@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>實驗室器材借用系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #ddd9ce;
+    --text: #1a1916;
+    --text2: #6b6760;
+    --accent: #2a6b4f;
+    --accent2: #d4a843;
+    --danger: #c0392b;
+    --blue: #2c5f8a;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-icon { font-size: 22px; }
+  header h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+  header nav { display: flex; gap: 4px; }
+  header nav button {
+    background: none; border: none; color: rgba(255,255,255,0.8);
+    padding: 6px 13px; border-radius: 6px; cursor: pointer;
+    font-size: 13.5px; font-family: inherit; font-weight: 500;
+    transition: all 0.15s;
+  }
+  header nav button:hover, header nav button.active {
+    background: rgba(255,255,255,0.18); color: #fff;
+  }
+  .user-info { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+
+  /* ── LAYOUT ── */
+  main { max-width: 960px; margin: 0 auto; padding: 28px 20px; }
+  .page { display: none; animation: fadeIn 0.2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .card-title .icon { font-size: 18px; }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 500; color: var(--text2); }
+  input, select, textarea {
+    border: 1.5px solid var(--border); border-radius: 7px;
+    padding: 9px 12px; font-size: 14px; font-family: inherit;
+    background: var(--bg); color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,107,79,0.12);
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  .hint { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px; border-radius: 7px; border: none;
+    font-size: 14px; font-family: inherit; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #1f5139; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(42,107,79,0.3); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #a93226; }
+  .btn-sm { padding: 5px 12px; font-size: 13px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* ── DEPOSIT BANNER ── */
+  .deposit-banner {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border: 1.5px solid var(--accent2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    display: none;
+  }
+  .deposit-banner.show { display: block; }
+  .deposit-banner h3 { font-size: 14px; color: #92400e; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+  .deposit-banner ul { list-style: none; font-size: 13.5px; color: #78350f; }
+  .deposit-banner li { padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .deposit-amount {
+    font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500;
+    color: var(--accent); margin: 10px 0 4px;
+  }
+
+  /* ── EQUIPMENT SELECTOR ── */
+  .room-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .room-tab {
+    padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border);
+    background: var(--surface2); font-size: 13px; cursor: pointer;
+    font-family: inherit; font-weight: 500; transition: all 0.15s; color: var(--text);
+  }
+  .room-tab.active, .room-tab:hover {
+    background: var(--accent); border-color: var(--accent); color: #fff;
+  }
+  .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .equip-item {
+    border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; cursor: pointer; transition: all 0.15s;
+    background: var(--surface);
+    position: relative;
+  }
+  .equip-item:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(42,107,79,0.12); }
+  .equip-item.selected { border-color: var(--accent); background: #f0f9f4; }
+  .equip-item.unavailable { opacity: 0.45; cursor: not-allowed; }
+  .equip-name { font-size: 14px; font-weight: 600; }
+  .equip-spec { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .equip-avail { font-size: 12px; margin-top: 6px; }
+  .avail-ok { color: var(--accent); }
+  .avail-no { color: var(--danger); }
+  .equip-qty {
+    display: flex; align-items: center; gap: 6px; margin-top: 8px;
+  }
+  .qty-btn {
+    width: 24px; height: 24px; border-radius: 5px; border: 1px solid var(--border);
+    background: var(--surface2); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+    transition: all 0.1s;
+  }
+  .qty-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .qty-input {
+    width: 44px; text-align: center; padding: 3px 6px;
+    border: 1px solid var(--border); border-radius: 5px; font-size: 13px;
+    font-family: 'DM Mono', monospace;
+  }
+  .selected-list { margin-top: 14px; }
+  .selected-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: var(--surface2); border-radius: 6px; margin-bottom: 6px;
+    font-size: 13.5px;
+  }
+  .selected-item-name { font-weight: 600; }
+  .selected-item-meta { color: var(--text2); font-size: 12px; }
+  .remove-item { color: var(--danger); cursor: pointer; font-size: 16px; padding: 0 4px; background: none; border: none; }
+
+  /* ── STATUS BADGE ── */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .badge-pending { background: #fef3c7; color: #92400e; }
+  .badge-approved { background: #d1fae5; color: #065f46; }
+  .badge-rejected { background: #fee2e2; color: #991b1b; }
+  .badge-returned { background: #e0e7ff; color: #3730a3; }
+  .badge-overdue { background: #fee2e2; color: #991b1b; }
+  .badge-damaged { background: #fce7f3; color: #9d174d; }
+
+  /* ── RECORD TABLE ── */
+  .record-list { display: flex; flex-direction: column; gap: 12px; }
+  .record-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+    background: var(--surface); transition: box-shadow 0.15s;
+  }
+  .record-card:hover { box-shadow: var(--shadow); }
+  .record-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .record-id { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); }
+  .record-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; font-size: 13px; }
+  .record-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .record-meta-label { font-size: 11px; color: var(--text2); font-weight: 500; }
+  .record-meta-value { font-weight: 600; }
+  .record-items { margin-top: 8px; font-size: 13px; color: var(--text2); }
+  .record-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── ADMIN ── */
+  .admin-tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 2px solid var(--border); }
+  .admin-tab {
+    padding: 8px 18px; border: none; background: none;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent;
+    margin-bottom: -2px; transition: all 0.15s;
+  }
+  .admin-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .admin-panel { display: none; }
+  .admin-panel.active { display: block; }
+
+  /* ── EQUIPMENT PAGE ── */
+  .equip-browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .equip-browse-card {
+    border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px;
+    background: var(--surface);
+  }
+  .equip-browse-room { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .equip-browse-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .equip-browse-spec { font-size: 13px; color: var(--text2); }
+  .equip-browse-count { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .count-bar-bg { height: 5px; background: var(--border); border-radius: 3px; flex: 1; margin: 0 10px; }
+  .count-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.3s; }
+  .count-num { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200; padding: 20px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 24px; max-width: 480px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--text); color: #fff;
+    padding: 12px 18px; border-radius: 8px;
+    font-size: 14px; font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.25s; z-index: 300; max-width: 320px;
+  }
+  .toast.show { transform: none; opacity: 1; }
+  .toast.success { background: var(--accent); }
+  .toast.error { background: var(--danger); }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
+  .spinner {
+    width: 28px; height: 28px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.6s linear infinite; margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 50px 20px; color: var(--text2); }
+  .empty-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty p { font-size: 14px; }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 8px; padding: 14px 16px; font-size: 13.5px; color: #1e40af;
+    margin-bottom: 16px;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .search-bar input { flex: 1; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    header nav button { padding: 6px 8px; font-size: 12.5px; }
+    header h1 { font-size: 14px; }
+    main { padding: 16px 14px; }
+    .record-meta { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <span class="logo-icon">🧪</span>
+    <h1>實驗室器材借用系統</h1>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('borrow')">申請借用</button>
+    <button onclick="showPage('equipment')">器材查詢</button>
+    <button onclick="showPage('myrecords')">我的記錄</button>
+    <button onclick="showPage('admin')">管理</button>
+  </nav>
+  <div class="user-info">
+    <div class="user-avatar" id="userAvatar">?</div>
+    <span id="userName" style="font-size:13px">未登入</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ══════════════════════════════ PAGE: 申請借用 ══════════════════════════════ -->
+<div id="page-borrow" class="page active">
+
+  <!-- 保證金提示 -->
+  <div class="deposit-banner" id="depositBanner">
+    <h3>⚠️ 此借用目的需繳納保證金</h3>
+    <ul>
+      <li>🏛️ 僅借用<strong>場地</strong>：NT$500</li>
+      <li>🔬 僅借用<strong>器材</strong>：NT$1,000</li>
+      <li>📦 場地＋器材皆借：NT$1,500</li>
+      <li>✅ 器材完整歸還後<strong>全額退還</strong>；如有損壞，照價賠償</li>
+    </ul>
+    <div class="deposit-amount" id="depositCalc">NT$ 0</div>
+    <div style="font-size:13px;color:#92400e">預估保證金（請於借用前至辦公室繳納）</div>
+  </div>
+
+  <!-- Step 1: 基本資料 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">👤</span>借用人資料</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>借用人姓名 *</label>
+        <input type="text" id="f-name" placeholder="輸入姓名">
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="f-email" placeholder="student@school.edu.tw">
+      </div>
+      <div class="form-group">
+        <label>借用目的 *</label>
+        <select id="f-purpose" onchange="onPurposeChange()">
+          <option value="">-- 請選擇 --</option>
+          <option value="課程">課程</option>
+          <option value="自主學習">自主學習</option>
+          <option value="科展">科展</option>
+          <option value="社團">社團</option>
+          <option value="其他">其他</option>
+        </select>
+        <div class="hint">自主學習、科展需繳保證金</div>
+      </div>
+      <div class="form-group">
+        <label>是否借用場地</label>
+        <select id="f-venue" onchange="calcDeposit()">
+          <option value="">否</option>
+          <option value="1">是（實驗室場地）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>借用日期 *</label>
+        <input type="date" id="f-borrow-date">
+      </div>
+      <div class="form-group">
+        <label>預計歸還日期 *</label>
+        <input type="date" id="f-return-date">
+      </div>
+      <div class="form-group full">
+        <label>備註說明</label>
+        <textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: 器材選擇 -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🔬</span>選擇借用器材</div>
+    <div class="room-tabs" id="roomTabs">
+      <div class="loading"><div class="spinner"></div>載入中…</div>
+    </div>
+    <div class="equip-grid" id="equipGrid">
+    </div>
+    <div class="selected-list" id="selectedList"></div>
+  </div>
+
+  <!-- Submit -->
+  <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:4px;">
+    <button class="btn btn-secondary" onclick="resetForm()">清除重填</button>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">
+      📋 提交借用申請
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ PAGE: 器材查詢 ══════════════════════════════ -->
+<div id="page-equipment" class="page">
+  <div class="card">
+    <div class="card-title"><span class="icon">📦</span>器材庫存查詢</div>
+    <div class="search-bar">
+      <input type="text" id="equipSearch" placeholder="搜尋器材名稱…" oninput="filterEquipBrowse()">
+      <select id="equipRoomFilter" onchange="filterEquipBrowse()">
+        <option value="">全部房間</option>
+      </select>
+    </div>
+    <div class="equip-browse-grid" id="equipBrowseGrid">
+      <div class="loading"><div class="spinner"></div>載入中…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ PAGE: 我的記錄 ══════════════════════════════ -->
+<div id="page-myrecords" class="page">
+  <div class="card">
+    <div class="card-title"><span class="icon">📋</span>我的借用記錄</div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label>輸入 Email 查詢</label>
+        <input type="email" id="queryEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group" style="justify-content:flex-end; padding-top:20px;">
+        <button class="btn btn-primary" onclick="loadMyRecords()">🔍 查詢</button>
+      </div>
+    </div>
+    <div id="myRecordsList">
+      <div class="empty"><div class="empty-icon">📭</div><p>輸入 Email 後點擊查詢</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ PAGE: 管理 ══════════════════════════════ -->
+<div id="page-admin" class="page">
+  <div class="info-box">
+    <strong>🔐 管理員專區</strong>
+    此頁面供實驗室管理員使用，包含審核借用申請、確認歸還、保證金管理。
+  </div>
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="showAdminTab('pending')">待審核</button>
+    <button class="admin-tab" onclick="showAdminTab('approved')">已核准</button>
+    <button class="admin-tab" onclick="showAdminTab('return')">確認歸還</button>
+    <button class="admin-tab" onclick="showAdminTab('deposit')">保證金</button>
+    <button class="admin-tab" onclick="showAdminTab('all')">全部記錄</button>
+  </div>
+
+  <div id="admin-pending" class="admin-panel active">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><span class="icon">⏳</span>待審核申請</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAdminRecords()" style="margin-bottom:12px">🔄 重新整理</button>
+      <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+    </div>
+  </div>
+
+  <div id="admin-approved" class="admin-panel">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><span class="icon">✅</span>已核准申請</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAdminRecords()" style="margin-bottom:12px">🔄 重新整理</button>
+      <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>切換到此頁面後重新整理</p></div></div>
+    </div>
+  </div>
+
+  <div id="admin-return" class="admin-panel">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><span class="icon">📬</span>確認歸還</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAdminRecords()" style="margin-bottom:12px">🔄 重新整理</button>
+      <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>切換到此頁面後重新整理</p></div></div>
+    </div>
+  </div>
+
+  <div id="admin-deposit" class="admin-panel">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><span class="icon">💰</span>保證金管理</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAdminRecords()" style="margin-bottom:12px">🔄 重新整理</button>
+      <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>切換到此頁面後重新整理</p></div></div>
+    </div>
+  </div>
+
+  <div id="admin-all" class="admin-panel">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title"><span class="icon">📊</span>全部借用記錄</div>
+      <button class="btn btn-secondary btn-sm" onclick="loadAdminRecords()" style="margin-bottom:12px">🔄 重新整理</button>
+      <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>切換到此頁面後重新整理</p></div></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <div class="modal-title" id="modalTitle">確認操作</div>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────────
+const GAS_URL = 'https://script.google.com/macros/s/126hlsexl2a_brFZVLlaufUudfzp4tt2mo0Hx6UAL_2NxwwzRF4Xxj00w/exec'; // ← 換成你的 Apps Script 網址
+
+// ── STATE ───────────────────────────────────────────────────
+let allEquipment = [];
+let selectedItems = {};
+let allRooms = [];
+let currentRoom = '';
+let adminRecords = [];
+
+// ── INIT ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  setMinDates();
+  loadEquipment();
+  loadEquipBrowse();
+  loadAdminRecords();
+});
+
+function setMinDates() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-borrow-date').min = today;
+  document.getElementById('f-return-date').min = today;
+  document.getElementById('f-borrow-date').value = today;
+  document.getElementById('f-borrow-date').addEventListener('change', e => {
+    document.getElementById('f-return-date').min = e.target.value;
+  });
+}
+
+// ── API CALLS ────────────────────────────────────────────────
+async function api(params) {
+  if (!GAS_URL) {
+    // Demo mode: return mock data
+    return mockApi(params);
+  }
+  try {
+    if (params.method === 'POST') {
+      const res = await fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify(params.data)
+      });
+      return await res.json();
+    } else {
+      const url = new URL(GAS_URL);
+      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+      const res = await fetch(url.toString());
+      return await res.json();
+    }
+  } catch(e) {
+    return { success: false, message: '連線失敗：' + e.message };
+  }
+}
+
+// ── MOCK DATA (for preview before GAS_URL is set) ────────────
+function mockApi(params) {
+  const mockEquip = [
+    {room:'地球科學',name:'岩石標本箱',spec:'一套',total:5,available:4,unit:'套'},
+    {room:'地球科學',name:'地球儀',spec:'30cm',total:8,available:8,unit:'個'},
+    {room:'物理',name:'彈簧秤',spec:'0-500g',total:20,available:18,unit:'個'},
+    {room:'物理',name:'電流計',spec:'',total:10,available:10,unit:'個'},
+    {room:'化學',name:'100mL燒杯',spec:'玻璃',total:30,available:25,unit:'個'},
+    {room:'化學',name:'250mL燒杯',spec:'玻璃',total:20,available:20,unit:'個'},
+    {room:'化學',name:'酒精燈',spec:'',total:15,available:12,unit:'個'},
+    {room:'理化',name:'溫度計',spec:'0-100°C',total:25,available:25,unit:'支'},
+    {room:'生物',name:'顯微鏡',spec:'光學',total:15,available:13,unit:'台'},
+    {room:'生物',name:'解剖器械組',spec:'一套',total:10,available:10,unit:'套'},
+    {room:'教具',name:'量角器',spec:'',total:40,available:40,unit:'個'},
+  ];
+  if (params.action === 'getRooms') {
+    return {success:true, rooms:['地球科學','物理','化學','理化','生物','教具']};
+  }
+  if (params.action === 'getEquipment') {
+    const filtered = params.room ? mockEquip.filter(e=>e.room===params.room) : mockEquip;
+    return {success:true, equipment: filtered};
+  }
+  if (params.action === 'getAllRecords') {
+    return {success:true, records: [
+      {id:'REQ-20240101120000', time:'2024/01/01 12:00:00', name:'王小明', email:'wang@school.edu.tw',
+       purpose:'自主學習', items:[{room:'化學',name:'100mL燒杯',quantity:5,unit:'個'}],
+       borrowDate:'2024/01/05', returnDate:'2024/01/10', actualReturn:'',
+       status:'待審核', depositType:'器材', depositAmount:1000, depositStatus:'待繳納', note:''}
+    ]};
+  }
+  if (params.data && params.data.action === 'submitRequest') {
+    return {success:true, requestId:'REQ-DEMO-001', depositAmount: 0, depositType:'無'};
+  }
+  if (params.data && params.data.action === 'updateStatus') {
+    return {success:true};
+  }
+  if (params.data && params.data.action === 'returnEquipment') {
+    return {success:true};
+  }
+  return {success:false, message:'未知操作'};
+}
+
+// ── EQUIPMENT LOAD ────────────────────────────────────────────
+async function loadEquipment() {
+  const roomsRes = await api({action:'getRooms'});
+  if (!roomsRes.success) return;
+  allRooms = roomsRes.rooms;
+
+  const equipRes = await api({action:'getEquipment'});
+  if (!equipRes.success) return;
+  allEquipment = equipRes.equipment;
+
+  renderRoomTabs();
+  if (allRooms.length > 0) {
+    currentRoom = allRooms[0];
+    renderEquipGrid();
+  }
+}
+
+function renderRoomTabs() {
+  const tabs = document.getElementById('roomTabs');
+  tabs.innerHTML = allRooms.map(r =>
+    `<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${r}</button>`
+  ).join('');
+}
+
+function selectRoom(room) {
+  currentRoom = room;
+  renderRoomTabs();
+  renderEquipGrid();
+}
+
+function renderEquipGrid() {
+  const grid = document.getElementById('equipGrid');
+  const items = allEquipment.filter(e => e.room === currentRoom);
+
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><p>此房間目前無器材</p></div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(e => {
+    const avail = parseInt(e.available) || 0;
+    const sel = selectedItems[`${e.room}__${e.name}`];
+    const qty = sel ? sel.quantity : 0;
+    return `
+    <div class="equip-item ${qty>0?'selected':''} ${avail<=0?'unavailable':''}"
+         id="ei-${e.room}-${e.name}" onclick="toggleEquip(event,'${e.room}','${e.name}','${e.spec||''}','${e.unit||'個'}',${avail})">
+      <div class="equip-name">${e.name}</div>
+      ${e.spec?`<div class="equip-spec">${e.spec}</div>`:''}
+      <div class="equip-avail ${avail>0?'avail-ok':'avail-no'}">
+        ${avail>0?`可借：${avail} ${e.unit||'個'}`:'目前無庫存'}
+      </div>
+      ${avail>0?`
+      <div class="equip-qty" onclick="event.stopPropagation()">
+        <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${e.spec||''}','${e.unit||'個'}',${avail},-1)">−</button>
+        <input class="qty-input" type="number" min="0" max="${avail}"
+               value="${qty}" id="qty-${e.room}-${e.name}"
+               onchange="setQty('${e.room}','${e.name}','${e.spec||''}','${e.unit||'個'}',${avail},this.value)"
+               onclick="event.stopPropagation()">
+        <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${e.spec||''}','${e.unit||'個'}',${avail},1)">+</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleEquip(event, room, name, spec, unit, avail) {
+  if (avail <= 0) return;
+  const key = `${room}__${name}`;
+  if (selectedItems[key]) {
+    delete selectedItems[key];
+  } else {
+    selectedItems[key] = {room, name, spec, unit, quantity: 1};
+  }
+  renderEquipGrid();
+  renderSelectedList();
+  calcDeposit();
+}
+
+function changeQty(room, name, spec, unit, avail, delta) {
+  const key = `${room}__${name}`;
+  const cur = selectedItems[key] ? selectedItems[key].quantity : 0;
+  const next = Math.max(0, Math.min(avail, cur + delta));
+  if (next === 0) {
+    delete selectedItems[key];
+  } else {
+    selectedItems[key] = {room, name, spec, unit, quantity: next};
+  }
+  renderEquipGrid();
+  renderSelectedList();
+  calcDeposit();
+}
+
+function setQty(room, name, spec, unit, avail, val) {
+  const qty = Math.max(0, Math.min(avail, parseInt(val) || 0));
+  const key = `${room}__${name}`;
+  if (qty === 0) {
+    delete selectedItems[key];
+  } else {
+    selectedItems[key] = {room, name, spec, unit, quantity: qty};
+  }
+  renderEquipGrid();
+  renderSelectedList();
+  calcDeposit();
+}
+
+function renderSelectedList() {
+  const list = document.getElementById('selectedList');
+  const items = Object.values(selectedItems);
+  if (items.length === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = `
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;">已選器材：</div>
+    ${items.map(i=>`
+    <div class="selected-item">
+      <div>
+        <span class="selected-item-name">${i.name}</span>
+        <span class="selected-item-meta"> ${i.spec||''} × ${i.quantity} ${i.unit}</span>
+        <div style="font-size:11px;color:var(--text2)">${i.room}</div>
+      </div>
+      <button class="remove-item" onclick="removeItem('${i.room}__${i.name}')">✕</button>
+    </div>`).join('')}`;
+}
+
+function removeItem(key) {
+  delete selectedItems[key];
+  renderEquipGrid();
+  renderSelectedList();
+  calcDeposit();
+}
+
+// ── DEPOSIT CALC ──────────────────────────────────────────────
+function onPurposeChange() {
+  const purpose = document.getElementById('f-purpose').value;
+  const banner = document.getElementById('depositBanner');
+  if (purpose === '科展' || purpose === '自主學習') {
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+  calcDeposit();
+}
+
+function calcDeposit() {
+  const purpose = document.getElementById('f-purpose').value;
+  const hasVenue = !!document.getElementById('f-venue').value;
+  const hasEquip = Object.keys(selectedItems).length > 0;
+  let amount = 0;
+  if (purpose === '科展' || purpose === '自主學習') {
+    if (hasVenue && hasEquip) amount = 1500;
+    else if (hasVenue) amount = 500;
+    else if (hasEquip) amount = 1000;
+  }
+  document.getElementById('depositCalc').textContent = `NT$ ${amount.toLocaleString()}`;
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────
+async function submitRequest() {
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const purpose = document.getElementById('f-purpose').value;
+  const borrowDate = document.getElementById('f-borrow-date').value;
+  const returnDate = document.getElementById('f-return-date').value;
+  const venue = document.getElementById('f-venue').value;
+  const note = document.getElementById('f-note').value.trim();
+  const items = Object.values(selectedItems);
+
+  if (!name || !email || !purpose || !borrowDate || !returnDate) {
+    showToast('請填寫所有必填欄位', 'error'); return;
+  }
+  if (!email.includes('@')) {
+    showToast('請輸入正確的 Email', 'error'); return;
+  }
+  if (returnDate < borrowDate) {
+    showToast('歸還日期不能早於借用日期', 'error'); return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '提交中…';
+
+  const res = await api({
+    method: 'POST',
+    data: { action:'submitRequest', name, email, purpose, borrowDate, returnDate,
+            borrowVenue: venue, items, note }
+  });
+
+  btn.disabled = false;
+  btn.textContent = '📋 提交借用申請';
+
+  if (res.success) {
+    const depositMsg = res.depositAmount > 0
+      ? `\n保證金：NT$${res.depositAmount}（${res.depositType}），請至辦公室繳納。` : '';
+    showModal('✅ 申請成功',
+      `<p>申請編號：<strong style="font-family:'DM Mono',monospace">${res.requestId}</strong></p>
+       <p style="margin-top:8px;font-size:13.5px;color:var(--text2)">確認 Email 將寄送至 ${email}，請等待管理員審核。${depositMsg}</p>`,
+      [{label:'確定', class:'btn-primary', onclick:'closeModal()'}]
+    );
+    resetForm();
+  } else {
+    showToast('提交失敗：' + (res.message || '請稍後再試'), 'error');
+  }
+}
+
+function resetForm() {
+  document.getElementById('f-name').value = '';
+  document.getElementById('f-email').value = '';
+  document.getElementById('f-purpose').value = '';
+  document.getElementById('f-venue').value = '';
+  document.getElementById('f-note').value = '';
+  document.getElementById('depositBanner').classList.remove('show');
+  selectedItems = {};
+  renderEquipGrid();
+  renderSelectedList();
+  setMinDates();
+}
+
+// ── MY RECORDS ────────────────────────────────────────────────
+async function loadMyRecords() {
+  const email = document.getElementById('queryEmail').value.trim();
+  if (!email) { showToast('請輸入 Email', 'error'); return; }
+  const list = document.getElementById('myRecordsList');
+  list.innerHTML = '<div class="loading"><div class="spinner"></div>查詢中…</div>';
+  const res = await api({action:'getRecords', email});
+  if (!res.success) { list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>'; return; }
+  renderRecordList(res.records, list, false);
+}
+
+// ── EQUIPMENT BROWSE ──────────────────────────────────────────
+let allEquipBrowse = [];
+async function loadEquipBrowse() {
+  const res = await api({action:'getEquipment'});
+  if (!res.success) return;
+  allEquipBrowse = res.equipment;
+
+  const roomFilter = document.getElementById('equipRoomFilter');
+  const rooms = [...new Set(res.equipment.map(e=>e.room))];
+  rooms.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r; opt.textContent = r;
+    roomFilter.appendChild(opt);
+  });
+  renderEquipBrowse(res.equipment);
+}
+
+function filterEquipBrowse() {
+  const q = document.getElementById('equipSearch').value.toLowerCase();
+  const room = document.getElementById('equipRoomFilter').value;
+  const filtered = allEquipBrowse.filter(e =>
+    (!room || e.room === room) &&
+    (!q || e.name.toLowerCase().includes(q) || (e.spec||'').toLowerCase().includes(q))
+  );
+  renderEquipBrowse(filtered);
+}
+
+function renderEquipBrowse(items) {
+  const grid = document.getElementById('equipBrowseGrid');
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';
+    return;
+  }
+  grid.innerHTML = items.map(e => {
+    const avail = parseInt(e.available) || 0;
+    const total = parseInt(e.total) || 1;
+    const pct = Math.round(avail / total * 100);
+    return `
+    <div class="equip-browse-card">
+      <div class="equip-browse-room">${e.room}</div>
+      <div class="equip-browse-name">${e.name}</div>
+      <div class="equip-browse-spec">${e.spec||'─'}</div>
+      <div class="equip-browse-count">
+        <span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span>
+        <div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div>
+        <span style="font-size:12px;color:var(--text2)">/ ${total} ${e.unit||'個'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+async function loadAdminRecords() {
+  const res = await api({action:'getAllRecords'});
+  if (!res.success) return;
+  adminRecords = res.records;
+
+  const pending = adminRecords.filter(r => r.status === '待審核');
+  const approved = adminRecords.filter(r => r.status === '已核准' || r.status === '逾期');
+  const returnPending = adminRecords.filter(r => r.status === '已核准' || r.status === '逾期');
+  const deposits = adminRecords.filter(r => r.depositAmount > 0);
+
+  renderRecordList(pending, document.getElementById('pendingList'), true, 'pending');
+  renderRecordList(approved, document.getElementById('approvedList'), true, 'approved');
+  renderRecordList(returnPending, document.getElementById('returnList'), true, 'return');
+  renderRecordList(deposits, document.getElementById('depositList'), true, 'deposit');
+  renderRecordList(adminRecords, document.getElementById('allList'), true, 'all');
+}
+
+function showAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['pending','approved','return','deposit','all'][i] === tab);
+  });
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(`admin-${tab}`).classList.add('active');
+}
+
+// ── RECORD RENDERING ──────────────────────────────────────────
+function renderRecordList(records, container, isAdmin, mode) {
+  if (!records || records.length === 0) {
+    container.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';
+    return;
+  }
+  container.innerHTML = `<div class="record-list">${records.map(r => renderRecord(r, isAdmin, mode)).join('')}</div>`;
+}
+
+function renderRecord(r, isAdmin, mode) {
+  const statusClass = {
+    '待審核':'badge-pending', '已核准':'badge-approved', '已拒絕':'badge-rejected',
+    '已歸還':'badge-returned', '逾期':'badge-overdue', '已歸還-損壞':'badge-damaged'
+  }[r.status] || 'badge-pending';
+
+  const items = Array.isArray(r.items) ? r.items : [];
+  const itemStr = items.map(i=>`${i.room} ${i.name} × ${i.quantity}${i.unit||''}`).join('、') || '─';
+
+  let actions = '';
+  if (isAdmin) {
+    if (mode === 'pending' && r.status === '待審核') {
+      actions = `
+        <button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
+    }
+    if ((mode === 'return') && (r.status === '已核准' || r.status === '逾期')) {
+      actions = `
+        <button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}', false)">📬 確認歸還（完整）</button>
+        <button class="btn btn-danger btn-sm" onclick="confirmReturn('${r.id}', true)">⚠️ 確認歸還（損壞）</button>`;
+    }
+    if (mode === 'deposit' && r.depositAmount > 0) {
+      actions = `
+        ${r.depositStatus === '待繳納'?`<button class="btn btn-secondary btn-sm" onclick="updateDeposit('${r.id}','已繳納')">💰 標記已繳納</button>`:''}
+        ${r.depositStatus === '待退還'?`<button class="btn btn-primary btn-sm" onclick="updateDeposit('${r.id}','已退還')">↩️ 標記已退還</button>`:''}`;
+    }
+  }
+
+  return `
+  <div class="record-card">
+    <div class="record-header">
+      <div>
+        <span class="record-id">${r.id}</span>
+        <div style="font-size:14px;font-weight:700;margin-top:3px">${r.name}</div>
+        <div style="font-size:13px;color:var(--text2)">${r.email}</div>
+      </div>
+      <span class="badge ${statusClass}">${r.status}</span>
+    </div>
+    <div class="record-meta">
+      <div class="record-meta-item">
+        <span class="record-meta-label">借用目的</span>
+        <span class="record-meta-value">${r.purpose}</span>
+      </div>
+      <div class="record-meta-item">
+        <span class="record-meta-label">借用日期</span>
+        <span class="record-meta-value">${r.borrowDate || '─'}</span>
+      </div>
+      <div class="record-meta-item">
+        <span class="record-meta-label">預計歸還</span>
+        <span class="record-meta-value">${r.returnDate || '─'}</span>
+      </div>
+      ${r.depositAmount > 0 ? `
+      <div class="record-meta-item">
+        <span class="record-meta-label">保證金</span>
+        <span class="record-meta-value">NT$${r.depositAmount} (${r.depositStatus})</span>
+      </div>` : ''}
+    </div>
+    <div class="record-items">🔬 ${itemStr}</div>
+    ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
+    ${actions?`<div class="record-actions">${actions}</div>`:''}
+  </div>`;
+}
+
+// ── ADMIN ACTIONS ─────────────────────────────────────────────
+function approveRecord(id) {
+  showModal('確認核准', `<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`, [
+    {label:'取消', class:'btn-secondary', onclick:'closeModal()'},
+    {label:'確認核准', class:'btn-primary', onclick:`doUpdateStatus('${id}','已核准')`}
+  ]);
+}
+
+function rejectRecord(id) {
+  showModal('確認拒絕', `<p>確定拒絕申請單 <strong>${id}</strong> 嗎？</p>
+    <div class="form-group" style="margin-top:12px"><label>拒絕原因（選填）</label>
+    <textarea id="rejectNote" rows="2" placeholder="輸入原因…"></textarea></div>`, [
+    {label:'取消', class:'btn-secondary', onclick:'closeModal()'},
+    {label:'確認拒絕', class:'btn-danger', onclick:`doUpdateStatus('${id}','已拒絕',document.getElementById('rejectNote').value)`}
+  ]);
+}
+
+async function doUpdateStatus(id, status, note) {
+  closeModal();
+  const res = await api({method:'POST', data:{action:'updateStatus', requestId:id, status, note}});
+  if (res.success) { showToast('狀態已更新', 'success'); loadAdminRecords(); }
+  else showToast('更新失敗', 'error');
+}
+
+function confirmReturn(id, damaged) {
+  const label = damaged ? '損壞歸還' : '完整歸還';
+  showModal('確認歸還', `<p>確認 <strong>${id}</strong> ${label}？</p>
+    ${damaged?'<p style="color:var(--danger);font-size:13px;margin-top:6px">⚠️ 損壞將保留保證金並照價賠償</p>':''}`, [
+    {label:'取消', class:'btn-secondary', onclick:'closeModal()'},
+    {label:`確認${label}`, class: damaged?'btn-danger':'btn-primary',
+     onclick:`doReturn('${id}',${damaged})`}
+  ]);
+}
+
+async function doReturn(id, damaged) {
+  closeModal();
+  const res = await api({method:'POST', data:{action:'returnEquipment', requestId:id, damaged}});
+  if (res.success) { showToast('歸還已確認', 'success'); loadAdminRecords(); }
+  else showToast('更新失敗', 'error');
+}
+
+async function updateDeposit(id, status) {
+  const res = await api({method:'POST', data:{action:'updateDeposit', requestId:id, status}});
+  if (res.success) { showToast('保證金狀態已更新', 'success'); loadAdminRecords(); }
+  else showToast('更新失敗', 'error');
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('header nav button').forEach((b, i) => {
+    b.classList.toggle('active', ['borrow','equipment','myrecords','admin'][i] === page);
+  });
+}
+
+function showModal(title, body, actions) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('modalActions').innerHTML = actions.map(a =>
+    `<button class="btn ${a.class}" onclick="${a.onclick}">${a.label}</button>`
+  ).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal(event) {
+  if (!event || event.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('show');
+  }
+}
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type||''}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
