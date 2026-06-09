@@ -549,25 +549,42 @@ function setMinDates() {
 
 // ── API CALLS ────────────────────────────────────────────────
 async function api(params) {
-  if (!GAS_URL) {
-    // Demo mode: return mock data
-    return mockApi(params);
-  }
-  try {
-    if (params.method === 'POST') {
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify(params.data)
-      });
-      return await res.json();
-    } else {
-      const url = new URL(GAS_URL);
-      Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
-      const res = await fetch(url.toString());
-      return await res.json();
-    }
-  } catch(e) {
-    return { success: false, message: '連線失敗：' + e.message };
+  if (params.method === 'POST') {
+    // POST 用 no-cors 模式送出，無法讀回應，改用 GET 帶參數
+    return new Promise((resolve) => {
+      const callbackName = 'cb_' + Date.now();
+      const script = document.createElement('script');
+      const allParams = { ...params.data, callback: callbackName };
+      const qs = Object.entries(allParams).map(([k,v]) =>
+        k + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)
+      ).join('&');
+      window[callbackName] = (data) => {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+      script.src = GAS_URL + '?' + qs;
+      script.onerror = () => resolve({ success: false, message: '連線失敗' });
+      document.body.appendChild(script);
+    });
+  } else {
+    // GET 用 JSONP
+    return new Promise((resolve) => {
+      const callbackName = 'cb_' + Date.now();
+      const script = document.createElement('script');
+      const allParams = { ...params, callback: callbackName };
+      const qs = Object.entries(allParams).map(([k,v]) =>
+        k + '=' + encodeURIComponent(v)
+      ).join('&');
+      window[callbackName] = (data) => {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        resolve(data);
+      };
+      script.src = GAS_URL + '?' + qs;
+      script.onerror = () => resolve({ success: false, message: '連線失敗' });
+      document.body.appendChild(script);
+    });
   }
 }
 
