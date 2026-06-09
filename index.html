@@ -403,7 +403,8 @@ function removeItem(key) { delete selectedItems[key]; renderEquipGrid(); renderS
 // ── DEPOSIT ───────────────────────────────────────────────
 function onPurposeChange() {
   const p = document.getElementById('f-purpose').value;
-  document.getElementById('depositBanner').classList.toggle('show', p === '科展' || p === '自主學習');
+  // 修改：只要選擇了目的，且目的「不是」課程，就顯示保證金橫幅
+  document.getElementById('depositBanner').classList.toggle('show', p !== '' && p !== '課程');
   calcDeposit();
 }
 
@@ -412,7 +413,9 @@ function calcDeposit() {
   const hasVenue = !!document.getElementById('f-venue').value;
   const hasEquip = Object.keys(selectedItems).length > 0;
   let amount = 0;
-  if (p === '科展' || p === '自主學習') {
+  
+  // 修改：除了課程以外，其他目的都需要計算保證金
+  if (p !== '' && p !== '課程') {
     if (hasVenue && hasEquip) amount = 1500;
     else if (hasVenue) amount = 500;
     else if (hasEquip) amount = 1000;
@@ -440,13 +443,20 @@ async function submitRequest() {
 
   try {
     const id = 'REQ-' + Date.now();
-    let depositType = '無', depositAmount = 0;
-    if (purpose === '科展' || purpose === '自主學習') {
-      const hasVenue = !!venue, hasEquip = items.length > 0;
-      if (hasVenue && hasEquip) { depositType = '場地+器材'; depositAmount = 1500; }
-      else if (hasVenue) { depositType = '場地'; depositAmount = 500; }
-      else if (hasEquip) { depositType = '器材'; depositAmount = 1000; }
-    }
+   let depositType = '無', depositAmount = 0;
+if (purpose !== '課程') { // 修改判斷：除了課程都需要
+  const hasVenue = !!venue, hasEquip = items.length > 0;
+  if (hasVenue && hasEquip) {
+    depositType = '場地+器材';
+    depositAmount = 1500;
+  } else if (hasVenue) {
+    depositType = '場地';
+    depositAmount = 500;
+  } else if (hasEquip) {
+    depositType = '器材';
+    depositAmount = 1000;
+  }
+}
     await sb('POST', 'borrow_records', { body: {
       id, borrower_name: name, email, purpose, items,
       borrow_date: borrowDate, return_date: returnDate,
