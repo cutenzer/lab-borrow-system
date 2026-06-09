@@ -171,10 +171,14 @@
       <div class="form-group">
         <label>是否借用場地</label>
         <select id="f-venue" onchange="calcDeposit()">
-          <option value="">否</option>
-          <option value="1">是（實驗室場地）</option>
-        </select>
-      </div>
+    <option value="">否（不借用場地）</option>
+    <option value="化學實驗室">是（化學實驗室）</option>
+    <option value="理化實驗室">是（理化實驗室）</option>
+    <option value="物理實驗室">是（物理實驗室）</option>
+    <option value="生物實驗室">是（生物實驗室）</option>
+    <option value="地科實驗室">是（地科實驗室）</option>
+  </select>
+</div>
       <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
       <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
@@ -446,16 +450,9 @@ async function submitRequest() {
    let depositType = '無', depositAmount = 0;
 if (purpose !== '課程') { // 修改判斷：除了課程都需要
   const hasVenue = !!venue, hasEquip = items.length > 0;
-  if (hasVenue && hasEquip) {
-    depositType = '場地+器材';
-    depositAmount = 1500;
-  } else if (hasVenue) {
-    depositType = '場地';
-    depositAmount = 500;
-  } else if (hasEquip) {
-    depositType = '器材';
-    depositAmount = 1000;
-  }
+  if (hasVenue && hasEquip) { depositType = '場地+器材'; depositAmount = 1500; } 
+  else if (hasVenue) { depositType = '場地';  depositAmount = 500; }
+  else if (hasEquip) { depositType = '器材';  depositAmount = 1000;}
 }
     await sb('POST', 'borrow_records', { body: {
       id, borrower_name: name, email, purpose, items,
