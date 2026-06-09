@@ -549,32 +549,42 @@ function setMinDates() {
 
 // ── API CALLS ────────────────────────────────────────────────
 async function api(params) {
-  if (params.method === 'POST') {
-    // POST 用 no-cors 模式送出，無法讀回應，改用 GET 帶參數
-    return new Promise((resolve) => {
-      const callbackName = 'cb_' + Date.now();
-      const script = document.createElement('script');
-      const allParams = { ...params.data, callback: callbackName };
+  try {
+    let url, options;
+    if (params.method === 'POST') {
+      // 把 POST 改成 GET 參數傳送
+      const allParams = { ...params.data };
       const qs = Object.entries(allParams).map(([k,v]) =>
         k + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)
       ).join('&');
-      window[callbackName] = (data) => {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        resolve(data);
-      };
-      script.src = GAS_URL + '?' + qs;
-      script.onerror = () => resolve({ success: false, message: '連線失敗' });
-      document.body.appendChild(script);
+      url = GAS_URL + '?' + qs;
+    } else {
+      const allParams = { ...params };
+      const qs = Object.entries(allParams).map(([k,v]) =>
+        k + '=' + encodeURIComponent(v)
+      ).join('&');
+      url = GAS_URL + '?' + qs;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      mode: 'cors',
     });
-  } else {
-    // GET 用 JSONP
+    return await res.json();
+  } catch(e) {
+    // cors 失敗時改用 JSONP
     return new Promise((resolve) => {
       const callbackName = 'cb_' + Date.now();
       const script = document.createElement('script');
-      const allParams = { ...params, callback: callbackName };
-      const qs = Object.entries(allParams).map(([k,v]) =>
-        k + '=' + encodeURIComponent(v)
+      let allParams, qs;
+      if (params.method === 'POST') {
+        allParams = { ...params.data, callback: callbackName };
+      } else {
+        allParams = { ...params, callback: callbackName };
+      }
+      qs = Object.entries(allParams).map(([k,v]) =>
+        k + '=' + encodeURIComponent(typeof v === 'object' ? JSON.stringify(v) : v)
       ).join('&');
       window[callbackName] = (data) => {
         delete window[callbackName];
@@ -587,7 +597,6 @@ async function api(params) {
     });
   }
 }
-
 // ── MOCK DATA (for preview before GAS_URL is set) ────────────
 function mockApi(params) {
   const mockEquip = [
