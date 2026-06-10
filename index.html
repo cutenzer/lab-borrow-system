@@ -43,23 +43,50 @@
   .btn-danger:hover { background: #a93226; }
   .btn-sm { padding: 5px 12px; font-size: 13px; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  /* 保證金 */
   .deposit-banner { background: linear-gradient(135deg,#fffbeb,#fef3c7); border: 1.5px solid var(--accent2); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 18px; display: none; }
   .deposit-banner.show { display: block; }
   .deposit-banner h3 { font-size: 14px; color: #92400e; margin-bottom: 8px; }
   .deposit-banner ul { list-style: none; font-size: 13.5px; color: #78350f; }
   .deposit-banner li { padding: 3px 0; }
   .deposit-amount { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; color: var(--accent); margin: 10px 0 4px; }
+
+  /* 全域搜尋 */
+  .global-search-wrap { position: relative; margin-bottom: 18px; }
+  .global-search-input { width: 100%; padding: 12px 16px 12px 44px; font-size: 15px; border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface); font-family: inherit; outline: none; transition: border-color 0.15s; }
+  .global-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,107,79,0.12); }
+  .global-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
+  .search-results { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .search-result-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--surface2); cursor: pointer; transition: background 0.1s; }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: var(--surface2); }
+  .search-result-img { width: 52px; height: 52px; border-radius: 6px; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+  .search-result-img-placeholder { width: 52px; height: 52px; border-radius: 6px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .search-result-info { flex: 1; }
+  .search-result-name { font-size: 15px; font-weight: 700; }
+  .search-result-room { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 2px; }
+  .search-result-spec { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .search-result-avail { font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .search-empty { padding: 24px; text-align: center; color: var(--text2); font-size: 14px; }
+
+  /* 房間分頁 */
   .room-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
   .room-tab { padding: 5px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--surface2); font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500; transition: all 0.15s; color: var(--text); }
   .room-tab.active, .room-tab:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-  .equip-item { border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; background: var(--surface); }
+
+  /* 器材卡片（選擇器） */
+  .equip-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .equip-item { border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.15s; background: var(--surface); }
   .equip-item:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(42,107,79,0.12); }
   .equip-item.selected { border-color: var(--accent); background: #f0f9f4; }
   .equip-item.unavailable { opacity: 0.45; cursor: not-allowed; }
-  .equip-name { font-size: 14px; font-weight: 600; }
-  .equip-spec { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .equip-avail { font-size: 12px; margin-top: 6px; }
+  .equip-item-img { width: 100%; height: 110px; object-fit: cover; background: var(--surface2); display: block; }
+  .equip-item-img-placeholder { width: 100%; height: 110px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+  .equip-item-body { padding: 10px 12px; }
+  .equip-name { font-size: 13.5px; font-weight: 600; }
+  .equip-spec { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+  .equip-avail { font-size: 12px; margin-top: 5px; }
   .avail-ok { color: var(--accent); }
   .avail-no { color: var(--danger); }
   .equip-qty { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
@@ -69,6 +96,23 @@
   .selected-list { margin-top: 14px; }
   .selected-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface2); border-radius: 6px; margin-bottom: 6px; font-size: 13.5px; }
   .remove-item { color: var(--danger); cursor: pointer; font-size: 16px; padding: 0 4px; background: none; border: none; }
+
+  /* 器材瀏覽（查詢頁） */
+  .equip-browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .equip-browse-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); transition: box-shadow 0.15s; }
+  .equip-browse-card:hover { box-shadow: var(--shadow); }
+  .equip-browse-img { width: 100%; height: 130px; object-fit: cover; background: var(--surface2); display: block; }
+  .equip-browse-img-placeholder { width: 100%; height: 130px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 38px; }
+  .equip-browse-body { padding: 12px 14px; }
+  .equip-browse-room { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .equip-browse-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .equip-browse-spec { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  .equip-browse-count { display: flex; align-items: center; gap: 6px; }
+  .count-bar-bg { height: 5px; background: var(--border); border-radius: 3px; flex: 1; }
+  .count-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
+  .count-num { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; white-space: nowrap; }
+
+  /* Badge */
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .badge-pending { background: #fef3c7; color: #92400e; }
   .badge-approved { background: #d1fae5; color: #065f46; }
@@ -76,6 +120,8 @@
   .badge-returned { background: #e0e7ff; color: #3730a3; }
   .badge-overdue { background: #fee2e2; color: #991b1b; }
   .badge-damaged { background: #fce7f3; color: #9d174d; }
+
+  /* 記錄 */
   .record-list { display: flex; flex-direction: column; gap: 12px; }
   .record-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
   .record-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
@@ -86,30 +132,29 @@
   .record-meta-value { font-weight: 600; }
   .record-items { margin-top: 8px; font-size: 13px; color: var(--text2); }
   .record-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* Admin */
   .admin-tabs { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 2px solid var(--border); }
   .admin-tab { padding: 8px 18px; border: none; background: none; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
   .admin-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .admin-panel { display: none; }
   .admin-panel.active { display: block; }
-  .equip-browse-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-  .equip-browse-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
-  .equip-browse-room { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-  .equip-browse-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-  .equip-browse-spec { font-size: 13px; color: var(--text2); }
-  .equip-browse-count { margin-top: 10px; display: flex; align-items: center; justify-content: space-between; }
-  .count-bar-bg { height: 5px; background: var(--border); border-radius: 3px; flex: 1; margin: 0 10px; }
-  .count-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); }
-  .count-num { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+
+  /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
   .modal-overlay.show { display: flex; }
   .modal { background: var(--surface); border-radius: var(--radius); padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: slideUp 0.2s ease; }
   @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
   .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
   .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Toast */
   .toast { position: fixed; bottom: 24px; right: 24px; background: var(--text); color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 8px 24px rgba(0,0,0,0.2); transform: translateY(80px); opacity: 0; transition: all 0.25s; z-index: 300; }
   .toast.show { transform: none; opacity: 1; }
   .toast.success { background: var(--accent); }
   .toast.error { background: var(--danger); }
+
+  /* 其他 */
   .loading { text-align: center; padding: 40px; color: var(--text2); font-size: 14px; }
   .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; margin: 0 auto 12px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -118,7 +163,7 @@
   .info-box { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px; font-size: 13.5px; color: #1e40af; margin-bottom: 16px; }
   .search-bar { display: flex; gap: 8px; margin-bottom: 16px; }
   .search-bar input { flex: 1; }
-  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } header nav button { padding: 6px 8px; font-size: 12.5px; } }
+  @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } header nav button { padding: 6px 8px; font-size: 12px; } .equip-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
 </style>
 </head>
 <body>
@@ -140,6 +185,19 @@
 
 <!-- PAGE: 申請借用 -->
 <div id="page-borrow" class="page active">
+
+  <!-- 全域搜尋 -->
+  <div class="card">
+    <div class="card-title">🔍 搜尋器材</div>
+    <div class="global-search-wrap">
+      <span class="global-search-icon">🔎</span>
+      <input class="global-search-input" type="text" id="globalSearch"
+        placeholder="輸入器材名稱關鍵字，例如：燒杯、顯微鏡…"
+        oninput="doGlobalSearch(this.value)">
+    </div>
+    <div id="globalSearchResults"></div>
+  </div>
+
   <div class="deposit-banner" id="depositBanner">
     <h3>⚠️ 此借用目的需繳納保證金</h3>
     <ul>
@@ -151,6 +209,7 @@
     <div class="deposit-amount" id="depositCalc">NT$ 0</div>
     <div style="font-size:13px;color:#92400e">預估保證金（請於借用前至辦公室繳納）</div>
   </div>
+
   <div class="card">
     <div class="card-title">👤 借用人資料</div>
     <div class="form-grid">
@@ -171,25 +230,27 @@
       <div class="form-group">
         <label>是否借用場地</label>
         <select id="f-venue" onchange="calcDeposit()">
-    <option value="">否（不借用場地）</option>
-    <option value="化學實驗室">是（化學實驗室）</option>
-    <option value="理化實驗室">是（理化實驗室）</option>
-    <option value="物理實驗室">是（物理實驗室）</option>
-    <option value="生物實驗室">是（生物實驗室）</option>
-    <option value="地科實驗室">是（地科實驗室）</option>
-  </select>
-</div>
+          <option value="">否（不借用場地）</option>
+          <option value="化學實驗室">是（化學實驗室）</option>
+          <option value="理化實驗室">是（理化實驗室）</option>
+          <option value="物理實驗室">是（物理實驗室）</option>
+          <option value="生物實驗室">是（生物實驗室）</option>
+          <option value="地科實驗室">是（地科實驗室）</option>
+        </select>
+      </div>
       <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
       <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">🔬 選擇借用器材</div>
     <div class="room-tabs" id="roomTabs"><div class="loading"><div class="spinner"></div>載入中…</div></div>
     <div class="equip-grid" id="equipGrid"></div>
     <div class="selected-list" id="selectedList"></div>
   </div>
+
   <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:4px;">
     <button class="btn btn-secondary" onclick="resetForm()">清除重填</button>
     <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">📋 提交借用申請</button>
@@ -269,11 +330,9 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
 const SUPABASE_URL = 'https://bgifddtcklpqbmljlvcg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64'; // ← 貼上你的 anon key
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
 
-// ── SUPABASE HELPER ──────────────────────────────────────
 async function sb(method, table, opts = {}) {
   let url = SUPABASE_URL + '/rest/v1/' + table;
   const params = [];
@@ -281,15 +340,9 @@ async function sb(method, table, opts = {}) {
   if (opts.filter) params.push(opts.filter);
   if (opts.order) params.push('order=' + opts.order);
   if (params.length) url += '?' + params.join('&');
-
   const res = await fetch(url, {
     method,
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': 'Bearer ' + SUPABASE_KEY,
-      'Content-Type': 'application/json',
-      'Prefer': opts.prefer || 'return=representation'
-    },
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation' },
     body: opts.body ? JSON.stringify(opts.body) : undefined
   });
   if (res.status === 204) return [];
@@ -298,10 +351,8 @@ async function sb(method, table, opts = {}) {
   return data;
 }
 
-// ── STATE ────────────────────────────────────────────────
 let allEquipment = [], selectedItems = {}, allRooms = [], currentRoom = '';
 
-// ── INIT ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   setMinDates();
   loadEquipment();
@@ -319,11 +370,71 @@ function setMinDates() {
   });
 }
 
-// ── EQUIPMENT ────────────────────────────────────────────
+// ── 全域搜尋 ──────────────────────────────────────────────
+let searchTimer = null;
+function doGlobalSearch(q) {
+  const box = document.getElementById('globalSearchResults');
+  clearTimeout(searchTimer);
+  if (!q.trim()) { box.innerHTML = ''; return; }
+  searchTimer = setTimeout(async () => {
+    box.innerHTML = '<div class="loading"><div class="spinner"></div>搜尋中…</div>';
+    try {
+      const rows = await sb('GET', 'equipment', {
+        filter: 'name=ilike.*' + encodeURIComponent(q) + '*',
+        order: 'room,name'
+      });
+      if (!rows.length) {
+        box.innerHTML = '<div class="search-empty">找不到「' + q + '」相關器材</div>';
+        return;
+      }
+      box.innerHTML = '<div class="search-results">' + rows.map(e => {
+        const avail = parseInt(e.available) || 0;
+        const imgHtml = e.image_url
+          ? `<img class="search-result-img" src="${e.image_url}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="search-result-img-placeholder" style="display:none">🔬</div>`
+          : `<div class="search-result-img-placeholder">🔬</div>`;
+        return `<div class="search-result-item" onclick="jumpToEquip('${e.room}','${e.name}')">
+          ${imgHtml}
+          <div class="search-result-info">
+            <div class="search-result-name">${e.name}</div>
+            <div class="search-result-room">${e.room}</div>
+            ${e.spec ? `<div class="search-result-spec">${e.spec}</div>` : ''}
+          </div>
+          <div class="search-result-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借 '+avail+' '+e.unit:'無庫存'}</div>
+        </div>`;
+      }).join('') + '</div>';
+    } catch(err) {
+      box.innerHTML = '<div class="search-empty">搜尋失敗：' + err.message + '</div>';
+    }
+  }, 350);
+}
+
+function jumpToEquip(room, name) {
+  document.getElementById('globalSearch').value = '';
+  document.getElementById('globalSearchResults').innerHTML = '';
+  currentRoom = room;
+  renderRoomTabs();
+  renderEquipGrid();
+  // 捲動到器材選擇區
+  document.querySelector('.room-tabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => {
+    const key = room + '__' + name;
+    if (!selectedItems[key]) {
+      const equip = allEquipment.find(e => e.room === room && e.name === name);
+      if (equip && parseInt(equip.available) > 0) {
+        selectedItems[key] = { room, name, spec: equip.spec, unit: equip.unit, quantity: 1 };
+        renderEquipGrid();
+        renderSelectedList();
+        calcDeposit();
+      }
+    }
+  }, 400);
+}
+
+// ── 器材載入 ──────────────────────────────────────────────
 async function loadEquipment() {
   try {
     const rows = await sb('GET', 'equipment', { order: 'room,name' });
-    allEquipment = rows.map(r => ({ room: r.room, name: r.name, spec: r.spec || '', total: r.total, available: r.available, unit: r.unit || '個', id: r.id }));
+    allEquipment = rows.map(r => ({ id: r.id, room: r.room, name: r.name, spec: r.spec || '', total: r.total, available: r.available, unit: r.unit || '個', image_url: r.image_url || '' }));
     allRooms = [...new Set(rows.map(r => r.room))];
     renderRoomTabs();
     if (allRooms.length > 0) { currentRoom = allRooms[0]; renderEquipGrid(); }
@@ -348,18 +459,25 @@ function renderEquipGrid() {
     const avail = parseInt(e.available) || 0;
     const sel = selectedItems[e.room + '__' + e.name];
     const qty = sel ? sel.quantity : 0;
+    const imgHtml = e.image_url
+      ? `<img class="equip-item-img" src="${e.image_url}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        + `<div class="equip-item-img-placeholder" style="display:none">🔬</div>`
+      : `<div class="equip-item-img-placeholder">🔬</div>`;
     return `<div class="equip-item ${qty>0?'selected':''} ${avail<=0?'unavailable':''}"
-      onclick="toggleEquip(event,'${e.room}','${e.name}','${e.spec}','${e.unit}',${avail})">
-      <div class="equip-name">${e.name}</div>
-      ${e.spec ? `<div class="equip-spec">${e.spec}</div>` : ''}
-      <div class="equip-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>
-      ${avail>0?`<div class="equip-qty" onclick="event.stopPropagation()">
-        <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${e.spec}','${e.unit}',${avail},-1)">−</button>
-        <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}"
-          onchange="setQty('${e.room}','${e.name}','${e.spec}','${e.unit}',${avail},this.value)"
-          onclick="event.stopPropagation()">
-        <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${e.spec}','${e.unit}',${avail},1)">+</button>
-      </div>`:''}
+      onclick="toggleEquip(event,'${e.room}','${e.name}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail})">
+      ${imgHtml}
+      <div class="equip-item-body">
+        <div class="equip-name">${e.name}</div>
+        ${e.spec ? `<div class="equip-spec">${e.spec}</div>` : ''}
+        <div class="equip-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>
+        ${avail>0?`<div class="equip-qty" onclick="event.stopPropagation()">
+          <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},-1)">−</button>
+          <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}"
+            onchange="setQty('${e.room}','${e.name}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},this.value)"
+            onclick="event.stopPropagation()">
+          <button class="qty-btn" onclick="changeQty('${e.room}','${e.name}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},1)">+</button>
+        </div>`:''}
+      </div>
     </div>`;
   }).join('');
 }
@@ -404,10 +522,9 @@ function renderSelectedList() {
 
 function removeItem(key) { delete selectedItems[key]; renderEquipGrid(); renderSelectedList(); calcDeposit(); }
 
-// ── DEPOSIT ───────────────────────────────────────────────
+// ── 保證金 ────────────────────────────────────────────────
 function onPurposeChange() {
   const p = document.getElementById('f-purpose').value;
-  // 修改：只要選擇了目的，且目的「不是」課程，就顯示保證金橫幅
   document.getElementById('depositBanner').classList.toggle('show', p !== '' && p !== '課程');
   calcDeposit();
 }
@@ -417,8 +534,6 @@ function calcDeposit() {
   const hasVenue = !!document.getElementById('f-venue').value;
   const hasEquip = Object.keys(selectedItems).length > 0;
   let amount = 0;
-  
-  // 修改：除了課程以外，其他目的都需要計算保證金
   if (p !== '' && p !== '課程') {
     if (hasVenue && hasEquip) amount = 1500;
     else if (hasVenue) amount = 500;
@@ -427,7 +542,7 @@ function calcDeposit() {
   document.getElementById('depositCalc').textContent = 'NT$ ' + amount.toLocaleString();
 }
 
-// ── SUBMIT ────────────────────────────────────────────────
+// ── 提交申請 ──────────────────────────────────────────────
 async function submitRequest() {
   const name = document.getElementById('f-name').value.trim();
   const email = document.getElementById('f-email').value.trim();
@@ -447,13 +562,13 @@ async function submitRequest() {
 
   try {
     const id = 'REQ-' + Date.now();
-   let depositType = '無', depositAmount = 0;
-if (purpose !== '課程') { // 修改判斷：除了課程都需要
-  const hasVenue = !!venue, hasEquip = items.length > 0;
-  if (hasVenue && hasEquip) { depositType = '場地+器材'; depositAmount = 1500; } 
-  else if (hasVenue) { depositType = '場地';  depositAmount = 500; }
-  else if (hasEquip) { depositType = '器材';  depositAmount = 1000;}
-}
+    let depositType = '無', depositAmount = 0;
+    if (purpose !== '課程') {
+      const hasVenue = !!venue, hasEquip = items.length > 0;
+      if (hasVenue && hasEquip) { depositType = '場地+器材'; depositAmount = 1500; }
+      else if (hasVenue) { depositType = '場地'; depositAmount = 500; }
+      else if (hasEquip) { depositType = '器材'; depositAmount = 1000; }
+    }
     await sb('POST', 'borrow_records', { body: {
       id, borrower_name: name, email, purpose, items,
       borrow_date: borrowDate, return_date: returnDate,
@@ -462,27 +577,20 @@ if (purpose !== '課程') { // 修改判斷：除了課程都需要
       deposit_status: depositAmount > 0 ? '待繳納' : '不需要',
       note
     }});
-    // 更新器材可借數量
     for (const item of items) {
       const equip = allEquipment.find(e => e.room === item.room && e.name === item.name);
       if (equip) {
-        await sb('PATCH', 'equipment', {
-          filter: 'id=eq.' + equip.id,
-          body: { available: Math.max(0, equip.available - parseInt(item.quantity)) },
-          prefer: 'return=minimal'
-        });
+        await sb('PATCH', 'equipment', { filter: 'id=eq.' + equip.id, body: { available: Math.max(0, equip.available - parseInt(item.quantity)) }, prefer: 'return=minimal' });
         equip.available = Math.max(0, equip.available - parseInt(item.quantity));
       }
     }
     showModal('✅ 申請成功',
       `<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p>
        <p style="margin-top:8px;font-size:13.5px;color:var(--text2)">請等待管理員審核。${depositAmount>0?'<br>保證金：NT$'+depositAmount+'（'+depositType+'），請至辦公室繳納。':''}</p>`,
-      [{label:'確定', class:'btn-primary', onclick:'closeModal()'}]
+      [{label:'確定', cls:'btn-primary', fn:'closeModal()'}]
     );
     resetForm();
-  } catch(e) {
-    showToast('提交失敗：' + e.message, 'error');
-  }
+  } catch(e) { showToast('提交失敗：' + e.message, 'error'); }
   btn.disabled = false; btn.textContent = '📋 提交借用申請';
 }
 
@@ -495,7 +603,7 @@ function resetForm() {
   renderEquipGrid(); renderSelectedList(); setMinDates();
 }
 
-// ── MY RECORDS ────────────────────────────────────────────
+// ── 我的記錄 ──────────────────────────────────────────────
 async function loadMyRecords() {
   const email = document.getElementById('queryEmail').value.trim();
   if (!email) { showToast('請輸入 Email', 'error'); return; }
@@ -504,15 +612,15 @@ async function loadMyRecords() {
   try {
     const rows = await sb('GET', 'borrow_records', { filter: 'email=eq.' + encodeURIComponent(email), order: 'created_at.desc' });
     renderRecordList(mapRecords(rows), list, false);
-  } catch(e) { list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗：' + e.message + '</p></div>'; }
+  } catch(e) { list.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>'; }
 }
 
-// ── EQUIP BROWSE ──────────────────────────────────────────
+// ── 器材瀏覽 ──────────────────────────────────────────────
 let allEquipBrowse = [];
 async function loadEquipBrowse() {
   try {
     const rows = await sb('GET', 'equipment', { order: 'room,name' });
-    allEquipBrowse = rows.map(r => ({ room: r.room, name: r.name, spec: r.spec || '', total: r.total, available: r.available, unit: r.unit || '個' }));
+    allEquipBrowse = rows.map(r => ({ room: r.room, name: r.name, spec: r.spec || '', total: r.total, available: r.available, unit: r.unit || '個', image_url: r.image_url || '' }));
     const roomFilter = document.getElementById('equipRoomFilter');
     [...new Set(rows.map(r => r.room))].forEach(r => {
       const opt = document.createElement('option'); opt.value = r; opt.textContent = r; roomFilter.appendChild(opt);
@@ -533,20 +641,26 @@ function renderEquipBrowse(items) {
   grid.innerHTML = items.map(e => {
     const avail = parseInt(e.available) || 0, total = parseInt(e.total) || 1;
     const pct = Math.round(avail / total * 100);
+    const imgHtml = e.image_url
+      ? `<img class="equip-browse-img" src="${e.image_url}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-browse-img-placeholder" style="display:none">🔬</div>`
+      : `<div class="equip-browse-img-placeholder">🔬</div>`;
     return `<div class="equip-browse-card">
-      <div class="equip-browse-room">${e.room}</div>
-      <div class="equip-browse-name">${e.name}</div>
-      <div class="equip-browse-spec">${e.spec || '─'}</div>
-      <div class="equip-browse-count">
-        <span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span>
-        <div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div>
-        <span style="font-size:12px;color:var(--text2)">/ ${total} ${e.unit}</span>
+      ${imgHtml}
+      <div class="equip-browse-body">
+        <div class="equip-browse-room">${e.room}</div>
+        <div class="equip-browse-name">${e.name}</div>
+        <div class="equip-browse-spec">${e.spec || '─'}</div>
+        <div class="equip-browse-count">
+          <span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span>
+          <div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div>
+          <span style="font-size:12px;color:var(--text2)">/ ${total} ${e.unit}</span>
+        </div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── ADMIN ─────────────────────────────────────────────────
+// ── 管理 ──────────────────────────────────────────────────
 async function loadAdminRecords() {
   try {
     const rows = await sb('GET', 'borrow_records', { order: 'created_at.desc' });
@@ -616,7 +730,6 @@ function renderRecord(r, isAdmin, mode) {
   </div>`;
 }
 
-// ── ADMIN ACTIONS ─────────────────────────────────────────
 function approveRecord(id) {
   showModal('確認核准', `<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`, [
     {label:'取消', cls:'btn-secondary', fn:'closeModal()'},
@@ -690,7 +803,6 @@ async function updateDepositStatus(id, status) {
   } catch(e) { showToast('更新失敗：' + e.message, 'error'); }
 }
 
-// ── UI HELPERS ────────────────────────────────────────────
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
