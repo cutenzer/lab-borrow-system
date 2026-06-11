@@ -17,32 +17,25 @@
   .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;font-size:13.5px;font-family:inherit;font-weight:600;cursor:pointer;transition:all 0.15s;}
   .btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#1f5139;}
   .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{background:var(--border);}
-  .btn-danger{background:var(--danger);color:#fff;}.btn-danger:hover{background:#a93226;}
-  .btn-warn{background:var(--warn);color:#fff;}
+  .btn-danger{background:var(--danger);color:#fff;}.btn-warn{background:var(--warn);color:#fff;}
   .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  /* 分頁 */
   .tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;}
-  .tab{padding:8px 16px;border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;}
+  .tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;}
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .panel{display:none;}.panel.active{display:block;}
-  /* 目的分類 */
   .purpose-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-  .purpose-tab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:var(--text);white-space:nowrap;}
+  .purpose-tab{padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:var(--text);}
   .purpose-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
-  /* 記錄卡片 */
   .record-list{display:flex;flex-direction:column;gap:10px;}
   .record-card{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--surface);}
   .record-card.overdue{border-color:var(--danger);border-width:2px;}
   .record-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
   .record-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
-  .record-person{font-size:14px;font-weight:700;margin-top:2px;}
-  .record-email{font-size:12px;color:var(--text2);}
   .record-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;font-size:12.5px;margin-top:8px;}
   .record-meta-item{display:flex;flex-direction:column;gap:1px;}
   .record-meta-label{font-size:10px;color:var(--text2);font-weight:500;}
   .record-meta-value{font-weight:600;}
-  /* 器材條列 */
   .item-list{margin-top:10px;background:var(--surface2);border-radius:6px;padding:10px 12px;}
   .item-list-title{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;}
   .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;}
@@ -52,25 +45,40 @@
   .item-room{font-size:11px;color:var(--accent);}
   .item-qty{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap;}
   .record-actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
-  /* 損壞賠償 */
   .damage-form{background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:14px;margin-top:10px;}
   .damage-form-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px;}
   .damage-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
-  .damage-row input{flex:1;min-width:100px;padding:6px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;outline:none;}
-  .damage-row input:focus{border-color:var(--danger);}
+  .damage-row input{flex:1;min-width:80px;padding:6px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;outline:none;}
   .damage-summary{background:#fff;border-radius:6px;padding:10px;margin-top:8px;font-size:13px;}
   .damage-line{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--surface2);}
   .damage-line:last-child{border-bottom:none;font-weight:700;font-size:14px;color:var(--danger);}
-  /* Badge */
   .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
   .badge-pending{background:#fef3c7;color:#92400e;}.badge-approved{background:#d1fae5;color:#065f46;}
   .badge-rejected{background:#fee2e2;color:#991b1b;}.badge-returned{background:#e0e7ff;color:#3730a3;}
   .badge-overdue{background:#fee2e2;color:#991b1b;}.badge-damaged{background:#fce7f3;color:#9d174d;}
-  /* 統計 */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
-  .stat-num{font-size:28px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;}
-  .stat-label{font-size:12px;color:var(--text2);margin-top:4px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+  .stat-num{font-size:26px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;}
+  .stat-label{font-size:11.5px;color:var(--text2);margin-top:3px;}
+  /* 場地時間表 */
+  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+  .venue-nav-week{font-size:14px;font-weight:700;}
+  .venue-table-wrap{overflow-x:auto;}
+  .venue-table{width:100%;border-collapse:collapse;min-width:700px;font-size:12px;}
+  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;position:sticky;top:0;}
+  .venue-table th:first-child{background:#1f5139;position:sticky;left:0;z-index:2;min-width:60px;}
+  .venue-table td{border:1px solid var(--border);padding:4px;vertical-align:top;min-width:120px;}
+  .venue-table td:first-child{background:var(--surface2);font-weight:600;font-size:11.5px;text-align:center;white-space:nowrap;position:sticky;left:0;z-index:1;}
+  .venue-table tr:nth-child(even) td{background:#fafaf8;}
+  .venue-table tr:nth-child(even) td:first-child{background:#e8e6e0;}
+  .venue-cell{min-height:30px;}
+  .venue-booking{border-radius:4px;padding:3px 6px;margin-bottom:3px;font-size:11px;line-height:1.4;cursor:pointer;}
+  .venue-booking.approved{background:#d1fae5;color:#065f46;border-left:3px solid #065f46;}
+  .venue-booking.pending{background:#fef3c7;color:#92400e;border-left:3px solid #d97706;}
+  .venue-booking.fixed{background:#e0e7ff;color:#3730a3;border-left:3px solid #4f46e5;}
+  .venue-booking.rejected{background:#fee2e2;color:#991b1b;border-left:3px solid #dc2626;text-decoration:line-through;}
+  .venue-add-admin{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:2px;font-size:10.5px;color:var(--text2);cursor:pointer;margin-top:2px;}
+  .venue-add-admin:hover{border-color:var(--accent);color:var(--accent);}
   /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
   .modal-overlay.show{display:flex;}
@@ -90,13 +98,12 @@
   .empty{text-align:center;padding:40px 20px;color:var(--text2);}
   .empty-icon{font-size:36px;margin-bottom:8px;}
   .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:13px;color:#1e40af;margin-bottom:14px;}
-  /* 登入 */
   .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);}
   .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:360px;box-shadow:var(--shadow);text-align:center;}
   .login-input{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px;}
   .login-input:focus{border-color:var(--accent);}
   .login-err{color:var(--danger);font-size:13px;margin-bottom:10px;display:none;}
-  @media(max-width:600px){.tabs{gap:0;}.tab{padding:7px 10px;font-size:12.5px;}}
+  @media(max-width:600px){.tab{padding:7px 10px;font-size:12px;}}
 </style>
 </head>
 <body>
@@ -105,7 +112,7 @@
   <div class="login-card">
     <div style="font-size:40px;margin-bottom:12px">🔐</div>
     <div style="font-size:20px;font-weight:700;margin-bottom:6px">管理員登入</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:24px">請輸入管理密碼進入後台</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px">請輸入管理密碼</div>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
     <div class="login-err" id="pwErr">密碼錯誤，請再試一次</div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="checkPw()">進入管理後台</button>
@@ -115,63 +122,71 @@
 <div id="adminWrap" style="display:none">
 <header>
   <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">🧪</span><h1>實驗室管理後台</h1></div>
-  <div style="display:flex;gap:8px;align-items:center">
+  <div style="display:flex;gap:8px">
     <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button>
     <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
   </div>
 </header>
 <main>
 
-<!-- 統計 -->
 <div class="stats-grid" id="statsGrid"></div>
 
-<!-- 分頁 -->
 <div class="tabs">
   <button class="tab active" onclick="showTab('pending')">⏳ 待審核</button>
   <button class="tab" onclick="showTab('approved')">✅ 已核准</button>
   <button class="tab" onclick="showTab('return')">📬 確認歸還</button>
   <button class="tab" onclick="showTab('deposit')">💰 保證金</button>
+  <button class="tab" onclick="showTab('venue')">🏛️ 場地管理</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
 
 <div id="panel-pending" class="panel active">
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">⏳ 待審核申請</div>
-    <div class="purpose-tabs" id="pendingPurposeTabs"></div>
-    <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
-  </div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">⏳ 待審核申請</div>
+  <div class="purpose-tabs" id="pendingPurposeTabs"></div>
+  <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
 </div>
 <div id="panel-approved" class="panel">
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">✅ 已核准申請</div>
-    <div class="purpose-tabs" id="approvedPurposeTabs"></div>
-    <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
-  </div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">✅ 已核准申請</div>
+  <div class="purpose-tabs" id="approvedPurposeTabs"></div>
+  <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
 <div id="panel-return" class="panel">
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">📬 確認歸還</div>
-    <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
-  </div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">📬 確認歸還</div>
+  <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
 <div id="panel-deposit" class="panel">
+  <div class="card" style="margin-bottom:0"><div class="card-title">💰 保證金管理</div>
+  <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
+</div>
+
+<!-- 場地管理 -->
+<div id="panel-venue" class="panel">
   <div class="card" style="margin-bottom:0">
-    <div class="card-title">💰 保證金管理</div>
-    <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div>
+    <div class="card-title">🏛️ 場地預約管理</div>
+    <div class="info-box">🟦 固定課程（管理員設定）　🟩 已核准　🟨 待審核　點格子可新增固定課程或審核申請</div>
+    <div class="venue-nav">
+      <button class="btn btn-secondary btn-sm" onclick="changeAdminWeek(-1)">← 上週</button>
+      <span class="venue-nav-week" id="adminVenueWeekLabel"></span>
+      <button class="btn btn-secondary btn-sm" onclick="changeAdminWeek(1)">下週 →</button>
+      <button class="btn btn-primary btn-sm" onclick="goAdminThisWeek()">本週</button>
+    </div>
+    <!-- 待審核場地申請 -->
+    <div id="venuePendingList" style="margin-bottom:14px"></div>
+    <div class="venue-table-wrap">
+      <table class="venue-table" id="adminVenueTable"></table>
+    </div>
   </div>
 </div>
+
 <div id="panel-all" class="panel">
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">📊 全部借用記錄</div>
-    <div class="purpose-tabs" id="allPurposeTabs"></div>
-    <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
-  </div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部借用記錄</div>
+  <div class="purpose-tabs" id="allPurposeTabs"></div>
+  <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
 
 </main>
 </div>
 
-<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-title" id="modalTitle"></div>
@@ -184,10 +199,13 @@
 <script>
 const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
-const ADMIN_PW='191313';
+const ADMIN_PW='smgsh-lab-2025'; // ← 修改密碼在這裡
 const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
 const rn=r=>ROOM_NAMES[r]||r;
 const PURPOSES=['全部','課程','自主學習','科展','社團','其他'];
+const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實驗室','地科實驗室'];
+const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
+const DAYS=['一','二','三','四','五','六','日'];
 
 function checkPw(){
   if(document.getElementById('pwInput').value===ADMIN_PW){
@@ -213,71 +231,61 @@ async function sb(method,table,opts={}){
 }
 
 let allRecords=[],allEquipment=[],currentPurposeFilter={pending:'全部',approved:'全部',all:'全部'};
+let adminWeekOffset=0,adminVenueBookings=[];
 
 async function loadAll(){
   try{
-    const[rows,equip]=await Promise.all([sb('GET','borrow_records',{order:'created_at.desc'}),sb('GET','equipment',{order:'room,name'})]);
+    const[rows,equip,venueRows]=await Promise.all([
+      sb('GET','borrow_records',{order:'created_at.desc'}),
+      sb('GET','equipment',{order:'room,name'}),
+      sb('GET','venue_bookings',{order:'booking_date,period'})
+    ]);
     allEquipment=equip;
     allRecords=mapRecords(rows);
+    adminVenueBookings=venueRows;
     renderStats();
-    renderWithFilter('pending');
-    renderWithFilter('approved');
+    renderWithFilter('pending');renderWithFilter('approved');renderWithFilter('all');
     renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
     renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
-    renderWithFilter('all');
-    renderPurposeTabs('pending');
-    renderPurposeTabs('approved');
-    renderPurposeTabs('all');
+    renderPurposeTabs('pending');renderPurposeTabs('approved');renderPurposeTabs('all');
+    loadAdminVenue();
   }catch(e){showToast('載入失敗：'+e.message,'error');}
 }
 
 function renderStats(){
-  const pending=allRecords.filter(r=>r.status==='待審核').length;
-  const approved=allRecords.filter(r=>r.status==='已核准').length;
-  const overdue=allRecords.filter(r=>r.status==='逾期').length;
-  const depositPending=allRecords.filter(r=>r.depositStatus==='待繳納').length;
-  const depositReturn=allRecords.filter(r=>r.depositStatus==='待退還').length;
-  document.getElementById('statsGrid').innerHTML=[
-    {num:pending,label:'待審核',color:'#92400e'},
-    {num:approved,label:'借用中',color:'#065f46'},
-    {num:overdue,label:'逾期未還',color:'var(--danger)'},
-    {num:depositPending,label:'待收保證金',color:'#92400e'},
-    {num:depositReturn,label:'待退保證金',color:'#1e40af'},
-  ].map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
+  const stats=[
+    {num:allRecords.filter(r=>r.status==='待審核').length,label:'待審核',color:'#92400e'},
+    {num:allRecords.filter(r=>r.status==='已核准').length,label:'借用中',color:'#065f46'},
+    {num:allRecords.filter(r=>r.status==='逾期').length,label:'逾期未還',color:'var(--danger)'},
+    {num:adminVenueBookings.filter(b=>b.status==='待審核').length,label:'場地待審',color:'#1e40af'},
+    {num:allRecords.filter(r=>r.depositStatus==='待繳納').length,label:'待收保證金',color:'#92400e'},
+    {num:allRecords.filter(r=>r.depositStatus==='待退還').length,label:'待退保證金',color:'#1e40af'},
+  ];
+  document.getElementById('statsGrid').innerHTML=stats.map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
 }
 
 function renderPurposeTabs(panel){
-  const el=document.getElementById(panel+'PurposeTabs');
-  if(!el)return;
-  el.innerHTML=PURPOSES.map(p=>
-    `<button class="purpose-tab ${currentPurposeFilter[panel]===p?'active':''}" onclick="setPurposeFilter('${panel}','${p}')">${p}</button>`
-  ).join('');
+  const el=document.getElementById(panel+'PurposeTabs');if(!el)return;
+  el.innerHTML=PURPOSES.map(p=>`<button class="purpose-tab ${currentPurposeFilter[panel]===p?'active':''}" onclick="setPurposeFilter('${panel}','${p}')">${p}</button>`).join('');
 }
-
-function setPurposeFilter(panel,purpose){
-  currentPurposeFilter[panel]=purpose;
-  renderPurposeTabs(panel);
-  renderWithFilter(panel);
-}
+function setPurposeFilter(panel,purpose){currentPurposeFilter[panel]=purpose;renderPurposeTabs(panel);renderWithFilter(panel);}
 
 function renderWithFilter(panel){
   let records=allRecords;
   if(panel==='pending')records=allRecords.filter(r=>r.status==='待審核');
   else if(panel==='approved')records=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期');
-  else if(panel==='all')records=allRecords;
   const f=currentPurposeFilter[panel];
   if(f&&f!=='全部')records=records.filter(r=>r.purpose===f);
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
-function mapRecords(rows){
-  return rows.map(r=>({id:r.id,time:r.created_at,name:r.borrower_name,email:r.email,purpose:r.purpose,items:r.items||[],borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund}));
-}
+function mapRecords(rows){return rows.map(r=>({id:r.id,time:r.created_at,name:r.borrower_name,email:r.email,purpose:r.purpose,items:r.items||[],borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund}));}
 
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','all'][i]===tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','all'][i]===tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
+  if(tab==='venue')loadAdminVenue();
 }
 
 function renderList(records,container,mode){
@@ -288,50 +296,26 @@ function renderList(records,container,mode){
 function renderRecord(r,mode){
   const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
   const items=Array.isArray(r.items)?r.items:[];
-  const isOverdue=r.status==='逾期';
-  const today=new Date();
-  const returnDate=r.returnDate?new Date(r.returnDate):null;
+  const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
-
-  // 條列式器材
-  const itemListHtml=items.length?`<div class="item-list">
-    <div class="item-list-title">借用器材清單</div>
-    ${items.map((i,idx)=>`<div class="item-row">
-      <span class="item-num">${idx+1}.</span>
-      <span class="item-name">${i.name}</span>
-      <span class="item-room">${rn(i.room)}</span>
-      <span class="item-qty">× ${i.quantity} ${i.unit||''}</span>
-    </div>`).join('')}
-  </div>`:'';
-
-  // 損壞資訊
-  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ 損壞說明：${r.damageNote}${r.finalRefund!=null?' | 實際退還：NT$'+r.finalRefund:''}</div>`:'';
-
+  const itemListHtml=items.length?`<div class="item-list"><div class="item-list-title">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${i.name}</span><span class="item-room">${rn(i.room)}</span><span class="item-qty">× ${i.quantity} ${i.unit||''}</span></div>`).join('')}</div>`:'';
+  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ 損壞：${r.damageNote}${r.finalRefund!=null?' | 退還：NT$'+r.finalRefund:''}</div>`:'';
   let actions='';
-  if(mode==='pending'&&r.status==='待審核'){
-    actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button>
-             <button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
-  }
-  if(mode==='return'&&(r.status==='已核准'||r.status==='逾期')){
-    actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}',false)">📬 完整歸還</button>
-             <button class="btn btn-danger btn-sm" onclick="openDamageModal('${r.id}')">⚠️ 損壞歸還</button>`;
-  }
+  if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
+  if(mode==='return'&&(r.status==='已核准'||r.status==='逾期'))actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}')">📬 完整歸還</button><button class="btn btn-danger btn-sm" onclick="openDamageModal('${r.id}')">⚠️ 損壞歸還</button>`;
   if(mode==='deposit'&&r.depositAmount>0){
     if(r.depositStatus==='待繳納')actions=`<button class="btn btn-secondary btn-sm" onclick="updateDeposit('${r.id}','已繳納')">💰 標記已繳納</button>`;
-    if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund('${r.id}',${r.depositAmount})">↩️ 確認退還保證金</button>`;
-    if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal('${r.id}',${r.depositAmount})">💸 計算賠償金額</button>`;
+    if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund('${r.id}',${r.depositAmount})">↩️ 確認退還</button>`;
+    if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal('${r.id}',${r.depositAmount})">💸 計算賠償</button>`;
   }
-
-  return `<div class="record-card ${isOverdue?'overdue':''}">
+  return `<div class="record-card ${r.status==='逾期'?'overdue':''}">
     <div class="record-header">
-      <div>
-        <span class="record-id">${r.id}</span>
-        <div class="record-person">${r.name} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${r.purpose}】</span></div>
-        <div class="record-email">${r.email}</div>
-      </div>
+      <div><span class="record-id">${r.id}</span>
+        <div style="font-size:14px;font-weight:700;margin-top:2px">${r.name} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${r.purpose}】</span></div>
+        <div style="font-size:12px;color:var(--text2)">${r.email}</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="badge ${sc}">${r.status}</span>
-        ${isOverdue?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
+        ${overdueDays>0?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
       </div>
     </div>
     <div class="record-meta">
@@ -340,28 +324,148 @@ function renderRecord(r,mode){
       ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${r.actualReturn}</span></div>`:''}
       ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount}<br><span style="font-size:11px;color:var(--text2)">${r.depositStatus}</span></span></div>`:''}
     </div>
-    ${itemListHtml}
-    ${damageHtml}
+    ${itemListHtml}${damageHtml}
     ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${r.note}</div>`:''}
     ${actions?`<div class="record-actions">${actions}</div>`:''}
   </div>`;
 }
 
-// ── 審核 ──────────────────────────────────────────────────
-function approveRecord(id){
-  showModal('確認核准',`<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`,[
+// ── 場地管理 ──────────────────────────────────────────────
+function getWeekDates(offset){
+  const now=new Date(),day=now.getDay(),monday=new Date(now);
+  monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);
+  const dates=[];for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}
+  return dates;
+}
+function fmtDate(d){return d.toISOString().split('T')[0];}
+function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
+function changeAdminWeek(delta){adminWeekOffset+=delta;loadAdminVenue();}
+function goAdminThisWeek(){adminWeekOffset=0;loadAdminVenue();}
+
+async function loadAdminVenue(){
+  const dates=getWeekDates(adminWeekOffset);
+  const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
+  document.getElementById('adminVenueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+  try{
+    adminVenueBookings=await sb('GET','venue_bookings',{filter:`booking_date=gte.${startStr}&booking_date=lte.${endStr}`,order:'booking_date,period'});
+    renderAdminVenueTable(dates);
+    renderVenuePending();
+  }catch(e){showToast('載入場地失敗','error');}
+}
+
+function renderVenuePending(){
+  const pending=adminVenueBookings.filter(b=>b.status==='待審核');
+  if(!pending.length){document.getElementById('venuePendingList').innerHTML='';return;}
+  document.getElementById('venuePendingList').innerHTML=`<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">⏳ 待審核場地申請（${pending.length}件）</div>`+
+    pending.map(b=>`<div style="background:#fef3c7;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;font-size:13px">
+      <div><strong>${b.borrower_name}</strong> 申請 <strong>${b.venue}</strong> ${b.booking_date} ${b.period} 【${b.purpose}】${b.note?` — ${b.note}`:''}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary btn-sm" onclick="approveVenue('${b.id}')">✅ 核准</button>
+        <button class="btn btn-danger btn-sm" onclick="rejectVenue('${b.id}')">❌ 拒絕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderAdminVenueTable(dates){
+  const table=document.getElementById('adminVenueTable');
+  let html=`<thead><tr><th>時段</th>${dates.map((d,i)=>`<th>週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span></th>`).join('')}</tr></thead><tbody>`;
+  PERIODS.forEach(period=>{
+    html+=`<tr><td>${period}</td>`;
+    dates.forEach(date=>{
+      const dateStr=fmtDate(date);
+      const cellBookings=adminVenueBookings.filter(b=>b.booking_date===dateStr&&b.period===period);
+      html+=`<td><div class="venue-cell">`;
+      VENUES.forEach(venue=>{
+        const vb=cellBookings.filter(b=>b.venue===venue);
+        if(vb.length>0){
+          vb.forEach(b=>{
+            const cls=b.is_fixed?'fixed':b.status==='已核准'?'approved':b.status==='已拒絕'?'rejected':'pending';
+            html+=`<div class="venue-booking ${cls}" onclick="clickVenueBooking('${b.id}')" title="${b.borrower_name} (${b.status})">
+              ${venue.replace('實驗室','')}<br>${b.is_fixed?'📌 ':''}<strong>${b.borrower_name}</strong>
+            </div>`;
+          });
+        }
+      });
+      html+=`<button class="venue-add-admin" onclick="openAdminVenueModal('${dateStr}','${period}')">＋ 新增</button>`;
+      html+=`</div></td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody>`;
+  table.innerHTML=html;
+}
+
+function openAdminVenueModal(date,period){
+  showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
+    <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="avf-email" placeholder="（選填）"></div>
+    <div class="form-group"><label>借用目的 *</label>
+      <select id="avf-purpose">
+        <option value="課程">課程</option><option value="自主學習">自主學習</option>
+        <option value="科展">科展</option><option value="社團">社團</option><option value="其他">其他</option>
+      </select>
+    </div>
+    <div class="form-group"><label>實驗室 *</label>
+      <select id="avf-venue">${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
+    </div>
+    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px">
+      <input type="checkbox" id="avf-fixed" style="width:auto">
+      <label for="avf-fixed" style="color:var(--text);font-size:13px">📌 固定課程（整學期）</label>
+    </div>
+    <div id="semesterWrap" style="display:none" class="form-group"><label>學期</label>
+      <input type="text" id="avf-semester" placeholder="例如：113-2"></div>
+    <div class="form-group"><label>備註</label><textarea id="avf-note" rows="2"></textarea></div>
+  `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認核准',cls:'btn-primary',fn:`doStatus('${id}','已核准')`}
+    {label:'確認新增',cls:'btn-primary',fn:`adminAddVenue('${date}','${period}')`}
+  ]);
+  document.getElementById('avf-fixed').addEventListener('change',function(){
+    document.getElementById('semesterWrap').style.display=this.checked?'flex':'none';
+  });
+}
+
+async function adminAddVenue(date,period){
+  const name=document.getElementById('avf-name').value.trim();
+  const email=document.getElementById('avf-email').value.trim();
+  const purpose=document.getElementById('avf-purpose').value;
+  const venue=document.getElementById('avf-venue').value;
+  const isFixed=document.getElementById('avf-fixed').checked;
+  const semester=document.getElementById('avf-semester')?.value.trim()||'';
+  const note=document.getElementById('avf-note').value.trim();
+  if(!name){showToast('請填寫姓名','error');return;}
+  closeModal();
+  try{
+    const id='VEN-ADM-'+Date.now();
+    await sb('POST','venue_bookings',{body:{id,borrower_name:name,email:email||'admin@school.edu.tw',purpose,venue,booking_date:date,period,status:'已核准',note,is_fixed:isFixed,semester}});
+    showToast('已新增場地預約','success');loadAdminVenue();
+  }catch(e){showToast('新增失敗：'+e.message,'error');}
+}
+
+function clickVenueBooking(id){
+  const b=adminVenueBookings.find(x=>x.id===id);if(!b)return;
+  showModal(`場地預約 — ${b.venue} ${b.booking_date} ${b.period}`,`
+    <div style="font-size:14px;margin-bottom:10px"><strong>${b.borrower_name}</strong> (${b.purpose})</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">${b.email}</div>
+    ${b.note?`<div style="font-size:13px;margin-bottom:10px">📝 ${b.note}</div>`:''}
+    <div style="font-size:13px">狀態：<strong>${b.status}</strong></div>
+  `,[
+    {label:'關閉',cls:'btn-secondary',fn:'closeModal()'},
+    ...(b.status==='待審核'?[
+      {label:'✅ 核准',cls:'btn-primary',fn:`approveVenue('${id}')`},
+      {label:'❌ 拒絕',cls:'btn-danger',fn:`rejectVenue('${id}')`}
+    ]:[]),
+    {label:'🗑️ 刪除',cls:'btn-danger',fn:`deleteVenue('${id}')`}
   ]);
 }
-function rejectRecord(id){
-  showModal('確認拒絕',`<p>確定拒絕申請單 <strong>${id}</strong> 嗎？</p>
-    <div class="form-group" style="margin-top:10px"><label>拒絕原因（選填）</label>
-    <textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認拒絕',cls:'btn-danger',fn:`doStatus('${id}','已拒絕',document.getElementById('rejectNote').value)`}
-  ]);
-}
+
+async function approveVenue(id){closeModal();try{await sb('PATCH','venue_bookings',{filter:'id=eq.'+id,body:{status:'已核准'},prefer:'return=minimal'});showToast('已核准','success');loadAdminVenue();}catch(e){showToast('失敗','error');}}
+async function rejectVenue(id){closeModal();try{await sb('PATCH','venue_bookings',{filter:'id=eq.'+id,body:{status:'已拒絕'},prefer:'return=minimal'});showToast('已拒絕','success');loadAdminVenue();}catch(e){showToast('失敗','error');}}
+async function deleteVenue(id){closeModal();try{await sb('DELETE','venue_bookings',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadAdminVenue();}catch(e){showToast('失敗','error');}}
+
+// ── 器材審核 ──────────────────────────────────────────────
+function approveRecord(id){showModal('確認核准',`<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doStatus('${id}','已核准')`}]);}
+function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${id}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因</label><textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doStatus('${id}','已拒絕',document.getElementById('rejectNote').value)`}]);}
+
 async function doStatus(id,status,note){
   closeModal();
   try{
@@ -378,54 +482,35 @@ async function doStatus(id,status,note){
   }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
 
-// ── 歸還 ──────────────────────────────────────────────────
-function confirmReturn(id,damaged){
-  showModal('確認完整歸還',`<p>確認 <strong>${id}</strong> 器材完整歸還？</p>`,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'')`}
-  ]);
-}
+function confirmReturn(id){showModal('確認完整歸還',`<p>確認 <strong>${id}</strong> 器材完整歸還？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'')`}]);}
 
 function openDamageModal(id){
   const record=allRecords.find(r=>r.id===id);
   const items=record?.items||[];
-  showModal('⚠️ 損壞歸還 - 填寫損壞說明',`
-    <div class="info-box">填寫損壞的器材及賠償金額，系統將自動計算最終退還保證金。</div>
-    <div class="form-group"><label>損壞說明 *</label>
-    <textarea id="damageNoteInput" rows="3" placeholder="例如：100mL燒杯2個破裂，每個NT$50"></textarea></div>
+  showModal('⚠️ 損壞歸還',`
+    <div class="form-group"><label>損壞說明 *</label><textarea id="damageNoteInput" rows="2" placeholder="例如：燒杯2個破裂"></textarea></div>
     <div class="damage-form">
       <div class="damage-form-title">💸 賠償計算</div>
-      ${items.map((item,i)=>`
-        <div class="damage-row">
-          <span style="font-size:13px;min-width:120px">${item.name} × ${item.quantity}</span>
-          <input type="number" id="dmg_qty_${i}" placeholder="損壞數量" min="0" max="${item.quantity}" oninput="calcDamage('${id}')">
-          <span style="font-size:13px">件 × NT$</span>
-          <input type="number" id="dmg_price_${i}" placeholder="每件單價" min="0" oninput="calcDamage('${id}')">
-        </div>`).join('')}
-      <div class="damage-summary" id="damageSummary">
+      ${items.map((item,i)=>`<div class="damage-row">
+        <span style="font-size:12.5px;min-width:100px">${item.name} × ${item.quantity}</span>
+        <input type="number" id="dmg_qty_${i}" placeholder="損壞數" min="0" max="${item.quantity}" oninput="calcDamage('${id}')">
+        <span style="font-size:12px">件 × NT$</span>
+        <input type="number" id="dmg_price_${i}" placeholder="單價" min="0" oninput="calcDamage('${id}')">
+      </div>`).join('')}
+      <div class="damage-summary">
         <div class="damage-line"><span>保證金</span><span>NT$${record?.depositAmount||0}</span></div>
         <div class="damage-line"><span>賠償金額</span><span id="dmgTotal">NT$0</span></div>
         <div class="damage-line"><span>實際退還</span><span id="dmgRefund">NT$${record?.depositAmount||0}</span></div>
       </div>
     </div>
-  `,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認損壞歸還',cls:'btn-danger',fn:`doReturn('${id}',true,document.getElementById('damageNoteInput').value,${record?.depositAmount||0})`}
-  ]);
-  window._dmgItems=items;
-  window._dmgDeposit=record?.depositAmount||0;
+  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認損壞歸還',cls:'btn-danger',fn:`doReturn('${id}',true,document.getElementById('damageNoteInput').value,${record?.depositAmount||0})`}]);
+  window._dmgItems=items;window._dmgDeposit=record?.depositAmount||0;
 }
 
-function calcDamage(id){
-  const items=window._dmgItems||[];
-  let total=0;
-  items.forEach((item,i)=>{
-    const qty=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0;
-    const price=parseInt(document.getElementById('dmg_price_'+i)?.value)||0;
-    total+=qty*price;
-  });
-  const deposit=window._dmgDeposit||0;
-  const refund=Math.max(0,deposit-total);
+function calcDamage(){
+  const items=window._dmgItems||[];let total=0;
+  items.forEach((item,i)=>{const q=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0;const p=parseInt(document.getElementById('dmg_price_'+i)?.value)||0;total+=q*p;});
+  const deposit=window._dmgDeposit||0,refund=Math.max(0,deposit-total);
   if(document.getElementById('dmgTotal'))document.getElementById('dmgTotal').textContent='NT$'+total;
   if(document.getElementById('dmgRefund'))document.getElementById('dmgRefund').textContent='NT$'+refund;
 }
@@ -434,15 +519,8 @@ async function doReturn(id,damaged,damageNote,depositAmount){
   closeModal();
   try{
     const today=new Date().toISOString().split('T')[0];
-    const items=window._dmgItems||[];
-    let total=0;
-    if(damaged){
-      items.forEach((item,i)=>{
-        const qty=parseInt(document.getElementById?.('dmg_qty_'+i)?.value)||0;
-        const price=parseInt(document.getElementById?.('dmg_price_'+i)?.value)||0;
-        total+=qty*price;
-      });
-    }
+    const items=window._dmgItems||[];let total=0;
+    if(damaged)items.forEach((item,i)=>{const q=parseInt(document.getElementById?.('dmg_qty_'+i)?.value)||0;const p=parseInt(document.getElementById?.('dmg_price_'+i)?.value)||0;total+=q*p;});
     const finalRefund=damaged?Math.max(0,(depositAmount||0)-total):depositAmount;
     const body={status:damaged?'已歸還-損壞':'已歸還',actual_return:today,deposit_status:damaged?'損壞-照價賠償':'待退還'};
     if(damaged){body.damage_note=damageNote;body.final_refund=finalRefund;}
@@ -454,69 +532,29 @@ async function doReturn(id,damaged,damageNote,depositAmount){
         if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});
       }
     }
-    showToast(damaged?`損壞歸還確認，應退還 NT$${finalRefund}`:'歸還確認成功','success');
-    loadAll();
+    showToast(damaged?`損壞歸還，應退還 NT$${finalRefund}`:'歸還確認成功','success');loadAll();
   }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
 
-// ── 保證金 ────────────────────────────────────────────────
-async function updateDeposit(id,status){
-  try{
-    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:status},prefer:'return=minimal'});
-    showToast('保證金狀態已更新','success');loadAll();
-  }catch(e){showToast('更新失敗：'+e.message,'error');}
-}
-
-function confirmRefund(id,amount){
-  showModal('確認退還保證金',`<p>確認退還 NT$<strong>${amount}</strong> 保證金給借用人？</p>`,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認已退還',cls:'btn-primary',fn:`updateDeposit('${id}','已退還')`}
-  ]);
-}
+async function updateDeposit(id,status){try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:status},prefer:'return=minimal'});showToast('保證金狀態已更新','success');loadAll();}catch(e){showToast('更新失敗','error');}}
+function confirmRefund(id,amount){showModal('確認退還保證金',`<p>確認退還 NT$<strong>${amount}</strong> 給借用人？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認已退還',cls:'btn-primary',fn:`updateDeposit('${id}','已退還')`}]);}
 
 function openDamageSettleModal(id,depositAmount){
   const record=allRecords.find(r=>r.id===id);
   showModal('💸 損壞賠償結算',`
-    <div class="info-box">${record?.damageNote||'請填寫損壞說明'}</div>
-    <div class="form-group"><label>損壞說明</label>
-    <textarea id="settleNote" rows="2">${record?.damageNote||''}</textarea></div>
-    <div class="form-group"><label>賠償金額 (NT$)</label>
-    <input type="number" id="settleCompensation" placeholder="0" oninput="calcSettle(${depositAmount})"></div>
+    <div class="form-group"><label>損壞說明</label><textarea id="settleNote" rows="2">${record?.damageNote||''}</textarea></div>
+    <div class="form-group"><label>賠償金額 (NT$)</label><input type="number" id="settleComp" placeholder="0" oninput="calcSettle(${depositAmount})"></div>
     <div class="damage-summary">
       <div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div>
-      <div class="damage-line"><span>賠償金額</span><span id="settleComp">NT$0</span></div>
+      <div class="damage-line"><span>賠償金額</span><span id="settleCompDisplay">NT$0</span></div>
       <div class="damage-line"><span>實際退還</span><span id="settleRefund">NT$${depositAmount}</span></div>
     </div>
-  `,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認結算',cls:'btn-warn',fn:`doSettle('${id}',${depositAmount})`}
-  ]);
+  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認結算',cls:'btn-warn',fn:`doSettle('${id}',${depositAmount})`}]);
 }
+function calcSettle(deposit){const comp=parseInt(document.getElementById('settleComp')?.value)||0,refund=Math.max(0,deposit-comp);if(document.getElementById('settleCompDisplay'))document.getElementById('settleCompDisplay').textContent='NT$'+comp;if(document.getElementById('settleRefund'))document.getElementById('settleRefund').textContent='NT$'+refund;}
+async function doSettle(id,depositAmount){const comp=parseInt(document.getElementById('settleComp')?.value)||0,note=document.getElementById('settleNote')?.value||'',refund=Math.max(0,depositAmount-comp);closeModal();try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'損壞結算完成',damage_note:note,final_refund:refund},prefer:'return=minimal'});showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();}catch(e){showToast('更新失敗','error');}}
 
-function calcSettle(deposit){
-  const comp=parseInt(document.getElementById('settleCompensation')?.value)||0;
-  const refund=Math.max(0,deposit-comp);
-  if(document.getElementById('settleComp'))document.getElementById('settleComp').textContent='NT$'+comp;
-  if(document.getElementById('settleRefund'))document.getElementById('settleRefund').textContent='NT$'+refund;
-}
-
-async function doSettle(id,depositAmount){
-  const comp=parseInt(document.getElementById('settleCompensation')?.value)||0;
-  const note=document.getElementById('settleNote')?.value||'';
-  const refund=Math.max(0,depositAmount-comp);
-  closeModal();
-  try{
-    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'損壞結算完成',damage_note:note,final_refund:refund},prefer:'return=minimal'});
-    showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();
-  }catch(e){showToast('更新失敗：'+e.message,'error');}
-}
-
-function showModal(title,body,actions){
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalBody').innerHTML=body;
-  document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
-  document.getElementById('modalOverlay').classList.add('show');
-}
+function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
