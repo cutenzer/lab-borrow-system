@@ -451,7 +451,8 @@ function getNextDates(days){
   const today=new Date();
   for(let i=0;i<days;i++){
     const d=new Date(today);d.setDate(today.getDate()+i);
-    const val=d.toISOString().split('T')[0];
+    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day2=String(d.getDate()).padStart(2,'0');
+    const val=`${y}-${m}-${day2}`;
     const dayIdx=(d.getDay()+6)%7;
     result.push({val,label:`${val} (週${DAYS[dayIdx]})`});
   }
@@ -501,7 +502,7 @@ function getWeekDates(offset){
   const dates=[];for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}
   return dates;
 }
-function fmtDate(d){return d.toISOString().split('T')[0];}
+function fmtDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeWeek(delta){venueWeekOffset+=delta;loadVenue();}
 function goThisWeek(){venueWeekOffset=0;loadVenue();}
