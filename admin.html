@@ -80,11 +80,11 @@
   .venue-table th:first-child{left:0;z-index:5;background:#1f5139;min-width:44px;}
   .venue-table th:nth-child(2){left:44px;z-index:5;background:#1f5139;min-width:42px;}
   .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;background:var(--surface);}
-  .venue-table tr.band-shade td{background:#eceae3;}
-  .venue-table .period-cell{font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;background:#ddd9ce;}
-  .venue-table tr.band-shade .period-cell{background:#cfcbbe;}
-  .venue-table .lab-cell{font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;background:var(--surface2);}
-  .venue-table tr.band-shade .lab-cell{background:#e2e0d8;}
+  .venue-table tr.band-shade td{background:#f6f4ee;}
+  .venue-table .period-cell{font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;background:#e9e6dc;}
+  .venue-table tr.band-shade .period-cell{background:#e0dccf;}
+  .venue-table .lab-cell{font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;background:#f2f0e9;}
+  .venue-table tr.band-shade .lab-cell{background:#eae7dd;}
   .venue-table .lab-生物{color:#15803d;}.venue-table .lab-化學{color:#b45309;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#1d4ed8;}.venue-table .lab-地科{color:#0e7490;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;cursor:pointer;text-align:center;}
@@ -597,6 +597,12 @@ async function doDeleteSemester(id){
   catch(e){showToast('刪除失敗','error');}
 }
 
+function venueLabel(b){
+  const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團'}[b.purpose]||b.purpose||'';
+  const who=(b.role==='學生'&&b.student_id)?b.student_id:b.borrower_name;
+  return `${purposeShort}-${who}`;
+}
+
 function renderAdminVenueTable(dates,expanded){
   const table=document.getElementById('adminVenueTable');
   const LABS=['生物','化學','理化','物理','地科'];
@@ -615,7 +621,7 @@ function renderAdminVenueTable(dates,expanded){
         html+=`<td class="vcell">`;
         cellBookings.forEach(b=>{
           const cls=b.is_fixed?'fixed':b.periodStatus==='已核准'?'approved':b.periodStatus==='已拒絕'?'rejected':'pending';
-          html+=`<div class="venue-booking ${cls}" onclick="clickAdminBooking('${b.id}','${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}<strong>${b.borrower_name}</strong>${b.purpose==='自主學習'?'<br><span style="font-size:9px">自主</span>':b.purpose==='科展'?'<br><span style="font-size:9px">科展</span>':''}</div>`;
+          html+=`<div class="venue-booking ${cls}" onclick="clickAdminBooking('${b.id}','${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${venueFull}')">＋</button>`;
         html+=`</td>`;
@@ -676,7 +682,7 @@ async function deletePeriod(bookingId,date,period,venue){
 function openAdminAddVenue(date,period,presetVenue){
   showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
     <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師"></div>
-    <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="其他">其他</option></select></div>
+    <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
     <div class="form-group"><label>實驗室 *</label><select id="avf-venue">${VENUES.map(v=>`<option value="${v}" ${v===presetVenue?'selected':''}>${v}</option>`).join('')}</select></div>
     <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto"><label for="avf-fixed" style="color:var(--text)">📌 固定課程（整學期）</label></div>
     <div id="semesterWrap" style="display:none" class="form-group"><label>學期</label><input type="text" id="avf-semester" placeholder="例如：113-2"></div>
