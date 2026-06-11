@@ -699,28 +699,19 @@ async function handleAiScan(input){
   reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';};
   reader.readAsDataURL(file);
   const resultsDiv=document.getElementById('aiResults');
-  resultsDiv.innerHTML='<div class="loading"><div class="spinner"></div>AI 辨識中…</div>';
-  const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
-  try{
-    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
-        {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
-        {type:'text',text:'這是一張實驗室器材的照片。請辨識圖中的器材名稱，以JSON格式回應：{"items":[{"name":"器材名稱","quantity":1}]}。只回傳JSON，不要其他文字。器材名稱請用繁體中文。'}
-      ]}]})
-    });
-    const data=await response.json();
-    const text=data.content[0].text;
-    let parsed;try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch{parsed={items:[]};}
-    if(!parsed.items||!parsed.items.length){resultsDiv.innerHTML='<div class="search-empty">無法辨識，請手動搜尋</div>';return;}
-    const matched=[];
-    for(const item of parsed.items){const found=allEquipment.filter(e=>e.name.includes(item.name)||item.name.includes(e.name.replace(/[0-9mLmg]/g,'').trim()));if(found.length>0)matched.push({...found[0],suggestedQty:item.quantity||1});}
-    if(!matched.length){resultsDiv.innerHTML='<div class="search-empty">辨識到器材但資料庫找不到，請手動搜尋</div>';return;}
-    resultsDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;">📷 AI 辨識結果：</div>'+
-      matched.map(e=>{const avail=parseInt(e.available)||0;return `<div class="ai-result-item">
-        <div><span style="font-weight:700">${e.name}</span><span style="font-size:11px;color:var(--accent);margin-left:6px">${rn(e.room)}</span></div>
-        <div style="display:flex;align-items:center;gap:8px"><span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+e.unit:'無庫存'}</span>
-        ${avail>0?`<button class="btn btn-primary btn-sm" onclick="addFromAI('${e.room}','${e.name.replace(/'/g,"\\'")}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},${e.suggestedQty})">加入</button>`:''}</div>
-      </div>`;}).join('');
+  resultsDiv.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--text2);margin:8px 0">📷 請從下方選擇圖片中的器材：</div>';
+
+  // 直接列出所有可借器材供手動勾選
+  const avail=allEquipment.filter(e=>parseInt(e.available)>0);
+  if(!avail.length){resultsDiv.innerHTML='<div class="search-empty">目前無可借器材</div>';return;}
+  resultsDiv.innerHTML+=avail.map(e=>{
+    const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
+    return `<div class="ai-result-item">
+      <div><span style="font-weight:700">${e.name}</span><span style="font-size:11px;color:var(--accent);margin-left:6px">${rn(e.room)}</span>${e.spec?`<span style="font-size:11px;color:var(--text2);margin-left:4px">${e.spec}</span>`:''}</div>
+      <button class="btn btn-primary btn-sm" onclick="addFromAI('${e.room}','${safeN}','${safeS}','${e.unit}',${parseInt(e.available)},1)">加入</button>
+    </div>`;
+  }).join('');
+}
   }catch(err){resultsDiv.innerHTML='<div class="search-empty">辨識失敗</div>';}
 }
 function addFromAI(room,name,spec,unit,avail,qty){const key=room+'__'+name;selectedItems[key]={room,name,spec,unit,quantity:Math.min(qty,avail)};renderEquipList();updateCartBadge();calcDeposit();showToast(name+' 已加入','success');}
