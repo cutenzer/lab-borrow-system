@@ -90,8 +90,11 @@
   .qty-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
   .qty-input{width:36px;text-align:center;padding:2px 4px;border:1px solid var(--border);border-radius:5px;font-size:12.5px;}
   /* 購物車 */
-  .cart-fab{position:fixed;bottom:24px;right:20px;z-index:150;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:11px 18px;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(42,107,79,0.4);display:none;align-items:center;gap:8px;transition:all 0.2s;}
-  .cart-fab.show{display:flex;}
+  .cart-fab{position:fixed;bottom:24px;right:20px;z-index:150;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:11px 18px;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(42,107,79,0.4);display:flex;align-items:center;gap:8px;transition:all 0.2s;}
+  .cart-fab:hover{background:#1f5139;transform:translateY(-2px);}
+  .search-fab{position:fixed;bottom:24px;left:20px;z-index:150;background:var(--accent2);color:#3a2e00;border:none;border-radius:50px;padding:11px 18px;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(212,168,67,0.45);display:flex;align-items:center;gap:6px;transition:all 0.2s;}
+  .search-fab:hover{filter:brightness(1.05);transform:translateY(-2px);}
+  .search-drawer .cart-drawer-body{padding-top:6px;}
   .cart-badge{background:#fff;color:var(--accent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
   .cart-drawer{position:fixed;bottom:0;left:0;right:0;z-index:160;background:var(--surface);border-top:2px solid var(--accent);border-radius:16px 16px 0 0;max-height:80vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s ease;box-shadow:0 -8px 32px rgba(0,0,0,0.15);}
   .cart-drawer.open{transform:none;}
@@ -125,12 +128,12 @@
   .venue-table th:nth-child(2){left:44px;z-index:5;background:#1f5139;min-width:42px;}
   .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;background:var(--surface);}
   /* 節次交替底色 */
-  .venue-table tr.band-shade td{background:#eceae3;}
-  .venue-table tr.band-shade .vcell{background:#eceae3;}
-  .venue-table .period-cell{font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;background:#ddd9ce;}
-  .venue-table tr.band-shade .period-cell{background:#cfcbbe;}
-  .venue-table .lab-cell{font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;background:var(--surface2);}
-  .venue-table tr.band-shade .lab-cell{background:#e2e0d8;}
+  .venue-table tr.band-shade td{background:#f6f4ee;}
+  .venue-table tr.band-shade .vcell{background:#f6f4ee;}
+  .venue-table .period-cell{font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;background:#e9e6dc;}
+  .venue-table tr.band-shade .period-cell{background:#e0dccf;}
+  .venue-table .lab-cell{font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;background:#f2f0e9;}
+  .venue-table tr.band-shade .lab-cell{background:#eae7dd;}
   .venue-table .lab-生物{color:#15803d;}.venue-table .lab-化學{color:#b45309;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#1d4ed8;}.venue-table .lab-地科{color:#0e7490;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
   .venue-table .vcell{min-width:90px;}
@@ -236,8 +239,9 @@
         <select id="f-purpose" onchange="onPurposeChange()">
           <option value="">-- 請選擇 --</option>
           <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="社團">社團</option><option value="其他">其他</option>
+          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他（自填）</option>
         </select>
+        <input type="text" id="f-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
         <div class="hint">自主學習、科展需繳保證金</div>
       </div>
       <div class="form-group">
@@ -293,10 +297,11 @@
       <div class="form-group" id="vStudentIdGroup"><label>學號 *</label><input type="text" id="vf-student-id" placeholder="輸入學號"></div>
       <div class="form-group">
         <label>借用目的 *</label>
-        <select id="vf-purpose">
+        <select id="vf-purpose" onchange="onVenuePurposeChange()">
           <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="社團">社團</option><option value="其他">其他</option>
+          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他（自填）</option>
         </select>
+        <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
       </div>
       <div class="form-group full"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
     </div>
@@ -359,7 +364,7 @@
 </div>
 </main>
 
-<!-- 購物車 -->
+<!-- 購物車（右下，常駐） -->
 <button class="cart-fab" id="cartFab" onclick="openCart()">🛒 已選器材 <span class="cart-badge" id="cartBadge">0</span></button>
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
@@ -370,6 +375,21 @@
     <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑️ 清空</button>
     <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeCart();submitRequest()">📋 直接提交申請</button>
   </div>
+</div>
+
+<!-- 搜尋（左下，常駐） -->
+<button class="search-fab" id="searchFab" onclick="openSearch()">🔎 快速搜尋器材</button>
+<div class="cart-overlay" id="searchOverlay" onclick="closeSearch()"></div>
+<div class="cart-drawer search-drawer" id="searchDrawer">
+  <div class="cart-drawer-handle"></div>
+  <div class="cart-drawer-header"><div class="cart-drawer-title">🔎 快速搜尋器材</div><button class="btn btn-secondary btn-sm" onclick="closeSearch()">關閉</button></div>
+  <div style="padding:10px 18px 0">
+    <div class="search-wrap" style="margin-bottom:8px">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" id="fabSearch" placeholder="輸入器材名稱…" oninput="doFabSearch(this.value)" autocomplete="off">
+    </div>
+  </div>
+  <div class="cart-drawer-body" id="fabSearchResults"><div style="text-align:center;color:var(--text2);padding:20px;font-size:13px">輸入關鍵字搜尋器材</div></div>
 </div>
 
 <!-- 燈箱 -->
@@ -496,7 +516,8 @@ function getNextDates(days){
 async function submitVenueRequest(){
   const name=document.getElementById('vf-name').value.trim();
   const studentId=currentVenueRole==='學生'?document.getElementById('vf-student-id').value.trim():'';
-  const purpose=document.getElementById('vf-purpose').value;
+  let purpose=document.getElementById('vf-purpose').value;
+  if(purpose==='其他'){const other=document.getElementById('vf-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
   const note=document.getElementById('vf-note').value.trim();
   if(!name){showToast('請填寫姓名','error');return;}
   if(currentVenueRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
@@ -633,6 +654,13 @@ async function loadVenue(){
   }catch(e){showToast('載入場地資料失敗','error');}
 }
 
+// 場地格子顯示文字：目的-老師名 或 目的-學號（學生保護個資）
+function venueLabel(b){
+  const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團'}[b.purpose]||b.purpose||'';
+  const who=(b.role==='學生'&&b.student_id)?b.student_id:b.borrower_name;
+  return `${purposeShort}-${who}`;
+}
+
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
   const LABS=['生物','化學','理化','物理','地科'];
@@ -651,7 +679,7 @@ function renderVenueTable(dates){
         html+=`<td class="vcell">`;
         cellBookings.forEach(b=>{
           const cls=b.is_fixed?'fixed':b.periodStatus==='已核准'?'approved':b.periodStatus==='已拒絕'?'rejected':'pending';
-          html+=`<div class="venue-booking ${cls}">${b.is_fixed?'📌':''}<strong>${b.borrower_name}</strong>${b.purpose==='自主學習'?'<br><span style="font-size:9px">自主</span>':b.purpose==='科展'?'<br><span style="font-size:9px">科展</span>':''}</div>`;
+          html+=`<div class="venue-booking ${cls}">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         html+=`</td>`;
       });
@@ -740,7 +768,37 @@ function clearCart(){selectedItems={};updateCartBadge();renderEquipList();render
 function updateCartBadge(){
   const total=Object.values(selectedItems).reduce((s,i)=>s+i.quantity,0);
   document.getElementById('cartBadge').textContent=total;
-  document.getElementById('cartFab').classList.toggle('show',total>0);
+}
+// 左下角搜尋抽屜
+function openSearch(){document.getElementById('searchDrawer').classList.add('open');document.getElementById('searchOverlay').classList.add('show');document.getElementById('fabSearch').focus();}
+function closeSearch(){document.getElementById('searchDrawer').classList.remove('open');document.getElementById('searchOverlay').classList.remove('show');}
+let fabSearchTimer=null;
+function doFabSearch(q){
+  const box=document.getElementById('fabSearchResults');
+  clearTimeout(fabSearchTimer);
+  if(!q.trim()){box.innerHTML='<div style="text-align:center;color:var(--text2);padding:20px;font-size:13px">輸入關鍵字搜尋器材</div>';return;}
+  fabSearchTimer=setTimeout(()=>{
+    const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q));
+    if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+q+'」相關器材</div>';return;}
+    box.innerHTML=filtered.map(e=>{
+      const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
+      const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
+      const imgHtml=e.image_url?`<img class="sr-thumb" src="${e.image_url}" loading="lazy" onclick="openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
+      const borrowerInfo=getBorrowerInfo(e.name,e.room);
+      return `<div class="search-result-item" style="border-bottom:1px solid var(--surface2)">
+        ${imgHtml}
+        <div style="flex:1;min-width:0"><div class="sr-name">${e.name}</div><div class="sr-room">${rn(e.room)}</div>${e.spec?`<div class="sr-spec">${e.spec}</div>`:''}${borrowerInfo}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+e.unit:'無庫存'}</span>
+          ${avail>0?`<div class="sr-qty">
+            <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},-1);doFabSearch(document.getElementById('fabSearch').value)">−</button>
+            <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},this.value)">
+            <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},1);doFabSearch(document.getElementById('fabSearch').value)">+</button>
+          </div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  },200);
 }
 function renderCart(){
   const body=document.getElementById('cartBody'),items=Object.values(selectedItems);
@@ -798,13 +856,16 @@ function changeQty(room,name,spec,unit,avail,delta){const key=room+'__'+name,cur
 function setQty(room,name,spec,unit,avail,val){const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};renderEquipList();updateCartBadge();calcDeposit();}
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();}
 
-function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();}
+function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();}
+function onVenuePurposeChange(){const p=document.getElementById('vf-purpose').value;document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';}
 function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
 
 async function submitRequest(){
   const name=document.getElementById('f-name').value.trim();
   const studentId=currentRole==='學生'?document.getElementById('f-student-id').value.trim():'';
-  const purpose=document.getElementById('f-purpose').value,borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
+  let purpose=document.getElementById('f-purpose').value;
+  const borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
+  if(purpose==='其他'){const other=document.getElementById('f-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
   const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim(),items=Object.values(selectedItems);
   if(!name){showToast('請填寫姓名','error');return;}
   if(currentRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
