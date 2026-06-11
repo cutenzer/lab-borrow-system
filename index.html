@@ -35,6 +35,10 @@
   .btn-danger{background:var(--danger);color:#fff;}
   .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;}
+  /* 身份選擇 */
+  .role-tabs{display:flex;gap:8px;margin-bottom:12px;}
+  .role-tab{flex:1;padding:10px;border:2px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;transition:all 0.15s;font-size:13.5px;font-weight:600;background:var(--surface2);}
+  .role-tab.active{border-color:var(--accent);background:#f0f9f4;color:var(--accent);}
   /* 保證金 */
   .deposit-banner{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid var(--accent2);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;display:none;}
   .deposit-banner.show{display:block;}
@@ -52,9 +56,8 @@
   .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(42,107,79,0.12);}
   .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;}
   .search-dropdown{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-top:6px;overflow:hidden;box-shadow:var(--shadow);}
-  .search-result-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--surface2);cursor:pointer;transition:background 0.1s;}
+  .search-result-item{display:flex;align-items:center;gap:10px;padding:9px 13px;border-bottom:1px solid var(--surface2);}
   .search-result-item:last-child{border-bottom:none;}
-  .search-result-item:hover{background:var(--surface2);}
   .sr-thumb{width:42px;height:42px;border-radius:5px;object-fit:cover;flex-shrink:0;}
   .sr-thumb-ph{width:42px;height:42px;border-radius:5px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
   .sr-name{font-size:14px;font-weight:700;}
@@ -62,11 +65,11 @@
   .sr-spec{font-size:11px;color:var(--text2);}
   .sr-qty{display:flex;align-items:center;gap:4px;margin-left:8px;}
   .search-empty{padding:18px;text-align:center;color:var(--text2);font-size:13px;}
-  /* 圖片上傳辨識 */
-  .ai-scan-box{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:10px;position:relative;}
+  /* AI 辨識 */
+  .ai-scan-box{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:10px;}
   .ai-scan-box:hover{border-color:var(--accent);background:rgba(42,107,79,0.04);}
   .ai-scan-box input{display:none;}
-  .ai-scan-preview{width:100%;max-height:180px;object-fit:contain;border-radius:8px;margin-top:10px;display:none;}
+  .ai-scan-preview{width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:8px;display:none;}
   .ai-result-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:13px;}
   /* 條列式器材 */
   .equip-list{display:flex;flex-direction:column;}
@@ -74,14 +77,13 @@
   .equip-row:last-child{border-bottom:none;}
   .equip-row:hover{background:#fafaf8;border-radius:6px;}
   .equip-row.unavailable{opacity:0.4;}
-  .equip-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:pointer;transition:transform 0.15s;}
+  .equip-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;flex-shrink:0;cursor:pointer;}
   .equip-thumb:hover{transform:scale(1.08);}
   .equip-thumb-ph{width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
   .equip-row-info{flex:1;min-width:0;}
   .equip-row-name{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .equip-row-sub{font-size:11px;color:var(--text2);margin-top:1px;}
   .equip-row-avail{font-size:11.5px;margin-top:2px;}
-  /* 借用人標示 */
   .borrower-tag{display:inline-flex;align-items:center;gap:3px;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:600;margin-top:2px;}
   .equip-row-qty{display:flex;align-items:center;gap:4px;flex-shrink:0;}
   .qty-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.1s;}
@@ -90,7 +92,6 @@
   /* 購物車 */
   .cart-fab{position:fixed;bottom:24px;right:20px;z-index:150;background:var(--accent);color:#fff;border:none;border-radius:50px;padding:11px 18px;font-size:14px;font-family:inherit;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(42,107,79,0.4);display:none;align-items:center;gap:8px;transition:all 0.2s;}
   .cart-fab.show{display:flex;}
-  .cart-fab:hover{background:#1f5139;transform:translateY(-2px);}
   .cart-badge{background:#fff;color:var(--accent);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
   .cart-drawer{position:fixed;bottom:0;left:0;right:0;z-index:160;background:var(--surface);border-top:2px solid var(--accent);border-radius:16px 16px 0 0;max-height:80vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s ease;box-shadow:0 -8px 32px rgba(0,0,0,0.15);}
   .cart-drawer.open{transform:none;}
@@ -98,7 +99,7 @@
   .cart-drawer-header{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);}
   .cart-drawer-title{font-size:15px;font-weight:700;}
   .cart-drawer-body{overflow-y:auto;padding:10px 18px;flex:1;}
-  .cart-drawer-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+  .cart-drawer-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;}
   .cart-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2);}
   .cart-item:last-child{border-bottom:none;}
   .cart-item-thumb{width:38px;height:38px;border-radius:5px;object-fit:cover;flex-shrink:0;}
@@ -107,15 +108,34 @@
   .cart-item-name{font-size:13px;font-weight:600;}
   .cart-item-sub{font-size:11px;color:var(--text2);}
   .cart-item-qty{display:flex;align-items:center;gap:4px;flex-shrink:0;}
-  .cart-item-remove{color:var(--danger);cursor:pointer;font-size:15px;padding:0 4px;background:none;border:none;flex-shrink:0;}
+  .cart-item-remove{color:var(--danger);cursor:pointer;font-size:15px;padding:0 4px;background:none;border:none;}
   .cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:155;display:none;}
   .cart-overlay.show{display:block;}
+  /* 場地預約 */
+  .period-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .period-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 12px;flex-wrap:wrap;}
+  .period-row select{flex:1;min-width:100px;}
+  .period-row-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
+  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+  .venue-nav-week{font-size:14px;font-weight:700;}
+  .venue-table-wrap{overflow-x:auto;}
+  .venue-table{width:100%;border-collapse:collapse;min-width:600px;font-size:12px;}
+  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;}
+  .venue-table th:first-child{background:#1f5139;position:sticky;left:0;z-index:2;}
+  .venue-table td{border:1px solid var(--border);padding:4px;vertical-align:top;min-width:110px;}
+  .venue-table td:first-child{background:var(--surface2);font-weight:600;font-size:11.5px;text-align:center;white-space:nowrap;position:sticky;left:0;z-index:1;}
+  .venue-booking{border-radius:4px;padding:3px 6px;margin-bottom:2px;font-size:11px;line-height:1.4;}
+  .venue-booking.approved{background:#d1fae5;color:#065f46;border-left:3px solid #065f46;}
+  .venue-booking.pending{background:#fef3c7;color:#92400e;border-left:3px solid #d97706;}
+  .venue-booking.fixed{background:#e0e7ff;color:#3730a3;border-left:3px solid #4f46e5;}
+  .venue-booking.rejected{background:#fee2e2;color:#991b1b;text-decoration:line-through;}
+  .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
+  .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);}
   /* 器材查詢 */
   .browse-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
   .browse-filters input{flex:1;min-width:140px;}
-  .browse-filters select{min-width:110px;}
   .equip-browse-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
-  .equip-browse-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);transition:box-shadow 0.15s;cursor:pointer;}
+  .equip-browse-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);cursor:pointer;}
   .equip-browse-card:hover{box-shadow:var(--shadow);}
   .equip-browse-img{width:100%;height:120px;object-fit:cover;background:var(--surface2);display:block;}
   .equip-browse-img-ph{width:100%;height:120px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:34px;}
@@ -127,26 +147,6 @@
   .count-bar-bg{height:4px;background:var(--border);border-radius:2px;flex:1;}
   .count-bar-fill{height:100%;border-radius:2px;background:var(--accent);}
   .count-num{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;white-space:nowrap;}
-  /* 場地預約時間表 */
-  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
-  .venue-nav-week{font-size:14px;font-weight:700;}
-  .venue-table-wrap{overflow-x:auto;}
-  .venue-table{width:100%;border-collapse:collapse;min-width:600px;font-size:12.5px;}
-  .venue-table th{background:var(--accent);color:#fff;padding:8px 6px;text-align:center;font-weight:600;white-space:nowrap;position:sticky;top:0;}
-  .venue-table th:first-child{background:#1f5139;position:sticky;left:0;z-index:2;}
-  .venue-table td{border:1px solid var(--border);padding:4px;vertical-align:top;min-width:110px;}
-  .venue-table td:first-child{background:var(--surface2);font-weight:600;font-size:12px;text-align:center;white-space:nowrap;position:sticky;left:0;z-index:1;}
-  .venue-table tr:nth-child(even) td{background:#fafaf8;}
-  .venue-table tr:nth-child(even) td:first-child{background:#e8e6e0;}
-  .venue-cell{min-height:32px;}
-  .venue-booking{border-radius:4px;padding:3px 6px;margin-bottom:2px;font-size:11px;line-height:1.4;}
-  .venue-booking.approved{background:#d1fae5;color:#065f46;border-left:3px solid #065f46;}
-  .venue-booking.pending{background:#fef3c7;color:#92400e;border-left:3px solid #d97706;}
-  .venue-booking.fixed{background:#e0e7ff;color:#3730a3;border-left:3px solid #4f46e5;}
-  .venue-booking.rejected{background:#fee2e2;color:#991b1b;border-left:3px solid #dc2626;text-decoration:line-through;}
-  .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;transition:all 0.1s;margin-top:2px;}
-  .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(42,107,79,0.05);}
-  .period-label-break{background:#f0efe9;color:var(--text2);font-style:italic;}
   /* 記錄 */
   .record-list{display:flex;flex-direction:column;gap:10px;}
   .record-card{border:1px solid var(--border);border-radius:8px;padding:12px 14px;background:var(--surface);}
@@ -156,7 +156,6 @@
   .record-meta-item{display:flex;flex-direction:column;gap:1px;}
   .record-meta-label{font-size:10px;color:var(--text2);font-weight:500;}
   .record-meta-value{font-weight:600;}
-  .record-items{margin-top:6px;font-size:12.5px;color:var(--text2);line-height:1.8;}
   .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
   .badge-pending{background:#fef3c7;color:#92400e;}.badge-approved{background:#d1fae5;color:#065f46;}
   .badge-rejected{background:#fee2e2;color:#991b1b;}.badge-returned{background:#e0e7ff;color:#3730a3;}
@@ -165,7 +164,7 @@
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;}
   .lightbox.show{display:flex;}
   .lightbox img{max-width:90vw;max-height:85vh;border-radius:8px;object-fit:contain;}
-  .lightbox-info{position:fixed;bottom:24px;left:0;right:0;text-align:center;color:#fff;font-size:14px;font-weight:600;}
+  .lightbox-info{position:fixed;bottom:24px;left:0;right:0;text-align:center;color:#fff;font-size:14px;}
   .lightbox-close{position:fixed;top:16px;right:20px;color:#fff;font-size:28px;cursor:pointer;background:none;border:none;}
   /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
@@ -175,14 +174,14 @@
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
   .toast{position:fixed;bottom:80px;right:20px;background:var(--text);color:#fff;padding:10px 16px;border-radius:8px;font-size:13.5px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(80px);opacity:0;transition:all 0.25s;z-index:400;}
   .toast.show{transform:none;opacity:1;}.toast.success{background:var(--accent);}.toast.error{background:var(--danger);}
-  .loading{text-align:center;padding:36px;color:var(--text2);font-size:14px;}
+  .loading{text-align:center;padding:36px;color:var(--text2);}
   .spinner{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 10px;}
   @keyframes spin{to{transform:rotate(360deg)}}
   .empty{text-align:center;padding:40px 20px;color:var(--text2);}
   .empty-icon{font-size:36px;margin-bottom:8px;}
   .avail-ok{color:var(--accent);}.avail-no{color:var(--danger);}
   .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:13px;color:#1e40af;margin-bottom:14px;}
-  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}header nav button{padding:5px 7px;font-size:12px;}header h1{font-size:14px;}.equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}header nav button{padding:5px 6px;font-size:11.5px;}header h1{font-size:14px;}.equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}}
 </style>
 </head>
 <body>
@@ -210,9 +209,14 @@
   </div>
   <div class="card">
     <div class="card-title">👤 借用人資料</div>
+    <!-- 身份選擇 -->
+    <div class="role-tabs">
+      <div class="role-tab active" id="roleTabStudent" onclick="setRole('學生')">🎓 學生</div>
+      <div class="role-tab" id="roleTabTeacher" onclick="setRole('老師')">👨‍🏫 老師</div>
+    </div>
     <div class="form-grid">
-      <div class="form-group"><label>借用人姓名 *</label><input type="text" id="f-name" placeholder="輸入姓名"></div>
-      <div class="form-group"><label>Email *</label><input type="email" id="f-email" placeholder="student@school.edu.tw"></div>
+      <div class="form-group"><label>姓名 *</label><input type="text" id="f-name" placeholder="輸入姓名"></div>
+      <div class="form-group" id="studentIdGroup"><label>學號 *</label><input type="text" id="f-student-id" placeholder="輸入學號"></div>
       <div class="form-group">
         <label>借用目的 *</label>
         <select id="f-purpose" onchange="onPurposeChange()">
@@ -240,16 +244,14 @@
   </div>
   <div class="card">
     <div class="card-title">🔬 選擇借用器材</div>
-    <!-- 圖片上傳辨識 -->
     <div class="ai-scan-box" onclick="document.getElementById('aiFileInput').click()">
-      <div style="font-size:22px;margin-bottom:4px">📁</div>
-      <div style="font-size:13.5px;font-weight:600">上傳圖片辨識器材</div>
-      <div style="font-size:12px;color:var(--text2);margin-top:2px">點此選擇圖片，AI 自動辨識器材</div>
+      <div style="font-size:20px;margin-bottom:4px">📁</div>
+      <div style="font-size:13px;font-weight:600">上傳圖片辨識器材</div>
+      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">選擇圖片，AI 自動辨識器材</div>
       <input type="file" id="aiFileInput" accept="image/*" onchange="handleAiScan(this)">
       <img id="aiPreview" class="ai-scan-preview">
     </div>
     <div id="aiResults"></div>
-    <!-- 搜尋 -->
     <div class="search-wrap">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowSearch" placeholder="搜尋器材名稱…" oninput="doBorrowSearch(this.value)">
@@ -267,8 +269,39 @@
 <!-- 場地預約 -->
 <div id="page-venue" class="page">
   <div class="card">
-    <div class="card-title">🏛️ 實驗室場地預約時間表</div>
-    <div class="info-box">點擊格子中的「＋ 預約」即可申請，待管理員確認後生效。🟦 固定課程 🟩 已核准 🟨 待審核</div>
+    <div class="card-title">🏛️ 申請場地預約</div>
+    <div class="role-tabs">
+      <div class="role-tab active" id="vroleTabStudent" onclick="setVenueRole('學生')">🎓 學生</div>
+      <div class="role-tab" id="vroleTabTeacher" onclick="setVenueRole('老師')">👨‍🏫 老師</div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>姓名 *</label><input type="text" id="vf-name" placeholder="輸入姓名"></div>
+      <div class="form-group" id="vStudentIdGroup"><label>學號 *</label><input type="text" id="vf-student-id" placeholder="輸入學號"></div>
+      <div class="form-group">
+        <label>借用目的 *</label>
+        <select id="vf-purpose">
+          <option value="課程">課程</option><option value="自主學習">自主學習</option>
+          <option value="科展">科展</option><option value="社團">社團</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group full"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
+    </div>
+    <!-- 時段列表 -->
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 借用時段</div>
+      <div class="period-list" id="periodList"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addPeriodRow()">＋ 新增時段</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button class="btn btn-secondary" onclick="resetVenueForm()">清除重填</button>
+      <button class="btn btn-primary" onclick="submitVenueRequest()">📋 提交場地預約</button>
+    </div>
+  </div>
+
+  <!-- 本週時間表 -->
+  <div class="card">
+    <div class="card-title">📅 本週場地使用狀況</div>
+    <div class="info-box">🟦 固定課程　🟩 已核准　🟨 待審核</div>
     <div class="venue-nav">
       <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
       <span class="venue-nav-week" id="venueWeekLabel"></span>
@@ -297,11 +330,12 @@
 <div id="page-myrecords" class="page">
   <div class="card">
     <div class="card-title">📋 我的借用記錄</div>
-    <div class="form-grid" style="margin-bottom:14px;">
-      <div class="form-group"><label>輸入 Email 查詢</label><input type="email" id="queryEmail" placeholder="your@email.com"></div>
-      <div class="form-group" style="justify-content:flex-end;padding-top:18px;"><button class="btn btn-primary" onclick="loadMyRecords()">🔍 查詢</button></div>
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="form-group"><label>姓名</label><input type="text" id="queryName" placeholder="輸入姓名"></div>
+      <div class="form-group"><label>學號（學生填寫）</label><input type="text" id="queryStudentId" placeholder="輸入學號"></div>
     </div>
-    <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>輸入 Email 後點擊查詢</p></div></div>
+    <button class="btn btn-primary" onclick="loadMyRecords()" style="margin-bottom:14px">🔍 查詢</button>
+    <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>填寫姓名或學號後查詢</p></div></div>
   </div>
 </div>
 </main>
@@ -311,10 +345,7 @@
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
   <div class="cart-drawer-handle"></div>
-  <div class="cart-drawer-header">
-    <div class="cart-drawer-title">🛒 已選器材清單</div>
-    <button class="btn btn-secondary btn-sm" onclick="closeCart()">關閉</button>
-  </div>
+  <div class="cart-drawer-header"><div class="cart-drawer-title">🛒 已選器材清單</div><button class="btn btn-secondary btn-sm" onclick="closeCart()">關閉</button></div>
   <div class="cart-drawer-body" id="cartBody"></div>
   <div class="cart-drawer-footer">
     <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑️ 清空</button>
@@ -331,11 +362,7 @@
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal">
-    <div class="modal-title" id="modalTitle"></div>
-    <div id="modalBody"></div>
-    <div class="modal-actions" id="modalActions"></div>
-  </div>
+  <div class="modal"><div class="modal-title" id="modalTitle"></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -346,7 +373,6 @@ const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geo
 const rn=r=>ROOM_NAMES[r]||r;
 const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實驗室','地科實驗室'];
 const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
-const PERIOD_BREAKS=['早休','午休','晚上'];
 const DAYS=['一','二','三','四','五','六','日'];
 
 async function sb(method,table,opts={}){
@@ -364,51 +390,137 @@ async function sb(method,table,opts={}){
 }
 
 let allEquipment=[],selectedItems={},allRooms=[],currentRoom='';
+let currentRole='學生',currentVenueRole='學生';
 let venueWeekOffset=0,venueBookings=[];
+let activeBorrowRecords=[];
 
-window.addEventListener('DOMContentLoaded',()=>{
-  setMinDates();loadEquipment();loadEquipBrowse();
-});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipment();loadEquipBrowse();addPeriodRow();});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
-  document.getElementById('f-borrow-date').min=today;
-  document.getElementById('f-return-date').min=today;
+  ['f-borrow-date','f-return-date'].forEach(id=>{document.getElementById(id).min=today;});
   document.getElementById('f-borrow-date').value=today;
   document.getElementById('f-borrow-date').addEventListener('change',e=>{document.getElementById('f-return-date').min=e.target.value;});
 }
 
-// ── 場地預約 ──────────────────────────────────────────────
-function getWeekDates(offset){
-  const now=new Date();
-  const day=now.getDay();
-  const monday=new Date(now);
-  monday.setDate(now.getDate()-((day+6)%7)+offset*7);
-  monday.setHours(0,0,0,0);
-  const dates=[];
-  for(let i=0;i<7;i++){
-    const d=new Date(monday);
-    d.setDate(monday.getDate()+i);
-    dates.push(d);
-  }
-  return dates;
+// ── 身份切換 ──────────────────────────────────────────────
+function setRole(role){
+  currentRole=role;
+  document.getElementById('roleTabStudent').classList.toggle('active',role==='學生');
+  document.getElementById('roleTabTeacher').classList.toggle('active',role==='老師');
+  document.getElementById('studentIdGroup').style.display=role==='學生'?'flex':'none';
+}
+function setVenueRole(role){
+  currentVenueRole=role;
+  document.getElementById('vroleTabStudent').classList.toggle('active',role==='學生');
+  document.getElementById('vroleTabTeacher').classList.toggle('active',role==='老師');
+  document.getElementById('vStudentIdGroup').style.display=role==='學生'?'flex':'none';
 }
 
+// ── 場地預約時段 ──────────────────────────────────────────
+let periodRows=[];
+function addPeriodRow(){
+  const id=Date.now();
+  periodRows.push(id);
+  renderPeriodList();
+}
+function removePeriodRow(id){
+  periodRows=periodRows.filter(r=>r!==id);
+  renderPeriodList();
+}
+function renderPeriodList(){
+  const list=document.getElementById('periodList');
+  if(!periodRows.length){list.innerHTML='<div style="font-size:13px;color:var(--text2)">尚未新增時段，請點下方按鈕新增</div>';return;}
+  list.innerHTML=periodRows.map((id,idx)=>`
+    <div class="period-row" id="pr-${id}">
+      <span style="font-size:12px;color:var(--text2);min-width:24px">${idx+1}.</span>
+      <select id="pr-date-${id}" style="min-width:130px">
+        ${getNextDates(14).map(d=>`<option value="${d.val}">${d.label}</option>`).join('')}
+      </select>
+      <select id="pr-period-${id}">
+        ${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}
+      </select>
+      <select id="pr-venue-${id}">
+        ${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}
+      </select>
+      <button class="period-row-remove" onclick="removePeriodRow(${id})">✕</button>
+    </div>`).join('');
+}
+function getNextDates(days){
+  const result=[];
+  const today=new Date();
+  for(let i=0;i<days;i++){
+    const d=new Date(today);d.setDate(today.getDate()+i);
+    const val=d.toISOString().split('T')[0];
+    const dayIdx=(d.getDay()+6)%7;
+    result.push({val,label:`${val} (週${DAYS[dayIdx]})`});
+  }
+  return result;
+}
+
+async function submitVenueRequest(){
+  const name=document.getElementById('vf-name').value.trim();
+  const studentId=currentVenueRole==='學生'?document.getElementById('vf-student-id').value.trim():'';
+  const purpose=document.getElementById('vf-purpose').value;
+  const note=document.getElementById('vf-note').value.trim();
+  if(!name){showToast('請填寫姓名','error');return;}
+  if(currentVenueRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
+  if(!periodRows.length){showToast('請新增至少一個時段','error');return;}
+  const periods=periodRows.map(id=>({
+    date:document.getElementById('pr-date-'+id).value,
+    period:document.getElementById('pr-period-'+id).value,
+    venue:document.getElementById('pr-venue-'+id).value,
+    status:'待審核'
+  }));
+  try{
+    const id='VEN-'+Date.now();
+    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note}});
+    showModal('✅ 場地預約申請已送出',`
+      <p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p>
+      <p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段，請等待管理員確認。</p>
+      <div style="margin-top:10px;font-size:13px">
+        ${periods.map((p,i)=>`<div style="padding:3px 0;border-bottom:1px solid var(--surface2)">${i+1}. ${p.date} ${p.period} ${p.venue}</div>`).join('')}
+      </div>
+    `,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
+    resetVenueForm();
+    loadVenue();
+  }catch(e){showToast('申請失敗：'+e.message,'error');}
+}
+
+function resetVenueForm(){
+  document.getElementById('vf-name').value='';
+  document.getElementById('vf-student-id').value='';
+  document.getElementById('vf-note').value='';
+  periodRows=[];addPeriodRow();
+}
+
+// ── 場地週曆 ──────────────────────────────────────────────
+function getWeekDates(offset){
+  const now=new Date(),day=now.getDay(),monday=new Date(now);
+  monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);
+  const dates=[];for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}
+  return dates;
+}
 function fmtDate(d){return d.toISOString().split('T')[0];}
 function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
-
 function changeWeek(delta){venueWeekOffset+=delta;loadVenue();}
 function goThisWeek(){venueWeekOffset=0;loadVenue();}
 
 async function loadVenue(){
   const dates=getWeekDates(venueWeekOffset);
-  const startStr=fmtDate(dates[0]);
-  const endStr=fmtDate(dates[6]);
+  const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
   document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
   try{
-    venueBookings=await sb('GET','venue_bookings',{
-      filter:`booking_date=gte.${startStr}&booking_date=lte.${endStr}`,
-      order:'booking_date,period'
+    const all=await sb('GET','venue_bookings',{order:'created_at'});
+    // 展開 periods 欄位
+    venueBookings=[];
+    all.forEach(b=>{
+      const periods=Array.isArray(b.periods)?b.periods:[];
+      periods.forEach(p=>{
+        if(p.date>=startStr&&p.date<=endStr){
+          venueBookings.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status||b.status});
+        }
+      });
     });
     renderVenueTable(dates);
   }catch(e){showToast('載入場地資料失敗','error');}
@@ -416,28 +528,20 @@ async function loadVenue(){
 
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
-  // 標題列
   let html=`<thead><tr><th>時段</th>${dates.map((d,i)=>`<th>週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span></th>`).join('')}</tr></thead><tbody>`;
-
   PERIODS.forEach(period=>{
-    const isBreak=PERIOD_BREAKS.includes(period);
-    html+=`<tr>`;
-    html+=`<td class="${isBreak?'period-label-break':''}">${period}</td>`;
+    html+=`<tr><td>${period}</td>`;
     dates.forEach(date=>{
       const dateStr=fmtDate(date);
-      const cellBookings=venueBookings.filter(b=>b.booking_date===dateStr&&b.period===period);
-      html+=`<td><div class="venue-cell">`;
+      const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period);
+      html+=`<td><div>`;
       VENUES.forEach(venue=>{
-        const vb=cellBookings.filter(b=>b.venue===venue);
-        if(vb.length>0){
-          vb.forEach(b=>{
-            const cls=b.is_fixed?'fixed':b.status==='已核准'?'approved':b.status==='已拒絕'?'rejected':'pending';
-            const label=b.is_fixed?`📌 ${b.borrower_name}`:`${b.borrower_name}`;
-            html+=`<div class="venue-booking ${cls}" title="${venue}・${b.purpose}・${b.borrower_name}">${venue.replace('實驗室','')}<br>${label}</div>`;
-          });
-        }
+        const vb=cellBookings.filter(b=>b.displayVenue===venue);
+        vb.forEach(b=>{
+          const cls=b.is_fixed?'fixed':b.periodStatus==='已核准'?'approved':b.periodStatus==='已拒絕'?'rejected':'pending';
+          html+=`<div class="venue-booking ${cls}">${venue.replace('實驗室','')}<br>${b.is_fixed?'📌 ':''}<strong>${b.borrower_name}</strong></div>`;
+        });
       });
-      html+=`<button class="venue-add-btn" onclick="openVenueModal('${dateStr}','${period}')">＋ 預約</button>`;
       html+=`</div></td>`;
     });
     html+=`</tr>`;
@@ -446,45 +550,7 @@ function renderVenueTable(dates){
   table.innerHTML=html;
 }
 
-function openVenueModal(date,period){
-  showModal(`📅 場地預約 — ${date} ${period}`,`
-    <div class="form-group"><label>姓名 *</label><input type="text" id="vf-name" placeholder="輸入姓名"></div>
-    <div class="form-group"><label>Email *</label><input type="email" id="vf-email" placeholder="your@email.com"></div>
-    <div class="form-group"><label>借用目的 *</label>
-      <select id="vf-purpose">
-        <option value="課程">課程</option><option value="自主學習">自主學習</option>
-        <option value="科展">科展</option><option value="社團">社團</option><option value="其他">其他</option>
-      </select>
-    </div>
-    <div class="form-group"><label>實驗室 *</label>
-      <select id="vf-venue">${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
-    </div>
-    <div class="form-group"><label>備註</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
-    <div style="font-size:12px;color:var(--text2);margin-top:6px">⚠️ 申請後需等待管理員確認，固定課程時段仍可申請，管理員將判斷是否核准。</div>
-  `,[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'送出預約申請',cls:'btn-primary',fn:`submitVenueBooking('${date}','${period}')`}
-  ]);
-}
-
-async function submitVenueBooking(date,period){
-  const name=document.getElementById('vf-name').value.trim();
-  const email=document.getElementById('vf-email').value.trim();
-  const purpose=document.getElementById('vf-purpose').value;
-  const venue=document.getElementById('vf-venue').value;
-  const note=document.getElementById('vf-note').value.trim();
-  if(!name||!email){showToast('請填寫姓名和Email','error');return;}
-  if(!email.includes('@')){showToast('請輸入正確的 Email','error');return;}
-  closeModal();
-  try{
-    const id='VEN-'+Date.now();
-    await sb('POST','venue_bookings',{body:{id,borrower_name:name,email,purpose,venue,booking_date:date,period,status:'待審核',note}});
-    showToast('場地預約申請已送出，等待管理員確認','success');
-    loadVenue();
-  }catch(e){showToast('申請失敗：'+e.message,'error');}
-}
-
-// ── AI 圖片辨識 ───────────────────────────────────────────
+// ── AI 辨識 ───────────────────────────────────────────────
 async function handleAiScan(input){
   if(!input.files||!input.files[0])return;
   const file=input.files[0];
@@ -496,8 +562,7 @@ async function handleAiScan(input){
   resultsDiv.innerHTML='<div class="loading"><div class="spinner"></div>AI 辨識中…</div>';
   const base64=await new Promise(res=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.readAsDataURL(file);});
   try{
-    const response=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
+    const response=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[
         {type:'image',source:{type:'base64',media_type:file.type,data:base64}},
         {type:'text',text:'這是一張實驗室器材的照片。請辨識圖中的器材名稱，以JSON格式回應：{"items":[{"name":"器材名稱","quantity":1}]}。只回傳JSON，不要其他文字。器材名稱請用繁體中文。'}
@@ -505,30 +570,20 @@ async function handleAiScan(input){
     });
     const data=await response.json();
     const text=data.content[0].text;
-    let parsed;
-    try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch{parsed={items:[]};}
-    if(!parsed.items||!parsed.items.length){resultsDiv.innerHTML='<div class="search-empty">無法辨識器材，請手動搜尋</div>';return;}
+    let parsed;try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch{parsed={items:[]};}
+    if(!parsed.items||!parsed.items.length){resultsDiv.innerHTML='<div class="search-empty">無法辨識，請手動搜尋</div>';return;}
     const matched=[];
-    for(const item of parsed.items){
-      const found=allEquipment.filter(e=>e.name.includes(item.name)||item.name.includes(e.name.replace(/[0-9mLmg]/g,'').trim()));
-      if(found.length>0)matched.push({...found[0],suggestedQty:item.quantity||1});
-    }
+    for(const item of parsed.items){const found=allEquipment.filter(e=>e.name.includes(item.name)||item.name.includes(e.name.replace(/[0-9mLmg]/g,'').trim()));if(found.length>0)matched.push({...found[0],suggestedQty:item.quantity||1});}
     if(!matched.length){resultsDiv.innerHTML='<div class="search-empty">辨識到器材但資料庫找不到，請手動搜尋</div>';return;}
-    resultsDiv.innerHTML=`<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;">📷 AI 辨識結果：</div>`+
+    resultsDiv.innerHTML='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px;">📷 AI 辨識結果：</div>'+
       matched.map(e=>{const avail=parseInt(e.available)||0;return `<div class="ai-result-item">
         <div><span style="font-weight:700">${e.name}</span><span style="font-size:11px;color:var(--accent);margin-left:6px">${rn(e.room)}</span></div>
         <div style="display:flex;align-items:center;gap:8px"><span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+e.unit:'無庫存'}</span>
         ${avail>0?`<button class="btn btn-primary btn-sm" onclick="addFromAI('${e.room}','${e.name.replace(/'/g,"\\'")}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},${e.suggestedQty})">加入</button>`:''}</div>
       </div>`;}).join('');
-  }catch(err){resultsDiv.innerHTML='<div class="search-empty">辨識失敗：'+err.message+'</div>';}
+  }catch(err){resultsDiv.innerHTML='<div class="search-empty">辨識失敗</div>';}
 }
-
-function addFromAI(room,name,spec,unit,avail,qty){
-  const key=room+'__'+name;
-  selectedItems[key]={room,name,spec,unit,quantity:Math.min(qty,avail)};
-  renderEquipList();updateCartBadge();calcDeposit();
-  showToast(name+' 已加入','success');
-}
+function addFromAI(room,name,spec,unit,avail,qty){const key=room+'__'+name;selectedItems[key]={room,name,spec,unit,quantity:Math.min(qty,avail)};renderEquipList();updateCartBadge();calcDeposit();showToast(name+' 已加入','success');}
 
 // ── 搜尋 ──────────────────────────────────────────────────
 let searchTimer=null;
@@ -540,21 +595,13 @@ function doBorrowSearch(q){
     const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q));
     if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+q+'」相關器材</div>';return;}
     box.innerHTML='<div class="search-dropdown">'+filtered.map(e=>{
-      const avail=parseInt(e.available)||0;
-      const key=e.room+'__'+e.name;
-      const qty=selectedItems[key]?.quantity||0;
+      const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
       const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
-      const imgHtml=e.image_url?`<img class="sr-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
-      // 借用人資訊
+      const imgHtml=e.image_url?`<img class="sr-thumb" src="${e.image_url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
       const borrowerInfo=getBorrowerInfo(e.name,e.room);
       return `<div class="search-result-item">
         ${imgHtml}
-        <div style="flex:1;min-width:0">
-          <div class="sr-name">${e.name}</div>
-          <div class="sr-room">${rn(e.room)}</div>
-          ${e.spec?`<div class="sr-spec">${e.spec}</div>`:''}
-          ${borrowerInfo}
-        </div>
+        <div style="flex:1;min-width:0"><div class="sr-name">${e.name}</div><div class="sr-room">${rn(e.room)}</div>${e.spec?`<div class="sr-spec">${e.spec}</div>`:''}${borrowerInfo}</div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+e.unit:'無庫存'}</span>
           ${avail>0?`<div class="sr-qty" onclick="event.stopPropagation()">
@@ -568,46 +615,29 @@ function doBorrowSearch(q){
   },200);
 }
 
-// ── 借用人資訊 ────────────────────────────────────────────
-let activeBorrowRecords=[];
 function getBorrowerInfo(name,room){
-  const active=activeBorrowRecords.filter(r=>
-    r.status==='已核准'&&Array.isArray(r.items)&&
-    r.items.some(i=>i.name===name&&i.room===room)
-  );
+  const active=activeBorrowRecords.filter(r=>r.status==='已核准'&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
   if(!active.length)return '';
   return active.map(r=>`<div class="borrower-tag">📌 ${r.borrower_name} 借用中</div>`).join('');
-}
-
-async function loadActiveBorrows(){
-  try{
-    const rows=await sb('GET','borrow_records',{filter:'status=eq.已核准',order:'created_at.desc'});
-    activeBorrowRecords=rows;
-  }catch(e){}
 }
 
 // ── 購物車 ────────────────────────────────────────────────
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');document.getElementById('cartOverlay').classList.remove('show');}
 function clearCart(){selectedItems={};updateCartBadge();renderEquipList();renderCart();calcDeposit();}
-
 function updateCartBadge(){
   const total=Object.values(selectedItems).reduce((s,i)=>s+i.quantity,0);
   document.getElementById('cartBadge').textContent=total;
   document.getElementById('cartFab').classList.toggle('show',total>0);
 }
-
 function renderCart(){
-  const body=document.getElementById('cartBody');
-  const items=Object.values(selectedItems);
+  const body=document.getElementById('cartBody'),items=Object.values(selectedItems);
   if(!items.length){body.innerHTML='<div class="empty"><div class="empty-icon">🛒</div><p>尚未選擇任何器材</p></div>';return;}
   body.innerHTML=items.map(i=>{
-    const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
-    const avail=parseInt(equip?.available)||0;
+    const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(equip?.available)||0;
     const safeN=i.name.replace(/'/g,"\\'"),safeS=(i.spec||'').replace(/'/g,"\\'");
     const imgHtml=equip?.image_url?`<img class="cart-item-thumb" src="${equip.image_url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
-    return `<div class="cart-item">
-      ${imgHtml}
+    return `<div class="cart-item">${imgHtml}
       <div class="cart-item-info"><div class="cart-item-name">${i.name}</div><div class="cart-item-sub">${rn(i.room)}${i.spec?' ・ '+i.spec:''}</div></div>
       <div class="cart-item-qty">
         <button class="qty-btn" onclick="changeQty('${i.room}','${safeN}','${safeS}','${i.unit}',${avail},-1);renderCart()">−</button>
@@ -630,34 +660,20 @@ async function loadEquipment(){
     if(allRooms.length>0){currentRoom=allRooms[0];renderEquipList();}
   }catch(e){document.getElementById('roomTabs').innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
 }
-
-function renderRoomTabs(){
-  document.getElementById('roomTabs').innerHTML=allRooms.map(r=>
-    `<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${rn(r)}</button>`
-  ).join('');
-}
+function renderRoomTabs(){document.getElementById('roomTabs').innerHTML=allRooms.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${rn(r)}</button>`).join('');}
 function selectRoom(room){currentRoom=room;renderRoomTabs();renderEquipList();}
-
 function renderEquipList(){
-  const list=document.getElementById('equipList');
-  const items=allEquipment.filter(e=>e.room===currentRoom);
+  const list=document.getElementById('equipList'),items=allEquipment.filter(e=>e.room===currentRoom);
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📦</div><p>此房間目前無器材</p></div>';return;}
   list.innerHTML=items.map(e=>{
-    const avail=parseInt(e.available)||0;
-    const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
+    const avail=parseInt(e.available)||0,qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
     const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
-    const imgHtml=e.image_url
-      ?`<img class="equip-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`
-      :`<div class="equip-thumb-ph">🔬</div>`;
+    const imgHtml=e.image_url?`<img class="equip-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     return `<div class="equip-row ${avail<=0?'unavailable':''}">
       ${imgHtml}
-      <div class="equip-row-info">
-        <div class="equip-row-name">${e.name}</div>
-        <div class="equip-row-sub">${e.spec||''}${e.location?' ・ '+e.location:''}</div>
-        <div class="equip-row-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>
-        ${borrowerInfo}
-      </div>
+      <div class="equip-row-info"><div class="equip-row-name">${e.name}</div><div class="equip-row-sub">${e.spec||''}${e.location?' ・ '+e.location:''}</div>
+      <div class="equip-row-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>${borrowerInfo}</div>
       ${avail>0?`<div class="equip-row-qty" onclick="event.stopPropagation()">
         <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},-1)">−</button>
         <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},this.value)" onclick="event.stopPropagation()">
@@ -666,57 +682,36 @@ function renderEquipList(){
     </div>`;
   }).join('');
 }
-
-function changeQty(room,name,spec,unit,avail,delta){
-  const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));
-  if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};
-  renderEquipList();updateCartBadge();calcDeposit();
-  const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);
-}
-function setQty(room,name,spec,unit,avail,val){
-  const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;
-  if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};
-  renderEquipList();updateCartBadge();calcDeposit();
-}
+function changeQty(room,name,spec,unit,avail,delta){const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};renderEquipList();updateCartBadge();calcDeposit();const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);}
+function setQty(room,name,spec,unit,avail,val){const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};renderEquipList();updateCartBadge();calcDeposit();}
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();}
 
-function onPurposeChange(){
-  const p=document.getElementById('f-purpose').value;
-  document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();
-}
-function calcDeposit(){
-  const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
-  let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}
-  document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();
-}
+function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();}
+function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
 
 async function submitRequest(){
-  const name=document.getElementById('f-name').value.trim(),email=document.getElementById('f-email').value.trim(),
-    purpose=document.getElementById('f-purpose').value,borrowDate=document.getElementById('f-borrow-date').value,
-    returnDate=document.getElementById('f-return-date').value,venue=document.getElementById('f-venue').value,
-    note=document.getElementById('f-note').value.trim(),items=Object.values(selectedItems);
-  if(!name||!email||!purpose||!borrowDate||!returnDate){showToast('請填寫所有必填欄位','error');return;}
-  if(!email.includes('@')){showToast('請輸入正確的 Email','error');return;}
+  const name=document.getElementById('f-name').value.trim();
+  const studentId=currentRole==='學生'?document.getElementById('f-student-id').value.trim():'';
+  const purpose=document.getElementById('f-purpose').value,borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
+  const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim(),items=Object.values(selectedItems);
+  if(!name){showToast('請填寫姓名','error');return;}
+  if(currentRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
+  if(!purpose||!borrowDate||!returnDate){showToast('請填寫所有必填欄位','error');return;}
   if(returnDate<borrowDate){showToast('歸還日期不能早於借用日期','error');return;}
   closeCart();
   const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='提交中…';
   try{
-    const id='REQ-'+Date.now();
-    let dt='無',da=0;
+    const id='REQ-'+Date.now();let dt='無',da=0;
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
-    await sb('POST','borrow_records',{body:{id,borrower_name:name,email,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note}});
-    for(const item of items){
-      const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);
-      if(equip){await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:Math.max(0,equip.available-parseInt(item.quantity))},prefer:'return=minimal'});equip.available=Math.max(0,equip.available-parseInt(item.quantity));}
-    }
+    await sb('POST','borrow_records',{body:{id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note}});
+    for(const item of items){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip){await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:Math.max(0,equip.available-parseInt(item.quantity))},prefer:'return=minimal'});equip.available=Math.max(0,equip.available-parseInt(item.quantity));}}
     showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${da>0?'<br>保證金：NT$'+da+'（'+dt+'），請至辦公室繳納。':''}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
   btn.disabled=false;btn.textContent='📋 提交借用申請';
 }
-
 function resetForm(){
-  ['f-name','f-email','f-note'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-student-id','f-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-purpose').value='';document.getElementById('f-venue').value='';
   document.getElementById('depositBanner').classList.remove('show');
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
@@ -724,34 +719,25 @@ function resetForm(){
 }
 
 async function loadMyRecords(){
-  const email=document.getElementById('queryEmail').value.trim();
-  if(!email){showToast('請輸入 Email','error');return;}
+  const name=document.getElementById('queryName').value.trim();
+  const studentId=document.getElementById('queryStudentId').value.trim();
+  if(!name&&!studentId){showToast('請填寫姓名或學號','error');return;}
   const list=document.getElementById('myRecordsList');
   list.innerHTML='<div class="loading"><div class="spinner"></div>查詢中…</div>';
   try{
-    const[rows,venueRows]=await Promise.all([
-      sb('GET','borrow_records',{filter:'email=eq.'+encodeURIComponent(email),order:'created_at.desc'}),
-      sb('GET','venue_bookings',{filter:'email=eq.'+encodeURIComponent(email),order:'booking_date.desc'})
-    ]);
+    let borrowFilter='',venueFilter='';
+    if(studentId){borrowFilter=`student_id=eq.${encodeURIComponent(studentId)}`;venueFilter=`student_id=eq.${encodeURIComponent(studentId)}`;}
+    else{borrowFilter=`borrower_name=eq.${encodeURIComponent(name)}`;venueFilter=`borrower_name=eq.${encodeURIComponent(name)}`;}
+    const[rows,venueRows]=await Promise.all([sb('GET','borrow_records',{filter:borrowFilter,order:'created_at.desc'}),sb('GET','venue_bookings',{filter:venueFilter,order:'created_at.desc'})]);
     let html='';
-    if(rows.length){
-      html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>';
-      html+=renderRecordListHTML(mapRecords(rows));
-    }
+    if(rows.length){html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(rows);}
     if(venueRows.length){
-      html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin:14px 0 8px">場地預約記錄</div>';
-      html+='<div class="record-list">'+venueRows.map(r=>{
+      html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin:14px 0 8px">場地預約記錄</div><div class="record-list">'+venueRows.map(r=>{
         const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected'}[r.status]||'badge-pending';
+        const periods=Array.isArray(r.periods)?r.periods:[];
         return `<div class="record-card">
-          <div class="record-header">
-            <div><span class="record-id">${r.id}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.venue}</div></div>
-            <span class="badge ${sc}">${r.status}</span>
-          </div>
-          <div class="record-meta">
-            <div class="record-meta-item"><span class="record-meta-label">日期</span><span class="record-meta-value">${r.booking_date}</span></div>
-            <div class="record-meta-item"><span class="record-meta-label">時段</span><span class="record-meta-value">${r.period}</span></div>
-            <div class="record-meta-item"><span class="record-meta-label">目的</span><span class="record-meta-value">${r.purpose}</span></div>
-          </div>
+          <div class="record-header"><div><span class="record-id">${r.id}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.purpose}</div></div><span class="badge ${sc}">${r.status}</span></div>
+          <div style="font-size:13px;margin-top:8px">${periods.map((p,i)=>`<div style="padding:2px 0">${i+1}. ${p.date} ${p.period} ${p.venue} <span class="badge ${p.status==='已核准'?'badge-approved':p.status==='已拒絕'?'badge-rejected':'badge-pending'}">${p.status}</span></div>`).join('')}</div>
           ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
         </div>`;
       }).join('')+'</div>';
@@ -759,6 +745,24 @@ async function loadMyRecords(){
     if(!html)html='<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p></div>';
     list.innerHTML=html;
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
+}
+
+function renderRecordListHTML(rows){
+  return '<div class="record-list">'+rows.map(r=>{
+    const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
+    const items=Array.isArray(r.items)?r.items:[];
+    return `<div class="record-card">
+      <div class="record-header"><div><span class="record-id">${r.id}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.borrower_name}</div><div style="font-size:12px;color:var(--text2)">${r.role||''} ${r.student_id?'・ '+r.student_id:''}</div></div><span class="badge ${sc}">${r.status}</span></div>
+      <div class="record-meta">
+        <div class="record-meta-item"><span class="record-meta-label">借用目的</span><span class="record-meta-value">${r.purpose}</span></div>
+        <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${r.borrow_date||'─'}</span></div>
+        <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${r.return_date||'─'}</span></div>
+        ${r.deposit_amount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.deposit_amount}</span></div>`:''}
+      </div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${rn(i.room)} ${i.name} × ${i.quantity}${i.unit||''}`).join('<br>')}</div>
+      ${r.note?`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
+    </div>`;
+  }).join('')+'</div>';
 }
 
 let allEquipBrowse=[];
@@ -771,10 +775,7 @@ async function loadEquipBrowse(){
     renderEquipBrowse(allEquipBrowse);
   }catch(e){}
 }
-function filterEquipBrowse(){
-  const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;
-  renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));
-}
+function filterEquipBrowse(){const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));}
 function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
   if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';return;}
@@ -784,63 +785,24 @@ function renderEquipBrowse(items){
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     const imgHtml=e.image_url?`<img class="equip-browse-img" src="${e.image_url}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-browse-img-ph" style="display:none">🔬</div>`:`<div class="equip-browse-img-ph">🔬</div>`;
     return `<div class="equip-browse-card" onclick="openLightbox('${e.image_url}','${safeN}')">
-      ${imgHtml}
-      <div class="equip-browse-body">
-        <div class="equip-browse-room">${rn(e.room)}</div>
-        <div class="equip-browse-name">${e.name}</div>
+      ${imgHtml}<div class="equip-browse-body">
+        <div class="equip-browse-room">${rn(e.room)}</div><div class="equip-browse-name">${e.name}</div>
         <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+e.location:''}</div>
-        <div class="equip-browse-count">
-          <span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span>
-          <div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div>
-          <span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span>
-        </div>
+        <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
         ${borrowerInfo}
-      </div>
-    </div>`;
+      </div></div>`;
   }).join('');
 }
 
-function mapRecords(rows){return rows.map(r=>({id:r.id,time:r.created_at,name:r.borrower_name,email:r.email,purpose:r.purpose,items:r.items||[],borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,depositStatus:r.deposit_status,note:r.note}));}
-
-function renderRecordListHTML(records){
-  if(!records||!records.length)return '<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';
-  return '<div class="record-list">'+records.map(r=>{
-    const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
-    const items=Array.isArray(r.items)?r.items:[];
-    const itemStr=items.map((i,idx)=>`${idx+1}. ${rn(i.room)} ${i.name} × ${i.quantity}${i.unit||''}`).join('<br>');
-    return `<div class="record-card">
-      <div class="record-header">
-        <div><span class="record-id">${r.id}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.name}</div><div style="font-size:12px;color:var(--text2)">${r.email}</div></div>
-        <span class="badge ${sc}">${r.status}</span>
-      </div>
-      <div class="record-meta">
-        <div class="record-meta-item"><span class="record-meta-label">借用目的</span><span class="record-meta-value">${r.purpose}</span></div>
-        <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${r.borrowDate||'─'}</span></div>
-        <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${r.returnDate||'─'}</span></div>
-        ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount} (${r.depositStatus})</span></div>`:''}
-      </div>
-      <div class="record-items">🔬 借用器材：<br>${itemStr}</div>
-      ${r.note?`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
-    </div>`;
-  }).join('')+'</div>';
-}
-
-// 燈箱
 function openLightbox(url,name){if(!url)return;event&&event.stopPropagation();document.getElementById('lightboxImg').src=url;document.getElementById('lightboxInfo').textContent=name||'';document.getElementById('lightbox').classList.add('show');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
-
 function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords'][i]===page));
   if(page==='venue')loadVenue();
 }
-function showModal(title,body,actions){
-  document.getElementById('modalTitle').textContent=title;
-  document.getElementById('modalBody').innerHTML=body;
-  document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
-  document.getElementById('modalOverlay').classList.add('show');
-}
+function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
