@@ -445,17 +445,13 @@ function renderPeriodList(){
       </select>
       <button class="period-row-remove" onclick="removePeriodRow(${id})">✕</button>
     </div>`).join('');
+}
 function getNextDates(days){
   const result=[];
   const today=new Date();
   for(let i=0;i<days;i++){
-    const d=new Date(today);
-    d.setDate(today.getDate()+i);
-    // 用本地時間格式化，避免時區問題
-    const y=d.getFullYear();
-    const m=String(d.getMonth()+1).padStart(2,'0');
-    const day=String(d.getDate()).padStart(2,'0');
-    const val=`${y}-${m}-${day}`;
+    const d=new Date(today);d.setDate(today.getDate()+i);
+    const val=d.toISOString().split('T')[0];
     const dayIdx=(d.getDay()+6)%7;
     result.push({val,label:`${val} (週${DAYS[dayIdx]})`});
   }
