@@ -118,13 +118,14 @@
   .period-row-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
   .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
   .venue-nav-week{font-size:14px;font-weight:700;}
-  .venue-table-wrap{overflow-x:auto;}
-  .venue-table{width:100%;border-collapse:collapse;min-width:700px;font-size:12px;}
-  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;}
-  .venue-table th:first-child,.venue-table th:nth-child(2){background:#1f5139;}
-  .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;}
-  .venue-table .period-cell{background:#e8e6e0;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:1;min-width:44px;}
-  .venue-table .lab-cell{background:var(--surface2);font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;}
+  .venue-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
+  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:3;border:1px solid #1f5139;}
+  .venue-table th:first-child{left:0;z-index:5;background:#1f5139;min-width:44px;}
+  .venue-table th:nth-child(2){left:44px;z-index:5;background:#1f5139;min-width:42px;}
+  .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;background:var(--surface);}
+  .venue-table .period-cell{background:#e8e6e0;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;}
+  .venue-table .lab-cell{background:var(--surface2);font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;}
   .venue-table .lab-生物{color:#15803d;}.venue-table .lab-化學{color:#b45309;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#1d4ed8;}.venue-table .lab-地科{color:#0e7490;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
   .venue-table .vcell{min-width:90px;}
@@ -135,6 +136,10 @@
   .venue-booking.rejected{background:#fee2e2;color:#991b1b;text-decoration:line-through;}
   .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+  /* 學期週次選擇 */
+  .week-selector{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .week-selector select{min-width:110px;}
+  .week-badge{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;}
   /* 器材查詢 */
   .browse-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
   .browse-filters input{flex:1;min-width:140px;}
@@ -304,8 +309,13 @@
 
   <!-- 本週時間表 -->
   <div class="card">
-    <div class="card-title">📅 本週場地使用狀況</div>
+    <div class="card-title">📅 場地使用狀況</div>
     <div class="info-box">🟦 固定課程　🟩 已核准　🟨 待審核</div>
+    <div class="week-selector" id="weekSelector" style="display:none">
+      <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
+      <select id="weekJump" onchange="jumpToWeek(this.value)"></select>
+      <span class="week-badge" id="currentWeekBadge"></span>
+    </div>
     <div class="venue-nav">
       <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
       <span class="venue-nav-week" id="venueWeekLabel"></span>
@@ -396,9 +406,10 @@ async function sb(method,table,opts={}){
 let allEquipment=[],selectedItems={},allRooms=[],currentRoom='';
 let currentRole='學生',currentVenueRole='學生';
 let venueWeekOffset=0,venueBookings=[];
+let activeSemester=null;
 let activeBorrowRecords=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipment();loadEquipBrowse();addPeriodRow();});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipment();loadEquipBrowse();addPeriodRow();loadActiveSemester();});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
@@ -525,13 +536,85 @@ function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeWeek(delta){venueWeekOffset+=delta;loadVenue();}
 function goThisWeek(){venueWeekOffset=0;loadVenue();}
 
+// 載入啟用中的學期設定
+async function loadActiveSemester(){
+  try{
+    const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
+    activeSemester=rows.length?rows[0]:null;
+    buildWeekSelector();
+  }catch(e){activeSemester=null;}
+}
+
+// 取得某個 offset 對應週的週一日期
+function getMondayOfOffset(offset){
+  const now=new Date(),day=now.getDay(),monday=new Date(now);
+  monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);
+  return monday;
+}
+
+// 計算某日期是學期第幾週（回傳數字，超出範圍回傳 null）
+function getWeekNumber(date){
+  if(!activeSemester||!activeSemester.start_date)return null;
+  const start=new Date(activeSemester.start_date+'T00:00:00');
+  // 找到開學日那一週的週一
+  const startDay=start.getDay();
+  const startMonday=new Date(start);
+  startMonday.setDate(start.getDate()-((startDay+6)%7));
+  startMonday.setHours(0,0,0,0);
+  const diffDays=Math.floor((date-startMonday)/(1000*60*60*24));
+  const week=Math.floor(diffDays/7)+1;
+  return week;
+}
+
+// 建立「第幾週」下拉選單
+function buildWeekSelector(){
+  const sel=document.getElementById('weekJump');
+  const wrap=document.getElementById('weekSelector');
+  if(!activeSemester){wrap.style.display='none';return;}
+  wrap.style.display='flex';
+  const total=activeSemester.total_weeks||20;
+  let opts='';
+  for(let w=1;w<=total;w++)opts+=`<option value="${w}">第 ${w} 週</option>`;
+  sel.innerHTML=opts;
+}
+
+// 跳到指定週次
+function jumpToWeek(week){
+  if(!activeSemester)return;
+  week=parseInt(week);
+  const start=new Date(activeSemester.start_date+'T00:00:00');
+  const startDay=start.getDay();
+  const startMonday=new Date(start);
+  startMonday.setDate(start.getDate()-((startDay+6)%7));
+  startMonday.setHours(0,0,0,0);
+  // 目標週的週一
+  const targetMonday=new Date(startMonday);
+  targetMonday.setDate(startMonday.getDate()+(week-1)*7);
+  // 計算和本週的 offset
+  const thisMonday=getMondayOfOffset(0);
+  const offset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
+  venueWeekOffset=offset;
+  loadVenue();
+}
+
 async function loadVenue(){
+  if(!activeSemester)await loadActiveSemester();
   const dates=getWeekDates(venueWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
-  document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+  // 顯示週次標籤
+  const weekNum=getWeekNumber(dates[0]);
+  const badge=document.getElementById('currentWeekBadge');
+  const weekSel=document.getElementById('weekJump');
+  if(weekNum!==null&&activeSemester&&weekNum>=1&&weekNum<=(activeSemester.total_weeks||20)){
+    document.getElementById('venueWeekLabel').textContent=`第${weekNum}週　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge){badge.textContent=`第 ${weekNum} 週`;badge.style.display='inline-block';}
+    if(weekSel)weekSel.value=weekNum;
+  }else{
+    document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge)badge.style.display='none';
+  }
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
-    // 展開 periods 欄位
     venueBookings=[];
     all.forEach(b=>{
       const periods=Array.isArray(b.periods)?b.periods:[];
