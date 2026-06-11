@@ -6,125 +6,172 @@
 <title>實驗室管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#f4f3ef;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;--text:#1a1916;--text2:#6b6760;--accent:#2a6b4f;--danger:#c0392b;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08); }
+  :root{--bg:#f4f3ef;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;--text:#1a1916;--text2:#6b6760;--accent:#2a6b4f;--danger:#c0392b;--warn:#d4a843;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;}
-  header{background:var(--accent);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
-  header h1{font-size:17px;font-weight:700;}
-  main{max-width:960px;margin:0 auto;padding:28px 20px;}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:18px;box-shadow:var(--shadow);}
-  .card-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:7px;border:none;font-size:14px;font-family:inherit;font-weight:600;cursor:pointer;transition:all 0.15s;}
-  .btn-primary{background:var(--accent);color:#fff;} .btn-primary:hover{background:#1f5139;}
-  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);} .btn-secondary:hover{background:var(--border);}
-  .btn-danger{background:var(--danger);color:#fff;} .btn-danger:hover{background:#a93226;}
-  .btn-sm{padding:5px 12px;font-size:13px;}
+  header{background:var(--accent);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+  header h1{font-size:16px;font-weight:700;}
+  main{max-width:1000px;margin:0 auto;padding:20px 16px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;border:none;font-size:13.5px;font-family:inherit;font-weight:600;cursor:pointer;transition:all 0.15s;}
+  .btn-primary{background:var(--accent);color:#fff;}.btn-primary:hover{background:#1f5139;}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{background:var(--border);}
+  .btn-danger{background:var(--danger);color:#fff;}.btn-danger:hover{background:#a93226;}
+  .btn-warn{background:var(--warn);color:#fff;}
+  .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  .admin-tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid var(--border);}
-  .admin-tab{padding:8px 18px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;}
-  .admin-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
-  .admin-panel{display:none;} .admin-panel.active{display:block;}
-  .record-list{display:flex;flex-direction:column;gap:12px;}
+  /* 分頁 */
+  .tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;}
+  .tab{padding:8px 16px;border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .panel{display:none;}.panel.active{display:block;}
+  /* 目的分類 */
+  .purpose-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+  .purpose-tab{padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-size:12.5px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:var(--text);white-space:nowrap;}
+  .purpose-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  /* 記錄卡片 */
+  .record-list{display:flex;flex-direction:column;gap:10px;}
   .record-card{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--surface);}
+  .record-card.overdue{border-color:var(--danger);border-width:2px;}
   .record-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
-  .record-id{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);}
-  .record-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;font-size:13px;margin-top:8px;}
-  .record-meta-item{display:flex;flex-direction:column;gap:2px;}
-  .record-meta-label{font-size:11px;color:var(--text2);font-weight:500;}
+  .record-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+  .record-person{font-size:14px;font-weight:700;margin-top:2px;}
+  .record-email{font-size:12px;color:var(--text2);}
+  .record-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;font-size:12.5px;margin-top:8px;}
+  .record-meta-item{display:flex;flex-direction:column;gap:1px;}
+  .record-meta-label{font-size:10px;color:var(--text2);font-weight:500;}
   .record-meta-value{font-weight:600;}
-  .record-items{margin-top:8px;font-size:13px;color:var(--text2);}
-  .record-actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;}
-  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap;}
-  .badge-pending{background:#fef3c7;color:#92400e;} .badge-approved{background:#d1fae5;color:#065f46;}
-  .badge-rejected{background:#fee2e2;color:#991b1b;} .badge-returned{background:#e0e7ff;color:#3730a3;}
-  .badge-overdue{background:#fee2e2;color:#991b1b;} .badge-damaged{background:#fce7f3;color:#9d174d;}
+  /* 器材條列 */
+  .item-list{margin-top:10px;background:var(--surface2);border-radius:6px;padding:10px 12px;}
+  .item-list-title{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;}
+  .item-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .item-row:last-child{border-bottom:none;}
+  .item-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);min-width:18px;}
+  .item-name{font-weight:600;flex:1;}
+  .item-room{font-size:11px;color:var(--accent);}
+  .item-qty{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;white-space:nowrap;}
+  .record-actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
+  /* 損壞賠償 */
+  .damage-form{background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:14px;margin-top:10px;}
+  .damage-form-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px;}
+  .damage-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
+  .damage-row input{flex:1;min-width:100px;padding:6px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;outline:none;}
+  .damage-row input:focus{border-color:var(--danger);}
+  .damage-summary{background:#fff;border-radius:6px;padding:10px;margin-top:8px;font-size:13px;}
+  .damage-line{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--surface2);}
+  .damage-line:last-child{border-bottom:none;font-weight:700;font-size:14px;color:var(--danger);}
+  /* Badge */
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap;}
+  .badge-pending{background:#fef3c7;color:#92400e;}.badge-approved{background:#d1fae5;color:#065f46;}
+  .badge-rejected{background:#fee2e2;color:#991b1b;}.badge-returned{background:#e0e7ff;color:#3730a3;}
+  .badge-overdue{background:#fee2e2;color:#991b1b;}.badge-damaged{background:#fce7f3;color:#9d174d;}
+  /* 統計 */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:18px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+  .stat-num{font-size:28px;font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;}
+  .stat-label{font-size:12px;color:var(--text2);margin-top:4px;}
+  /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
   .modal-overlay.show{display:flex;}
-  .modal{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:480px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);}
-  .modal-title{font-size:16px;font-weight:700;margin-bottom:16px;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
-  .toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(80px);opacity:0;transition:all 0.25s;z-index:300;}
-  .toast.show{transform:none;opacity:1;} .toast.success{background:var(--accent);} .toast.error{background:var(--danger);}
-  .loading{text-align:center;padding:40px;color:var(--text2);font-size:14px;}
-  .spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 12px;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  .empty{text-align:center;padding:50px 20px;color:var(--text2);}
-  .empty-icon{font-size:40px;margin-bottom:10px;}
-  label{font-size:13px;font-weight:500;color:var(--text2);}
-  input,select,textarea{border:1.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;width:100%;}
-  input:focus,textarea:focus{border-color:var(--accent);}
-  textarea{resize:vertical;min-height:70px;}
-  /* 登入畫面 */
+  .modal{background:var(--surface);border-radius:var(--radius);padding:22px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
+  .modal-title{font-size:15px;font-weight:700;margin-bottom:14px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+  label{font-size:12px;font-weight:500;color:var(--text2);}
+  input,select,textarea{border:1.5px solid var(--border);border-radius:7px;padding:8px 11px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  textarea{resize:vertical;min-height:60px;}
+  .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .toast{position:fixed;bottom:24px;right:20px;background:var(--text);color:#fff;padding:10px 16px;border-radius:8px;font-size:13.5px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.2);transform:translateY(80px);opacity:0;transition:all 0.25s;z-index:400;}
+  .toast.show{transform:none;opacity:1;}.toast.success{background:var(--accent);}.toast.error{background:var(--danger);}
+  .loading{text-align:center;padding:36px;color:var(--text2);font-size:14px;}
+  .spinner{width:26px;height:26px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite;margin:0 auto 10px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .empty{text-align:center;padding:40px 20px;color:var(--text2);}
+  .empty-icon{font-size:36px;margin-bottom:8px;}
+  .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:13px;color:#1e40af;margin-bottom:14px;}
+  /* 登入 */
   .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);}
-  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;}
-  .login-icon{font-size:40px;margin-bottom:12px;}
-  .login-title{font-size:20px;font-weight:700;margin-bottom:6px;}
-  .login-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
-  .login-input{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;outline:none;text-align:center;letter-spacing:4px;margin-bottom:14px;}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:36px 32px;width:100%;max-width:360px;box-shadow:var(--shadow);text-align:center;}
+  .login-input{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px;}
   .login-input:focus{border-color:var(--accent);}
   .login-err{color:var(--danger);font-size:13px;margin-bottom:10px;display:none;}
+  @media(max-width:600px){.tabs{gap:0;}.tab{padding:7px 10px;font-size:12.5px;}}
 </style>
 </head>
 <body>
 
-<!-- 登入畫面 -->
 <div class="login-wrap" id="loginWrap">
   <div class="login-card">
-    <div class="login-icon">🔐</div>
-    <div class="login-title">管理員登入</div>
-    <div class="login-sub">請輸入管理密碼進入後台</div>
+    <div style="font-size:40px;margin-bottom:12px">🔐</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:6px">管理員登入</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:24px">請輸入管理密碼進入後台</div>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
     <div class="login-err" id="pwErr">密碼錯誤，請再試一次</div>
     <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="checkPw()">進入管理後台</button>
   </div>
 </div>
 
-<!-- 管理後台（登入後顯示） -->
 <div id="adminWrap" style="display:none">
 <header>
-  <div style="display:flex;align-items:center;gap:12px">
-    <span style="font-size:22px">🧪</span>
-    <h1>實驗室管理後台</h1>
+  <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">🧪</span><h1>實驗室管理後台</h1></div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button>
+    <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
   </div>
-  <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
 </header>
 <main>
-  <div class="admin-tabs">
-    <button class="admin-tab active" onclick="showTab('pending')">⏳ 待審核</button>
-    <button class="admin-tab" onclick="showTab('approved')">✅ 已核准</button>
-    <button class="admin-tab" onclick="showTab('return')">📬 確認歸還</button>
-    <button class="admin-tab" onclick="showTab('deposit')">💰 保證金</button>
-    <button class="admin-tab" onclick="showTab('all')">📊 全部記錄</button>
-  </div>
 
-  <div id="tab-pending" class="admin-panel active">
-    <div class="card" style="margin-bottom:0"><div class="card-title">⏳ 待審核申請</div>
-    <button class="btn btn-secondary btn-sm" onclick="loadRecords()" style="margin-bottom:12px">🔄 重新整理</button>
-    <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
+<!-- 統計 -->
+<div class="stats-grid" id="statsGrid"></div>
+
+<!-- 分頁 -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('pending')">⏳ 待審核</button>
+  <button class="tab" onclick="showTab('approved')">✅ 已核准</button>
+  <button class="tab" onclick="showTab('return')">📬 確認歸還</button>
+  <button class="tab" onclick="showTab('deposit')">💰 保證金</button>
+  <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
+</div>
+
+<div id="panel-pending" class="panel active">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">⏳ 待審核申請</div>
+    <div class="purpose-tabs" id="pendingPurposeTabs"></div>
+    <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
-  <div id="tab-approved" class="admin-panel">
-    <div class="card" style="margin-bottom:0"><div class="card-title">✅ 已核准申請</div>
-    <button class="btn btn-secondary btn-sm" onclick="loadRecords()" style="margin-bottom:12px">🔄 重新整理</button>
-    <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+</div>
+<div id="panel-approved" class="panel">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">✅ 已核准申請</div>
+    <div class="purpose-tabs" id="approvedPurposeTabs"></div>
+    <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
   </div>
-  <div id="tab-return" class="admin-panel">
-    <div class="card" style="margin-bottom:0"><div class="card-title">📬 確認歸還</div>
-    <button class="btn btn-secondary btn-sm" onclick="loadRecords()" style="margin-bottom:12px">🔄 重新整理</button>
-    <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+</div>
+<div id="panel-return" class="panel">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📬 確認歸還</div>
+    <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
   </div>
-  <div id="tab-deposit" class="admin-panel">
-    <div class="card" style="margin-bottom:0"><div class="card-title">💰 保證金管理</div>
-    <button class="btn btn-secondary btn-sm" onclick="loadRecords()" style="margin-bottom:12px">🔄 重新整理</button>
-    <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
+</div>
+<div id="panel-deposit" class="panel">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">💰 保證金管理</div>
+    <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div>
   </div>
-  <div id="tab-all" class="admin-panel">
-    <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部借用記錄</div>
-    <button class="btn btn-secondary btn-sm" onclick="loadRecords()" style="margin-bottom:12px">🔄 重新整理</button>
-    <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+</div>
+<div id="panel-all" class="panel">
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📊 全部借用記錄</div>
+    <div class="purpose-tabs" id="allPurposeTabs"></div>
+    <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div>
   </div>
+</div>
+
 </main>
 </div>
 
+<!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-title" id="modalTitle"></div>
@@ -135,196 +182,344 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const SUPABASE_URL = 'https://bgifddtcklpqbmljlvcg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
-const ADMIN_PW = '191313'; // ← 你可以自行修改這個密碼
+const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
+const ADMIN_PW='smgsh-lab-2025';
+const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
+const rn=r=>ROOM_NAMES[r]||r;
+const PURPOSES=['全部','課程','自主學習','科展','社團','其他'];
 
-const ROOM_NAMES = {'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
-const rn = r => ROOM_NAMES[r] || r;
-
-// 登入
-function checkPw() {
-  const pw = document.getElementById('pwInput').value;
-  if (pw === ADMIN_PW) {
-    document.getElementById('loginWrap').style.display = 'none';
-    document.getElementById('adminWrap').style.display = 'block';
-    loadRecords();
-  } else {
-    document.getElementById('pwErr').style.display = 'block';
-    document.getElementById('pwInput').value = '';
-  }
+function checkPw(){
+  if(document.getElementById('pwInput').value===ADMIN_PW){
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('adminWrap').style.display='block';
+    loadAll();
+  }else{document.getElementById('pwErr').style.display='block';document.getElementById('pwInput').value='';}
 }
-function logout() {
-  document.getElementById('adminWrap').style.display = 'none';
-  document.getElementById('loginWrap').style.display = 'flex';
-  document.getElementById('pwInput').value = '';
-}
+function logout(){document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
 
-async function sb(method, table, opts = {}) {
-  let url = SUPABASE_URL + '/rest/v1/' + table;
-  const params = [];
-  if (opts.select) params.push('select=' + opts.select);
-  if (opts.filter) params.push(opts.filter);
-  if (opts.order) params.push('order=' + opts.order);
-  if (params.length) url += '?' + params.join('&');
-  const res = await fetch(url, {
-    method,
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': opts.prefer || 'return=representation' },
-    body: opts.body ? JSON.stringify(opts.body) : undefined
-  });
-  if (res.status === 204) return [];
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || res.statusText);
+async function sb(method,table,opts={}){
+  let url=SUPABASE_URL+'/rest/v1/'+table;
+  const p=[];
+  if(opts.select)p.push('select='+opts.select);
+  if(opts.filter)p.push(opts.filter);
+  if(opts.order)p.push('order='+opts.order);
+  if(p.length)url+='?'+p.join('&');
+  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
+  if(res.status===204)return[];
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.message||res.statusText);
   return data;
 }
 
-let allEquipment = [];
-async function loadRecords() {
-  try {
-    const [rows, equip] = await Promise.all([
-      sb('GET', 'borrow_records', { order: 'created_at.desc' }),
-      sb('GET', 'equipment', { order: 'room,name' })
-    ]);
-    allEquipment = equip;
-    const records = mapRecords(rows);
-    renderList(records.filter(r => r.status === '待審核'), 'pendingList', 'pending');
-    renderList(records.filter(r => r.status === '已核准' || r.status === '逾期'), 'approvedList', 'approved');
-    renderList(records.filter(r => r.status === '已核准' || r.status === '逾期'), 'returnList', 'return');
-    renderList(records.filter(r => r.depositAmount > 0), 'depositList', 'deposit');
-    renderList(records, 'allList', 'all');
-  } catch(e) { showToast('載入失敗：' + e.message, 'error'); }
+let allRecords=[],allEquipment=[],currentPurposeFilter={pending:'全部',approved:'全部',all:'全部'};
+
+async function loadAll(){
+  try{
+    const[rows,equip]=await Promise.all([sb('GET','borrow_records',{order:'created_at.desc'}),sb('GET','equipment',{order:'room,name'})]);
+    allEquipment=equip;
+    allRecords=mapRecords(rows);
+    renderStats();
+    renderWithFilter('pending');
+    renderWithFilter('approved');
+    renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
+    renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
+    renderWithFilter('all');
+    renderPurposeTabs('pending');
+    renderPurposeTabs('approved');
+    renderPurposeTabs('all');
+  }catch(e){showToast('載入失敗：'+e.message,'error');}
 }
 
-function mapRecords(rows) {
-  return rows.map(r => ({ id: r.id, time: r.created_at, name: r.borrower_name, email: r.email, purpose: r.purpose, items: r.items||[], borrowDate: r.borrow_date, returnDate: r.return_date, actualReturn: r.actual_return, status: r.status, depositType: r.deposit_type, depositAmount: r.deposit_amount, depositStatus: r.deposit_status, note: r.note }));
+function renderStats(){
+  const pending=allRecords.filter(r=>r.status==='待審核').length;
+  const approved=allRecords.filter(r=>r.status==='已核准').length;
+  const overdue=allRecords.filter(r=>r.status==='逾期').length;
+  const depositPending=allRecords.filter(r=>r.depositStatus==='待繳納').length;
+  const depositReturn=allRecords.filter(r=>r.depositStatus==='待退還').length;
+  document.getElementById('statsGrid').innerHTML=[
+    {num:pending,label:'待審核',color:'#92400e'},
+    {num:approved,label:'借用中',color:'#065f46'},
+    {num:overdue,label:'逾期未還',color:'var(--danger)'},
+    {num:depositPending,label:'待收保證金',color:'#92400e'},
+    {num:depositReturn,label:'待退保證金',color:'#1e40af'},
+  ].map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
 }
 
-function showTab(tab) {
-  document.querySelectorAll('.admin-tab').forEach((t,i) => t.classList.toggle('active', ['pending','approved','return','deposit','all'][i] === tab));
-  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+function renderPurposeTabs(panel){
+  const el=document.getElementById(panel+'PurposeTabs');
+  if(!el)return;
+  el.innerHTML=PURPOSES.map(p=>
+    `<button class="purpose-tab ${currentPurposeFilter[panel]===p?'active':''}" onclick="setPurposeFilter('${panel}','${p}')">${p}</button>`
+  ).join('');
 }
 
-function renderList(records, containerId, mode) {
-  const c = document.getElementById(containerId);
-  if (!records || !records.length) { c.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>'; return; }
-  c.innerHTML = '<div class="record-list">' + records.map(r => renderRecord(r, mode)).join('') + '</div>';
+function setPurposeFilter(panel,purpose){
+  currentPurposeFilter[panel]=purpose;
+  renderPurposeTabs(panel);
+  renderWithFilter(panel);
 }
 
-function renderRecord(r, mode) {
-  const sc = {'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status] || 'badge-pending';
-  const items = Array.isArray(r.items) ? r.items : [];
-  const itemStr = items.map(i => rn(i.room) + ' ' + i.name + ' × ' + i.quantity + (i.unit||'')).join('、') || '─';
-  let actions = '';
-  if (mode === 'pending' && r.status === '待審核')
-    actions = `<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button>
-               <button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
-  if (mode === 'return' && (r.status === '已核准' || r.status === '逾期'))
-    actions = `<button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}',false)">📬 確認歸還（完整）</button>
-               <button class="btn btn-danger btn-sm" onclick="confirmReturn('${r.id}',true)">⚠️ 確認歸還（損壞）</button>`;
-  if (mode === 'deposit' && r.depositAmount > 0) {
-    if (r.depositStatus === '待繳納') actions = `<button class="btn btn-secondary btn-sm" onclick="updateDeposit('${r.id}','已繳納')">💰 標記已繳納</button>`;
-    if (r.depositStatus === '待退還') actions = `<button class="btn btn-primary btn-sm" onclick="updateDeposit('${r.id}','已退還')">↩️ 標記已退還</button>`;
+function renderWithFilter(panel){
+  let records=allRecords;
+  if(panel==='pending')records=allRecords.filter(r=>r.status==='待審核');
+  else if(panel==='approved')records=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期');
+  else if(panel==='all')records=allRecords;
+  const f=currentPurposeFilter[panel];
+  if(f&&f!=='全部')records=records.filter(r=>r.purpose===f);
+  renderList(records,document.getElementById(panel+'List'),panel);
+}
+
+function mapRecords(rows){
+  return rows.map(r=>({id:r.id,time:r.created_at,name:r.borrower_name,email:r.email,purpose:r.purpose,items:r.items||[],borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund}));
+}
+
+function showTab(tab){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','all'][i]===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+function renderList(records,container,mode){
+  if(!records||!records.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';return;}
+  container.innerHTML='<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
+}
+
+function renderRecord(r,mode){
+  const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
+  const items=Array.isArray(r.items)?r.items:[];
+  const isOverdue=r.status==='逾期';
+  const today=new Date();
+  const returnDate=r.returnDate?new Date(r.returnDate):null;
+  const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
+
+  // 條列式器材
+  const itemListHtml=items.length?`<div class="item-list">
+    <div class="item-list-title">借用器材清單</div>
+    ${items.map((i,idx)=>`<div class="item-row">
+      <span class="item-num">${idx+1}.</span>
+      <span class="item-name">${i.name}</span>
+      <span class="item-room">${rn(i.room)}</span>
+      <span class="item-qty">× ${i.quantity} ${i.unit||''}</span>
+    </div>`).join('')}
+  </div>`:'';
+
+  // 損壞資訊
+  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ 損壞說明：${r.damageNote}${r.finalRefund!=null?' | 實際退還：NT$'+r.finalRefund:''}</div>`:'';
+
+  let actions='';
+  if(mode==='pending'&&r.status==='待審核'){
+    actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button>
+             <button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
   }
-  return `<div class="record-card">
+  if(mode==='return'&&(r.status==='已核准'||r.status==='逾期')){
+    actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}',false)">📬 完整歸還</button>
+             <button class="btn btn-danger btn-sm" onclick="openDamageModal('${r.id}')">⚠️ 損壞歸還</button>`;
+  }
+  if(mode==='deposit'&&r.depositAmount>0){
+    if(r.depositStatus==='待繳納')actions=`<button class="btn btn-secondary btn-sm" onclick="updateDeposit('${r.id}','已繳納')">💰 標記已繳納</button>`;
+    if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund('${r.id}',${r.depositAmount})">↩️ 確認退還保證金</button>`;
+    if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal('${r.id}',${r.depositAmount})">💸 計算賠償金額</button>`;
+  }
+
+  return `<div class="record-card ${isOverdue?'overdue':''}">
     <div class="record-header">
-      <div><span class="record-id">${r.id}</span>
-        <div style="font-size:14px;font-weight:700;margin-top:3px">${r.name}</div>
-        <div style="font-size:13px;color:var(--text2)">${r.email}</div></div>
-      <span class="badge ${sc}">${r.status}</span>
+      <div>
+        <span class="record-id">${r.id}</span>
+        <div class="record-person">${r.name} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${r.purpose}】</span></div>
+        <div class="record-email">${r.email}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="badge ${sc}">${r.status}</span>
+        ${isOverdue?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
+      </div>
     </div>
     <div class="record-meta">
-      <div class="record-meta-item"><span class="record-meta-label">借用目的</span><span class="record-meta-value">${r.purpose}</span></div>
       <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${r.borrowDate||'─'}</span></div>
       <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${r.returnDate||'─'}</span></div>
-      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount} (${r.depositStatus})</span></div>`:''}
+      ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${r.actualReturn}</span></div>`:''}
+      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount}<br><span style="font-size:11px;color:var(--text2)">${r.depositStatus}</span></span></div>`:''}
     </div>
-    <div class="record-items">🔬 ${itemStr}</div>
-    ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
+    ${itemListHtml}
+    ${damageHtml}
+    ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${r.note}</div>`:''}
     ${actions?`<div class="record-actions">${actions}</div>`:''}
   </div>`;
 }
 
-function approveRecord(id) {
-  showModal('確認核准', `<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`, [
+// ── 審核 ──────────────────────────────────────────────────
+function approveRecord(id){
+  showModal('確認核准',`<p>確定核准申請單 <strong>${id}</strong> 嗎？</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認核准',cls:'btn-primary',fn:`doStatus('${id}','已核准')`}
   ]);
 }
-function rejectRecord(id) {
-  showModal('確認拒絕', `<p>確定拒絕申請單 <strong>${id}</strong> 嗎？</p>
-    <div style="margin-top:12px"><label>拒絕原因（選填）</label>
-    <textarea id="rejectNote" rows="2" style="margin-top:6px"></textarea></div>`, [
+function rejectRecord(id){
+  showModal('確認拒絕',`<p>確定拒絕申請單 <strong>${id}</strong> 嗎？</p>
+    <div class="form-group" style="margin-top:10px"><label>拒絕原因（選填）</label>
+    <textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認拒絕',cls:'btn-danger',fn:`doStatus('${id}','已拒絕',document.getElementById('rejectNote').value)`}
   ]);
 }
-async function doStatus(id, status, note) {
+async function doStatus(id,status,note){
   closeModal();
-  try {
-    const body = { status };
-    if (note) body.note = note;
-    await sb('PATCH', 'borrow_records', { filter: 'id=eq.' + id, body, prefer: 'return=minimal' });
-    if (status === '已拒絕') {
-      const rows = await sb('GET', 'borrow_records', { filter: 'id=eq.' + id });
-      if (rows.length > 0) {
-        for (const item of (rows[0].items || [])) {
-          const equip = allEquipment.find(e => e.room === item.room && e.name === item.name);
-          if (equip) await sb('PATCH', 'equipment', { filter: 'id=eq.' + equip.id, body: { available: equip.available + parseInt(item.quantity) }, prefer: 'return=minimal' });
-        }
+  try{
+    const body={status};if(note)body.note=note;
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
+    if(status==='已拒絕'){
+      const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});
+      if(rows.length>0)for(const item of(rows[0].items||[])){
+        const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);
+        if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});
       }
     }
-    showToast('狀態已更新', 'success'); loadRecords();
-  } catch(e) { showToast('更新失敗：' + e.message, 'error'); }
-}
-function confirmReturn(id, damaged) {
-  const label = damaged ? '損壞歸還' : '完整歸還';
-  showModal('確認歸還', `<p>確認 <strong>${id}</strong> ${label}？</p>
-    ${damaged?'<p style="color:var(--danger);font-size:13px;margin-top:6px">⚠️ 損壞將保留保證金並照價賠償</p>':''}`, [
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認'+label,cls:damaged?'btn-danger':'btn-primary',fn:`doReturn('${id}',${damaged})`}
-  ]);
-}
-async function doReturn(id, damaged) {
-  closeModal();
-  try {
-    const today = new Date().toISOString().split('T')[0];
-    await sb('PATCH', 'borrow_records', { filter: 'id=eq.' + id, body: { status: damaged?'已歸還-損壞':'已歸還', actual_return: today, deposit_status: damaged?'損壞-照價賠償':'待退還' }, prefer: 'return=minimal' });
-    if (!damaged) {
-      const rows = await sb('GET', 'borrow_records', { filter: 'id=eq.' + id });
-      if (rows.length > 0) {
-        for (const item of (rows[0].items || [])) {
-          const equip = allEquipment.find(e => e.room === item.room && e.name === item.name);
-          if (equip) await sb('PATCH', 'equipment', { filter: 'id=eq.' + equip.id, body: { available: equip.available + parseInt(item.quantity) }, prefer: 'return=minimal' });
-        }
-      }
-    }
-    showToast('歸還已確認', 'success'); loadRecords();
-  } catch(e) { showToast('更新失敗：' + e.message, 'error'); }
-}
-async function updateDeposit(id, status) {
-  try {
-    await sb('PATCH', 'borrow_records', { filter: 'id=eq.' + id, body: { deposit_status: status }, prefer: 'return=minimal' });
-    showToast('保證金狀態已更新', 'success'); loadRecords();
-  } catch(e) { showToast('更新失敗：' + e.message, 'error'); }
+    showToast('狀態已更新','success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
 
-function showModal(title, body, actions) {
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = body;
-  document.getElementById('modalActions').innerHTML = actions.map(a => `<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
+// ── 歸還 ──────────────────────────────────────────────────
+function confirmReturn(id,damaged){
+  showModal('確認完整歸還',`<p>確認 <strong>${id}</strong> 器材完整歸還？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'')`}
+  ]);
+}
+
+function openDamageModal(id){
+  const record=allRecords.find(r=>r.id===id);
+  const items=record?.items||[];
+  showModal('⚠️ 損壞歸還 - 填寫損壞說明',`
+    <div class="info-box">填寫損壞的器材及賠償金額，系統將自動計算最終退還保證金。</div>
+    <div class="form-group"><label>損壞說明 *</label>
+    <textarea id="damageNoteInput" rows="3" placeholder="例如：100mL燒杯2個破裂，每個NT$50"></textarea></div>
+    <div class="damage-form">
+      <div class="damage-form-title">💸 賠償計算</div>
+      ${items.map((item,i)=>`
+        <div class="damage-row">
+          <span style="font-size:13px;min-width:120px">${item.name} × ${item.quantity}</span>
+          <input type="number" id="dmg_qty_${i}" placeholder="損壞數量" min="0" max="${item.quantity}" oninput="calcDamage('${id}')">
+          <span style="font-size:13px">件 × NT$</span>
+          <input type="number" id="dmg_price_${i}" placeholder="每件單價" min="0" oninput="calcDamage('${id}')">
+        </div>`).join('')}
+      <div class="damage-summary" id="damageSummary">
+        <div class="damage-line"><span>保證金</span><span>NT$${record?.depositAmount||0}</span></div>
+        <div class="damage-line"><span>賠償金額</span><span id="dmgTotal">NT$0</span></div>
+        <div class="damage-line"><span>實際退還</span><span id="dmgRefund">NT$${record?.depositAmount||0}</span></div>
+      </div>
+    </div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認損壞歸還',cls:'btn-danger',fn:`doReturn('${id}',true,document.getElementById('damageNoteInput').value,${record?.depositAmount||0})`}
+  ]);
+  window._dmgItems=items;
+  window._dmgDeposit=record?.depositAmount||0;
+}
+
+function calcDamage(id){
+  const items=window._dmgItems||[];
+  let total=0;
+  items.forEach((item,i)=>{
+    const qty=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0;
+    const price=parseInt(document.getElementById('dmg_price_'+i)?.value)||0;
+    total+=qty*price;
+  });
+  const deposit=window._dmgDeposit||0;
+  const refund=Math.max(0,deposit-total);
+  if(document.getElementById('dmgTotal'))document.getElementById('dmgTotal').textContent='NT$'+total;
+  if(document.getElementById('dmgRefund'))document.getElementById('dmgRefund').textContent='NT$'+refund;
+}
+
+async function doReturn(id,damaged,damageNote,depositAmount){
+  closeModal();
+  try{
+    const today=new Date().toISOString().split('T')[0];
+    const items=window._dmgItems||[];
+    let total=0;
+    if(damaged){
+      items.forEach((item,i)=>{
+        const qty=parseInt(document.getElementById?.('dmg_qty_'+i)?.value)||0;
+        const price=parseInt(document.getElementById?.('dmg_price_'+i)?.value)||0;
+        total+=qty*price;
+      });
+    }
+    const finalRefund=damaged?Math.max(0,(depositAmount||0)-total):depositAmount;
+    const body={status:damaged?'已歸還-損壞':'已歸還',actual_return:today,deposit_status:damaged?'損壞-照價賠償':'待退還'};
+    if(damaged){body.damage_note=damageNote;body.final_refund=finalRefund;}
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
+    if(!damaged){
+      const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});
+      if(rows.length>0)for(const item of(rows[0].items||[])){
+        const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);
+        if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});
+      }
+    }
+    showToast(damaged?`損壞歸還確認，應退還 NT$${finalRefund}`:'歸還確認成功','success');
+    loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+
+// ── 保證金 ────────────────────────────────────────────────
+async function updateDeposit(id,status){
+  try{
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:status},prefer:'return=minimal'});
+    showToast('保證金狀態已更新','success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+
+function confirmRefund(id,amount){
+  showModal('確認退還保證金',`<p>確認退還 NT$<strong>${amount}</strong> 保證金給借用人？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認已退還',cls:'btn-primary',fn:`updateDeposit('${id}','已退還')`}
+  ]);
+}
+
+function openDamageSettleModal(id,depositAmount){
+  const record=allRecords.find(r=>r.id===id);
+  showModal('💸 損壞賠償結算',`
+    <div class="info-box">${record?.damageNote||'請填寫損壞說明'}</div>
+    <div class="form-group"><label>損壞說明</label>
+    <textarea id="settleNote" rows="2">${record?.damageNote||''}</textarea></div>
+    <div class="form-group"><label>賠償金額 (NT$)</label>
+    <input type="number" id="settleCompensation" placeholder="0" oninput="calcSettle(${depositAmount})"></div>
+    <div class="damage-summary">
+      <div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div>
+      <div class="damage-line"><span>賠償金額</span><span id="settleComp">NT$0</span></div>
+      <div class="damage-line"><span>實際退還</span><span id="settleRefund">NT$${depositAmount}</span></div>
+    </div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認結算',cls:'btn-warn',fn:`doSettle('${id}',${depositAmount})`}
+  ]);
+}
+
+function calcSettle(deposit){
+  const comp=parseInt(document.getElementById('settleCompensation')?.value)||0;
+  const refund=Math.max(0,deposit-comp);
+  if(document.getElementById('settleComp'))document.getElementById('settleComp').textContent='NT$'+comp;
+  if(document.getElementById('settleRefund'))document.getElementById('settleRefund').textContent='NT$'+refund;
+}
+
+async function doSettle(id,depositAmount){
+  const comp=parseInt(document.getElementById('settleCompensation')?.value)||0;
+  const note=document.getElementById('settleNote')?.value||'';
+  const refund=Math.max(0,depositAmount-comp);
+  closeModal();
+  try{
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'損壞結算完成',damage_note:note,final_refund:refund},prefer:'return=minimal'});
+    showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+
+function showModal(title,body,actions){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=body;
+  document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
   document.getElementById('modalOverlay').classList.add('show');
 }
-function closeModal(event) {
-  if (!event || event.target === document.getElementById('modalOverlay'))
-    document.getElementById('modalOverlay').classList.remove('show');
-}
+function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'toast show ' + (type||'');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
-}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
 </script>
 </body>
 </html>
