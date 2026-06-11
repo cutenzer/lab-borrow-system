@@ -74,13 +74,14 @@
   .stat-label{font-size:11px;color:var(--text2);margin-top:3px;}
   /* 場地週曆 */
   .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
-  .venue-table-wrap{overflow-x:auto;}
-  .venue-table{width:100%;border-collapse:collapse;min-width:700px;font-size:12px;}
-  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;}
-  .venue-table th:first-child,.venue-table th:nth-child(2){background:#1f5139;}
-  .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;}
-  .venue-table .period-cell{background:#e8e6e0;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;min-width:44px;}
-  .venue-table .lab-cell{background:var(--surface2);font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;}
+  .venue-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
+  .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:3;border:1px solid #1f5139;}
+  .venue-table th:first-child{left:0;z-index:5;background:#1f5139;min-width:44px;}
+  .venue-table th:nth-child(2){left:44px;z-index:5;background:#1f5139;min-width:42px;}
+  .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;background:var(--surface);}
+  .venue-table .period-cell{background:#e8e6e0;font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;}
+  .venue-table .lab-cell{background:var(--surface2);font-weight:600;font-size:11px;text-align:center;white-space:nowrap;min-width:42px;position:sticky;left:44px;z-index:2;}
   .venue-table .lab-生物{color:#15803d;}.venue-table .lab-化學{color:#b45309;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#1d4ed8;}.venue-table .lab-地科{color:#0e7490;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;cursor:pointer;text-align:center;}
@@ -146,6 +147,7 @@
   <button class="tab" onclick="showTab('return')">📬 確認歸還</button>
   <button class="tab" onclick="showTab('deposit')">💰 保證金</button>
   <button class="tab" onclick="showTab('venue')">🏛️ 場地管理</button>
+  <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
 
@@ -176,6 +178,11 @@
   </div>
   <div class="card" style="margin-bottom:0">
     <div class="card-title">🏛️ 場地週曆</div>
+    <div class="week-selector" id="adminWeekSelector" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
+      <select id="adminWeekJump" onchange="adminJumpToWeek(this.value)" style="min-width:110px"></select>
+      <span id="adminCurrentWeekBadge" style="display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px"></span>
+    </div>
     <div class="venue-nav">
       <button class="btn btn-secondary btn-sm" onclick="changeAdminWeek(-1)">← 上週</button>
       <span style="font-size:14px;font-weight:700" id="adminVenueWeekLabel"></span>
@@ -183,6 +190,32 @@
       <button class="btn btn-primary btn-sm" onclick="goAdminThisWeek()">本週</button>
     </div>
     <div class="venue-table-wrap"><table class="venue-table" id="adminVenueTable"></table></div>
+  </div>
+</div>
+
+<!-- 學期設定 -->
+<div id="panel-semester" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📆 新增 / 編輯學期</div>
+    <div class="info-box">設定開學日與總週數後，系統會自動計算每個日期屬於第幾週。設為「啟用中」的學期會用於前台週次顯示。</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+      <div class="form-group"><label>學期名稱 *</label><input type="text" id="sem-name" placeholder="例如：114學年度上學期"></div>
+      <div class="form-group"><label>開學日 *</label><input type="date" id="sem-start"></div>
+      <div class="form-group"><label>總週數 *</label><input type="number" id="sem-weeks" value="20" min="1" max="30"></div>
+      <div class="form-group"><label>寒假開始</label><input type="date" id="sem-winter-start"></div>
+      <div class="form-group"><label>寒假結束</label><input type="date" id="sem-winter-end"></div>
+      <div class="form-group"><label>暑假開始</label><input type="date" id="sem-summer-start"></div>
+      <div class="form-group"><label>暑假結束</label><input type="date" id="sem-summer-end"></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:20px"><input type="checkbox" id="sem-active" style="width:auto"><label for="sem-active" style="color:var(--text)">設為啟用中學期</label></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-secondary" onclick="clearSemesterForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveSemester()">💾 儲存學期</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📋 已建立的學期</div>
+    <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
   </div>
 </div>
 
@@ -274,10 +307,11 @@ function renderWithFilter(panel){
 }
 
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','all'][i]===tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','semester','all'][i]===tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
+  if(tab==='semester')loadSemesters();
 }
 
 function renderList(records,container,mode){
@@ -393,17 +427,171 @@ function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeAdminWeek(delta){adminWeekOffset+=delta;loadAdminVenue();}
 function goAdminThisWeek(){adminWeekOffset=0;loadAdminVenue();}
 
+// ── 學期週次 ──────────────────────────────────────────────
+let activeSemester=null,allSemesters=[];
+
+async function loadActiveSemester(){
+  try{
+    const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
+    activeSemester=rows.length?rows[0]:null;
+    buildAdminWeekSelector();
+  }catch(e){activeSemester=null;}
+}
+
+function getMondayOfOffset(offset){const now=new Date(),day=now.getDay(),monday=new Date(now);monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);return monday;}
+
+function getWeekNumber(date){
+  if(!activeSemester||!activeSemester.start_date)return null;
+  const start=new Date(activeSemester.start_date+'T00:00:00');
+  const startDay=start.getDay();
+  const startMonday=new Date(start);startMonday.setDate(start.getDate()-((startDay+6)%7));startMonday.setHours(0,0,0,0);
+  const diffDays=Math.floor((date-startMonday)/(1000*60*60*24));
+  return Math.floor(diffDays/7)+1;
+}
+
+function buildAdminWeekSelector(){
+  const sel=document.getElementById('adminWeekJump'),wrap=document.getElementById('adminWeekSelector');
+  if(!activeSemester){wrap.style.display='none';return;}
+  wrap.style.display='flex';
+  const total=activeSemester.total_weeks||20;
+  let opts='';for(let w=1;w<=total;w++)opts+=`<option value="${w}">第 ${w} 週</option>`;
+  sel.innerHTML=opts;
+}
+
+function adminJumpToWeek(week){
+  if(!activeSemester)return;
+  week=parseInt(week);
+  const start=new Date(activeSemester.start_date+'T00:00:00');
+  const startDay=start.getDay();
+  const startMonday=new Date(start);startMonday.setDate(start.getDate()-((startDay+6)%7));startMonday.setHours(0,0,0,0);
+  const targetMonday=new Date(startMonday);targetMonday.setDate(startMonday.getDate()+(week-1)*7);
+  const thisMonday=getMondayOfOffset(0);
+  adminWeekOffset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
+  loadAdminVenue();
+}
+
 async function loadAdminVenue(){
+  if(!activeSemester)await loadActiveSemester();
   const dates=getWeekDates(adminWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
-  document.getElementById('adminVenueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+  const weekNum=getWeekNumber(dates[0]);
+  const badge=document.getElementById('adminCurrentWeekBadge'),weekSel=document.getElementById('adminWeekJump');
+  if(weekNum!==null&&activeSemester&&weekNum>=1&&weekNum<=(activeSemester.total_weeks||20)){
+    document.getElementById('adminVenueWeekLabel').textContent=`第${weekNum}週　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge){badge.textContent=`第 ${weekNum} 週`;badge.style.display='inline-block';}
+    if(weekSel)weekSel.value=weekNum;
+  }else{
+    document.getElementById('adminVenueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge)badge.style.display='none';
+  }
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
-    // 展開 periods
     const expanded=[];
     all.forEach(b=>{(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
     renderAdminVenueTable(dates,expanded);
   }catch(e){}
+}
+
+// ── 學期 CRUD ─────────────────────────────────────────────
+async function loadSemesters(){
+  const list=document.getElementById('semesterList');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    allSemesters=await sb('GET','semester_settings',{order:'created_at.desc'});
+    if(!allSemesters.length){list.innerHTML='<div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div>';return;}
+    list.innerHTML='<div class="record-list">'+allSemesters.map(s=>`
+      <div class="record-card" style="${s.is_active?'border-color:var(--accent);border-width:2px':''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div>
+            <div style="font-size:15px;font-weight:700">${s.name} ${s.is_active?'<span class="badge badge-approved">啟用中</span>':''}</div>
+            <div style="font-size:12.5px;color:var(--text2);margin-top:4px">開學日：${s.start_date}　共 ${s.total_weeks} 週</div>
+            ${s.winter_break_start?`<div style="font-size:12px;color:var(--text2)">寒假：${s.winter_break_start} ～ ${s.winter_break_end||'?'}</div>`:''}
+            ${s.summer_break_start?`<div style="font-size:12px;color:var(--text2)">暑假：${s.summer_break_start} ～ ${s.summer_break_end||'?'}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${!s.is_active?`<button class="btn btn-primary btn-sm" onclick="activateSemester('${s.id}')">設為啟用</button>`:''}
+            <button class="btn btn-secondary btn-sm" onclick="editSemester('${s.id}')">✏️ 編輯</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSemester('${s.id}')">🗑️ 刪除</button>
+          </div>
+        </div>
+      </div>`).join('')+'</div>';
+  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+}
+
+let editingSemesterId=null;
+function clearSemesterForm(){
+  editingSemesterId=null;
+  ['sem-name','sem-start','sem-winter-start','sem-winter-end','sem-summer-start','sem-summer-end'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sem-weeks').value='20';
+  document.getElementById('sem-active').checked=false;
+}
+
+function editSemester(id){
+  const s=allSemesters.find(x=>x.id===id);if(!s)return;
+  editingSemesterId=id;
+  document.getElementById('sem-name').value=s.name||'';
+  document.getElementById('sem-start').value=s.start_date||'';
+  document.getElementById('sem-weeks').value=s.total_weeks||20;
+  document.getElementById('sem-winter-start').value=s.winter_break_start||'';
+  document.getElementById('sem-winter-end').value=s.winter_break_end||'';
+  document.getElementById('sem-summer-start').value=s.summer_break_start||'';
+  document.getElementById('sem-summer-end').value=s.summer_break_end||'';
+  document.getElementById('sem-active').checked=!!s.is_active;
+  document.querySelector('#panel-semester .card-title').scrollIntoView({behavior:'smooth'});
+  showToast('已載入學期資料，可修改後儲存','success');
+}
+
+async function saveSemester(){
+  const name=document.getElementById('sem-name').value.trim();
+  const start=document.getElementById('sem-start').value;
+  const weeks=parseInt(document.getElementById('sem-weeks').value)||20;
+  if(!name||!start){showToast('請填寫學期名稱和開學日','error');return;}
+  const isActive=document.getElementById('sem-active').checked;
+  const body={
+    name,start_date:start,total_weeks:weeks,
+    winter_break_start:document.getElementById('sem-winter-start').value||null,
+    winter_break_end:document.getElementById('sem-winter-end').value||null,
+    summer_break_start:document.getElementById('sem-summer-start').value||null,
+    summer_break_end:document.getElementById('sem-summer-end').value||null,
+    is_active:isActive
+  };
+  try{
+    // 若設為啟用，先把其他學期取消啟用
+    if(isActive){
+      const actives=await sb('GET','semester_settings',{filter:'is_active=eq.true'});
+      for(const a of actives){if(a.id!==editingSemesterId)await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});}
+    }
+    if(editingSemesterId){
+      await sb('PATCH','semester_settings',{filter:'id=eq.'+editingSemesterId,body,prefer:'return=minimal'});
+      showToast('學期已更新','success');
+    }else{
+      body.id='SEM-'+Date.now();
+      await sb('POST','semester_settings',{body,prefer:'return=minimal'});
+      showToast('學期已建立','success');
+    }
+    clearSemesterForm();loadSemesters();loadActiveSemester();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+
+async function activateSemester(id){
+  try{
+    const actives=await sb('GET','semester_settings',{filter:'is_active=eq.true'});
+    for(const a of actives)await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});
+    await sb('PATCH','semester_settings',{filter:'id=eq.'+id,body:{is_active:true},prefer:'return=minimal'});
+    showToast('已設為啟用中學期','success');loadSemesters();loadActiveSemester();
+  }catch(e){showToast('失敗','error');}
+}
+
+function deleteSemester(id){
+  showModal('確認刪除',`<p>確定刪除這個學期設定嗎？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteSemester('${id}')`}
+  ]);
+}
+async function doDeleteSemester(id){
+  closeModal();
+  try{await sb('DELETE','semester_settings',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadSemesters();loadActiveSemester();}
+  catch(e){showToast('刪除失敗','error');}
 }
 
 function renderAdminVenueTable(dates,expanded){
