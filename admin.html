@@ -681,7 +681,13 @@ async function deletePeriod(bookingId,date,period,venue){
 
 function openAdminAddVenue(date,period,presetVenue){
   showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
-    <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師"></div>
+    <div class="form-group"><label>身份 *</label>
+      <select id="avf-role" onchange="document.getElementById('avf-sid-group').style.display=this.value==='學生'?'flex':'none'">
+        <option value="老師">老師</option><option value="學生">學生</option>
+      </select>
+    </div>
+    <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師 / 王小美"></div>
+    <div class="form-group" id="avf-sid-group" style="display:none"><label>學號 *</label><input type="text" id="avf-sid" placeholder="例如：191010"></div>
     <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
     <div class="form-group"><label>實驗室 *</label><select id="avf-venue">${VENUES.map(v=>`<option value="${v}" ${v===presetVenue?'selected':''}>${v}</option>`).join('')}</select></div>
     <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto"><label for="avf-fixed" style="color:var(--text)">📌 固定課程（整學期）</label></div>
@@ -696,7 +702,10 @@ function openAdminAddVenue(date,period,presetVenue){
 
 async function adminAddVenue(date,period){
   const name=document.getElementById('avf-name').value.trim();
+  const role=document.getElementById('avf-role').value;
+  const sid=role==='學生'?document.getElementById('avf-sid').value.trim():'';
   if(!name){showToast('請填寫姓名','error');return;}
+  if(role==='學生'&&!sid){showToast('學生請填寫學號','error');return;}
   const purpose=document.getElementById('avf-purpose').value;
   const venue=document.getElementById('avf-venue').value;
   const isFixed=document.getElementById('avf-fixed').checked;
@@ -705,7 +714,7 @@ async function adminAddVenue(date,period){
   closeModal();
   try{
     const id='VEN-ADM-'+Date.now();
-    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:null,role:'老師',purpose,periods:[{date,period,venue,status:'已核准'}],status:'已核准',note,is_fixed:isFixed,semester}});
+    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:sid||null,role,purpose,periods:[{date,period,venue,status:'已核准'}],status:'已核准',note,is_fixed:isFixed,semester}});
     showToast('已新增','success');loadAll();
   }catch(e){showToast('失敗：'+e.message,'error');}
 }
