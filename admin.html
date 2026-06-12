@@ -27,7 +27,6 @@
   .purpose-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
   .purpose-tab{padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:var(--text);}
   .purpose-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;}
-  /* 記錄卡片 */
   .record-list{display:flex;flex-direction:column;gap:10px;}
   .record-card{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--surface);}
   .record-card.overdue{border-color:var(--danger);border-width:2px;}
@@ -45,7 +44,6 @@
   .item-room{font-size:11px;color:var(--accent);}
   .item-qty{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;}
   .record-actions{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
-  /* 場地申請卡片 */
   .venue-request-card{border:1px solid var(--border);border-radius:8px;padding:14px 16px;background:var(--surface);margin-bottom:10px;}
   .venue-request-card.has-pending{border-color:var(--warn);}
   .period-manage-list{margin-top:10px;}
@@ -57,7 +55,6 @@
   .ps-pending{background:#fef3c7;color:#92400e;}
   .ps-approved{background:#d1fae5;color:#065f46;}
   .ps-rejected{background:#fee2e2;color:#991b1b;}
-  /* 損壞 */
   .damage-form{background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:14px;margin-top:10px;}
   .damage-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;}
   .damage-row input{flex:1;min-width:80px;padding:6px 10px;font-size:13px;border:1.5px solid var(--border);border-radius:6px;font-family:inherit;outline:none;}
@@ -72,7 +69,6 @@
   .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
   .stat-num{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;}
   .stat-label{font-size:11px;color:var(--text2);margin-top:3px;}
-  /* 場地週曆 */
   .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
   .venue-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh;}
   .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
@@ -94,7 +90,6 @@
   .venue-booking.rejected{background:#fee2e2;color:#991b1b;text-decoration:line-through;}
   .venue-add-admin{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:2px;font-size:10.5px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-admin:hover{border-color:var(--accent);color:var(--accent);}
-  /* Modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
   .modal-overlay.show{display:flex;}
   .modal{background:var(--surface);border-radius:var(--radius);padding:22px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
@@ -173,7 +168,6 @@
   <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
 </div>
 
-<!-- 場地管理 -->
 <div id="panel-venue" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">⏳ 待審核場地申請</div>
@@ -196,7 +190,6 @@
   </div>
 </div>
 
-<!-- 學期設定 -->
 <div id="panel-semester" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📆 新增 / 編輯學期</div>
@@ -238,7 +231,7 @@
 <script>
 const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
-const ADMIN_PW='191313'; // ← 修改密碼在這裡
+const ADMIN_PW='191313';
 const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
 const rn=r=>ROOM_NAMES[r]||r;
 const PURPOSES=['全部','課程','自主學習','科展','社團','其他'];
@@ -249,15 +242,8 @@ const DAYS=['一','二','三','四','五','六','日'];
 function checkPw(){if(document.getElementById('pwInput').value===ADMIN_PW){document.getElementById('loginWrap').style.display='none';document.getElementById('adminWrap').style.display='block';loadAll();}else{document.getElementById('pwErr').style.display='block';document.getElementById('pwInput').value='';}}
 function logout(){document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
 
+// ── 修正：讀 text() 再 parse，避免 204 / 201 空 body 爆炸 ──
 async function sb(method,table,opts={}){
-  let url=SUPABASE_URL+'/rest/v1/'+table;
-  const p=[];
-  if(opts.select)p.push('select='+opts.select);
-  if(opts.filter)p.push(opts.filter);
-  if(opts.order)p.push('order='+opts.order);
-  if(p.length)url+='?'+p.join('&');
-  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
-  async function sb(method,table,opts={}){
   let url=SUPABASE_URL+'/rest/v1/'+table;
   const p=[];
   if(opts.select)p.push('select='+opts.select);
@@ -270,18 +256,28 @@ async function sb(method,table,opts={}){
   if(!res.ok)throw new Error((data&&data.message)||res.statusText);
   return data||[];
 }
-}
 
 let allRecords=[],allEquipment=[],allVenueBookings=[];
 let currentPurposeFilter={pending:'全部',approved:'全部',all:'全部'};
 let adminWeekOffset=0;
 
+// ── 修正：每個陣列都加 Array.isArray 保護 ──
 async function loadAll(){
   try{
-    const[rows,equip,venueRows]=await Promise.all([sb('GET','borrow_records',{order:'created_at.desc'}),sb('GET','equipment',{order:'room,name'}),sb('GET','venue_bookings',{order:'created_at.desc'})]);
-    allEquipment=equip;
-    allRecords=rows.map(r=>({id:r.id,time:r.created_at,name:r.borrower_name,studentId:r.student_id,role:r.role,purpose:r.purpose,items:r.items||[],borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund}));
-    allVenueBookings=venueRows;
+    const[rows,equip,venueRows]=await Promise.all([
+      sb('GET','borrow_records',{order:'created_at.desc'}),
+      sb('GET','equipment',{order:'room,name'}),
+      sb('GET','venue_bookings',{order:'created_at.desc'})
+    ]);
+    allEquipment=Array.isArray(equip)?equip:[];
+    allVenueBookings=Array.isArray(venueRows)?venueRows:[];
+    allRecords=(Array.isArray(rows)?rows:[]).map(r=>({
+      id:r.id,time:r.created_at,name:r.borrower_name,studentId:r.student_id,
+      role:r.role,purpose:r.purpose,items:r.items||[],
+      borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,
+      status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
+      depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund
+    }));
     renderStats();
     renderWithFilter('pending');renderWithFilter('approved');renderWithFilter('all');
     renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
@@ -385,7 +381,6 @@ function renderVenuePending(){
         </div>
         <span class="badge badge-pending">待審核 ${pendingCount} 筆</span>
       </div>
-      <!-- 時段列表，可個別選擇 -->
       <div class="period-manage-list">
         ${periods.map((p,i)=>`
           <div class="period-manage-row ${p.status==='已核准'?'approved':p.status==='已拒絕'?'rejected':'pending'}">
@@ -432,20 +427,18 @@ async function approveAllVenue(bookingId,approve){
   }catch(e){showToast('更新失敗','error');}
 }
 
-// 週曆
 function getWeekDates(offset){const now=new Date(),day=now.getDay(),monday=new Date(now);monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);const dates=[];for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}return dates;}
 function fmtDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeAdminWeek(delta){adminWeekOffset+=delta;loadAdminVenue();}
 function goAdminThisWeek(){adminWeekOffset=0;loadAdminVenue();}
 
-// ── 學期週次 ──────────────────────────────────────────────
 let activeSemester=null,allSemesters=[];
 
 async function loadActiveSemester(){
   try{
     const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
-    activeSemester=rows.length?rows[0]:null;
+    activeSemester=(Array.isArray(rows)&&rows.length)?rows[0]:null;
     buildAdminWeekSelector();
   }catch(e){activeSemester=null;}
 }
@@ -499,7 +492,7 @@ async function loadAdminVenue(){
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     const expanded=[];
-    all.forEach(b=>{(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
+    (Array.isArray(all)?all:[]).forEach(b=>{(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
     renderAdminVenueTable(dates,expanded);
   }catch(e){}
 }
@@ -510,6 +503,7 @@ async function loadSemesters(){
   list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
   try{
     allSemesters=await sb('GET','semester_settings',{order:'created_at.desc'});
+    allSemesters=Array.isArray(allSemesters)?allSemesters:[];
     if(!allSemesters.length){list.innerHTML='<div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div>';return;}
     list.innerHTML='<div class="record-list">'+allSemesters.map(s=>`
       <div class="record-card" style="${s.is_active?'border-color:var(--accent);border-width:2px':''}">
@@ -568,10 +562,9 @@ async function saveSemester(){
     is_active:isActive
   };
   try{
-    // 若設為啟用，先把其他學期取消啟用
     if(isActive){
       const actives=await sb('GET','semester_settings',{filter:'is_active=eq.true'});
-      for(const a of actives){if(a.id!==editingSemesterId)await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});}
+      for(const a of(Array.isArray(actives)?actives:[])){if(a.id!==editingSemesterId)await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});}
     }
     if(editingSemesterId){
       await sb('PATCH','semester_settings',{filter:'id=eq.'+editingSemesterId,body,prefer:'return=minimal'});
@@ -588,7 +581,7 @@ async function saveSemester(){
 async function activateSemester(id){
   try{
     const actives=await sb('GET','semester_settings',{filter:'is_active=eq.true'});
-    for(const a of actives)await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});
+    for(const a of(Array.isArray(actives)?actives:[]))await sb('PATCH','semester_settings',{filter:'id=eq.'+a.id,body:{is_active:false},prefer:'return=minimal'});
     await sb('PATCH','semester_settings',{filter:'id=eq.'+id,body:{is_active:true},prefer:'return=minimal'});
     showToast('已設為啟用中學期','success');loadSemesters();loadActiveSemester();
   }catch(e){showToast('失敗','error');}
@@ -641,7 +634,6 @@ function renderAdminVenueTable(dates,expanded){
   html+=`</tbody>`;table.innerHTML=html;
 }
 
-// 點擊週曆中的預約 → 可刪除該時段
 function clickAdminBooking(bookingId,date,period,venue){
   const booking=allVenueBookings.find(b=>b.id===bookingId);
   if(!booking){showToast('找不到資料','error');return;}
@@ -679,7 +671,6 @@ async function deletePeriod(bookingId,date,period,venue){
   closeModal();
   try{
     if(periods.length===0){
-      // 整張單都刪光，刪除整筆
       await sb('DELETE','venue_bookings',{filter:'id=eq.'+bookingId,prefer:'return=minimal'});
     }else{
       await sb('PATCH','venue_bookings',{filter:'id=eq.'+bookingId,body:{periods},prefer:'return=minimal'});
@@ -736,7 +727,7 @@ async function doStatus(id,status,note){
   try{
     const body={status};if(note)body.note=note;
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
-    if(status==='已拒絕'){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
+    if(status==='已拒絕'){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(Array.isArray(rows)&&rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
     showToast('狀態已更新','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
 }
@@ -768,7 +759,7 @@ async function doReturn(id,damaged,damageNote,depositAmount){
     const body={status:damaged?'已歸還-損壞':'已歸還',actual_return:today,deposit_status:damaged?'損壞-照價賠償':'待退還'};
     if(damaged){body.damage_note=damageNote;body.final_refund=finalRefund;}
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
-    if(!damaged){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
+    if(!damaged){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(Array.isArray(rows)&&rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
     showToast(damaged?`損壞歸還，應退還 NT$${finalRefund}`:'歸還確認成功','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
 }
