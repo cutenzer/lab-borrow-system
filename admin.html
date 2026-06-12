@@ -257,10 +257,19 @@ async function sb(method,table,opts={}){
   if(opts.order)p.push('order='+opts.order);
   if(p.length)url+='?'+p.join('&');
   const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
-  if(res.status===204)return[];
-  const data=await res.json();
-  if(!res.ok)throw new Error(data.message||res.statusText);
-  return data;
+  async function sb(method,table,opts={}){
+  let url=SUPABASE_URL+'/rest/v1/'+table;
+  const p=[];
+  if(opts.select)p.push('select='+opts.select);
+  if(opts.filter)p.push(opts.filter);
+  if(opts.order)p.push('order='+opts.order);
+  if(p.length)url+='?'+p.join('&');
+  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
+  const text=await res.text();
+  const data=text?JSON.parse(text):null;
+  if(!res.ok)throw new Error((data&&data.message)||res.statusText);
+  return data||[];
+}
 }
 
 let allRecords=[],allEquipment=[],allVenueBookings=[];
