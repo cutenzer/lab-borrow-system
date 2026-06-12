@@ -152,13 +152,14 @@
   .venue-fs-title{font-size:15px;font-weight:700;}
   .venue-fs-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
   .venue-fs-legend{padding:6px 14px;font-size:12px;color:var(--text2);border-bottom:1px solid var(--surface2);background:var(--surface2);}
-  .venue-fs-body{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;padding:8px;}
+  .venue-fs-body{flex:1;overflow:hidden;padding:8px;position:relative;}
+  .venue-fs-body.scroll-mode{overflow:auto;-webkit-overflow-scrolling:touch;}
+  #vfsScaleWrap{transform-origin:top left;display:inline-block;}
   .venue-fs-body .venue-table{min-width:640px;}
-  .venue-fs-body.compact .venue-table{font-size:9px;min-width:0;width:100%;}
-  .venue-fs-body.compact .venue-table th{padding:4px 2px;}
-  .venue-fs-body.compact .venue-table td{padding:2px;min-width:0;}
-  .venue-fs-body.compact .venue-table .vcell{min-width:0;}
-  .venue-fs-body.compact .venue-booking{font-size:8.5px;padding:1px 2px;line-height:1.2;}
+  /* 整體（縮放）模式取消 sticky，縮放才不會錯位 */
+  .venue-fs-body:not(.scroll-mode) .venue-table th,
+  .venue-fs-body:not(.scroll-mode) .venue-table .period-cell,
+  .venue-fs-body:not(.scroll-mode) .venue-table .lab-cell{position:static;}
   /* 學期週次選擇 */
   .week-selector{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
   .week-selector select{min-width:110px;}
@@ -417,13 +418,13 @@
         <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
         <button class="btn btn-primary btn-sm" onclick="goThisWeek()">本週</button>
         <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
-        <button class="btn btn-secondary btn-sm" id="vfsCompactBtn" onclick="toggleVenueFsCompact()">🔍 縮小字體</button>
+        <button class="btn btn-secondary btn-sm" id="vfsModeBtn" onclick="toggleVenueFsMode()">🔍 放大細看</button>
         <button class="btn btn-danger btn-sm" onclick="closeVenueFullscreen()">✕ 關閉</button>
       </div>
     </div>
     <div class="venue-fs-legend">🟦 固定課程　🟩 已核准　🟨 待審核　・ 點擊空白處可關閉</div>
     <div class="venue-fs-body" id="venueFsBody">
-      <table class="venue-table" id="venueTableFS"></table>
+      <div id="vfsScaleWrap"><table class="venue-table" id="venueTableFS"></table></div>
     </div>
   </div>
 </div>
@@ -729,24 +730,46 @@ function renderVenueTable(dates){
   if(fsTable)fsTable.innerHTML=html;
   const fsTitle=document.getElementById('venueFsTitle');
   if(fsTitle){const lbl=document.getElementById('venueWeekLabel').textContent;fsTitle.textContent=lbl?('場地使用狀況　'+lbl):'場地使用狀況';}
+  if(document.getElementById('venueFsOverlay').classList.contains('show')){requestAnimationFrame(fitVenueFs);}
 }
 
 // ── 場地全螢幕檢視 ────────────────────────────────────────
+function venueFsOpen(){return document.getElementById('venueFsOverlay').classList.contains('show');}
 function openVenueFullscreen(){
   document.getElementById('venueFsOverlay').classList.add('show');
-  // 確保資料已載入並同步到全螢幕表格
-  loadVenue();
+  loadVenue(); // 載入並同步資料，renderVenueTable 會自動套用縮放
 }
 function closeVenueFullscreen(e){
   if(!e||e.target===document.getElementById('venueFsOverlay')){
     document.getElementById('venueFsOverlay').classList.remove('show');
   }
 }
-function toggleVenueFsCompact(){
+// 整體（縮放）⇄ 細看（捲動）切換
+function toggleVenueFsMode(){
   const body=document.getElementById('venueFsBody');
-  body.classList.toggle('compact');
-  document.getElementById('vfsCompactBtn').textContent=body.classList.contains('compact')?'🔍 放大字體':'🔍 縮小字體';
+  const scroll=body.classList.toggle('scroll-mode');
+  document.getElementById('vfsModeBtn').textContent=scroll?'🗺️ 整體檢視':'🔍 放大細看';
+  fitVenueFs();
 }
+// 把整張表縮放到剛好塞進視窗（A3 縮成 A4 的概念）
+function fitVenueFs(){
+  const body=document.getElementById('venueFsBody');
+  const wrap=document.getElementById('vfsScaleWrap');
+  if(!wrap)return;
+  if(body.classList.contains('scroll-mode')){wrap.style.transform='';wrap.style.marginLeft='';return;}
+  // 先還原再量測自然尺寸
+  wrap.style.transform='none';wrap.style.marginLeft='0';
+  const tw=wrap.offsetWidth,th=wrap.offsetHeight;
+  if(!tw||!th)return;
+  const availW=body.clientWidth-4,availH=body.clientHeight-4;
+  let scale=Math.min(availW/tw,availH/th);
+  scale=Math.min(scale,2); // 桌機有留白時最多放大到 2 倍
+  const offsetX=Math.max(0,(availW-tw*scale)/2);
+  wrap.style.transformOrigin='top left';
+  wrap.style.transform='scale('+scale+')';
+  wrap.style.marginLeft=offsetX+'px';
+}
+window.addEventListener('resize',()=>{if(venueFsOpen())fitVenueFs();});
 
 // ── AI 辨識 ───────────────────────────────────────────────
 async function handleAiScan(input){
