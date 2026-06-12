@@ -712,8 +712,7 @@ async function handleAiScan(input){
     </div>`;
   }).join('');
 }
-  }catch(err){resultsDiv.innerHTML='<div class="search-empty">辨識失敗</div>';}
-}
+  
 function addFromAI(room,name,spec,unit,avail,qty){const key=room+'__'+name;selectedItems[key]={room,name,spec,unit,quantity:Math.min(qty,avail)};renderEquipList();updateCartBadge();calcDeposit();showToast(name+' 已加入','success');}
 
 // ── 搜尋 ──────────────────────────────────────────────────
