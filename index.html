@@ -214,7 +214,16 @@
   .empty-icon{font-size:36px;margin-bottom:8px;}
   .avail-ok{color:var(--accent);}.avail-no{color:var(--danger);}
   .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;font-size:13px;color:#1e40af;margin-bottom:14px;}
-  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}header nav button{padding:5px 6px;font-size:11.5px;}header h1{font-size:16px;}.equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}}
+  /* 底部導覽列（手機） */
+  .bottom-nav{display:none;}
+  @media(max-width:600px){.form-grid{grid-template-columns:1fr;}header nav{display:none;}header h1{font-size:16px;}.equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
+    main{padding-bottom:74px;}
+    .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:140;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,0.06);}
+    .bn-item{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:11px;color:var(--text2);cursor:pointer;}
+    .bn-item span{font-size:20px;line-height:1;}
+    .bn-item.active{color:var(--accent);font-weight:700;}
+    .cart-fab,.search-fab{bottom:calc(84px + env(safe-area-inset-bottom));}
+  }
 </style>
 </head>
 <body>
@@ -381,6 +390,14 @@
 </div>
 </main>
 
+<!-- 底部導覽列（手機顯示） -->
+<nav class="bottom-nav">
+  <button class="bn-item active" data-page="borrow" onclick="showPage('borrow')"><span>🔬</span>借用</button>
+  <button class="bn-item" data-page="venue" onclick="showPage('venue')"><span>🏛️</span>場地</button>
+  <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查詢</button>
+  <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
+</nav>
+
 <!-- 購物車（右下，常駐，僅圖標） -->
 <button class="cart-fab" id="cartFab" onclick="openCart()" title="已選器材" aria-label="已選器材">🛒<span class="cart-badge" id="cartBadge">0</span></button>
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
@@ -471,7 +488,7 @@ let venueWeekOffset=0,venueBookings=[];
 let activeSemester=null;
 let activeBorrowRecords=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipment();loadEquipBrowse();addPeriodRow();loadActiveSemester();});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
@@ -565,6 +582,16 @@ async function submitVenueRequest(){
     venue:document.getElementById('pr-venue-'+id).value,
     status:'待審核'
   }));
+  // 衝突檢查：同 日期+節次+場地 已有固定課程或已核准的預約
+  try{
+    const existing=await sb('GET','venue_bookings',{});
+    const taken=(d,pd,v)=>(Array.isArray(existing)?existing:[]).some(b=>(b.periods||[]).some(p=>p.date===d&&p.period===pd&&p.venue===v&&(b.is_fixed||p.status==='已核准')));
+    const conflicts=periods.filter(p=>taken(p.date,p.period,p.venue));
+    if(conflicts.length){
+      showModal('⚠️ 時段衝突',`<p>以下時段已被預約或為固定課程，無法重複申請：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:8px;font-size:13px;color:var(--text2)">請移除或更換這些時段後再提交。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
+      return;
+    }
+  }catch(e){/* 檢查失敗就放行，交給管理員把關 */}
   try{
     const id='VEN-'+Date.now();
     await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note}});
@@ -827,7 +854,7 @@ function doBorrowSearch(q){
 }
 
 function getBorrowerInfo(name,room){
-  const active=activeBorrowRecords.filter(r=>r.status==='已核准'&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
+  const active=activeBorrowRecords.filter(r=>(r.status==='已核准'||r.status==='逾期')&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
   if(!active.length)return '';
   return active.map(r=>`<div class="borrower-tag">📌 ${r.borrower_name} 借用中</div>`).join('');
 }
@@ -890,15 +917,37 @@ function renderCart(){
   }).join('');
 }
 
-// ── 器材載入 ──────────────────────────────────────────────
-async function loadEquipment(){
+// ── 器材載入（合併前台兩個畫面，可借量改為即時推導）──────────
+async function loadEquipmentData(){
   try{
-    const[rows,borrows]=await Promise.all([sb('GET','equipment',{order:'room,name'}),sb('GET','borrow_records',{filter:'status=eq.已核准'})]);
-    allEquipment=rows.map(r=>({id:r.id,room:r.room,name:r.name,spec:r.spec||'',total:r.total,available:r.available,unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''}));
-    activeBorrowRecords=borrows;
+    const [rows,borrows]=await Promise.all([
+      sb('GET','equipment',{order:'room,name'}),
+      sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'})
+    ]);
+    activeBorrowRecords=Array.isArray(borrows)?borrows:[];
+    // 已核准/逾期（尚未歸還）的借出量
+    const borrowedMap={};
+    activeBorrowRecords.forEach(r=>{
+      (Array.isArray(r.items)?r.items:[]).forEach(it=>{
+        const k=it.room+'__'+it.name;
+        borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);
+      });
+    });
+    const mapped=rows.map(r=>{
+      const total=parseInt(r.total)||0;
+      const borrowed=borrowedMap[r.room+'__'+r.name]||0;
+      return {id:r.id,room:r.room,name:r.name,spec:r.spec||'',total,
+        available:Math.max(0,total-borrowed),   // ← 推導，不再讀 DB 的 available
+        unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''};
+    });
+    allEquipment=mapped;
+    allEquipBrowse=mapped;                       // 兩個畫面共用同一份資料
     allRooms=[...new Set(rows.map(r=>r.room))];
+    const rf=document.getElementById('equipRoomFilter');
+    if(rf)rf.innerHTML='<option value="">全部房間</option>'+allRooms.map(r=>`<option value="${r}">${rn(r)}</option>`).join('');
     renderRoomTabs();
-    if(allRooms.length>0){currentRoom=allRooms[0];renderEquipList();}
+    if(allRooms.length){currentRoom=(currentRoom&&allRooms.includes(currentRoom))?currentRoom:allRooms[0];renderEquipList();}
+    renderEquipBrowse(allEquipBrowse);
   }catch(e){document.getElementById('roomTabs').innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
 }
 function renderRoomTabs(){document.getElementById('roomTabs').innerHTML=allRooms.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${rn(r)}</button>`).join('');}
@@ -948,7 +997,7 @@ async function submitRequest(){
     const id='REQ-'+Date.now();let dt='無',da=0;
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
     await sb('POST','borrow_records',{body:{id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note}});
-    for(const item of items){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip){await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:Math.max(0,equip.available-parseInt(item.quantity))},prefer:'return=minimal'});equip.available=Math.max(0,equip.available-parseInt(item.quantity));}}
+    // 提交僅建立「待審核」記錄，不扣庫存；可借量由「核准/逾期」記錄即時推導，待管理員核准時才真正佔用
     showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${da>0?'<br>保證金：NT$'+da+'（'+dt+'），請至辦公室繳納。':''}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
@@ -969,9 +1018,10 @@ async function loadMyRecords(){
   const list=document.getElementById('myRecordsList');
   list.innerHTML='<div class="loading"><div class="spinner"></div>查詢中…</div>';
   try{
+    const nm=name, sid=studentId;
     let borrowFilter='',venueFilter='';
-    if(studentId){borrowFilter=`student_id=eq.${encodeURIComponent(studentId)}`;venueFilter=`student_id=eq.${encodeURIComponent(studentId)}`;}
-    else{borrowFilter=`borrower_name=eq.${encodeURIComponent(name)}`;venueFilter=`borrower_name=eq.${encodeURIComponent(name)}`;}
+    if(sid){borrowFilter=`student_id=eq.${encodeURIComponent(sid)}`;venueFilter=borrowFilter;}
+    else{borrowFilter=`borrower_name=ilike.*${encodeURIComponent(nm)}*`;venueFilter=borrowFilter;}
     const[rows,venueRows]=await Promise.all([sb('GET','borrow_records',{filter:borrowFilter,order:'created_at.desc'}),sb('GET','venue_bookings',{filter:venueFilter,order:'created_at.desc'})]);
     let html='';
     if(rows.length){html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(rows);}
@@ -1010,15 +1060,7 @@ function renderRecordListHTML(rows){
 }
 
 let allEquipBrowse=[];
-async function loadEquipBrowse(){
-  try{
-    const rows=await sb('GET','equipment',{order:'room,name'});
-    allEquipBrowse=rows.map(r=>({room:r.room,name:r.name,spec:r.spec||'',total:r.total,available:r.available,unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''}));
-    const rf=document.getElementById('equipRoomFilter');
-    [...new Set(rows.map(r=>r.room))].forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=rn(r);rf.appendChild(o);});
-    renderEquipBrowse(allEquipBrowse);
-  }catch(e){}
-}
+// loadEquipBrowse 已併入 loadEquipmentData，兩個畫面共用同一份資料
 function filterEquipBrowse(){const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));}
 function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
@@ -1044,6 +1086,13 @@ function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords'][i]===page));
+  // 同步底部導覽列
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  // 購物車 / 搜尋 FAB 只在借用頁顯示，離開時收起抽屜
+  const onBorrow=(page==='borrow');
+  document.getElementById('cartFab').style.display=onBorrow?'flex':'none';
+  document.getElementById('searchFab').style.display=onBorrow?'flex':'none';
+  if(!onBorrow){closeCart();closeSearch();}
   if(page==='venue')loadVenue();
 }
 function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
