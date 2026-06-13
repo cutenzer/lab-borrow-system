@@ -402,12 +402,30 @@ function renderVenuePending(){
   }).join('');
 }
 
-async function approveVenueSelected(bookingId,approve){
+async function approveVenueSelected(bookingId,approve,force){
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
-  const periods=[...booking.periods];
-  periods.forEach((p,i)=>{
+  // 找出本次勾選且待審核的時段
+  const selected=[];
+  (booking.periods||[]).forEach((p,i)=>{
     const cb=document.getElementById(`pck-${bookingId}-${i}`);
-    if(cb&&cb.checked&&p.status==='待審核'){p.status=approve?'已核准':'已拒絕';}
+    if(cb&&cb.checked&&p.status==='待審核')selected.push(p);
+  });
+  if(!selected.length){showToast('沒有勾選任何待審核時段','error');return;}
+  // 核准時先檢查衝突
+  if(approve&&!force){
+    const conflicts=selected.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
+    if(conflicts.length){
+      showModal('⚠️ 時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'仍要核准',cls:'btn-warn',fn:`approveVenueSelected('${bookingId}',true,true)`}
+      ]);
+      return;
+    }
+  }
+  closeModal();
+  const periods=(booking.periods||[]).map((p,i)=>{
+    const cb=document.getElementById(`pck-${bookingId}-${i}`);
+    return (cb&&cb.checked&&p.status==='待審核')?{...p,status:approve?'已核准':'已拒絕'}:p;
   });
   const allDone=periods.every(p=>p.status!=='待審核');
   const overallStatus=allDone?(periods.some(p=>p.status==='已核准')?'已核准':'已拒絕'):'部分核准';
@@ -417,8 +435,20 @@ async function approveVenueSelected(bookingId,approve){
   }catch(e){showToast('更新失敗','error');}
 }
 
-async function approveAllVenue(bookingId,approve){
+async function approveAllVenue(bookingId,approve,force){
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
+  if(approve&&!force){
+    const pendingPeriods=(booking.periods||[]).filter(p=>p.status==='待審核');
+    const conflicts=pendingPeriods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
+    if(conflicts.length){
+      showModal('⚠️ 時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'仍要核准',cls:'btn-warn',fn:`approveAllVenue('${bookingId}',true,true)`}
+      ]);
+      return;
+    }
+  }
+  closeModal();
   const periods=(booking.periods||[]).map(p=>({...p,status:p.status==='待審核'?(approve?'已核准':'已拒絕'):p.status}));
   const status=approve?'已核准':'已拒絕';
   try{
@@ -655,7 +685,22 @@ function clickAdminBooking(bookingId,date,period,venue){
   ]);
 }
 
-async function setPeriodStatus(bookingId,date,period,venue,status){
+// 衝突 = 同 date+period+venue 已有「固定課程」或「已核准」的其他預約
+function venueSlotConflict(date,period,venue,excludeId){
+  return allVenueBookings.find(b=>b.id!==excludeId&&(b.periods||[]).some(p=>p.date===date&&p.period===period&&p.venue===venue&&(b.is_fixed||p.status==='已核准')));
+}
+
+async function setPeriodStatus(bookingId,date,period,venue,status,force){
+  if(status==='已核准'&&!force){
+    const conf=venueSlotConflict(date,period,venue,bookingId);
+    if(conf){
+      showModal('⚠️ 時段衝突',`<p>此時段已有 <strong>${conf.borrower_name}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${date} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'仍要核准',cls:'btn-warn',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准',true)`}
+      ]);
+      return;
+    }
+  }
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
   const periods=(booking.periods||[]).map(p=>(p.date===date&&p.period===period&&p.venue===venue)?{...p,status}:p);
   const allDone=periods.every(p=>p.status!=='待審核');
@@ -720,15 +765,39 @@ async function adminAddVenue(date,period){
 }
 
 // ── 器材審核 ──────────────────────────────────────────────
-function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doStatus('${id}','已核准')`}]);}
-function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${id}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因</label><textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doStatus('${id}','已拒絕',document.getElementById('rejectNote').value)`}]);}
-async function doStatus(id,status,note){
+function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doApprove('${id}')`}]);}
+function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${id}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因</label><textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doReject('${id}')`}]);}
+
+// 核准：核准當下重新計算各器材已借出量，夠才核准（庫存採推導模型，不寫 available）
+async function doApprove(id){
+  closeModal();
+  const rec=allRecords.find(r=>r.id===id);
+  if(!rec){showToast('找不到記錄','error');return;}
+  try{
+    const approved=await sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'});
+    const borrowedMap={};
+    (Array.isArray(approved)?approved:[]).forEach(r=>{(r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});});
+    const shortage=[];
+    (rec.items||[]).forEach(it=>{
+      const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name);
+      const total=eq?parseInt(eq.total)||0:0;
+      const already=borrowedMap[it.room+'__'+it.name]||0;
+      if(already+(parseInt(it.quantity)||0)>total)shortage.push(`${it.name}（需 ${it.quantity}，可借 ${Math.max(0,total-already)}）`);
+    });
+    if(shortage.length){showToast('庫存不足，無法核准：'+shortage.join('、'),'error');return;}
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{status:'已核准'},prefer:'return=minimal'});
+    showToast('已核准','success');loadAll();
+  }catch(e){showToast('核准失敗：'+e.message,'error');}
+}
+
+// 拒絕：只改狀態，不需加回庫存（可借量是推導的）
+async function doReject(id){
   closeModal();
   try{
-    const body={status};if(note)body.note=note;
+    const note=document.getElementById('rejectNote')?.value||'';
+    const body={status:'已拒絕'};if(note)body.note=note;
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
-    if(status==='已拒絕'){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(Array.isArray(rows)&&rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
-    showToast('狀態已更新','success');loadAll();
+    showToast('已拒絕','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
 }
 function confirmReturn(id){showModal('確認完整歸還',`<p>確認器材完整歸還？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'',0)`}]);}
@@ -753,13 +822,18 @@ async function doReturn(id,damaged,damageNote,depositAmount){
   closeModal();
   try{
     const today=new Date().toISOString().split('T')[0];
-    const items=window._dmgItems||[];let total=0;
-    if(damaged)items.forEach((item,i)=>{const q=parseInt(document.getElementById?.('dmg_qty_'+i)?.value)||0,p=parseInt(document.getElementById?.('dmg_price_'+i)?.value)||0;total+=q*p;});
-    const finalRefund=damaged?Math.max(0,(depositAmount||0)-total):depositAmount;
+    const items=window._dmgItems||[];let comp=0;const lost={};
+    if(damaged)items.forEach((item,i)=>{
+      const q=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0;
+      const p=parseInt(document.getElementById('dmg_price_'+i)?.value)||0;
+      comp+=q*p; if(q>0)lost[item.room+'__'+item.name]=(lost[item.room+'__'+item.name]||0)+q;
+    });
+    const finalRefund=damaged?Math.max(0,(depositAmount||0)-comp):depositAmount;
     const body={status:damaged?'已歸還-損壞':'已歸還',actual_return:today,deposit_status:damaged?'損壞-照價賠償':'待退還'};
     if(damaged){body.damage_note=damageNote;body.final_refund=finalRefund;}
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
-    if(!damaged){const rows=await sb('GET','borrow_records',{filter:'id=eq.'+id});if(Array.isArray(rows)&&rows.length>0)for(const item of(rows[0].items||[])){const equip=allEquipment.find(e=>e.room===item.room&&e.name===item.name);if(equip)await sb('PATCH','equipment',{filter:'id=eq.'+equip.id,body:{available:equip.available+parseInt(item.quantity)},prefer:'return=minimal'});}}
+    // 推導模型：正常歸還不必加回 available（改狀態後自動回補）；損壞品視為報廢，從 total 扣除
+    if(damaged)for(const k in lost){const eq=allEquipment.find(e=>e.room+'__'+e.name===k);if(eq)await sb('PATCH','equipment',{filter:'id=eq.'+eq.id,body:{total:Math.max(0,(parseInt(eq.total)||0)-lost[k])},prefer:'return=minimal'});}
     showToast(damaged?`損壞歸還，應退還 NT$${finalRefund}`:'歸還確認成功','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
 }
