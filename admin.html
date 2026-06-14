@@ -231,7 +231,10 @@
 <script>
 const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
-const ADMIN_PW='191313';
+// 管理員改用 Supabase Auth 登入，密碼不再寫在程式裡。
+// ↓ 改成你在 Supabase → Authentication → Users 建立的管理員帳號 Email（Email 不是機密）
+const ADMIN_EMAIL='smgsh@mail.com';
+let ACCESS_TOKEN=null;
 const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
 const rn=r=>ROOM_NAMES[r]||r;
 const PURPOSES=['全部','課程','自主學習','科展','社團','其他'];
@@ -239,8 +242,30 @@ const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實�
 const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
 const DAYS=['一','二','三','四','五','六','日'];
 
-function checkPw(){if(document.getElementById('pwInput').value===ADMIN_PW){document.getElementById('loginWrap').style.display='none';document.getElementById('adminWrap').style.display='block';loadAll();}else{document.getElementById('pwErr').style.display='block';document.getElementById('pwInput').value='';}}
-function logout(){document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
+async function checkPw(){
+  const pw=document.getElementById('pwInput').value;
+  const err=document.getElementById('pwErr');
+  err.style.display='none';
+  try{
+    const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email:ADMIN_EMAIL,password:pw})
+    });
+    const data=await res.json();
+    if(!res.ok||!data.access_token)throw new Error(data.error_description||data.msg||data.error||'帳號或密碼錯誤');
+    ACCESS_TOKEN=data.access_token;
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('adminWrap').style.display='block';
+    document.getElementById('pwInput').value='';
+    loadAll();
+  }catch(e){
+    err.textContent='登入失敗：'+e.message;
+    err.style.display='block';
+    document.getElementById('pwInput').value='';
+  }
+}
+function logout(){ACCESS_TOKEN=null;document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
 
 // ── 修正：讀 text() 再 parse，避免 204 / 201 空 body 爆炸 ──
 async function sb(method,table,opts={}){
@@ -250,7 +275,7 @@ async function sb(method,table,opts={}){
   if(opts.filter)p.push(opts.filter);
   if(opts.order)p.push('order='+opts.order);
   if(p.length)url+='?'+p.join('&');
-  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
+  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
   const text=await res.text();
   const data=text?JSON.parse(text):null;
   if(!res.ok)throw new Error((data&&data.message)||res.statusText);
