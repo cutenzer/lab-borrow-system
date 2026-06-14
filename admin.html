@@ -21,8 +21,10 @@
   .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
   .tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;}
-  .tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;}
+  .tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;position:relative;}
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-badge{display:none;position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:1;min-width:16px;height:16px;border-radius:8px;padding:0 4px;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);}
+  .tab-badge.show{display:flex;}
   .panel{display:none;}.panel.active{display:block;}
   .purpose-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
   .purpose-tab{padding:4px 11px;border-radius:20px;border:1.5px solid var(--border);background:var(--surface2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;transition:all 0.15s;color:var(--text);}
@@ -140,11 +142,11 @@
 <main>
 <div class="stats-grid" id="statsGrid"></div>
 <div class="tabs">
-  <button class="tab active" onclick="showTab('pending')">⏳ 待審核</button>
+  <button class="tab active" onclick="showTab('pending')">⏳ 待審核<span class="tab-badge" id="tb-pending">0</span></button>
   <button class="tab" onclick="showTab('approved')">✅ 已核准</button>
-  <button class="tab" onclick="showTab('return')">📬 確認歸還</button>
-  <button class="tab" onclick="showTab('deposit')">💰 保證金</button>
-  <button class="tab" onclick="showTab('venue')">🏛️ 場地管理</button>
+  <button class="tab" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
+  <button class="tab" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
+  <button class="tab" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
   <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
@@ -233,7 +235,7 @@ const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
 // 管理員改用 Supabase Auth 登入，密碼不再寫在程式裡。
 // ↓ 改成你在 Supabase → Authentication → Users 建立的管理員帳號 Email（Email 不是機密）
-const ADMIN_EMAIL='smgsh@mail.com';
+const ADMIN_EMAIL='lab-admin@example.com';
 let ACCESS_TOKEN=null;
 const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
 const rn=r=>ROOM_NAMES[r]||r;
@@ -324,6 +326,16 @@ function renderStats(){
     {num:overdue,label:'逾期未還',color:'var(--danger)'},{num:venuePending,label:'場地待審核',color:'#1e40af'},
     {num:depPending,label:'待收保證金',color:'#92400e'},{num:depReturn,label:'待退保證金',color:'#1e40af'},
   ].map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
+  // 分頁紅點：待審核 / 確認歸還(逾期) / 保證金(待收+待退) / 場地待審核
+  setTabBadge('tb-pending',pending);
+  setTabBadge('tb-return',overdue);
+  setTabBadge('tb-deposit',depPending+depReturn);
+  setTabBadge('tb-venue',venuePending);
+}
+function setTabBadge(id,count){
+  const el=document.getElementById(id);if(!el)return;
+  if(count>0){el.textContent=count>99?'99+':count;el.classList.add('show');}
+  else{el.classList.remove('show');}
 }
 
 function renderPurposeTabs(panel){
