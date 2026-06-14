@@ -282,6 +282,18 @@
       </div>
       <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
       <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
+      <div class="form-group">
+        <label>您的課程所屬實驗室</label>
+        <select id="f-home-lab" onchange="onHomeLabChange()">
+          <option value="">-- 不指定 --</option>
+          <option value="Chemistry">化學</option>
+          <option value="Biology">生物</option>
+          <option value="Geoscience">地科</option>
+          <option value="Physics Chemistry">理化</option>
+          <option value="Physics">物理</option>
+        </select>
+        <div class="hint">系統會優先顯示本科器材，庫存不足時才建議跨科借用</div>
+      </div>
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
   </div>
@@ -367,7 +379,9 @@
 <!-- 器材查詢 -->
 <div id="page-equipment" class="page">
   <div class="card">
-    <div class="card-title">📦 器材庫存查詢</div>
+    <div class="card-title">📦 器材庫存查詢
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
+    </div>
     <div class="browse-filters">
       <input type="text" id="equipSearch" placeholder="搜尋器材名稱…" oninput="filterEquipBrowse()">
       <select id="equipRoomFilter" onchange="filterEquipBrowse()"><option value="">全部房間</option></select>
@@ -407,7 +421,7 @@
   <div class="cart-drawer-body" id="cartBody"></div>
   <div class="cart-drawer-footer">
     <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑️ 清空</button>
-    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeCart();submitRequest()">📋 直接提交申請</button>
+    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="cartSubmit()">📋 直接提交申請</button>
   </div>
 </div>
 
@@ -468,6 +482,48 @@ const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實�
 const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
 const DAYS=['一','二','三','四','五','六','日'];
 
+// ── 位置編碼解析 ────────────────────────────────────────
+const CABINET_CODE_MAP={
+  'A':{name:'鐵櫃',icon:'🗄️'},
+  'B':{name:'鐵架',icon:'📚'},
+  'C':{name:'玻璃鐵櫃',icon:'🪟'},
+  'D':{name:'桌子的櫃子',icon:'🗃️'},
+  'E':{name:'抽氣櫃的櫃子',icon:'🌀'}
+};
+const ROOM_CODE_INFO=[
+  {code:'T',name:'教具室'},{code:'PC',name:'理化實驗室'},{code:'C',name:'化學實驗室'},
+  {code:'B',name:'生物實驗室'},{code:'P',name:'物理實驗室'},{code:'G',name:'地科實驗室'}
+];
+function decodeLocation(code){
+  if(!code)return '';
+  let rest=code.trim();
+  if(rest.startsWith('PC'))rest=rest.slice(2);
+  else if(/^[TCBPG]/.test(rest))rest=rest.slice(1);
+  if(!rest)return code;
+  const cabinetCode=rest.slice(0,1);
+  const cab=CABINET_CODE_MAP[cabinetCode];
+  if(!cab)return code;
+  rest=rest.slice(1);
+  const parts=rest.split('-');
+  const numPart=parts[0],layerPart=parts[1];
+  let label=`${cab.icon} ${cab.name} ${numPart}號`;
+  if(layerPart)label+=` ・ 第${layerPart}層`;
+  return label;
+}
+function showLocationGuide(){
+  const roomRows=ROOM_CODE_INFO.map(r=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span style="font-family:'DM Mono',monospace;font-weight:700">${r.code}</span><span>${r.name}</span></div>`).join('');
+  const cabRows=Object.entries(CABINET_CODE_MAP).map(([code,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span>${c.icon} <span style="font-family:'DM Mono',monospace;font-weight:700">${code}</span></span><span>${c.name}</span></div>`).join('');
+  showModal('❓ 器材標籤對照說明',`
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">① 實驗室代號</div>${roomRows}</div>
+      <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">② 櫃別代號＋圖示</div>${cabRows}</div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號　／　GC03-1 → 地科室・🪟玻璃鐵櫃03號・第1層</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 借到器材後，請依「位置編碼」放回原櫃原層，方便下一位使用者尋找。</p>
+  `,[{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
+}
+
 async function sb(method,table,opts={}){
   let url=SUPABASE_URL+'/rest/v1/'+table;
   const p=[];
@@ -487,6 +543,7 @@ let currentRole='學生',currentVenueRole='學生';
 let venueWeekOffset=0,venueBookings=[];
 let activeSemester=null;
 let activeBorrowRecords=[];
+let userHomeLab='';
 
 window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();});
 
@@ -950,7 +1007,10 @@ async function loadEquipmentData(){
     renderEquipBrowse(allEquipBrowse);
   }catch(e){document.getElementById('roomTabs').innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
 }
-function renderRoomTabs(){document.getElementById('roomTabs').innerHTML=allRooms.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${rn(r)}</button>`).join('');}
+function renderRoomTabs(){
+  const ordered=userHomeLab?[userHomeLab,...allRooms.filter(r=>r!==userHomeLab)]:allRooms;
+  document.getElementById('roomTabs').innerHTML=ordered.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${r===userHomeLab?'🏠 ':''}${rn(r)}</button>`).join('');
+}
 function selectRoom(room){currentRoom=room;renderRoomTabs();renderEquipList();}
 function renderEquipList(){
   const list=document.getElementById('equipList'),items=allEquipment.filter(e=>e.room===currentRoom);
@@ -960,9 +1020,10 @@ function renderEquipList(){
     const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
     const imgHtml=e.image_url?`<img class="equip-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
+    const locHtml=e.location?' ・ '+decodeLocation(e.location):'';
     return `<div class="equip-row ${avail<=0?'unavailable':''}">
       ${imgHtml}
-      <div class="equip-row-info"><div class="equip-row-name">${e.name}</div><div class="equip-row-sub">${e.spec||''}${e.location?' ・ '+e.location:''}</div>
+      <div class="equip-row-info"><div class="equip-row-name">${e.name}</div><div class="equip-row-sub">${e.spec||''}${locHtml}</div>
       <div class="equip-row-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>${borrowerInfo}</div>
       ${avail>0?`<div class="equip-row-qty" onclick="event.stopPropagation()">
         <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},-1)">−</button>
@@ -972,13 +1033,102 @@ function renderEquipList(){
     </div>`;
   }).join('');
 }
-function changeQty(room,name,spec,unit,avail,delta){const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};renderEquipList();updateCartBadge();calcDeposit();const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);}
+function changeQty(room,name,spec,unit,avail,delta){
+  const key=room+'__'+name,cur=selectedItems[key]?.quantity||0;
+  // 跨科借用提示：新增、跨科、且本科還有現貨時，先詢問是否改借本科
+  if(delta>0&&cur===0&&userHomeLab&&room!==userHomeLab){
+    const homeEquip=allEquipment.find(e=>e.room===userHomeLab&&e.name===name&&parseInt(e.available)>0);
+    if(homeEquip){
+      const safeN=name.replace(/'/g,"\\'"),safeS=(spec||'').replace(/'/g,"\\'");
+      const hSafeS=(homeEquip.spec||'').replace(/'/g,"\\'");
+      showModal('💡 本科還有現貨',
+        `<p style="font-size:13px">您正在借用 <strong>${rn(room)}</strong> 的「${name}」，但 <strong>${rn(userHomeLab)}</strong> 目前還有 <strong>${homeEquip.available}</strong> ${homeEquip.unit} 可借。</p>
+         <p style="font-size:12.5px;color:var(--text2);margin-top:6px">建議優先使用本科器材，跨科借用的部分留給真正不足的人。</p>`,
+        [
+          {label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',
+            fn:`closeModal();_addQty('${userHomeLab}','${safeN}','${hSafeS}','${homeEquip.unit}',${homeEquip.available},1)`},
+          {label:'仍要借此項',cls:'btn-secondary',
+            fn:`closeModal();_addQty('${room}','${safeN}','${safeS}','${unit}',${avail},1)`}
+        ]);
+      return;
+    }
+  }
+  _addQty(room,name,spec,unit,avail,delta);
+}
+function _addQty(room,name,spec,unit,avail,delta){
+  const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));
+  if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};
+  renderEquipList();updateCartBadge();calcDeposit();
+  const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);
+}
 function setQty(room,name,spec,unit,avail,val){const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};renderEquipList();updateCartBadge();calcDeposit();}
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();}
 
 function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();}
 function onVenuePurposeChange(){const p=document.getElementById('vf-purpose').value;document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';}
+function onHomeLabChange(){
+  userHomeLab=document.getElementById('f-home-lab').value;
+  renderRoomTabs();
+  if(userHomeLab&&allRooms.includes(userHomeLab)){currentRoom=userHomeLab;renderEquipList();}
+}
 function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
+
+// ── 購物車送出前補填資料 ──────────────────────────────────
+function cartSubmit(){
+  const missing=[];
+  if(!document.getElementById('f-name').value.trim())missing.push('name');
+  if(currentRole==='學生'&&!document.getElementById('f-student-id').value.trim())missing.push('studentId');
+  if(!document.getElementById('f-purpose').value)missing.push('purpose');
+  if(!document.getElementById('f-borrow-date').value)missing.push('borrowDate');
+  if(!document.getElementById('f-return-date').value)missing.push('returnDate');
+
+  if(!Object.keys(selectedItems).length){showToast('購物車是空的，請先選擇器材','error');return;}
+  if(!missing.length){closeCart();submitRequest();return;}
+  showQuickFillModal(missing);
+}
+function showQuickFillModal(missing){
+  let html='<p style="font-size:13px;color:var(--text2);margin-bottom:10px">請補齊以下資料即可送出申請：</p>';
+  html+=`<div class="form-group"><label>身份</label>
+    <div class="role-tabs" style="margin-bottom:0">
+      <div class="role-tab ${currentRole==='學生'?'active':''}" onclick="qfSetRole('學生')">🎓 學生</div>
+      <div class="role-tab ${currentRole==='老師'?'active':''}" onclick="qfSetRole('老師')">👨‍🏫 老師</div>
+    </div></div>`;
+  if(missing.includes('name'))html+=`<div class="form-group"><label>姓名 *</label><input id="qf-name" placeholder="輸入姓名"></div>`;
+  if(missing.includes('studentId'))html+=`<div class="form-group" id="qf-sid-group"><label>學號 *</label><input id="qf-sid" placeholder="輸入學號"></div>`;
+  if(missing.includes('purpose'))html+=`<div class="form-group"><label>借用目的 *</label>
+      <select id="qf-purpose" onchange="document.getElementById('qf-purpose-other').style.display=this.value==='其他'?'block':'none'">
+        <option value="">-- 請選擇 --</option>
+        <option value="課程">課程</option><option value="自主學習">自主學習</option>
+        <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他（自填）</option>
+      </select>
+      <input id="qf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px"></div>`;
+  if(missing.includes('borrowDate'))html+=`<div class="form-group"><label>借用日期 *</label><input type="date" id="qf-borrow-date"></div>`;
+  if(missing.includes('returnDate'))html+=`<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="qf-return-date"></div>`;
+  showModal('📋 補填借用人資料',html,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認並送出申請',cls:'btn-primary',fn:'confirmQuickFill()'}
+  ]);
+  const g=document.getElementById('qf-sid-group');if(g)g.style.display=currentRole==='學生'?'flex':'none';
+  if(document.getElementById('qf-borrow-date'))document.getElementById('qf-borrow-date').value=document.getElementById('f-borrow-date').value;
+}
+function qfSetRole(role){
+  currentRole=role;setRole(role);
+  document.querySelectorAll('#modalBody .role-tab').forEach(t=>t.classList.toggle('active',t.textContent.includes(role)));
+  const g=document.getElementById('qf-sid-group');if(g)g.style.display=role==='學生'?'flex':'none';
+}
+function confirmQuickFill(){
+  if(document.getElementById('qf-name'))document.getElementById('f-name').value=document.getElementById('qf-name').value.trim();
+  if(document.getElementById('qf-sid'))document.getElementById('f-student-id').value=document.getElementById('qf-sid').value.trim();
+  if(document.getElementById('qf-purpose')){
+    const p=document.getElementById('qf-purpose').value;
+    document.getElementById('f-purpose').value=p;
+    if(p==='其他')document.getElementById('f-purpose-other').value=document.getElementById('qf-purpose-other').value.trim();
+    onPurposeChange();
+  }
+  if(document.getElementById('qf-borrow-date'))document.getElementById('f-borrow-date').value=document.getElementById('qf-borrow-date').value;
+  if(document.getElementById('qf-return-date'))document.getElementById('f-return-date').value=document.getElementById('qf-return-date').value;
+  closeModal();closeCart();submitRequest();
+}
 
 async function submitRequest(){
   const name=document.getElementById('f-name').value.trim();
@@ -1010,6 +1160,7 @@ function resetForm(){
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
   document.getElementById('aiPreview').style.display='none';document.getElementById('aiResults').innerHTML='';
 }
+// 注意：保留 f-home-lab / userHomeLab，借用人通常多次借用都是同一科，不需每次重設
 
 async function loadMyRecords(){
   const name=document.getElementById('queryName').value.trim();
@@ -1070,10 +1221,11 @@ function renderEquipBrowse(items){
     const safeN=e.name.replace(/'/g,"\\'");
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     const imgHtml=e.image_url?`<img class="equip-browse-img" src="${e.image_url}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-browse-img-ph" style="display:none">🔬</div>`:`<div class="equip-browse-img-ph">🔬</div>`;
+    const crossTag=userHomeLab&&e.room!==userHomeLab?'<span style="font-size:10px;background:var(--surface2);color:var(--text2);padding:1px 6px;border-radius:8px;margin-left:4px">跨科</span>':'';
     return `<div class="equip-browse-card" onclick="openLightbox('${e.image_url}','${safeN}')">
       ${imgHtml}<div class="equip-browse-body">
-        <div class="equip-browse-room">${rn(e.room)}</div><div class="equip-browse-name">${e.name}</div>
-        <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+e.location:''}</div>
+        <div class="equip-browse-room">${rn(e.room)}${crossTag}</div><div class="equip-browse-name">${e.name}</div>
+        <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+decodeLocation(e.location):''}</div>
         <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
         ${borrowerInfo}
       </div></div>`;
