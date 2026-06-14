@@ -327,8 +327,8 @@ function renderStats(){
   const approved=allRecords.filter(r=>r.status==='已核准').length;
   const overdue=allRecords.filter(r=>r.status==='逾期').length;
   const venuePending=allVenueBookings.filter(b=>(b.periods||[]).some(p=>p.status==='待審核')).length;
-  const depPending=allRecords.filter(r=>r.depositStatus==='待繳納').length;
-  const depReturn=allRecords.filter(r=>r.depositStatus==='待退還').length;
+  const depPending=allRecords.filter(r=>r.depositStatus==='待繳納'&&r.depositAmount>0).length;
+  const depReturn=allRecords.filter(r=>r.depositStatus==='待退還'&&r.depositAmount>0).length;
   document.getElementById('statsGrid').innerHTML=[
     {num:pending,label:'器材待審核',color:'#92400e'},{num:approved,label:'器材借用中',color:'#065f46'},
     {num:overdue,label:'逾期未還',color:'var(--danger)'},{num:venuePending,label:'場地待審核',color:'#1e40af'},
