@@ -387,6 +387,7 @@ function renderRecord(r,mode){
     if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund('${r.id}',${r.depositAmount})">↩️ 確認退還</button>`;
     if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal('${r.id}',${r.depositAmount})">💸 計算賠償</button>`;
   }
+  actions+=`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteBorrowRecord('${r.id}')">🗑️ 刪除</button>`;
   return `<div class="record-card ${r.status==='逾期'?'overdue':''}">
     <div class="record-header">
       <div><span class="record-id">${r.id}</span>
@@ -1091,6 +1092,22 @@ async function doReject(id){
     showToast('已拒絕','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
 }
+
+// ── 借用記錄刪除 ──────────────────────────────────────────
+function deleteBorrowRecord(id){
+  showModal('確認刪除',`<p>確定要永久刪除這筆記錄嗎？</p><p style="font-size:13px;color:var(--text2);margin-top:6px">${id}</p><p style="font-size:13px;color:var(--danger);margin-top:6px">此操作無法復原。</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteBorrowRecord('${id}')`}
+  ]);
+}
+async function doDeleteBorrowRecord(id){
+  closeModal();
+  try{
+    await sb('DELETE','borrow_records',{filter:'id=eq.'+id,prefer:'return=minimal'});
+    showToast('已刪除','success');loadAll();
+  }catch(e){showToast('刪除失敗：'+e.message,'error');}
+}
+
 function confirmReturn(id){showModal('確認完整歸還',`<p>確認器材完整歸還？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'',0)`}]);}
 function openDamageModal(id){
   const record=allRecords.find(r=>r.id===id);const items=record?.items||[];
