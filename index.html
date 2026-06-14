@@ -497,7 +497,7 @@ const ROOM_CODE_INFO=[
 // 器材所屬房間 → 位置編碼開頭代號
 const ROOM_TO_CODE={'Chemistry':'C','Biology':'B','Geoscience':'G','Physics Chemistry':'PC','Physics':'P','TeachingMaterialRoom':'T'};
 // 代號 → 顯示用簡稱（放在每個位置最前面）
-const CODE_SHORT_NAME={'T':'教具室','PC':'理化','C':'化學','B':'生物','P':'物理','G':'地科'};
+const CODE_SHORT_NAME={'T':'教具室','PC':'理化室','C':'化學室','B':'生物室','P':'物理室','G':'地科室'};
 
 // 解析單一個位置編碼（如 BB02-2 / A04），回傳「簡稱＋圖示說明 (原始代號)」
 function decodeLocationPart(code,defaultRoomCode){
@@ -714,19 +714,45 @@ function getMondayOfOffset(offset){
   monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);
   return monday;
 }
+function getMondayOf(d){const day=d.getDay(),monday=new Date(d);monday.setDate(d.getDate()-((day+6)%7));monday.setHours(0,0,0,0);return monday;}
 
-// 計算某日期是學期第幾週（回傳數字，超出範圍回傳 null）
-function getWeekNumber(date){
-  if(!activeSemester||!activeSemester.start_date)return null;
-  const start=new Date(activeSemester.start_date+'T00:00:00');
-  // 找到開學日那一週的週一
-  const startDay=start.getDay();
-  const startMonday=new Date(start);
-  startMonday.setDate(start.getDate()-((startDay+6)%7));
-  startMonday.setHours(0,0,0,0);
-  const diffDays=Math.floor((date-startMonday)/(1000*60*60*24));
-  const week=Math.floor(diffDays/7)+1;
-  return week;
+// ── 學期週次計算（依「期間」設定）──────────────────────────
+// 取得某日期所在的期間與週次：{week, type, label} 或 null（不在任何期間內）
+function getWeekInfo(date,semester){
+  if(!semester||!Array.isArray(semester.periods))return null;
+  const ds=fmtDate(date);
+  for(const p of semester.periods){
+    if(!p.start_date||!p.end_date)continue;
+    if(ds>=p.start_date&&ds<=p.end_date){
+      const start=new Date(p.start_date+'T00:00:00');
+      const diffDays=Math.floor((date-start)/(1000*60*60*24));
+      const week=(parseInt(p.week_start)||1)+Math.floor(diffDays/7);
+      return {week,type:p.type,label:p.label||p.type};
+    }
+  }
+  return null;
+}
+// 列出整個學期所有「週」，用於週次跳轉下拉選單
+function getSemesterWeeks(semester){
+  if(!semester||!Array.isArray(semester.periods))return [];
+  const weeks=[];
+  semester.periods.forEach(p=>{
+    if(!p.start_date||!p.end_date)return;
+    const start=new Date(p.start_date+'T00:00:00'),end=new Date(p.end_date+'T00:00:00');
+    const totalDays=Math.floor((end-start)/(1000*60*60*24));
+    if(totalDays<0)return;
+    const weekCount=Math.floor(totalDays/7)+1;
+    for(let i=0;i<weekCount;i++){
+      const wDate=new Date(start);wDate.setDate(start.getDate()+i*7);
+      weeks.push({week:(parseInt(p.week_start)||1)+i,label:p.label||p.type,type:p.type,date:wDate});
+    }
+  });
+  weeks.sort((a,b)=>a.week-b.week);
+  return weeks;
+}
+function weekBadgeText(info){
+  if(!info)return '';
+  return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
 }
 
 // 建立「第幾週」下拉選單
@@ -734,29 +760,22 @@ function buildWeekSelector(){
   const sel=document.getElementById('weekJump');
   const wrap=document.getElementById('weekSelector');
   if(!activeSemester){wrap.style.display='none';return;}
+  const weeks=getSemesterWeeks(activeSemester);
+  if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
-  const total=activeSemester.total_weeks||20;
-  let opts='';
-  for(let w=1;w<=total;w++)opts+=`<option value="${w}">第 ${w} 週</option>`;
-  sel.innerHTML=opts;
+  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
 }
 
 // 跳到指定週次
 function jumpToWeek(week){
   if(!activeSemester)return;
   week=parseInt(week);
-  const start=new Date(activeSemester.start_date+'T00:00:00');
-  const startDay=start.getDay();
-  const startMonday=new Date(start);
-  startMonday.setDate(start.getDate()-((startDay+6)%7));
-  startMonday.setHours(0,0,0,0);
-  // 目標週的週一
-  const targetMonday=new Date(startMonday);
-  targetMonday.setDate(startMonday.getDate()+(week-1)*7);
-  // 計算和本週的 offset
+  const weeks=getSemesterWeeks(activeSemester);
+  const target=weeks.find(w=>w.week===week);
+  if(!target)return;
+  const targetMonday=getMondayOf(target.date);
   const thisMonday=getMondayOfOffset(0);
-  const offset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
-  venueWeekOffset=offset;
+  venueWeekOffset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
   loadVenue();
 }
 
@@ -765,13 +784,13 @@ async function loadVenue(){
   const dates=getWeekDates(venueWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
   // 顯示週次標籤
-  const weekNum=getWeekNumber(dates[0]);
+  const weekInfo=getWeekInfo(dates[0],activeSemester);
   const badge=document.getElementById('currentWeekBadge');
   const weekSel=document.getElementById('weekJump');
-  if(weekNum!==null&&activeSemester&&weekNum>=1&&weekNum<=(activeSemester.total_weeks||20)){
-    document.getElementById('venueWeekLabel').textContent=`第${weekNum}週　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
-    if(badge){badge.textContent=`第 ${weekNum} 週`;badge.style.display='inline-block';}
-    if(weekSel)weekSel.value=weekNum;
+  if(weekInfo){
+    document.getElementById('venueWeekLabel').textContent=`${weekBadgeText(weekInfo)}　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge){badge.textContent=weekBadgeText(weekInfo);badge.style.display='inline-block';}
+    if(weekSel)weekSel.value=weekInfo.week;
   }else{
     document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
     if(badge)badge.style.display='none';
