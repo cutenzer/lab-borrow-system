@@ -115,6 +115,11 @@
   .login-input{width:100%;padding:11px 14px;font-size:15px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;outline:none;text-align:center;letter-spacing:3px;margin-bottom:12px;}
   .login-input:focus{border-color:var(--accent);}
   .login-err{color:var(--danger);font-size:13px;margin-bottom:10px;display:none;}
+  .period-setting-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 12px;flex-wrap:wrap;margin-bottom:8px;}
+  .period-setting-row select,.period-setting-row input{flex:1;min-width:90px;}
+  .period-setting-row .ps-weeklabel{font-size:12px;color:var(--text2);white-space:nowrap;}
+  .period-setting-row .ps-weekstart{max-width:64px;flex:0 0 64px;}
+  .period-setting-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
   @media(max-width:600px){.tab{padding:7px 9px;font-size:12px;}}
 </style>
 </head>
@@ -195,16 +200,19 @@
 <div id="panel-semester" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📆 新增 / 編輯學期</div>
-    <div class="info-box">設定開學日與總週數後，系統會自動計算每個日期屬於第幾週。設為「啟用中」的學期會用於前台週次顯示。</div>
+    <div class="info-box">設定各個「期間」的日期範圍與起始週次，系統會依此計算每個日期屬於第幾週，或顯示為寒假／寒輔／暑假／暑輔等標籤。設為「啟用中」的學期會用於前台週次顯示。</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-      <div class="form-group"><label>學期名稱 *</label><input type="text" id="sem-name" placeholder="例如：114學年度上學期"></div>
-      <div class="form-group"><label>開學日 *</label><input type="date" id="sem-start"></div>
-      <div class="form-group"><label>總週數 *</label><input type="number" id="sem-weeks" value="20" min="1" max="30"></div>
-      <div class="form-group"><label>寒假開始</label><input type="date" id="sem-winter-start"></div>
-      <div class="form-group"><label>寒假結束</label><input type="date" id="sem-winter-end"></div>
-      <div class="form-group"><label>暑假開始</label><input type="date" id="sem-summer-start"></div>
-      <div class="form-group"><label>暑假結束</label><input type="date" id="sem-summer-end"></div>
+      <div class="form-group"><label>學期名稱 *</label><input type="text" id="sem-name" placeholder="例如：114學年度下學期"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:20px"><input type="checkbox" id="sem-active" style="width:auto"><label for="sem-active" style="color:var(--text)">設為啟用中學期</label></div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 學期期間設定</div>
+      <div class="info-box" style="margin-bottom:10px">
+        範例：114學年度下學期，2/9～2/22 是「寒輔」，從第1週開始算；2/23 開學後是「開學週期」，因為前面寒輔已經算了2週，所以開學週期的起始週次填 <strong>3</strong>。<br>
+        114學年度上學期，9/1 開學是「開學週期」，起始週次填 <strong>1</strong>。
+      </div>
+      <div id="periodSettingList"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addPeriodSettingRow()">＋ 新增期間</button>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" onclick="clearSemesterForm()">清除</button>
@@ -511,32 +519,63 @@ async function loadActiveSemester(){
 }
 
 function getMondayOfOffset(offset){const now=new Date(),day=now.getDay(),monday=new Date(now);monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);return monday;}
+function getMondayOf(d){const day=d.getDay(),monday=new Date(d);monday.setDate(d.getDate()-((day+6)%7));monday.setHours(0,0,0,0);return monday;}
 
-function getWeekNumber(date){
-  if(!activeSemester||!activeSemester.start_date)return null;
-  const start=new Date(activeSemester.start_date+'T00:00:00');
-  const startDay=start.getDay();
-  const startMonday=new Date(start);startMonday.setDate(start.getDate()-((startDay+6)%7));startMonday.setHours(0,0,0,0);
-  const diffDays=Math.floor((date-startMonday)/(1000*60*60*24));
-  return Math.floor(diffDays/7)+1;
+// ── 學期週次計算（依「期間」設定）──────────────────────────
+// 取得某日期所在的期間與週次：{week, type, label} 或 null（不在任何期間內）
+function getWeekInfo(date,semester){
+  if(!semester||!Array.isArray(semester.periods))return null;
+  const ds=fmtDate(date);
+  for(const p of semester.periods){
+    if(!p.start_date||!p.end_date)continue;
+    if(ds>=p.start_date&&ds<=p.end_date){
+      const start=new Date(p.start_date+'T00:00:00');
+      const diffDays=Math.floor((date-start)/(1000*60*60*24));
+      const week=(parseInt(p.week_start)||1)+Math.floor(diffDays/7);
+      return {week,type:p.type,label:p.label||p.type};
+    }
+  }
+  return null;
+}
+// 列出整個學期所有「週」，用於週次跳轉下拉選單
+function getSemesterWeeks(semester){
+  if(!semester||!Array.isArray(semester.periods))return [];
+  const weeks=[];
+  semester.periods.forEach(p=>{
+    if(!p.start_date||!p.end_date)return;
+    const start=new Date(p.start_date+'T00:00:00'),end=new Date(p.end_date+'T00:00:00');
+    const totalDays=Math.floor((end-start)/(1000*60*60*24));
+    if(totalDays<0)return;
+    const weekCount=Math.floor(totalDays/7)+1;
+    for(let i=0;i<weekCount;i++){
+      const wDate=new Date(start);wDate.setDate(start.getDate()+i*7);
+      weeks.push({week:(parseInt(p.week_start)||1)+i,label:p.label||p.type,type:p.type,date:wDate});
+    }
+  });
+  weeks.sort((a,b)=>a.week-b.week);
+  return weeks;
+}
+function weekBadgeText(info){
+  if(!info)return '';
+  return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
 }
 
 function buildAdminWeekSelector(){
   const sel=document.getElementById('adminWeekJump'),wrap=document.getElementById('adminWeekSelector');
   if(!activeSemester){wrap.style.display='none';return;}
+  const weeks=getSemesterWeeks(activeSemester);
+  if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
-  const total=activeSemester.total_weeks||20;
-  let opts='';for(let w=1;w<=total;w++)opts+=`<option value="${w}">第 ${w} 週</option>`;
-  sel.innerHTML=opts;
+  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
 }
 
 function adminJumpToWeek(week){
   if(!activeSemester)return;
   week=parseInt(week);
-  const start=new Date(activeSemester.start_date+'T00:00:00');
-  const startDay=start.getDay();
-  const startMonday=new Date(start);startMonday.setDate(start.getDate()-((startDay+6)%7));startMonday.setHours(0,0,0,0);
-  const targetMonday=new Date(startMonday);targetMonday.setDate(startMonday.getDate()+(week-1)*7);
+  const weeks=getSemesterWeeks(activeSemester);
+  const target=weeks.find(w=>w.week===week);
+  if(!target)return;
+  const targetMonday=getMondayOf(target.date);
   const thisMonday=getMondayOfOffset(0);
   adminWeekOffset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
   loadAdminVenue();
@@ -546,12 +585,12 @@ async function loadAdminVenue(){
   if(!activeSemester)await loadActiveSemester();
   const dates=getWeekDates(adminWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
-  const weekNum=getWeekNumber(dates[0]);
+  const weekInfo=getWeekInfo(dates[0],activeSemester);
   const badge=document.getElementById('adminCurrentWeekBadge'),weekSel=document.getElementById('adminWeekJump');
-  if(weekNum!==null&&activeSemester&&weekNum>=1&&weekNum<=(activeSemester.total_weeks||20)){
-    document.getElementById('adminVenueWeekLabel').textContent=`第${weekNum}週　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
-    if(badge){badge.textContent=`第 ${weekNum} 週`;badge.style.display='inline-block';}
-    if(weekSel)weekSel.value=weekNum;
+  if(weekInfo){
+    document.getElementById('adminVenueWeekLabel').textContent=`${weekBadgeText(weekInfo)}　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    if(badge){badge.textContent=weekBadgeText(weekInfo);badge.style.display='inline-block';}
+    if(weekSel)weekSel.value=weekInfo.week;
   }else{
     document.getElementById('adminVenueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
     if(badge)badge.style.display='none';
@@ -572,14 +611,15 @@ async function loadSemesters(){
     allSemesters=await sb('GET','semester_settings',{order:'created_at.desc'});
     allSemesters=Array.isArray(allSemesters)?allSemesters:[];
     if(!allSemesters.length){list.innerHTML='<div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div>';return;}
-    list.innerHTML='<div class="record-list">'+allSemesters.map(s=>`
+    list.innerHTML='<div class="record-list">'+allSemesters.map(s=>{
+      const periods=Array.isArray(s.periods)?s.periods:[];
+      const periodSummary=periods.map(p=>`<div style="font-size:12px;color:var(--text2)">${p.type}${p.label&&p.label!==p.type?'（'+p.label+'）':''}：${p.start_date} ～ ${p.end_date}　第${p.week_start||1}週起</div>`).join('');
+      return `
       <div class="record-card" style="${s.is_active?'border-color:var(--accent);border-width:2px':''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div>
             <div style="font-size:15px;font-weight:700">${s.name} ${s.is_active?'<span class="badge badge-approved">啟用中</span>':''}</div>
-            <div style="font-size:12.5px;color:var(--text2);margin-top:4px">開學日：${s.start_date}　共 ${s.total_weeks} 週</div>
-            ${s.winter_break_start?`<div style="font-size:12px;color:var(--text2)">寒假：${s.winter_break_start} ～ ${s.winter_break_end||'?'}</div>`:''}
-            ${s.summer_break_start?`<div style="font-size:12px;color:var(--text2)">暑假：${s.summer_break_start} ～ ${s.summer_break_end||'?'}</div>`:''}
+            <div style="margin-top:4px">${periodSummary||'<span style="font-size:12px;color:var(--text2)">尚未設定期間</span>'}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             ${!s.is_active?`<button class="btn btn-primary btn-sm" onclick="activateSemester('${s.id}')">設為啟用</button>`:''}
@@ -587,46 +627,99 @@ async function loadSemesters(){
             <button class="btn btn-danger btn-sm" onclick="deleteSemester('${s.id}')">🗑️ 刪除</button>
           </div>
         </div>
-      </div>`).join('')+'</div>';
+      </div>`;
+    }).join('')+'</div>';
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+}
+
+// ── 學期期間設定列 ────────────────────────────────────────
+const PERIOD_TYPES=['開學週期','寒假','寒輔','暑假','暑輔','其他'];
+let periodSettingRows=[];
+function addPeriodSettingRow(data){
+  const id=Date.now()+Math.floor(Math.random()*1000);
+  periodSettingRows.push(id);
+  appendPeriodSettingRow(id,data);
+}
+function appendPeriodSettingRow(id,data){
+  data=data||{};
+  const list=document.getElementById('periodSettingList');
+  const emptyMsg=list.querySelector('.period-empty');
+  if(emptyMsg)emptyMsg.remove();
+  const div=document.createElement('div');
+  div.className='period-setting-row';
+  div.id='psr-'+id;
+  div.innerHTML=`
+    <select id="ps-type-${id}">${PERIOD_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')}</select>
+    <input type="text" id="ps-label-${id}" placeholder="顯示標籤（選填）">
+    <input type="date" id="ps-start-${id}">
+    <span style="font-size:12px;color:var(--text2)">～</span>
+    <input type="date" id="ps-end-${id}">
+    <span class="ps-weeklabel">起始週次</span>
+    <input type="number" id="ps-weekstart-${id}" class="ps-weekstart" min="1" value="1">
+    <button class="period-setting-remove" onclick="removePeriodSettingRow(${id})">✕</button>`;
+  list.appendChild(div);
+  if(data.type)document.getElementById('ps-type-'+id).value=data.type;
+  if(data.label)document.getElementById('ps-label-'+id).value=data.label;
+  if(data.start_date)document.getElementById('ps-start-'+id).value=data.start_date;
+  if(data.end_date)document.getElementById('ps-end-'+id).value=data.end_date;
+  if(data.week_start)document.getElementById('ps-weekstart-'+id).value=data.week_start;
+}
+function removePeriodSettingRow(id){
+  periodSettingRows=periodSettingRows.filter(r=>r!==id);
+  const row=document.getElementById('psr-'+id);if(row)row.remove();
+  if(!periodSettingRows.length)document.getElementById('periodSettingList').innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增任何期間，請點下方按鈕新增</div>';
+}
+function renderPeriodSettingList(periods){
+  const list=document.getElementById('periodSettingList');
+  list.innerHTML='';periodSettingRows=[];
+  if(!periods||!periods.length){list.innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增任何期間，請點下方按鈕新增</div>';return;}
+  periods.forEach(p=>addPeriodSettingRow(p));
+}
+function collectPeriodSettings(){
+  return periodSettingRows.map(id=>({
+    type:document.getElementById('ps-type-'+id).value,
+    label:document.getElementById('ps-label-'+id).value.trim(),
+    start_date:document.getElementById('ps-start-'+id).value,
+    end_date:document.getElementById('ps-end-'+id).value,
+    week_start:parseInt(document.getElementById('ps-weekstart-'+id).value)||1
+  })).filter(p=>p.start_date&&p.end_date);
 }
 
 let editingSemesterId=null;
 function clearSemesterForm(){
   editingSemesterId=null;
-  ['sem-name','sem-start','sem-winter-start','sem-winter-end','sem-summer-start','sem-summer-end'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('sem-weeks').value='20';
+  document.getElementById('sem-name').value='';
   document.getElementById('sem-active').checked=false;
+  renderPeriodSettingList([]);
 }
 
 function editSemester(id){
   const s=allSemesters.find(x=>x.id===id);if(!s)return;
   editingSemesterId=id;
   document.getElementById('sem-name').value=s.name||'';
-  document.getElementById('sem-start').value=s.start_date||'';
-  document.getElementById('sem-weeks').value=s.total_weeks||20;
-  document.getElementById('sem-winter-start').value=s.winter_break_start||'';
-  document.getElementById('sem-winter-end').value=s.winter_break_end||'';
-  document.getElementById('sem-summer-start').value=s.summer_break_start||'';
-  document.getElementById('sem-summer-end').value=s.summer_break_end||'';
   document.getElementById('sem-active').checked=!!s.is_active;
+  renderPeriodSettingList(Array.isArray(s.periods)?s.periods:[]);
   document.querySelector('#panel-semester .card-title').scrollIntoView({behavior:'smooth'});
   showToast('已載入學期資料，可修改後儲存','success');
 }
 
 async function saveSemester(){
   const name=document.getElementById('sem-name').value.trim();
-  const start=document.getElementById('sem-start').value;
-  const weeks=parseInt(document.getElementById('sem-weeks').value)||20;
-  if(!name||!start){showToast('請填寫學期名稱和開學日','error');return;}
+  if(!name){showToast('請填寫學期名稱','error');return;}
+  const periods=collectPeriodSettings();
+  if(!periods.length){showToast('請至少新增一個期間','error');return;}
   const isActive=document.getElementById('sem-active').checked;
+  // 為了相容舊欄位，順帶寫入第一個期間的起始日與最大週次
+  const totalWeeks=Math.max(...periods.map(p=>{
+    const start=new Date(p.start_date+'T00:00:00'),end=new Date(p.end_date+'T00:00:00');
+    const totalDays=Math.floor((end-start)/(1000*60*60*24));
+    return (p.week_start||1)+Math.floor(Math.max(totalDays,0)/7);
+  }));
+  const sortedByStart=[...periods].sort((a,b)=>a.start_date<b.start_date?-1:1);
   const body={
-    name,start_date:start,total_weeks:weeks,
-    winter_break_start:document.getElementById('sem-winter-start').value||null,
-    winter_break_end:document.getElementById('sem-winter-end').value||null,
-    summer_break_start:document.getElementById('sem-summer-start').value||null,
-    summer_break_end:document.getElementById('sem-summer-end').value||null,
-    is_active:isActive
+    name,periods,is_active:isActive,
+    start_date:sortedByStart[0].start_date,
+    total_weeks:totalWeeks
   };
   try{
     if(isActive){
@@ -884,6 +977,7 @@ function showModal(title,body,actions){document.getElementById('modalTitle').tex
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
+renderPeriodSettingList([]);
 </script>
 </body>
 </html>
