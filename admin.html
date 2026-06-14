@@ -560,6 +560,26 @@ function weekBadgeText(info){
   return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
 }
 
+// 將「第 week 週 + 星期 dayOfWeek（1=一...7=日）」換算成具體日期字串
+// 採用與 getSemesterWeeks 相同的展開規則：每個 period 從 start_date 起每7天算一週
+function getDateForWeek(semester,week,dayOfWeek){
+  if(!semester||!Array.isArray(semester.periods))return null;
+  for(const p of semester.periods){
+    if(!p.start_date||!p.end_date)continue;
+    const start=new Date(p.start_date+'T00:00:00'),end=new Date(p.end_date+'T00:00:00');
+    const totalDays=Math.floor((end-start)/(1000*60*60*24));
+    if(totalDays<0)continue;
+    const weekCount=Math.floor(totalDays/7)+1;
+    const wStart=parseInt(p.week_start)||1;
+    if(week>=wStart&&week<wStart+weekCount){
+      const base=new Date(start);base.setDate(start.getDate()+(week-wStart)*7);
+      const d=new Date(base);d.setDate(base.getDate()+(dayOfWeek-1));
+      return fmtDate(d);
+    }
+  }
+  return null;
+}
+
 function buildAdminWeekSelector(){
   const sel=document.getElementById('adminWeekJump'),wrap=document.getElementById('adminWeekSelector');
   if(!activeSemester){wrap.style.display='none';return;}
@@ -799,17 +819,23 @@ function clickAdminBooking(bookingId,date,period,venue){
   if(!booking){showToast('找不到資料','error');return;}
   const periods=booking.periods||[];
   const target=periods.find(p=>p.date===date&&p.period===period&&p.venue===venue);
+  const rec=booking.recurrence;
   showModal(`場地預約 — ${date} ${period}`,`
     <div style="font-size:14px;margin-bottom:6px"><strong>${booking.borrower_name}</strong> 【${booking.purpose}】</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${booking.role||''}${booking.student_id?' ・ '+booking.student_id:''}</div>
     <div style="font-size:13px;margin-bottom:10px">${venue}　${period}　狀態：<strong>${target?.status||booking.status}</strong></div>
     ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${booking.note}</div>`:''}
-    <div style="font-size:12px;color:var(--text2);margin-top:8px">此預約單共 ${periods.length} 個時段，刪除僅移除此時段。</div>
+    ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${rec.week_start}～${rec.week_end}週・每週${DAYS[rec.day_of_week-1]}（共 ${periods.length} 個時段）</div>`:''}
+    <div style="font-size:12px;color:var(--text2);margin-top:8px">此預約單共 ${periods.length} 個時段，「刪除此時段」僅移除這一筆。</div>
   `,[
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'},
     ...((target?.status||booking.status)==='待審核'?[
       {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准')`},
       {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已拒絕')`}
+    ]:[]),
+    ...(rec?[
+      {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal('${bookingId}')`},
+      {label:'🗑️ 刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries('${bookingId}')`}
     ]:[]),
     {label:'🗑️ 刪除此時段',cls:'btn-danger',fn:`deletePeriod('${bookingId}','${date}','${period}','${venue}')`}
   ]);
@@ -855,6 +881,15 @@ async function deletePeriod(bookingId,date,period,venue){
 }
 
 function openAdminAddVenue(date,period,presetVenue){
+  const dateObj=new Date(date+'T00:00:00');
+  const jsDay=dateObj.getDay(); // 0=週日..6=週六
+  const dow=jsDay===0?7:jsDay;  // 轉成 1=一...7=日
+  const weeks=getSemesterWeeks(activeSemester);
+  const hasWeeks=weeks.length>0;
+  const curInfo=getWeekInfo(dateObj,activeSemester);
+  const defaultStart=curInfo?curInfo.week:(hasWeeks?weeks[0].week:1);
+  const defaultEnd=hasWeeks?weeks[weeks.length-1].week:defaultStart;
+  const weekOptions=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
   showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
     <div class="form-group"><label>身份 *</label>
       <select id="avf-role" onchange="document.getElementById('avf-sid-group').style.display=this.value==='學生'?'flex':'none'">
@@ -865,17 +900,28 @@ function openAdminAddVenue(date,period,presetVenue){
     <div class="form-group" id="avf-sid-group" style="display:none"><label>學號 *</label><input type="text" id="avf-sid" placeholder="例如：191010"></div>
     <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
     <div class="form-group"><label>實驗室 *</label><select id="avf-venue">${VENUES.map(v=>`<option value="${v}" ${v===presetVenue?'selected':''}>${v}</option>`).join('')}</select></div>
-    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto"><label for="avf-fixed" style="color:var(--text)">📌 固定課程（整學期）</label></div>
-    <div id="semesterWrap" style="display:none" class="form-group"><label>學期</label><input type="text" id="avf-semester" placeholder="例如：113-2"></div>
+    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto" ${hasWeeks?'':'disabled'}><label for="avf-fixed" style="color:var(--text)">📌 固定課程（依週次套用）</label></div>
+    <div id="weekRangeWrap" style="display:none">
+      ${hasWeeks?`
+      <div class="info-box" style="margin-bottom:8px">系統會把這個節次套用到所選週次範圍內，每一週的「星期${DAYS[dow-1]}」。</div>
+      <div style="display:flex;gap:8px">
+        <div class="form-group" style="flex:1"><label>起始週</label><select id="avf-week-start">${weekOptions}</select></div>
+        <div class="form-group" style="flex:1"><label>結束週</label><select id="avf-week-end">${weekOptions}</select></div>
+      </div>`:`<div class="info-box">尚未設定學期週次，請先到「📆 學期設定」建立並啟用學期，才能依週次套用。</div>`}
+    </div>
     <div class="form-group"><label>備註</label><textarea id="avf-note" rows="2"></textarea></div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認新增',cls:'btn-primary',fn:`adminAddVenue('${date}','${period}')`}
+    {label:'確認新增',cls:'btn-primary',fn:`adminAddVenue('${date}','${period}',${dow})`}
   ]);
-  document.getElementById('avf-fixed').addEventListener('change',function(){document.getElementById('semesterWrap').style.display=this.checked?'block':'none';});
+  document.getElementById('avf-fixed').addEventListener('change',function(){document.getElementById('weekRangeWrap').style.display=this.checked?'block':'none';});
+  if(hasWeeks){
+    document.getElementById('avf-week-start').value=defaultStart;
+    document.getElementById('avf-week-end').value=defaultEnd;
+  }
 }
 
-async function adminAddVenue(date,period){
+async function adminAddVenue(date,period,dow){
   const name=document.getElementById('avf-name').value.trim();
   const role=document.getElementById('avf-role').value;
   const sid=role==='學生'?document.getElementById('avf-sid').value.trim():'';
@@ -884,14 +930,129 @@ async function adminAddVenue(date,period){
   const purpose=document.getElementById('avf-purpose').value;
   const venue=document.getElementById('avf-venue').value;
   const isFixed=document.getElementById('avf-fixed').checked;
-  const semester=document.getElementById('avf-semester')?.value.trim()||'';
   const note=document.getElementById('avf-note').value.trim();
+
+  let periods=[{date,period,venue,status:'已核准'}];
+  let recurrence=null;
+
+  if(isFixed&&document.getElementById('avf-week-start')){
+    const weekStart=parseInt(document.getElementById('avf-week-start').value);
+    const weekEnd=parseInt(document.getElementById('avf-week-end').value);
+    if(weekEnd<weekStart){showToast('結束週不能早於起始週','error');return;}
+    const dateSet=new Set();
+    for(let w=weekStart;w<=weekEnd;w++){
+      const d=getDateForWeek(activeSemester,w,dow);
+      if(d)dateSet.add(d);
+    }
+    if(!dateSet.size){showToast('所選週次範圍內找不到對應日期','error');return;}
+    periods=Array.from(dateSet).sort().map(d=>({date:d,period,venue,status:'已核准'}));
+    recurrence={day_of_week:dow,period,venue,week_start:weekStart,week_end:weekEnd};
+  }
+
+  const opts={name,role,sid,purpose,venue,isFixed,note,periods,recurrence};
+  const conflicts=periods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,null));
+  if(conflicts.length){
+    window._pendingVenueAdd=opts;
+    showModal('⚠️ 時段衝突',`
+      <p>以下日期已有核准／固定預約：</p>
+      <div style="margin-top:8px;font-size:13px;max-height:200px;overflow:auto">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div>
+      <p style="margin-top:6px;font-size:13px">共 ${periods.length} 筆，其中 ${conflicts.length} 筆衝突。仍要新增（造成重複預約）嗎？</p>
+    `,[
+      {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+      {label:'仍要新增',cls:'btn-warn',fn:'doAdminAddVenue(window._pendingVenueAdd)'}
+    ]);
+    return;
+  }
   closeModal();
+  await doAdminAddVenue(opts);
+}
+
+async function doAdminAddVenue(opts){
+  closeModal();
+  const{name,role,sid,purpose,venue,isFixed,note,periods,recurrence}=opts;
   try{
     const id='VEN-ADM-'+Date.now();
-    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:sid||null,role,purpose,periods:[{date,period,venue,status:'已核准'}],status:'已核准',note,is_fixed:isFixed,semester}});
-    showToast('已新增','success');loadAll();
+    const body={id,borrower_name:name,student_id:sid||null,role,purpose,periods,status:'已核准',note,is_fixed:isFixed};
+    if(recurrence)body.recurrence=recurrence;
+    await sb('POST','venue_bookings',{body});
+    showToast(`已新增 ${periods.length} 筆時段`,'success');loadAll();
   }catch(e){showToast('失敗：'+e.message,'error');}
+}
+
+// ── 固定課程系列管理 ──────────────────────────────────────
+function openEditRecurrenceModal(bookingId){
+  const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking||!booking.recurrence)return;
+  const rec=booking.recurrence;
+  const weeks=getSemesterWeeks(activeSemester);
+  if(!weeks.length){showToast('找不到學期週次設定，無法編輯排程','error');return;}
+  const weekOptions=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
+  showModal('✏️ 編輯整學期排程',`
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${booking.borrower_name}　【${booking.purpose}】　${rec.venue}　${rec.period}　每週${DAYS[rec.day_of_week-1]}</div>
+    <div style="display:flex;gap:8px">
+      <div class="form-group" style="flex:1"><label>起始週</label><select id="erc-week-start">${weekOptions}</select></div>
+      <div class="form-group" style="flex:1"><label>結束週</label><select id="erc-week-end">${weekOptions}</select></div>
+    </div>
+    <div class="info-box" style="margin-top:6px">調整週次範圍後，系統會自動比對新舊範圍對應的日期，新增或移除時段（已核准/拒絕狀態的既有時段不受影響）。</div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'預覽變更',cls:'btn-primary',fn:`previewRecurrenceEdit('${bookingId}')`}
+  ]);
+  document.getElementById('erc-week-start').value=rec.week_start;
+  document.getElementById('erc-week-end').value=rec.week_end;
+}
+
+function previewRecurrenceEdit(bookingId){
+  const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking||!booking.recurrence)return;
+  const rec=booking.recurrence;
+  const newStart=parseInt(document.getElementById('erc-week-start').value);
+  const newEnd=parseInt(document.getElementById('erc-week-end').value);
+  if(newEnd<newStart){showToast('結束週不能早於起始週','error');return;}
+  const newDates=new Set();
+  for(let w=newStart;w<=newEnd;w++){const d=getDateForWeek(activeSemester,w,rec.day_of_week);if(d)newDates.add(d);}
+  const oldPeriods=(booking.periods||[]).filter(p=>p.period===rec.period&&p.venue===rec.venue);
+  const oldDates=new Set(oldPeriods.map(p=>p.date));
+  const toAdd=Array.from(newDates).filter(d=>!oldDates.has(d)).sort();
+  const toRemove=oldPeriods.filter(p=>!newDates.has(p.date));
+  if(!toAdd.length&&!toRemove.length){showToast('週次範圍沒有變化','success');closeModal();return;}
+  const addConflicts=toAdd.filter(d=>venueSlotConflict(d,rec.period,rec.venue,bookingId));
+  window._pendingRecurrenceEdit={bookingId,newStart,newEnd,toAdd,toRemove};
+  showModal('預覽變更',`
+    <div style="font-size:13px;margin-bottom:8px">新週次範圍：第${newStart}～${newEnd}週</div>
+    ${toAdd.length?`<div style="font-size:13px;color:var(--accent);margin-bottom:4px">將新增 ${toAdd.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${toAdd.join('、')}</div>`:''}
+    ${toRemove.length?`<div style="font-size:13px;color:var(--danger);margin-bottom:4px">將移除 ${toRemove.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${toRemove.map(p=>p.date).join('、')}</div>`:''}
+    ${addConflicts.length?`<div style="font-size:13px;color:var(--danger);margin-top:6px">⚠️ 新增的日期中有 ${addConflicts.length} 筆與既有核准／固定預約衝突，新增後請至週曆檢查。</div>`:''}
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認套用',cls:'btn-primary',fn:'applyRecurrenceEdit()'}
+  ]);
+}
+
+async function applyRecurrenceEdit(){
+  const pending=window._pendingRecurrenceEdit;if(!pending)return;
+  const{bookingId,newStart,newEnd,toAdd,toRemove}=pending;
+  const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
+  const rec=booking.recurrence;
+  const removeSet=new Set(toRemove.map(p=>p.date));
+  let periods=(booking.periods||[]).filter(p=>!(removeSet.has(p.date)&&p.period===rec.period&&p.venue===rec.venue));
+  toAdd.forEach(d=>periods.push({date:d,period:rec.period,venue:rec.venue,status:'已核准'}));
+  const recurrence={...rec,week_start:newStart,week_end:newEnd};
+  closeModal();
+  try{
+    await sb('PATCH','venue_bookings',{filter:'id=eq.'+bookingId,body:{periods,recurrence},prefer:'return=minimal'});
+    showToast('排程已更新','success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+
+function deleteWholeSeries(bookingId){
+  showModal('確認刪除整個系列',`<p>確定要刪除整個固定課程系列嗎？這會移除此預約單的所有時段，無法復原。</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteWholeSeries('${bookingId}')`}
+  ]);
+}
+async function doDeleteWholeSeries(bookingId){
+  closeModal();
+  try{await sb('DELETE','venue_bookings',{filter:'id=eq.'+bookingId,prefer:'return=minimal'});showToast('整個系列已刪除','success');loadAll();}
+  catch(e){showToast('刪除失敗','error');}
 }
 
 // ── 器材審核 ──────────────────────────────────────────────
