@@ -497,7 +497,7 @@ const ROOM_CODE_INFO=[
 // 器材所屬房間 → 位置編碼開頭代號
 const ROOM_TO_CODE={'Chemistry':'C','Biology':'B','Geoscience':'G','Physics Chemistry':'PC','Physics':'P','TeachingMaterialRoom':'T'};
 // 代號 → 顯示用簡稱（放在每個位置最前面）
-const CODE_SHORT_NAME={'T':'教具室','PC':'理化室','C':'化學室','B':'生物室','P':'物理室','G':'地科室'};
+const CODE_SHORT_NAME={'T':'教具室','PC':'理化','C':'化學','B':'生物','P':'物理','G':'地科'};
 
 // 解析單一個位置編碼（如 BB02-2 / A04），回傳「簡稱＋圖示說明 (原始代號)」
 function decodeLocationPart(code,defaultRoomCode){
