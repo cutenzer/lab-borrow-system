@@ -52,12 +52,12 @@
     transition:box-shadow .2s,border-color .2s;
   }
   .card:hover{box-shadow:0 4px 20px rgba(31,52,92,0.12);border-color:#c7d7ea;}
-  .card-title{font-size:14.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:2px solid var(--surface2);}
+  .card-title{font-size:16px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:2px solid var(--surface2);}
   .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
   .form-group{display:flex;flex-direction:column;gap:4px;min-width:0;}
   .form-group.full{grid-column:1/-1;}
-  label{font-size:12.5px;font-weight:600;color:var(--text2);}
-  input,select,textarea{border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14.5px;font-family:inherit;background:#fff;color:var(--text);transition:border-color 0.15s,box-shadow 0.15s;outline:none;width:100%;}
+  label{font-size:13.5px;font-weight:600;color:var(--text2);}
+  input,select,textarea{border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;font-size:15.5px;font-family:inherit;background:#fff;color:var(--text);transition:border-color 0.15s,box-shadow 0.15s;outline:none;width:100%;}
   input[type="date"]{-webkit-min-logical-width:100%;min-width:100%;width:1px;box-sizing:border-box;}
   input::placeholder,textarea::placeholder{color:#9aabc0;}
   input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(53,103,201,0.14);}
@@ -74,7 +74,7 @@
   .btn:disabled{opacity:0.5;cursor:not-allowed;transform:none!important;box-shadow:none!important;}
   /* 身份選擇 */
   .role-tabs{display:flex;gap:8px;margin-bottom:12px;}
-  .role-tab{flex:1;padding:11px;border:2px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all 0.15s;font-size:14px;font-weight:600;background:var(--surface2);color:var(--text2);}
+  .role-tab{flex:1;padding:13px;border:2px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all 0.15s;font-size:17px;font-weight:700;background:var(--surface2);color:var(--text2);}
   .role-tab:hover{border-color:#c7d7ea;color:var(--text);}
   .role-tab.active{border-color:var(--accent);background:#e9f0fb;color:var(--accent);}
   /* 保證金 */
@@ -272,7 +272,7 @@
 </head>
 <body>
 <header>
-  <div class="header-left"><span style="font-size:20px">🧪</span><h1>實驗室器材借用系統</h1>
+  <div class="header-left"><span style="font-size:20px">🧬</span><h1>實驗室器材借用系統</h1>
     <span class="sys-online" style="display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10.5px;color:#fff;letter-spacing:1px;padding:2px 8px;border:1px solid rgba(255,255,255,0.35);border-radius:20px;background:rgba(255,255,255,0.12)">
       <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulseDot 2.6s ease-in-out infinite"></span>ONLINE
     </span>
