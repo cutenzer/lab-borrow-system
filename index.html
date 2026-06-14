@@ -494,32 +494,48 @@ const ROOM_CODE_INFO=[
   {code:'T',name:'教具室'},{code:'PC',name:'理化實驗室'},{code:'C',name:'化學實驗室'},
   {code:'B',name:'生物實驗室'},{code:'P',name:'物理實驗室'},{code:'G',name:'地科實驗室'}
 ];
-function decodeLocation(code){
-  if(!code)return '';
-  let rest=code.trim();
-  if(rest.startsWith('PC'))rest=rest.slice(2);
-  else if(/^[TCBPG]/.test(rest))rest=rest.slice(1);
-  if(!rest)return code;
+// 器材所屬房間 → 位置編碼開頭代號
+const ROOM_TO_CODE={'Chemistry':'C','Biology':'B','Geoscience':'G','Physics Chemistry':'PC','Physics':'P','TeachingMaterialRoom':'T'};
+// 代號 → 顯示用簡稱（放在每個位置最前面）
+const CODE_SHORT_NAME={'T':'教具室','PC':'理化','C':'化學','B':'生物','P':'物理','G':'地科'};
+
+// 解析單一個位置編碼（如 BB02-2 / A04），回傳「簡稱＋圖示說明 (原始代號)」
+function decodeLocationPart(code,defaultRoomCode){
+  let rest=(code||'').trim();
+  if(!rest)return '';
+  let roomCode=defaultRoomCode||'';
+  if(rest.startsWith('PC')){roomCode='PC';rest=rest.slice(2);}
+  else if(/^[TCBPG]/.test(rest)){roomCode=rest[0];rest=rest.slice(1);}
+  const roomShort=CODE_SHORT_NAME[roomCode]||'';
+  const prefix=roomShort?roomShort+'・':'';
   const cabinetCode=rest.slice(0,1);
   const cab=CABINET_CODE_MAP[cabinetCode];
-  if(!cab)return code;
+  if(!cab)return `${prefix}${code}`; // 無法解析就只加房間簡稱，保留原始代號
   rest=rest.slice(1);
   const parts=rest.split('-');
   const numPart=parts[0],layerPart=parts[1];
-  let label=`${cab.icon} ${cab.name} ${numPart}號`;
-  if(layerPart)label+=` ・ 第${layerPart}層`;
-  return label;
+  let label=`${prefix}${cab.icon}${cab.name}${numPart}號`;
+  if(layerPart)label+=`・第${layerPart}層`;
+  return `${label} (${code})`;
+}
+// 解析完整位置欄位，可能用 & 串接多個位置（同一器材分散放置）
+function decodeLocation(code,room){
+  if(!code)return '';
+  const defaultRoomCode=ROOM_TO_CODE[room]||'';
+  return code.split('&').map(p=>p.trim()).filter(Boolean)
+    .map(p=>decodeLocationPart(p,defaultRoomCode)).join('　＋　');
 }
 function showLocationGuide(){
   const roomRows=ROOM_CODE_INFO.map(r=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span style="font-family:'DM Mono',monospace;font-weight:700">${r.code}</span><span>${r.name}</span></div>`).join('');
   const cabRows=Object.entries(CABINET_CODE_MAP).map(([code,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span>${c.icon} <span style="font-family:'DM Mono',monospace;font-weight:700">${code}</span></span><span>${c.name}</span></div>`).join('');
   showModal('❓ 器材標籤對照說明',`
-    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。畫面上會同時顯示中文說明與原始代號（括號內），方便對照貼在櫃子上的標籤。</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">① 實驗室代號</div>${roomRows}</div>
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">② 櫃別代號＋圖示</div>${cabRows}</div>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號　／　GC03-1 → 地科室・🪟玻璃鐵櫃03號・第1層</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號 (PCA01)　／　GC03-1 → 地科室・🪟玻璃鐵櫃03號・第1層 (GC03-1)</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 若同一器材分放在多個位置，會以「＋」串接顯示，例如 A04 ＋ CA06，代表分別放在本科鐵櫃04號與化學室鐵櫃06號。</p>
     <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 借到器材後，請依「位置編碼」放回原櫃原層，方便下一位使用者尋找。</p>
   `,[{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
 }
@@ -1020,7 +1036,7 @@ function renderEquipList(){
     const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
     const imgHtml=e.image_url?`<img class="equip-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
-    const locHtml=e.location?' ・ '+decodeLocation(e.location):'';
+    const locHtml=e.location?' ・ '+decodeLocation(e.location,e.room):'';
     return `<div class="equip-row ${avail<=0?'unavailable':''}">
       ${imgHtml}
       <div class="equip-row-info"><div class="equip-row-name">${e.name}</div><div class="equip-row-sub">${e.spec||''}${locHtml}</div>
@@ -1225,7 +1241,7 @@ function renderEquipBrowse(items){
     return `<div class="equip-browse-card" onclick="openLightbox('${e.image_url}','${safeN}')">
       ${imgHtml}<div class="equip-browse-body">
         <div class="equip-browse-room">${rn(e.room)}${crossTag}</div><div class="equip-browse-name">${e.name}</div>
-        <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+decodeLocation(e.location):''}</div>
+        <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+decodeLocation(e.location,e.room):''}</div>
         <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
         ${borrowerInfo}
       </div></div>`;
