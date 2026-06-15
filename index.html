@@ -1344,6 +1344,8 @@ function showToast(msg,type){const t=document.getElementById('toast');t.textCont
 let allCourseTemplates=[], appliedTemplate=null;
 // 科別代號 → 中文簡稱（用來組課名）
 const SUBJECT_FROM_ROOM={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具'};
+// 可辨識的科別關鍵字（當 default_room 未對應時，從分類／課名推斷）
+const SUBJECTS=['地球科學','物理','化學','生物','地科','理化','數學','資訊','生活科技','國文','英文','歷史','地理','公民'];
 // 需特別標示的課程類型；一般課程不顯示
 const SPECIAL_TAGS=['探究','菁英','選修','資優','實驗班','科學班','先修','專題','加深加廣'];
 
@@ -1353,17 +1355,45 @@ function detectSpecialTag(t){
   for(const tag of SPECIAL_TAGS){if(hay.includes(tag))return tag;}
   return '';
 }
-// 統一課名格式：年級＋科別＋特殊標籤－課程名稱（不含教師名）
-// 例：高二物理探究-不確定度的計算 ／ 高一化學-溶解度的測定
+// 偵測科別：先用實驗室代號，對不到再從分類／課名找關鍵字
+function detectSubject(t){
+  if(SUBJECT_FROM_ROOM[t.default_room])return SUBJECT_FROM_ROOM[t.default_room];
+  const hay=`${t.category||''} ${t.name||''}`;
+  for(const s of SUBJECTS){if(hay.includes(s))return s==='地球科學'?'地科':s;}
+  return '';
+}
+// 把課名前面重複的「科別／特殊類型／年級」片段剝掉（含各種排列與全半形括號）
+function stripLeadingTokens(name,tokens){
+  let s=(name||'').trim();
+  const seps=['-','－','—','～','~','｜','|','/','／','：',':','　',' ','．','.','、'];
+  let changed=true;
+  while(changed){
+    changed=false;
+    for(const sep of seps){while(s.startsWith(sep)){s=s.slice(sep.length);changed=true;}}
+    for(const tk of tokens){if(tk&&s.startsWith(tk)){s=s.slice(tk.length);changed=true;break;}}
+  }
+  return s.trim();
+}
+// 統一課名格式：年級＋科別＋特殊標籤－課程名稱（不含教師名、不重複）
+// 例：高二物理探究-不確定度的測量與計算 ／ 高一化學-溶解度的測定
 function formatTemplateName(t){
   const grade=(t.grade||'').trim();
-  const subject=SUBJECT_FROM_ROOM[t.default_room]||'';
-  let special=detectSpecialTag(t);
-  const courseName=(t.name||'').trim();
-  if(special&&courseName.includes(special))special=''; // 課名已含標籤就不重複
+  const subject=detectSubject(t);
+  const special=detectSpecialTag(t);
+  // 要從課名開頭剝除的重複片段（各種組合＋全半形括號），長的先剝避免殘留
+  const tokens=[];
+  if(subject&&special){tokens.push(
+    subject+special, special+subject,
+    `${special}（${subject}）`,`${special}(${subject})`,
+    `${subject}（${special}）`,`${subject}(${special})`);}
+  if(subject)tokens.push(`（${subject}）`,`(${subject})`,subject);
+  if(special)tokens.push(`（${special}）`,`(${special})`,special);
+  if(grade)tokens.push(grade);
+  tokens.sort((a,b)=>b.length-a.length);
+  const pure=stripLeadingTokens(t.name,tokens);
   const head=`${grade}${subject}${special}`;
-  if(head&&courseName)return `${head}-${courseName}`;
-  return head||courseName||'（未命名課程）';
+  if(head&&pure)return `${head}-${pure}`;
+  return head||pure||(t.name||'').trim()||'（未命名課程）';
 }
 
 async function loadCourseTemplates(){
@@ -1396,28 +1426,42 @@ function applySelectedTemplate(){
 // 套用課程模板：把器材清單「直接加入購物車」（依實際庫存上限）
 function applyTemplate(id){
   const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
-  const added=[],skipped=[];
+  const av=e=>parseInt(e.available)||0;
+  const added=[];
   (t.equipment_items||[]).forEach(it=>{
     const want=parseInt(it.quantity)||0;
     if(want<=0)return;
-    // 比對實際器材：優先同名同科 → 同名+預設科別 → 同名
-    let eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name)
-        ||allEquipment.find(e=>e.room===t.default_room&&e.name===it.name)
-        ||allEquipment.find(e=>e.name===it.name);
-    if(!eq){skipped.push({name:it.name,reason:'查無此器材'});return;}
-    const avail=parseInt(eq.available)||0;
-    if(avail<=0){skipped.push({name:eq.name,reason:'目前無庫存'});return;}
-    const qty=Math.min(want,avail);
-    selectedItems[eq.room+'__'+eq.name]={room:eq.room,name:eq.name,spec:eq.spec||it.spec||'',unit:eq.unit||it.unit||'個',quantity:qty};
-    added.push({room:eq.room,name:eq.name,unit:eq.unit||'個',qty,want,capped:qty<want});
+    // 同名器材可能分散在不同科別／教具室，全部一起看
+    const cands=allEquipment.filter(e=>e.name===it.name);
+    let room,spec,unit,info='';
+    if(cands.length){
+      const totalAvail=cands.reduce((s,e)=>s+av(e),0);
+      // 取用地點：模板指定 → 預設科別（須足量）→ 任一足量(庫存最多) → 模板/預設 → 庫存最多
+      let pick=null;
+      for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r&&av(e)>=want);if(c){pick=c;break;}}}
+      if(!pick){const sat=cands.filter(e=>av(e)>=want).sort((a,b)=>av(b)-av(a));if(sat.length)pick=sat[0];}
+      if(!pick){for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r);if(c){pick=c;break;}}}}
+      if(!pick)pick=[...cands].sort((a,b)=>av(b)-av(a))[0];
+      room=pick.room;spec=pick.spec||it.spec||'';unit=pick.unit||it.unit||'個';
+      if(av(pick)>=want){/* 該處足量，免提醒 */}
+      else if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別／教具室合計尚有，請確認取用地點`;
+      else info=`全校目前可借約 ${totalAvail}（原需 ${want}），可能在教具室或其他科別，請向辦公室確認`;
+    }else{
+      // 模板有列＝學校理應有，只是庫存清單尚未建檔；仍依課程帶入，交由管理員核對
+      room=it.room||t.default_room||'';spec=it.spec||'';unit=it.unit||'個';
+      info='庫存清單中尚無此項，已依課程帶入，請向管理員確認';
+    }
+    // 數量＝課程需求（不依即時庫存砍量），保留老師的完整需求供管理員與歷年比對
+    selectedItems[room+'__'+it.name]={room,name:it.name,spec,unit,quantity:want};
+    added.push({room,name:it.name,unit,qty:want,info});
   });
-  appliedTemplate={id:t.id,name:formatTemplateName(t),note:t.reference_note||'',added,skipped};
+  appliedTemplate={id:t.id,name:formatTemplateName(t),note:t.reference_note||'',added};
   updateCartBadge();renderEquipList();calcDeposit();
   const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);
   renderAppliedTemplate();
   document.getElementById('appliedTemplateName').textContent=appliedTemplate.name;
   document.getElementById('appliedTemplateBox').style.display='block';
-  const msg=added.length?`已加入購物車 ${added.length} 項器材`:'此課程沒有可加入的器材';
+  const msg=added.length?`已帶入 ${added.length} 項器材到購物車`:'此課程沒有設定器材';
   showToast('已套用：'+appliedTemplate.name+'（'+msg+'）','success');
 }
 
@@ -1428,21 +1472,16 @@ function renderAppliedTemplate(){
   if(!appliedTemplate){box.innerHTML='';return;}
   let html='';
   if(appliedTemplate.added.length){
-    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">已加入購物車的器材（可到 🛒 微調數量）</div>`;
-    html+=appliedTemplate.added.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border)">
+    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">已帶入購物車的器材（數量＝課程需求，可到 🛒 微調）</div>`;
+    html+=appliedTemplate.added.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
       <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);min-width:18px">${i+1}.</span>
-      <span style="font-weight:600;flex:1">${a.name}</span>
+      <span style="font-weight:600;flex:1;min-width:90px">${a.name}</span>
       <span style="font-size:11px;color:var(--accent)">${rn(a.room)}</span>
       <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600">× ${a.qty} ${a.unit}</span>
-      ${a.capped?`<span class="borrower-tag">原需${a.want}・庫存不足</span>`:''}
+      ${a.info?`<span style="flex-basis:100%;font-size:11px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;margin-top:2px">ℹ️ ${a.info}</span>`:''}
     </div>`).join('')+`</div>`;
   }else{
-    html+=`<div style="font-size:12.5px;color:var(--text2);padding:6px 0">此課程沒有對應到任何可借器材。</div>`;
-  }
-  if(appliedTemplate.skipped.length){
-    html+=`<div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:12.5px;color:var(--danger)">
-      ⚠️ 以下器材未加入（請改用上方器材搜尋手動加入，或到辦公室確認）：<br>${appliedTemplate.skipped.map(s=>`・${s.name}（${s.reason}）`).join('<br>')}
-    </div>`;
+    html+=`<div style="font-size:12.5px;color:var(--text2);padding:6px 0">此課程沒有設定任何器材。</div>`;
   }
   if(appliedTemplate.note){
     const safeNote=appliedTemplate.note.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
