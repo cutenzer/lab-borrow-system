@@ -1116,8 +1116,8 @@ async function doDeleteWholeSeries(bookingId){
 function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doApprove('${id}')`}]);}
 function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${id}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因</label><textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doReject('${id}')`}]);}
 
-// 核准：核准當下重新計算各器材已借出量，夠才核准（庫存採推導模型，不寫 available）
-async function doApprove(id){
+// 核准：核准當下重新計算各器材已借出量；庫存不足時改為「可確認後強制核准」（庫存採推導模型，不寫 available）
+async function doApprove(id,force){
   closeModal();
   const rec=allRecords.find(r=>r.id===id);
   if(!rec){showToast('找不到記錄','error');return;}
@@ -1132,9 +1132,21 @@ async function doApprove(id){
       const already=borrowedMap[it.room+'__'+it.name]||0;
       if(already+(parseInt(it.quantity)||0)>total)shortage.push(`${it.name}（需 ${it.quantity}，可借 ${Math.max(0,total-already)}）`);
     });
-    if(shortage.length){showToast('庫存不足，無法核准：'+shortage.join('、'),'error');return;}
+    // 庫存不足：不再硬性阻擋，改為跳確認視窗，確認後可強制核准
+    if(shortage.length&&!force){
+      showModal('⚠️ 庫存不足，仍要核准嗎？',`
+        <p style="font-size:13px;margin-bottom:8px">以下器材目前的「系統可借量」不足：</p>
+        <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--danger)">${shortage.map(s=>'・'+s).join('<br>')}</div>
+        <p style="font-size:13px;color:var(--text2);margin-top:10px">若你確定學校實際有這些器材（例如庫存數量還沒建檔完成），可以直接強制核准。</p>
+        <p style="font-size:12px;color:var(--text2);margin-top:6px">⚠️ 強制核准後，這些器材的可借量可能會暫時顯示為 0 或負數，等你之後到器材管理把實際總數補齊，就會自動恢復正常。</p>
+      `,[
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'仍要核准',cls:'btn-warn',fn:`doApprove('${id}',true)`}
+      ]);
+      return;
+    }
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{status:'已核准'},prefer:'return=minimal'});
-    showToast('已核准','success');loadAll();
+    showToast(shortage.length?'已強制核准（庫存不足）':'已核准','success');loadAll();
   }catch(e){showToast('核准失敗：'+e.message,'error');}
 }
 
