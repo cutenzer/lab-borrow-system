@@ -151,6 +151,11 @@
   .cart-item-sub{font-size:11px;color:var(--text2);}
   .cart-item-qty{display:flex;align-items:center;gap:4px;flex-shrink:0;}
   .cart-item-remove{color:var(--danger);cursor:pointer;font-size:15px;padding:0 4px;background:none;border:none;}
+  .tpl-items-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px;}
+  .tpl-items-table th,.tpl-items-table td{border:1px solid var(--border);padding:6px 8px;text-align:left;vertical-align:middle;}
+  .tpl-items-table th{background:var(--surface2);font-weight:700;font-size:11.5px;color:var(--text2);}
+  .tpl-items-table td input[type=number]{width:56px;padding:3px 5px;font-size:12px;}
+  .tpl-items-table td select{padding:3px 5px;font-size:12px;width:auto;}
   .cart-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:155;display:none;}
   .cart-overlay.show{display:block;}
   /* 場地預約 */
@@ -349,7 +354,7 @@
     <div class="card-title">📚 套用課程模板</div>
     <div class="info-box">選擇你要上的課程，系統會自動帶入器材清單（獨立顯示、可自行調整，最後會跟手動選的器材一起送出）。</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 120px">
+      <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
         <option value="">全部科別</option>
         <option value="Physics">物理</option>
         <option value="Chemistry">化學</option>
@@ -357,9 +362,10 @@
         <option value="Geoscience">地科</option>
         <option value="Physics Chemistry">理化</option>
       </select>
-      <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:140px">
+      <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
+      <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
+      <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
     </div>
-    <div id="templatePickerList"></div>
 
     <div id="appliedTemplateBox" style="display:none;margin-top:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
@@ -379,14 +385,7 @@
   </div>
   <div class="card">
     <div class="card-title">🔬 選擇借用器材</div>
-    <div class="ai-scan-box" onclick="document.getElementById('aiFileInput').click()">
-      <div style="font-size:20px;margin-bottom:4px">📁</div>
-      <div style="font-size:13px;font-weight:600">上傳圖片辨識器材</div>
-      <div style="font-size:11.5px;color:var(--text2);margin-top:2px">選擇圖片，AI 自動辨識器材</div>
-      <input type="file" id="aiFileInput" accept="image/*" onchange="handleAiScan(this)">
-      <img id="aiPreview" class="ai-scan-preview">
-    </div>
-    <div id="aiResults"></div>
+   
     <div class="search-wrap">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowSearch" placeholder="搜尋器材名稱…" oninput="doBorrowSearch(this.value)">
@@ -970,31 +969,6 @@ function fitVenueFs(){
 }
 window.addEventListener('resize',()=>{if(venueFsOpen())fitVenueFs();});
 
-// ── AI 辨識 ───────────────────────────────────────────────
-async function handleAiScan(input){
-  if(!input.files||!input.files[0])return;
-  const file=input.files[0];
-  const preview=document.getElementById('aiPreview');
-  const reader=new FileReader();
-  reader.onload=e=>{preview.src=e.target.result;preview.style.display='block';};
-  reader.readAsDataURL(file);
-  const resultsDiv=document.getElementById('aiResults');
-  resultsDiv.innerHTML='<div style="font-size:13px;font-weight:600;color:var(--text2);margin:8px 0">📷 請從下方選擇圖片中的器材：</div>';
-
-  // 直接列出所有可借器材供手動勾選
-  const avail=allEquipment.filter(e=>parseInt(e.available)>0);
-  if(!avail.length){resultsDiv.innerHTML='<div class="search-empty">目前無可借器材</div>';return;}
-  resultsDiv.innerHTML+=avail.map(e=>{
-    const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
-    return `<div class="ai-result-item">
-      <div><span style="font-weight:700">${e.name}</span><span style="font-size:11px;color:var(--accent);margin-left:6px">${rn(e.room)}</span>${e.spec?`<span style="font-size:11px;color:var(--text2);margin-left:4px">${e.spec}</span>`:''}</div>
-      <button class="btn btn-primary btn-sm" onclick="addFromAI('${e.room}','${safeN}','${safeS}','${e.unit}',${parseInt(e.available)},1)">加入</button>
-    </div>`;
-  }).join('');
-}
-  
-function addFromAI(room,name,spec,unit,avail,qty){const key=room+'__'+name;selectedItems[key]={room,name,spec,unit,quantity:Math.min(qty,avail)};renderEquipList();updateCartBadge();calcDeposit();showToast(name+' 已加入','success');}
-
 // ── 搜尋 ──────────────────────────────────────────────────
 let searchTimer=null;
 function doBorrowSearch(q){
@@ -1275,7 +1249,6 @@ function resetForm(){
   document.getElementById('f-purpose').value='';document.getElementById('f-venue').value='';
   document.getElementById('depositBanner').classList.remove('show');
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
-  document.getElementById('aiPreview').style.display='none';document.getElementById('aiResults').innerHTML='';
   clearAppliedTemplate();
 }
 // 注意：保留 f-home-lab / userHomeLab，借用人通常多次借用都是同一科，不需每次重設
@@ -1385,19 +1358,20 @@ async function loadCourseTemplates(){
 function renderTemplatePicker(){
   const room=document.getElementById('tplFilterRoom').value;
   const q=document.getElementById('tplFilterSearch').value.trim();
-  const list=document.getElementById('templatePickerList');
+  const sel=document.getElementById('tplPickerSelect');
   let items=allCourseTemplates;
   if(room)items=items.filter(t=>t.default_room===room);
   if(q)items=items.filter(t=>(t.name||'').includes(q)||(t.grade||'').includes(q)||(t.teacher||'').includes(q));
-  if(!items.length){list.innerHTML='<div style="font-size:12.5px;color:var(--text2);padding:6px 0">找不到符合的課程模板</div>';return;}
-  list.innerHTML=items.map(t=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface)">
-      <div style="min-width:0">
-        <div style="font-size:13.5px;font-weight:700">${t.name}</div>
-        <div style="font-size:11px;color:var(--text2)">${t.grade||''}${t.teacher?' ・ '+t.teacher:''}${TPL_ROOM_LABEL[t.default_room]?' ・ '+TPL_ROOM_LABEL[t.default_room]:''}</div>
-      </div>
-      <button class="btn btn-primary btn-sm" onclick="applyTemplate('${t.id}')">套用</button>
-    </div>`).join('');
+  if(!items.length){sel.innerHTML='<option value="">（找不到符合的課程）</option>';return;}
+  sel.innerHTML='<option value="">— 選擇課程 —</option>'+items.map(t=>{
+    const sub=[t.grade,t.teacher].filter(Boolean).join(' ・ ');
+    return `<option value="${t.id}">${t.name}${sub?'（'+sub+'）':''}</option>`;
+  }).join('');
+}
+function applySelectedTemplate(){
+  const id=document.getElementById('tplPickerSelect').value;
+  if(!id){showToast('請先選擇課程','error');return;}
+  applyTemplate(id);
 }
 
 function applyTemplate(id){
@@ -1422,18 +1396,22 @@ function applyTemplate(id){
 function renderAppliedTemplate(){
   const box=document.getElementById('appliedTemplateItems');
   if(!appliedTemplate.items.length){box.innerHTML='<div style="font-size:12.5px;color:var(--text2);padding:6px 0">（無器材項目，可用下方搜尋自行新增）</div>';return;}
-  box.innerHTML=appliedTemplate.items.map((it,i)=>`
-    <div class="item-row">
-      <span class="item-num">${i+1}.</span>
-      <span class="item-name">${it.name}${it.spec?'　'+it.spec:''}</span>
-      ${it.matched?`<span class="item-room">${rn(it.room)}</span>`:`<select onchange="setTplItemRoom(${i},this.value)" style="font-size:11px;padding:1px 4px;border-radius:5px">
-        <option value="">⚠️選實驗室</option>
-        ${TPL_ROOM_SELECT_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===it.room?'selected':''}>${l}</option>`).join('')}
-      </select>`}
-      <input type="number" min="0" value="${it.quantity}" style="width:56px;padding:2px 6px;font-size:12px;border:1px solid var(--border);border-radius:5px" onchange="setTplItemQty(${i},this.value)">
-      <span style="font-size:11px;color:var(--text2)">${it.unit}</span>
-      <button class="cart-item-remove" onclick="removeTplItem(${i})">✕</button>
-    </div>`).join('');
+  box.innerHTML=`<table class="tpl-items-table">
+    <thead><tr><th style="width:26px">#</th><th>器材項目</th><th style="width:92px">實驗室</th><th style="width:64px">數量</th><th style="width:44px">單位</th><th style="width:28px"></th></tr></thead>
+    <tbody>${appliedTemplate.items.map((it,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${it.name}${it.spec?`<div style="font-size:11px;color:var(--text2)">${it.spec}</div>`:''}</td>
+        <td>${it.matched?rn(it.room):`<select onchange="setTplItemRoom(${i},this.value)">
+            <option value="">⚠️選實驗室</option>
+            ${TPL_ROOM_SELECT_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===it.room?'selected':''}>${l}</option>`).join('')}
+          </select>`}</td>
+        <td><input type="number" min="0" value="${it.quantity}" onchange="setTplItemQty(${i},this.value)"></td>
+        <td>${it.unit}</td>
+        <td><button class="cart-item-remove" onclick="removeTplItem(${i})">✕</button></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 function setTplItemQty(i,val){appliedTemplate.items[i].quantity=Math.max(0,parseInt(val)||0);calcDeposit();}
 function setTplItemRoom(i,val){appliedTemplate.items[i].room=val;appliedTemplate.items[i].matched=!!val;}
