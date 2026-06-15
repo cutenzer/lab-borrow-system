@@ -1473,7 +1473,8 @@ function applyTemplate(id){
       if(!pick){for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r);if(c){pick=c;break;}}}}
       if(!pick)pick=[...cands].sort((a,b)=>av(b)-av(a))[0];
       // 用「實際庫存的品名」當購物車鍵值，核准後才扣得到正確的那筆庫存
-      room=pick.room;name=pick.name;spec=pick.spec||it.spec||'';unit=pick.unit||it.unit||'個';
+      // 單位以「課程模板填的」為準（老師的需求數量＝12 張，而非庫存的整批單位 12 包）
+      room=pick.room;name=pick.name;spec=pick.spec||it.spec||'';unit=it.unit||pick.unit||'個';
       if(av(pick)>=want){/* 該處足量，免提醒 */}
       else if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別／教具室合計尚有，請確認取用地點`;
       else info=`全校目前可借約 ${totalAvail}（原需 ${want}），可能在教具室或其他科別，請向辦公室確認`;
