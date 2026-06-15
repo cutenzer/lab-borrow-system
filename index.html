@@ -345,6 +345,38 @@
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
   </div>
+<div class="card">
+    <div class="card-title">📚 套用課程模板</div>
+    <div class="info-box">選擇你要上的課程，系統會自動帶入器材清單（獨立顯示、可自行調整，最後會跟手動選的器材一起送出）。</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 120px">
+        <option value="">全部科別</option>
+        <option value="Physics">物理</option>
+        <option value="Chemistry">化學</option>
+        <option value="Biology">生物</option>
+        <option value="Geoscience">地科</option>
+        <option value="Physics Chemistry">理化</option>
+      </select>
+      <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:140px">
+    </div>
+    <div id="templatePickerList"></div>
+
+    <div id="appliedTemplateBox" style="display:none;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
+        <button class="btn btn-secondary btn-sm" onclick="clearAppliedTemplate()">✕ 移除套用</button>
+      </div>
+      <div class="item-list" id="appliedTemplateItems"></div>
+      <div style="margin-top:8px">
+        <input type="text" id="tplAddSearch" placeholder="搜尋並新增器材到此清單…" oninput="doTplAddSearch(this.value)">
+      </div>
+      <div id="tplAddResults"></div>
+      <div class="form-group" style="margin-top:10px"><label>📝 參考備註（藥品／注意事項，可自行修改）</label><textarea id="appliedTemplateNote" rows="4"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" onclick="saveTemplateChanges()">💾 更新此課程模板</button>
+      </div>
+    </div>
+  </div>
   <div class="card">
     <div class="card-title">🔬 選擇借用器材</div>
     <div class="ai-scan-box" onclick="document.getElementById('aiFileInput').click()">
@@ -609,7 +641,7 @@ let activeSemester=null;
 let activeBorrowRecords=[];
 let userHomeLab='';
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();loadCourseTemplates();});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
@@ -1154,8 +1186,7 @@ function onHomeLabChange(){
   renderRoomTabs();
   if(userHomeLab&&allRooms.includes(userHomeLab)){currentRoom=userHomeLab;renderEquipList();}
 }
-function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
-
+function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0||(appliedTemplate&&appliedTemplate.items.some(it=>it.quantity>0));let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
 // ── 購物車送出前補填資料 ──────────────────────────────────
 function cartSubmit(){
   const missing=[];
@@ -1165,7 +1196,8 @@ function cartSubmit(){
   if(!document.getElementById('f-borrow-date').value)missing.push('borrowDate');
   if(!document.getElementById('f-return-date').value)missing.push('returnDate');
 
-  if(!Object.keys(selectedItems).length){showToast('購物車是空的，請先選擇器材','error');return;}
+  const hasTplItems=appliedTemplate&&appliedTemplate.items.some(it=>it.quantity>0);
+  if(!Object.keys(selectedItems).length&&!hasTplItems){showToast('購物車是空的，請先選擇器材','error');return;}
   if(!missing.length){closeCart();submitRequest();return;}
   showQuickFillModal(missing);
 }
@@ -1219,7 +1251,9 @@ async function submitRequest(){
   let purpose=document.getElementById('f-purpose').value;
   const borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
   if(purpose==='其他'){const other=document.getElementById('f-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
-  const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim(),items=Object.values(selectedItems);
+ const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim();
+  const templateItems=(appliedTemplate?appliedTemplate.items:[]).filter(it=>it.quantity>0&&it.room).map(it=>({room:it.room,name:it.name,spec:it.spec,quantity:it.quantity,unit:it.unit}));
+  const items=[...templateItems,...Object.values(selectedItems)];
   if(!name){showToast('請填寫姓名','error');return;}
   if(currentRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
   if(!purpose||!borrowDate||!returnDate){showToast('請填寫所有必填欄位','error');return;}
@@ -1242,6 +1276,7 @@ function resetForm(){
   document.getElementById('depositBanner').classList.remove('show');
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
   document.getElementById('aiPreview').style.display='none';document.getElementById('aiResults').innerHTML='';
+  clearAppliedTemplate();
 }
 // 注意：保留 f-home-lab / userHomeLab，借用人通常多次借用都是同一科，不需每次重設
 
@@ -1334,6 +1369,118 @@ function showModal(title,body,actions){document.getElementById('modalTitle').tex
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
+  // ── 課程模板（前台套用）───────────────────────────────────
+let allCourseTemplates=[], appliedTemplate=null;
+const TPL_ROOM_LABEL={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具室'};
+const TPL_ROOM_SELECT_OPTIONS=[['Physics','物理'],['Chemistry','化學'],['Biology','生物'],['Geoscience','地科'],['Physics Chemistry','理化'],['TeachingMaterialRoom','教具室']];
+
+async function loadCourseTemplates(){
+  try{
+    allCourseTemplates=await sb('GET','course_templates',{order:'name'});
+    allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];
+    renderTemplatePicker();
+  }catch(e){}
+}
+
+function renderTemplatePicker(){
+  const room=document.getElementById('tplFilterRoom').value;
+  const q=document.getElementById('tplFilterSearch').value.trim();
+  const list=document.getElementById('templatePickerList');
+  let items=allCourseTemplates;
+  if(room)items=items.filter(t=>t.default_room===room);
+  if(q)items=items.filter(t=>(t.name||'').includes(q)||(t.grade||'').includes(q)||(t.teacher||'').includes(q));
+  if(!items.length){list.innerHTML='<div style="font-size:12.5px;color:var(--text2);padding:6px 0">找不到符合的課程模板</div>';return;}
+  list.innerHTML=items.map(t=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface)">
+      <div style="min-width:0">
+        <div style="font-size:13.5px;font-weight:700">${t.name}</div>
+        <div style="font-size:11px;color:var(--text2)">${t.grade||''}${t.teacher?' ・ '+t.teacher:''}${TPL_ROOM_LABEL[t.default_room]?' ・ '+TPL_ROOM_LABEL[t.default_room]:''}</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="applyTemplate('${t.id}')">套用</button>
+    </div>`).join('');
+}
+
+function applyTemplate(id){
+  const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
+  appliedTemplate={
+    id:t.id, name:t.name, default_room:t.default_room,
+    items:(t.equipment_items||[]).map(it=>{
+      const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name)||allEquipment.find(e=>e.name===it.name);
+      return {name:it.name,spec:it.spec||'',quantity:it.quantity||1,unit:it.unit||'個',note:it.note||'',
+        room:eq?eq.room:(it.room||''), matched:!!eq};
+    }),
+    note:t.reference_note||''
+  };
+  document.getElementById('appliedTemplateBox').style.display='block';
+  document.getElementById('appliedTemplateName').textContent=t.name;
+  document.getElementById('appliedTemplateNote').value=appliedTemplate.note;
+  renderAppliedTemplate();
+  calcDeposit();
+  showToast('已套用課程模板：'+t.name,'success');
+}
+
+function renderAppliedTemplate(){
+  const box=document.getElementById('appliedTemplateItems');
+  if(!appliedTemplate.items.length){box.innerHTML='<div style="font-size:12.5px;color:var(--text2);padding:6px 0">（無器材項目，可用下方搜尋自行新增）</div>';return;}
+  box.innerHTML=appliedTemplate.items.map((it,i)=>`
+    <div class="item-row">
+      <span class="item-num">${i+1}.</span>
+      <span class="item-name">${it.name}${it.spec?'　'+it.spec:''}</span>
+      ${it.matched?`<span class="item-room">${rn(it.room)}</span>`:`<select onchange="setTplItemRoom(${i},this.value)" style="font-size:11px;padding:1px 4px;border-radius:5px">
+        <option value="">⚠️選實驗室</option>
+        ${TPL_ROOM_SELECT_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===it.room?'selected':''}>${l}</option>`).join('')}
+      </select>`}
+      <input type="number" min="0" value="${it.quantity}" style="width:56px;padding:2px 6px;font-size:12px;border:1px solid var(--border);border-radius:5px" onchange="setTplItemQty(${i},this.value)">
+      <span style="font-size:11px;color:var(--text2)">${it.unit}</span>
+      <button class="cart-item-remove" onclick="removeTplItem(${i})">✕</button>
+    </div>`).join('');
+}
+function setTplItemQty(i,val){appliedTemplate.items[i].quantity=Math.max(0,parseInt(val)||0);calcDeposit();}
+function setTplItemRoom(i,val){appliedTemplate.items[i].room=val;appliedTemplate.items[i].matched=!!val;}
+function removeTplItem(i){appliedTemplate.items.splice(i,1);renderAppliedTemplate();calcDeposit();}
+function clearAppliedTemplate(){
+  appliedTemplate=null;
+  document.getElementById('appliedTemplateBox').style.display='none';
+  document.getElementById('tplAddResults').innerHTML='';
+  document.getElementById('tplAddSearch').value='';
+  calcDeposit();
+}
+
+let tplAddTimer=null;
+function doTplAddSearch(q){
+  const box=document.getElementById('tplAddResults');
+  clearTimeout(tplAddTimer);
+  if(!q.trim()){box.innerHTML='';return;}
+  tplAddTimer=setTimeout(()=>{
+    const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q)).slice(0,8);
+    if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+q+'」相關器材</div>';return;}
+    box.innerHTML='<div class="search-dropdown">'+filtered.map(e=>{
+      const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
+      return `<div class="search-result-item">
+        <div style="flex:1;min-width:0"><div class="sr-name">${e.name}</div><div class="sr-room">${rn(e.room)}</div>${e.spec?`<div class="sr-spec">${e.spec}</div>`:''}</div>
+        <button class="btn btn-primary btn-sm" onclick="addTplItem('${e.room}','${safeN}','${safeS}','${e.unit}')">加入</button>
+      </div>`;
+    }).join('')+'</div>';
+  },200);
+}
+function addTplItem(room,name,spec,unit){
+  if(!appliedTemplate)return;
+  appliedTemplate.items.push({name,spec,quantity:1,unit,note:'',room,matched:true});
+  renderAppliedTemplate();calcDeposit();
+  document.getElementById('tplAddSearch').value='';document.getElementById('tplAddResults').innerHTML='';
+}
+
+async function saveTemplateChanges(){
+  if(!appliedTemplate)return;
+  const equipment_items=appliedTemplate.items.filter(it=>it.quantity>0).map(it=>({name:it.name,spec:it.spec,quantity:it.quantity,unit:it.unit,room:it.room,note:it.note||''}));
+  const reference_note=document.getElementById('appliedTemplateNote').value;
+  try{
+    await sb('PATCH','course_templates',{filter:'id=eq.'+appliedTemplate.id,body:{equipment_items,reference_note,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    appliedTemplate.note=reference_note;
+    showToast('課程模板已更新','success');
+    loadCourseTemplates();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
 </script>
 </body>
 </html>
