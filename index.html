@@ -1432,7 +1432,12 @@ function applyTemplate(id){
     const want=parseInt(it.quantity)||0;
     if(want<=0)return;
     // 同名器材可能分散在不同科別／教具室，全部一起看
-    const cands=allEquipment.filter(e=>e.name===it.name);
+    const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
+    const allCands=allEquipment.filter(e=>e.name===it.name);
+    // 同名若有多種規格，優先挑規格相符的（例如 量筒 100mL）
+    const wantSpec=norm(it.spec);
+    const specCands=wantSpec?allCands.filter(e=>{const es=norm(e.spec);return es&&(es.includes(wantSpec)||wantSpec.includes(es));}):[];
+    const cands=specCands.length?specCands:allCands;
     let room,spec,unit,info='';
     if(cands.length){
       const totalAvail=cands.reduce((s,e)=>s+av(e),0);
