@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>實驗室管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{--bg:#f4f3ef;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;--text:#1a1916;--text2:#6b6760;--accent:#2a6b4f;--danger:#c0392b;--warn:#d4a843;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -132,7 +133,7 @@
     <div style="font-size:13px;color:var(--text2);margin-bottom:24px">請輸入管理密碼</div>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
     <div class="login-err" id="pwErr">密碼錯誤，請再試一次</div>
-    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="checkPw()">進入管理後台</button>
+    <="btn btn-primary" style="width:100%;justify-content:center" onclick="checkPw()">進入管理後台</button>
   </div>
 </div>
 
@@ -153,6 +154,7 @@
   <button class="tab" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
   <button class="tab" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
   <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
+  <button class="tab" onclick="showTab('templates')">📚 課程模板</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
 
@@ -225,6 +227,59 @@
   </div>
 </div>
 
+  <div id="panel-templates" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📤 上傳課程實驗紀錄表（Excel）</div>
+    <div class="info-box">上傳老師填寫的「＿＿＿實驗紀錄表」.xlsx，系統會自動解析器材清單，建立成課程模板。解析後請確認/調整下方資料再儲存。</div>
+    <input type="file" id="tpl-file" accept=".xlsx" onchange="handleTemplateFile(this)">
+    <div id="tplParseMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
+  </div>
+
+  <div class="card" id="tplFormCard" style="margin-bottom:16px;display:none">
+    <div class="card-title">📚 新增 / 編輯課程模板</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+      <div class="form-group" style="grid-column:1/-1"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
+      <div class="form-group"><label>分類</label><input type="text" id="tpl-category"></div>
+      <div class="form-group"><label>年級</label><input type="text" id="tpl-grade"></div>
+      <div class="form-group"><label>教師</label><input type="text" id="tpl-teacher"></div>
+      <div class="form-group"><label>月份</label><input type="text" id="tpl-month"></div>
+      <div class="form-group"><label>週次</label><input type="text" id="tpl-week"></div>
+      <div class="form-group"><label>班數</label><input type="number" id="tpl-classcount" min="0"></div>
+      <div class="form-group"><label>組數</label><input type="number" id="tpl-groupcount" min="0"></div>
+      <div class="form-group">
+        <label>預設實驗室（科別）</label>
+        <select id="tpl-defaultroom">
+          <option value="">不指定</option>
+          <option value="Physics">物理</option>
+          <option value="Chemistry">化學</option>
+          <option value="Biology">生物</option>
+          <option value="Geoscience">地科</option>
+          <option value="Physics Chemistry">理化</option>
+          <option value="TeachingMaterialRoom">教具室</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔬 器材清單（會出現在借用申請中，數量＝總共要借的量）</div>
+      <div id="tplEquipList"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addTplEquipRow()">＋ 新增器材項目</button>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label>📝 參考備註（藥品／共用品項／注意事項，老師套用時會看到，可自行修改）</label>
+      <textarea id="tpl-note" rows="6"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+      <button class="btn btn-secondary" onclick="clearTemplateForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課程模板</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📋 已建立的課程模板</div>
+    <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課程模板</p></div></div>
+  </div>
+</div>
+  
 <div id="panel-all" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
@@ -360,11 +415,12 @@ function renderWithFilter(panel){
 }
 
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','semester','all'][i]===tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','semester','templates','all'][i]===tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
   if(tab==='semester')loadSemesters();
+  if(tab==='templates')loadTemplates();
 }
 
 function renderList(records,container,mode){
@@ -1156,6 +1212,290 @@ function closeModal(event){if(!event||event.target===document.getElementById('mo
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
 renderPeriodSettingList([]);
+  // ── 課程模板：Excel 解析 ──────────────────────────────────
+const TPL_LABELS = ['實驗名稱','年級','月份','週次','關鍵字','教師','填表人','班數','組數'];
+const TPL_ROOM_GUESS_RULES = [
+  [/理化/, 'Physics Chemistry'],[/物理/, 'Physics'],[/化學/, 'Chemistry'],
+  [/生物/, 'Biology'],[/地科|地球科學/, 'Geoscience'],
+];
+const TPL_ROOM_OPTIONS = [['','不指定'],['Physics','物理'],['Chemistry','化學'],['Biology','生物'],['Geoscience','地科'],['Physics Chemistry','理化'],['TeachingMaterialRoom','教具室']];
+
+function parseCourseTemplateXlsx(workbook, fileName) {
+  for (const sheetName of workbook.SheetNames) {
+    const ws = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
+    const a1 = rows[0] && rows[0][0];
+    const a2 = rows[1] && rows[1][0];
+    if (a1 && String(a1).includes('曉明女中') && a2 === '實驗名稱') {
+      return parseTplSheet(rows, fileName, sheetName);
+    }
+  }
+  return { error: '此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課程模板', file: fileName };
+}
+
+function parseTplSheet(rows, fileName, sheetName) {
+  const get = (r, c) => (rows[r] && rows[r][c] !== undefined) ? rows[r][c] : null;
+  const trimStr = v => (v === null || v === undefined) ? null : String(v).trim();
+
+  const category = trimStr(get(0, 2));
+  const info = {};
+  for (let r = 1; r < 6; r++) {
+    [[0, 1], [2, 3]].forEach(([lc, vc]) => {
+      const label = trimStr(get(r, lc));
+      const val = get(r, vc);
+      if (label && TPL_LABELS.includes(label)) info[label] = val;
+    });
+  }
+
+  const sections = [];
+  let cur = null;
+  for (let r = 6; r < rows.length; r++) {
+    const a = trimStr(get(r, 0));
+    const b = get(r, 1);
+    if (a === '編號') {
+      cur = { category: trimStr(b) || '其他', items: [] };
+      sections.push(cur);
+    } else if (cur) {
+      if (a === null && (b === null || b === undefined)) {
+        cur = null;
+      } else {
+        cur.items.push({ no: get(r,0), name: trimStr(b), spec: get(r,2), qty_per_group: get(r,3), qty_total: get(r,4), note: get(r,5) });
+      }
+    }
+  }
+
+  const equipmentItems = [], otherItems = [], chemicals = [], recycling = [];
+  sections.forEach(sec => {
+    const catName = sec.category || '';
+    sec.items.forEach(it => {
+      if (!it.name) return;
+      const entry = { name: it.name, spec: (it.spec==null)?'':String(it.spec), note: it.note || '', qty_per_group: it.qty_per_group, qty_total: it.qty_total };
+      if (catName.includes('藥品')) chemicals.push(entry);
+      else if (catName.includes('回收')) recycling.push(entry);
+      else {
+        const total = it.qty_total;
+        if (typeof total === 'number' && total > 0) {
+          equipmentItems.push({ name: entry.name, spec: entry.spec, quantity: total, unit: '個', note: entry.note });
+        } else otherItems.push(entry);
+      }
+    });
+  });
+
+  const guessText = `${info['年級'] || ''} ${category || ''} ${fileName || ''}`;
+  let defaultRoom = '';
+  for (const [re, room] of TPL_ROOM_GUESS_RULES) { if (re.test(guessText)) { defaultRoom = room; break; } }
+
+  return {
+    source_file: fileName || '', sheet_name: sheetName,
+    name: trimStr(info['實驗名稱']) || '', category: category || '', grade: trimStr(info['年級']) || '',
+    month: trimStr(info['月份']) || '', week: trimStr(info['週次']) || trimStr(info['關鍵字']) || '',
+    teacher: trimStr(info['教師']) || '',
+    class_count: typeof info['班數']==='number'?info['班數']:null, group_count: typeof info['組數']==='number'?info['組數']:null,
+    default_room: defaultRoom, equipment_items: equipmentItems, other_items: otherItems, chemicals, recycling,
+  };
+}
+
+function buildReferenceNote(otherItems, chemicals, recycling){
+  const lines=[];
+  if(otherItems&&otherItems.length){
+    lines.push('⚠️ 數量為「共用」或需確認：');
+    otherItems.forEach(it=>lines.push(`- ${it.name}${it.spec?'（'+it.spec+'）':''}${it.note?'　'+it.note:''}`));
+    lines.push('');
+  }
+  if(chemicals&&chemicals.length){
+    lines.push('🧪 藥品項目：');
+    chemicals.forEach(it=>{
+      const qty=[it.qty_per_group,it.qty_total].filter(v=>v!=null&&v!=='').join(' / ');
+      lines.push(`- ${it.name}${it.spec?'（'+it.spec+'）':''}${qty?'　'+qty:''}${it.note?'　'+it.note:''}`);
+    });
+    lines.push('');
+  }
+  if(recycling&&recycling.length){
+    lines.push('♻️ 回收用具：');
+    recycling.forEach(it=>lines.push(`- ${it.name}${it.note?'　'+it.note:''}`));
+  }
+  return lines.join('\n').trim();
+}
+
+// ── 課程模板：上傳/表單 ────────────────────────────────────
+let allTemplates=[], editingTemplateId=null, tplEquipRows=[];
+
+async function handleTemplateFile(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const msg=document.getElementById('tplParseMsg');
+  msg.textContent='解析中…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const r=parseCourseTemplateXlsx(wb,file.name);
+      if(r.error){msg.textContent='⚠️ '+r.error;return;}
+      loadTemplateIntoForm(r);
+      msg.textContent='✅ 解析成功，請確認下方資料後儲存';
+    }catch(err){msg.textContent='解析失敗：'+err.message;}
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+
+function loadTemplateIntoForm(r){
+  editingTemplateId=null;
+  document.getElementById('tplFormCard').style.display='block';
+  document.getElementById('tpl-name').value=r.name||'';
+  document.getElementById('tpl-category').value=r.category||'';
+  document.getElementById('tpl-grade').value=r.grade||'';
+  document.getElementById('tpl-teacher').value=r.teacher||'';
+  document.getElementById('tpl-month').value=r.month||'';
+  document.getElementById('tpl-week').value=r.week||'';
+  document.getElementById('tpl-classcount').value=r.class_count??'';
+  document.getElementById('tpl-groupcount').value=r.group_count??'';
+  document.getElementById('tpl-defaultroom').value=r.default_room||'';
+  const items=r.equipment_items.map(it=>{
+    const matches=allEquipment.filter(e=>e.name===it.name);
+    let room='';
+    if(matches.length){const pref=matches.find(e=>e.room===r.default_room);room=(pref||matches[0]).room;}
+    else room=r.default_room||'';
+    return {...it, room};
+  });
+  renderTplEquipList(items);
+  document.getElementById('tpl-note').value=buildReferenceNote(r.other_items,r.chemicals,r.recycling);
+  document.getElementById('tplFormCard').scrollIntoView({behavior:'smooth'});
+}
+
+function renderTplEquipList(items){
+  const list=document.getElementById('tplEquipList');
+  list.innerHTML='';tplEquipRows=[];
+  (items||[]).forEach(it=>addTplEquipRow(it));
+  if(!tplEquipRows.length)addTplEquipRow();
+}
+function addTplEquipRow(data){
+  const id=Date.now()+Math.floor(Math.random()*1000);
+  tplEquipRows.push(id);
+  data=data||{};
+  const list=document.getElementById('tplEquipList');
+  const div=document.createElement('div');
+  div.className='period-setting-row';
+  div.id='ter-'+id;
+  div.innerHTML=`
+    <input type="text" id="te-name-${id}" placeholder="器材名稱" style="flex:2;min-width:100px" value="${(data.name||'').replace(/"/g,'&quot;')}">
+    <input type="text" id="te-spec-${id}" placeholder="規格" style="flex:1;min-width:70px" value="${(data.spec||'').replace(/"/g,'&quot;')}">
+    <input type="number" id="te-qty-${id}" placeholder="數量" min="0" style="flex:0 0 70px" value="${data.quantity??''}">
+    <input type="text" id="te-unit-${id}" placeholder="單位" style="flex:0 0 60px" value="${data.unit||'個'}">
+    <select id="te-room-${id}" style="flex:1;min-width:80px">${TPL_ROOM_OPTIONS.map(([v,l])=>`<option value="${v}" ${v===data.room?'selected':''}>${l}</option>`).join('')}</select>
+    <input type="text" id="te-note-${id}" placeholder="備註" style="flex:1;min-width:80px" value="${(data.note||'').replace(/"/g,'&quot;')}">
+    <button class="period-setting-remove" onclick="removeTplEquipRow(${id})">✕</button>`;
+  list.appendChild(div);
+}
+function removeTplEquipRow(id){
+  tplEquipRows=tplEquipRows.filter(r=>r!==id);
+  document.getElementById('ter-'+id)?.remove();
+}
+function collectTplEquipItems(){
+  return tplEquipRows.map(id=>({
+    name:document.getElementById('te-name-'+id).value.trim(),
+    spec:document.getElementById('te-spec-'+id).value.trim(),
+    quantity:parseInt(document.getElementById('te-qty-'+id).value)||0,
+    unit:document.getElementById('te-unit-'+id).value.trim()||'個',
+    room:document.getElementById('te-room-'+id).value,
+    note:document.getElementById('te-note-'+id).value.trim(),
+  })).filter(it=>it.name&&it.quantity>0);
+}
+
+function clearTemplateForm(){
+  editingTemplateId=null;
+  document.getElementById('tplFormCard').style.display='none';
+  ['tpl-name','tpl-category','tpl-grade','tpl-teacher','tpl-month','tpl-week','tpl-classcount','tpl-groupcount','tpl-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tpl-defaultroom').value='';
+  renderTplEquipList([]);
+  document.getElementById('tplParseMsg').textContent='';
+}
+
+async function saveTemplate(){
+  const name=document.getElementById('tpl-name').value.trim();
+  if(!name){showToast('請填寫課程名稱','error');return;}
+  const items=collectTplEquipItems();
+  const body={
+    name,
+    category:document.getElementById('tpl-category').value.trim(),
+    grade:document.getElementById('tpl-grade').value.trim(),
+    teacher:document.getElementById('tpl-teacher').value.trim(),
+    month:document.getElementById('tpl-month').value.trim(),
+    week:document.getElementById('tpl-week').value.trim(),
+    class_count:parseInt(document.getElementById('tpl-classcount').value)||null,
+    group_count:parseInt(document.getElementById('tpl-groupcount').value)||null,
+    default_room:document.getElementById('tpl-defaultroom').value,
+    equipment_items:items,
+    reference_note:document.getElementById('tpl-note').value,
+    updated_at:new Date().toISOString(),
+  };
+  try{
+    if(editingTemplateId){
+      await sb('PATCH','course_templates',{filter:'id=eq.'+editingTemplateId,body,prefer:'return=minimal'});
+      showToast('課程模板已更新','success');
+    }else{
+      body.id='TPL-'+Date.now();
+      await sb('POST','course_templates',{body,prefer:'return=minimal'});
+      showToast('課程模板已建立','success');
+    }
+    clearTemplateForm();loadTemplates();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+
+async function loadTemplates(){
+  const list=document.getElementById('templateList');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    allTemplates=await sb('GET','course_templates',{order:'created_at.desc'});
+    allTemplates=Array.isArray(allTemplates)?allTemplates:[];
+    if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課程模板</p></div>';return;}
+    list.innerHTML='<div class="record-list">'+allTemplates.map(t=>{
+      const roomLabel=(TPL_ROOM_OPTIONS.find(([v])=>v===t.default_room)||['',''])[1];
+      return `<div class="record-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div>
+            <div style="font-size:15px;font-weight:700">${t.name} ${roomLabel?`<span class="badge badge-approved">${roomLabel}</span>`:''}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${t.grade||''}${t.teacher?' ・ '+t.teacher:''}${t.group_count?' ・ '+t.group_count+'組':''}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">器材 ${(t.equipment_items||[]).length} 項</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button class="btn btn-secondary btn-sm" onclick="editTemplate('${t.id}')">✏️ 編輯</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTemplate('${t.id}')">🗑️ 刪除</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+}
+function editTemplate(id){
+  const t=allTemplates.find(x=>x.id===id);if(!t)return;
+  editingTemplateId=id;
+  document.getElementById('tplFormCard').style.display='block';
+  document.getElementById('tpl-name').value=t.name||'';
+  document.getElementById('tpl-category').value=t.category||'';
+  document.getElementById('tpl-grade').value=t.grade||'';
+  document.getElementById('tpl-teacher').value=t.teacher||'';
+  document.getElementById('tpl-month').value=t.month||'';
+  document.getElementById('tpl-week').value=t.week||'';
+  document.getElementById('tpl-classcount').value=t.class_count??'';
+  document.getElementById('tpl-groupcount').value=t.group_count??'';
+  document.getElementById('tpl-defaultroom').value=t.default_room||'';
+  renderTplEquipList(t.equipment_items||[]);
+  document.getElementById('tpl-note').value=t.reference_note||'';
+  document.getElementById('tplParseMsg').textContent='';
+  document.getElementById('tplFormCard').scrollIntoView({behavior:'smooth'});
+}
+function deleteTemplate(id){
+  showModal('確認刪除',`<p>確定刪除這個課程模板嗎？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteTemplate('${id}')`}
+  ]);
+}
+async function doDeleteTemplate(id){
+  closeModal();
+  try{await sb('DELETE','course_templates',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadTemplates();}
+  catch(e){showToast('刪除失敗','error');}
+}
 </script>
 </body>
 </html>
