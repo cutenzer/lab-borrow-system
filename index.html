@@ -297,11 +297,11 @@
     </span>
   </div>
   <nav>
-    <button class="active" onclick="showPage('borrow')">器材借用</button>
-    <button onclick="showPage('venue')">場地預約</button>
-    <button onclick="showPage('equipment')">器材查詢</button>
-    <button onclick="showPage('myrecords')">我的記錄</button>
-    <button onclick="showPage('chemicals')">藥品查詢</button>
+  <button class="active" onclick="showPage('borrow')">器材借用</button>
+  <button onclick="showPage('venue')">場地預約</button>
+  <button onclick="showPage('equipment')">器材查詢</button>
+  <button onclick="showPage('chemicals')">藥品查詢</button>
+  <button onclick="showPage('myrecords')">我的記錄</button>
   </nav>
 </header>
 <main>
@@ -516,8 +516,8 @@
   <button class="bn-item active" data-page="borrow" onclick="showPage('borrow')"><span>🔬</span>借用</button>
   <button class="bn-item" data-page="venue" onclick="showPage('venue')"><span>🏛️</span>場地</button>
   <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查詢</button>
-  <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
   <button class="bn-item" data-page="chemicals" onclick="showPage('chemicals')"><span>🧪</span>藥品</button>
+  <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
 </nav>
 
 <!-- 購物車（右下，常駐，僅圖標） -->
@@ -1384,7 +1384,7 @@ function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords','chemicals'][i]===page));
+  document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','chemicals','myrecords'][i]===page));
   // 同步底部導覽列
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   // 購物車 / 搜尋 FAB 只在借用頁顯示，離開時收起抽屜
