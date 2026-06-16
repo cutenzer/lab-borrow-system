@@ -332,10 +332,11 @@
         <select id="f-purpose" onchange="onPurposeChange()">
           <option value="">-- 請選擇 --</option>
           <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他（自填）</option>
+          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="選修">選修</option>
+          <option value="其他">其他（自填）</option>
         </select>
         <input type="text" id="f-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
-        <div class="hint">自主學習、科展需繳保證金</div>
+        <div class="hint">課程、探究、選修以外的目的需繳保證金</div>
       </div>
       <div class="form-group">
         <label>是否借用場地</label>
@@ -422,7 +423,7 @@
         <label>借用目的 *</label>
         <select id="vf-purpose" onchange="onVenuePurposeChange()">
           <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他（自填）</option>
+          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="選修">選修</option><option value="其他">其他（自填）</option>
         </select>
         <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
       </div>
@@ -1195,7 +1196,7 @@ function _addQty(room,name,spec,unit,avail,delta){
 function setQty(room,name,spec,unit,avail,val){const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};renderEquipList();updateCartBadge();calcDeposit();}
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();}
 
-function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';document.getElementById('depositBanner').classList.toggle('show',p!==''&&p!=='課程');calcDeposit();}
+function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';const noDeposit=['','課程','探究','選修'];document.getElementById('depositBanner').classList.toggle('show',p!==''&&!noDeposit.includes(p));calcDeposit();}
 function onVenuePurposeChange(){const p=document.getElementById('vf-purpose').value;document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';}
 function onHomeLabChange(){
   userHomeLab=document.getElementById('f-home-lab').value;
@@ -1203,7 +1204,7 @@ function onHomeLabChange(){
   if(userHomeLab&&allRooms.includes(userHomeLab)){currentRoom=userHomeLab;renderEquipList();}
 }
 // 保證金計算：器材（含課程模板帶入的）已經全部進購物車，所以只看 selectedItems
-function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;if(p!==''&&p!=='課程'){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
+function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;const noDeposit=['課程','探究','選修'];if(p!==''&&!noDeposit.includes(p)){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
 // ── 購物車送出前補填資料 ──────────────────────────────────
 function cartSubmit(){
   const missing=[];
