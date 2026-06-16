@@ -1967,7 +1967,7 @@ async function doDeleteChem(id) {
 
 // ── CSV 批次匯入 ─────────────────────────────────────────
 function parseChemCsv(raw) {
-  const stripQuotes = s => (s || '').trim().replace(/^"|"$/g, '').trim();
+  const stripQuotes = s => (s || '').trim().replace(/^"|"$/g, '').replace(/"/g, '').trim();
   const lines = raw.trim().split('\n').map(l => l.split('\t').map(stripQuotes));
   const dataLines = lines[0][0]?.includes('中文') ? lines.slice(1) : lines;
   return dataLines.map(cols => ({
