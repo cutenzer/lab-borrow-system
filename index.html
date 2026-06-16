@@ -1234,7 +1234,17 @@ async function submitRequest(){
   try{
     const id='REQ-'+Date.now();let dt='無',da=0;
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
-    await sb('POST','borrow_records',{body:{id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note}});
+    const recBody={id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note};
+    if(appliedTemplate&&appliedTemplate.rawName)recBody.course_name=appliedTemplate.rawName;
+    try{
+      await sb('POST','borrow_records',{body:recBody});
+    }catch(err){
+      // 若資料庫尚未新增 course_name 欄位，移除後重送，確保申請仍能成功
+      if(recBody.course_name&&/course_name|column|schema cache|PGRST/i.test(err.message||'')){
+        delete recBody.course_name;
+        await sb('POST','borrow_records',{body:recBody});
+      }else throw err;
+    }
     // 提交僅建立「待審核」記錄，不扣庫存；可借量由「核准/逾期」記錄即時推導，待管理員核准時才真正佔用
     showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${da>0?'<br>保證金：NT$'+da+'（'+dt+'），請至辦公室繳納。':''}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     resetForm();
@@ -1487,7 +1497,7 @@ function applyTemplate(id){
     selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
     added.push({room,name,unit,qty:want,info});
   });
-  appliedTemplate={id:t.id,name:formatTemplateName(t),note:t.reference_note||'',added};
+  appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added};
   updateCartBadge();renderEquipList();calcDeposit();
   const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);
   renderAppliedTemplate();
