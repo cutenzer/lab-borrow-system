@@ -835,7 +835,7 @@ function editSemester(id){
   document.getElementById('sem-name').value=s.name||'';
   document.getElementById('sem-active').checked=!!s.is_active;
   renderPeriodSettingList(Array.isArray(s.periods)?s.periods:[]);
-  document.querySelector('#panel-semester .card-title').scrollIntoView({behavior:'smooth'});
+  document.getElementById('chem-name-zh').scrollIntoView({ behavior: 'smooth', block: 'center' });
   showToast('已載入學期資料，可修改後儲存','success');
 }
 
@@ -1884,7 +1884,7 @@ function editChem(id) {
   document.getElementById('chem-recycle').value = c.recycle_type || '';
   document.getElementById('chem-note').value = c.note || '';
   document.getElementById('chem-available').checked = c.is_available !== false;
-  document.querySelector('#panel-chemicals .card-title').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('chem-name-zh').scrollIntoView({behavior:'smooth',block:'center'});
   showToast('已載入，可修改後儲存', 'success');
 }
 
