@@ -367,7 +367,7 @@ async function loadAll(){
       role:r.role,purpose:r.purpose,items:r.items||[],
       borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,
       status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
-      depositStatus:r.deposit_status,note:r.note,damageNote:r.damage_note||'',finalRefund:r.final_refund
+      depositStatus:r.deposit_status,note:r.note,courseName:r.course_name||'',damageNote:r.damage_note||'',finalRefund:r.final_refund
     }));
     renderStats();
     renderWithFilter('pending');renderWithFilter('approved');renderWithFilter('all');
@@ -1167,18 +1167,30 @@ async function doReject(id){
 const EXPORT_CLASS_PRESETS={
   '國中':['甲','乙','丙','丁','戊','己','庚','真','善','美'],
   '高中':['甲','乙','丙','丁','戊','己'],
-  '自然組':['丙','丁','戊','己'],
-  '社會組':['甲','乙']
+  '自然4':['丙','丁','戊','己'],
+  '自然5':['乙','丙','丁','戊','己'],
+  '社會':['甲','乙']
 };
 function splitTeachers(s){return (s||'').split(/[、,，;；\/／\s]+/).map(x=>x.trim()).filter(Boolean);}
 function expMonthFromDate(d){if(!d)return '';const m=parseInt(String(d).slice(5,7));return m?m+'月':'';}
 
-function openExportModal(id){
+async function openExportModal(id){
   const rec=allRecords.find(r=>r.id===id);
   if(!rec){showToast('找不到記錄','error');return;}
   const items=Array.isArray(rec.items)?rec.items:[];
   if(!items.length){showToast('這筆紀錄沒有器材可匯出','error');return;}
+  if(!activeSemester){try{await loadActiveSemester();}catch(e){}}
   const esc=s=>(s==null?'':String(s)).replace(/"/g,'&quot;');
+  // 週次：有啟用學期就用下拉（顯示日期範圍），否則退回手填
+  const weeks=getSemesterWeeks(activeSemester);
+  let weekField;
+  if(weeks.length){
+    const opts=weeks.map(w=>{const st=w.date;const en=new Date(st);en.setDate(st.getDate()+6);return `<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}　${fmtDateTW(st)}～${fmtDateTW(en)}</option>`;}).join('');
+    weekField=`<select id="exp-week-sel" onchange="expWeekSel()"><option value="">— 選擇週次 —</option>${opts}<option value="__other__">其他（自填）</option></select><input id="exp-week-other" placeholder="自填週次" style="display:none;margin-top:6px">`;
+  }else{
+    weekField=`<input id="exp-week-other" placeholder="例如：1"><input type="hidden" id="exp-week-sel" value="__other__">`;
+  }
+  const groupField=`<select id="exp-groupcount-sel" onchange="expGroupSel()"><option value="">— 選擇 —</option><option value="4">4</option><option value="6">6</option><option value="12">12</option><option value="__other__">其他（自填）</option></select><input id="exp-groupcount" type="number" min="0" placeholder="自填組數" style="display:none;margin-top:6px">`;
   const itemRows=items.map((it,i)=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="exp-item" data-idx="${i}" checked style="width:auto;flex-shrink:0">
@@ -1189,25 +1201,33 @@ function openExportModal(id){
     <div class="info-box" style="margin-bottom:12px">勾選要放進這張表單的器材，並填寫表頭欄位（可留白由老師手寫）。每組數量會在「借用數量 ÷ 組數」能整除時自動算好，否則留空。</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group" style="grid-column:1/-1"><label>分類（表格右上角）</label><input id="exp-category" value="探究與實作"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>實驗名稱</label><input id="exp-name" value="${esc(rec.note)}"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>實驗名稱</label><input id="exp-name" value="${esc(rec.courseName||'')}" placeholder="老師套用的課程會自動帶入"></div>
       <div class="form-group"><label>年級（也當班級前綴）</label><input id="exp-grade" placeholder="例如：高二"></div>
       <div class="form-group"><label>月份</label><input id="exp-month" value="${esc(expMonthFromDate(rec.borrowDate))}"></div>
-      <div class="form-group"><label>週次</label><input id="exp-week" placeholder="例如：1"></div>
+      <div class="form-group"><label>週次</label>${weekField}</div>
       <div class="form-group"><label>教師（可多位，用、分隔）</label><input id="exp-teacher" value="${esc(rec.name)}"></div>
       <div class="form-group"><label>填表人</label><input id="exp-filler" value="${esc(rec.name)}"></div>
-      <div class="form-group"><label>組數</label><input id="exp-groupcount" type="number" min="0" placeholder="例如：12"></div>
+      <div class="form-group"><label>組數</label>${groupField}</div>
     </div>
     <div style="margin-top:8px">
       <label style="font-size:12px;font-weight:600;color:var(--text2)">班級快速產生（用上面「年級」當前綴）</label>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">
         <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('國中')">國中10班</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('高中')">高中6班</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('自然組')">自然組4班</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('社會組')">社會組2班</button>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('exp-classes').value=''">清空</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('自然4')">自然組4班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('自然5')">自然組5班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('社會')">社會組2班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('exp-classes').value='';expBuildClassTeachers()">清空</button>
       </div>
-      <textarea id="exp-classes" rows="2" placeholder="班級名稱，一行一個或用、分隔（例如：高二甲、高二乙…）留白則整個班級區塊空白可手寫"></textarea>
+      <textarea id="exp-classes" rows="2" placeholder="班級名稱，一行一個或用、分隔（例如：高二甲、高二乙…）留白則整個班級區塊空白可手寫" oninput="expBuildClassTeachers()"></textarea>
       <div style="font-size:11px;color:var(--text2);margin-top:2px">上課日期／節次欄位會留白，方便老師手寫（借用單沒有逐班排課資料）。</div>
+    </div>
+    <div style="margin-top:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <label style="font-size:12px;font-weight:600;color:var(--text2)">各班教師（教師簽名欄，可不平分）</label>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expBuildClassTeachers()">↻ 依班級／教師產生對應</button>
+      </div>
+      <div id="exp-ct-list" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">填好「教師」與「班級」後，按上面按鈕即可逐班指定老師（預設平均分配，可改）。</div></div>
     </div>
     <div style="margin-top:12px">
       <div style="font-size:13px;font-weight:700;margin-bottom:6px">🔬 要匯出的器材（預設全選）</div>
@@ -1223,6 +1243,31 @@ function expGenClasses(kind){
   const prefix=(document.getElementById('exp-grade')?.value||'').trim();
   const list=(EXPORT_CLASS_PRESETS[kind]||[]).map(c=>prefix+c);
   document.getElementById('exp-classes').value=list.join('、');
+  expBuildClassTeachers();
+}
+function expGroupSel(){const s=document.getElementById('exp-groupcount-sel');const inp=document.getElementById('exp-groupcount');if(inp)inp.style.display=s.value==='__other__'?'block':'none';}
+function expWeekSel(){const s=document.getElementById('exp-week-sel');const o=document.getElementById('exp-week-other');if(o)o.style.display=(s&&s.value==='__other__')?'block':'none';}
+function expParseClasses(){return (document.getElementById('exp-classes').value||'').split(/[\n、,，;；]+/).map(s=>s.trim()).filter(Boolean);}
+// 逐班指定老師（預設平均分配，可改成不平分／非連續）
+function expBuildClassTeachers(){
+  const box=document.getElementById('exp-ct-list');if(!box)return;
+  const classes=expParseClasses();
+  const teachers=splitTeachers(document.getElementById('exp-teacher').value);
+  if(!classes.length){box.innerHTML='<div style="font-size:12px;color:var(--text2)">尚未輸入班級。</div>';return;}
+  if(!teachers.length){box.innerHTML='<div style="font-size:12px;color:var(--text2)">請先在「教師」欄輸入老師（多位用、分隔）。</div>';return;}
+  // 平均分配作為預設
+  const nT=teachers.length,base=Math.floor(classes.length/nT),rem=classes.length%nT;
+  const assign=new Array(classes.length).fill('');
+  let idx=0;
+  for(let t=0;t<nT;t++){const want=base+(t<rem?1:0);for(let k=0;k<want&&idx<classes.length;k++){assign[idx++]=teachers[t];}}
+  box.innerHTML=classes.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="min-width:70px;font-size:13px;font-weight:600">${c||('班級'+(i+1))}</span>
+      <select class="exp-ct" data-idx="${i}" style="flex:1">
+        <option value="">（不指定）</option>
+        ${teachers.map(t=>`<option ${t===assign[i]?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>`).join('');
 }
 
 async function doExport(id){
@@ -1233,17 +1278,30 @@ async function doExport(id){
   const chosen=[];
   document.querySelectorAll('.exp-item').forEach(cb=>{if(cb.checked){const it=items[parseInt(cb.dataset.idx)];if(it)chosen.push(it);}});
   if(!chosen.length){showToast('請至少勾選一項器材','error');return;}
-  const classesRaw=(document.getElementById('exp-classes').value||'').split(/[\n、,，;；]+/).map(s=>s.trim()).filter(Boolean);
+  const classesRaw=expParseClasses();
+  // 組數（下拉 4/6/12 或自填）
+  const gsel=document.getElementById('exp-groupcount-sel');
+  let groupCount=0;
+  if(gsel)groupCount=gsel.value==='__other__'?(parseInt(document.getElementById('exp-groupcount').value)||0):(parseInt(gsel.value)||0);
+  // 週次（下拉或自填）
+  const wsel=document.getElementById('exp-week-sel');
+  let week='';
+  if(wsel)week=wsel.value==='__other__'?((document.getElementById('exp-week-other')||{}).value||'').trim():wsel.value;
+  // 各班指定老師
+  const cts=document.querySelectorAll('.exp-ct');
+  let classTeacher=[];
+  if(cts.length===classesRaw.length&&cts.length)classTeacher=[...cts].map(s=>s.value);
   const meta={
     category:document.getElementById('exp-category').value.trim(),
     name:document.getElementById('exp-name').value.trim(),
     grade:document.getElementById('exp-grade').value.trim(),
     month:document.getElementById('exp-month').value.trim(),
-    week:document.getElementById('exp-week').value.trim(),
+    week:week,
     teacher:document.getElementById('exp-teacher').value.trim(),
     filler:document.getElementById('exp-filler').value.trim(),
-    groupCount:parseInt(document.getElementById('exp-groupcount').value)||0,
-    classNames:classesRaw
+    groupCount:groupCount,
+    classNames:classesRaw,
+    classTeacher:classTeacher
   };
   meta.classCount=classesRaw.length;
   closeModal();
@@ -1293,22 +1351,34 @@ async function buildReportXlsx(meta,items,rec){
       ws.mergeCells(`A${r1}:A${r2}`);setCell(`A${r1}`,meta.classNames[i]||'',{h:'center'});
       ws.mergeCells(`B${r1}:C${r2}`);setCell(`B${r1}`,'',{h:'center',wrap:true});
     }
-    // 教師簽名：把班級平均分給各老師（班級數≥老師數時依班級切，否則整塊放全部老師）
+    // 教師簽名：優先用「各班指定老師」（可不平分、可非連續），相鄰同老師才合併；否則平均分配
     const teachers=splitTeachers(meta.teacher);
-    const nT=teachers.length;
-    if(nT>=1&&cc>=nT){
-      const base=Math.floor(cc/nT), rem=cc%nT;
-      let cIdx=0;
-      for(let t=0;t<nT;t++){
-        const cnt=base+(t<rem?1:0);
-        const segStart=blockStart+cIdx*2, segEnd=blockStart+(cIdx+cnt)*2-1;
+    const ct=(Array.isArray(meta.classTeacher)&&meta.classTeacher.length===cc&&meta.classTeacher.some(x=>x))?meta.classTeacher:null;
+    if(ct){
+      let i=0;
+      while(i<cc){
+        let j=i;while(j+1<cc&&ct[j+1]===ct[i])j++;
+        const segStart=blockStart+i*2, segEnd=blockStart+(j+1)*2-1;
         ws.mergeCells(`D${segStart}:E${segEnd}`);setCell(`D${segStart}`,'教師簽名',{h:'center'});
-        ws.mergeCells(`F${segStart}:F${segEnd}`);setCell(`F${segStart}`,teachers[t]||'',{h:'center'});
-        cIdx+=cnt;
+        ws.mergeCells(`F${segStart}:F${segEnd}`);setCell(`F${segStart}`,ct[i]||'',{h:'center'});
+        i=j+1;
       }
     }else{
-      ws.mergeCells(`D${blockStart}:E${blockEnd}`);setCell(`D${blockStart}`,'教師簽名',{h:'center'});
-      ws.mergeCells(`F${blockStart}:F${blockEnd}`);setCell(`F${blockStart}`,teachers.join('、'),{h:'center'});
+      const nT=teachers.length;
+      if(nT>=1&&cc>=nT){
+        const base=Math.floor(cc/nT), rem=cc%nT;
+        let cIdx=0;
+        for(let t=0;t<nT;t++){
+          const cnt=base+(t<rem?1:0);
+          const segStart=blockStart+cIdx*2, segEnd=blockStart+(cIdx+cnt)*2-1;
+          ws.mergeCells(`D${segStart}:E${segEnd}`);setCell(`D${segStart}`,'教師簽名',{h:'center'});
+          ws.mergeCells(`F${segStart}:F${segEnd}`);setCell(`F${segStart}`,teachers[t]||'',{h:'center'});
+          cIdx+=cnt;
+        }
+      }else{
+        ws.mergeCells(`D${blockStart}:E${blockEnd}`);setCell(`D${blockStart}`,'教師簽名',{h:'center'});
+        ws.mergeCells(`F${blockStart}:F${blockEnd}`);setCell(`F${blockStart}`,teachers.join('、'),{h:'center'});
+      }
     }
     borderRange(blockStart,blockEnd);
     headerRow=blockEnd+2;       // 區塊後空一列，再放器材表頭
