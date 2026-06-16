@@ -156,6 +156,7 @@
   <button class="tab" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
   <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
   <button class="tab" onclick="showTab('templates')">📚 課程模板</button>
+  <button class="tab" onclick="showTab('chemicals')">🧪 藥品管理</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
 
@@ -280,7 +281,62 @@
     <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課程模板</p></div></div>
   </div>
 </div>
-  
+
+<div id="panel-chemicals" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📥 批次匯入（貼上 CSV）</div>
+    <div class="info-box">從 Google Sheet 複製資料（含標題列）貼到下方，格式：中文名稱、英文名稱、位置、分類、剩餘瓶數、藥品回收、附註</div>
+    <textarea id="chemCsvInput" rows="6" placeholder="貼上從 Google Sheet 複製的資料…" style="font-family:'DM Mono',monospace;font-size:12px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="previewChemCsv()">👁️ 預覽</button>
+      <button class="btn btn-primary" onclick="importChemCsv()">📥 確認匯入</button>
+    </div>
+    <div id="chemCsvPreview" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">➕ 新增 / 編輯藥品</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+      <div class="form-group" style="grid-column:1/-1"><label>中文名稱 *</label><input type="text" id="chem-name-zh"></div>
+      <div class="form-group"><label>英文名稱</label><input type="text" id="chem-name-en"></div>
+      <div class="form-group"><label>位置</label><input type="text" id="chem-location"></div>
+      <div class="form-group">
+        <label>分類</label>
+        <select id="chem-category">
+          <option value="">不指定</option>
+          <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
+          <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
+          <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-group"><label>剩餘瓶數</label><input type="number" id="chem-bottles" min="0" value="0"></div>
+      <div class="form-group"><label>藥品回收類別</label><input type="text" id="chem-recycle" placeholder="酸/鹼/有機不含鹵…"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>附註</label><textarea id="chem-note" rows="2"></textarea></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="chem-available" checked style="width:auto">
+        <label for="chem-available" style="color:var(--text)">開放借用</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button class="btn btn-secondary" onclick="clearChemForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveChem()">💾 儲存</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 藥品清單</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
+      <select id="adminChemCat" onchange="filterAdminChems()">
+        <option value="">全部分類</option>
+        <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
+        <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
+        <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
+      </select>
+    </div>
+    <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
+  </div>
+</div>  
 <div id="panel-all" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
@@ -422,6 +478,7 @@ function showTab(tab){
   if(tab==='venue')loadAdminVenue();
   if(tab==='semester')loadSemesters();
   if(tab==='templates')loadTemplates();
+  if(tab==='chemicals')loadAdminChems();
 }
 
 function renderList(records,container,mode){
@@ -1765,6 +1822,167 @@ async function doDeleteTemplate(id){
   closeModal();
   try{await sb('DELETE','course_templates',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadTemplates();}
   catch(e){showToast('刪除失敗','error');}
+}
+  // ── 藥品管理 ────────────────────────────────────────────
+let allAdminChems = [], editingChemId = null;
+
+async function loadAdminChems() {
+  try {
+    const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' });
+    allAdminChems = Array.isArray(rows) ? rows : [];
+    filterAdminChems();
+  } catch(e) { showToast('載入藥品失敗', 'error'); }
+}
+
+function filterAdminChems() {
+  const q = (document.getElementById('adminChemSearch')?.value || '').toLowerCase();
+  const cat = document.getElementById('adminChemCat')?.value || '';
+  const items = allAdminChems.filter(c =>
+    (!q || c.name_zh?.toLowerCase().includes(q) || c.name_en?.toLowerCase().includes(q)) &&
+    (!cat || c.category === cat)
+  );
+  const list = document.getElementById('adminChemList');
+  if (!items.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合藥品</p></div>'; return; }
+  list.innerHTML = '<div class="record-list">' + items.map(c => `
+    <div class="record-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-size:15px;font-weight:700">${c.name_zh} ${c.is_available === false ? '<span class="badge badge-rejected">不開放</span>' : '<span class="badge badge-approved">可借</span>'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.name_en || ''}</div>
+          <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
+            ${c.category ? `<span>${c.category}</span>` : ''}
+            ${c.location ? `<span>📍 ${c.location}</span>` : ''}
+            <span style="font-family:'DM Mono',monospace;font-weight:700">${c.bottles_left ?? 0} 瓶</span>
+            ${c.recycle_type ? `<span>♻️ ${c.recycle_type}</span>` : ''}
+          </div>
+          ${c.note && c.note !== '附註' ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${c.note}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="editChem(${c.id})">✏️ 編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteChem(${c.id})">🗑️ 刪除</button>
+        </div>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+function clearChemForm() {
+  editingChemId = null;
+  ['chem-name-zh','chem-name-en','chem-location','chem-recycle','chem-note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('chem-category').value = '';
+  document.getElementById('chem-bottles').value = '0';
+  document.getElementById('chem-available').checked = true;
+}
+
+function editChem(id) {
+  const c = allAdminChems.find(x => x.id === id); if (!c) return;
+  editingChemId = id;
+  document.getElementById('chem-name-zh').value = c.name_zh || '';
+  document.getElementById('chem-name-en').value = c.name_en || '';
+  document.getElementById('chem-location').value = c.location || '';
+  document.getElementById('chem-category').value = c.category || '';
+  document.getElementById('chem-bottles').value = c.bottles_left ?? 0;
+  document.getElementById('chem-recycle').value = c.recycle_type || '';
+  document.getElementById('chem-note').value = c.note || '';
+  document.getElementById('chem-available').checked = c.is_available !== false;
+  document.querySelector('#panel-chemicals .card-title').scrollIntoView({ behavior: 'smooth' });
+  showToast('已載入，可修改後儲存', 'success');
+}
+
+async function saveChem() {
+  const name_zh = document.getElementById('chem-name-zh').value.trim();
+  if (!name_zh) { showToast('請填寫中文名稱', 'error'); return; }
+  const body = {
+    name_zh,
+    name_en: document.getElementById('chem-name-en').value.trim() || null,
+    location: document.getElementById('chem-location').value.trim() || null,
+    category: document.getElementById('chem-category').value || null,
+    bottles_left: parseInt(document.getElementById('chem-bottles').value) || 0,
+    recycle_type: document.getElementById('chem-recycle').value.trim() || null,
+    note: document.getElementById('chem-note').value.trim() || null,
+    is_available: document.getElementById('chem-available').checked,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    if (editingChemId) {
+      await sb('PATCH', 'chemicals', { filter: 'id=eq.' + editingChemId, body, prefer: 'return=minimal' });
+      showToast('已更新', 'success');
+    } else {
+      await sb('POST', 'chemicals', { body, prefer: 'return=minimal' });
+      showToast('已新增', 'success');
+    }
+    clearChemForm(); loadAdminChems();
+  } catch(e) { showToast('儲存失敗：' + e.message, 'error'); }
+}
+
+function deleteChem(id) {
+  showModal('確認刪除', `<p>確定刪除這筆藥品資料嗎？</p>`, [
+    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
+    { label: '確認刪除', cls: 'btn-danger', fn: `doDeleteChem(${id})` }
+  ]);
+}
+async function doDeleteChem(id) {
+  closeModal();
+  try {
+    await sb('DELETE', 'chemicals', { filter: 'id=eq.' + id, prefer: 'return=minimal' });
+    showToast('已刪除', 'success'); loadAdminChems();
+  } catch(e) { showToast('刪除失敗', 'error'); }
+}
+
+// ── CSV 批次匯入 ─────────────────────────────────────────
+function parseChemCsv(raw) {
+  const lines = raw.trim().split('\n').map(l => l.split('\t'));
+  // 自動跳過標題列（第一欄是「中文名稱」）
+  const dataLines = lines[0][0]?.includes('中文') ? lines.slice(1) : lines;
+  return dataLines.map(cols => ({
+    name_zh: (cols[0] || '').trim(),
+    name_en: (cols[1] || '').trim() || null,
+    location: (cols[2] || '').trim() || null,
+    category: (cols[3] || '').trim() || null,
+    bottles_left: parseInt(cols[4]) || 0,
+    recycle_type: (cols[5] || '').trim() || null,
+    note: (cols[6] || '').trim() === '附註' ? null : (cols[6] || '').trim() || null,
+    is_available: true
+  })).filter(r => r.name_zh);
+}
+
+function previewChemCsv() {
+  const raw = document.getElementById('chemCsvInput').value;
+  if (!raw.trim()) { showToast('請先貼上資料', 'error'); return; }
+  const items = parseChemCsv(raw);
+  const box = document.getElementById('chemCsvPreview');
+  if (!items.length) { box.innerHTML = '<p style="color:var(--danger)">解析失敗，請確認格式</p>'; return; }
+  box.innerHTML = `<p style="font-size:13px;margin-bottom:8px">解析到 <strong>${items.length}</strong> 筆，預覽前5筆：</p>` +
+    '<div style="overflow:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">' +
+    '<tr style="background:var(--surface2)">' +
+    ['中文名稱','英文名稱','位置','分類','瓶數','回收','附註'].map(h => `<th style="padding:4px 6px;border:1px solid var(--border);text-align:left">${h}</th>`).join('') + '</tr>' +
+    items.slice(0, 5).map(r => `<tr>${[r.name_zh,r.name_en||'',r.location||'',r.category||'',r.bottles_left,r.recycle_type||'',r.note||''].map(v => `<td style="padding:4px 6px;border:1px solid var(--border)">${v}</td>`).join('')}</tr>`).join('') +
+    '</table></div>';
+}
+
+async function importChemCsv() {
+  const raw = document.getElementById('chemCsvInput').value;
+  if (!raw.trim()) { showToast('請先貼上資料', 'error'); return; }
+  const items = parseChemCsv(raw);
+  if (!items.length) { showToast('解析失敗', 'error'); return; }
+  showModal('確認匯入', `<p>確定匯入 <strong>${items.length}</strong> 筆藥品資料嗎？（不會刪除已有資料，僅新增）</p>`, [
+    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
+    { label: '確認匯入', cls: 'btn-primary', fn: 'doImportChemCsv()' }
+  ]);
+  window._pendingChemImport = items;
+}
+
+async function doImportChemCsv() {
+  closeModal();
+  const items = window._pendingChemImport || [];
+  let ok = 0, fail = 0;
+  for (const item of items) {
+    try { await sb('POST', 'chemicals', { body: item, prefer: 'return=minimal' }); ok++; }
+    catch(e) { fail++; }
+  }
+  showToast(`匯入完成：${ok} 筆成功${fail ? '，' + fail + ' 筆失敗' : ''}`, ok ? 'success' : 'error');
+  document.getElementById('chemCsvInput').value = '';
+  document.getElementById('chemCsvPreview').innerHTML = '';
+  loadAdminChems();
 }
 </script>
 </body>
