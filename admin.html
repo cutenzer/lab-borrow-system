@@ -6,6 +6,7 @@
 <title>實驗室管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
   :root{--bg:#f4f3ef;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;--text:#1a1916;--text2:#6b6760;--accent:#2a6b4f;--danger:#c0392b;--warn:#d4a843;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -443,6 +444,7 @@ function renderRecord(r,mode){
     if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund('${r.id}',${r.depositAmount})">↩️ 確認退還</button>`;
     if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal('${r.id}',${r.depositAmount})">💸 計算賠償</button>`;
   }
+  if(items.length)actions+=`<button class="btn btn-secondary btn-sm" onclick="openExportModal('${r.id}')">📄 匯出表單</button>`;
   actions+=`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteBorrowRecord('${r.id}')">🗑️ 刪除</button>`;
   return `<div class="record-card ${r.status==='逾期'?'overdue':''}">
     <div class="record-header">
@@ -1159,6 +1161,192 @@ async function doReject(id){
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
     showToast('已拒絕','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
+}
+
+// ── 匯出實驗紀錄表（比照範本格式，產生真正的 .xlsx）──────────
+const EXPORT_CLASS_PRESETS={
+  '國中':['甲','乙','丙','丁','戊','己','庚','真','善','美'],
+  '高中':['甲','乙','丙','丁','戊','己'],
+  '自然組':['丙','丁','戊','己'],
+  '社會組':['甲','乙']
+};
+function splitTeachers(s){return (s||'').split(/[、,，;；\/／\s]+/).map(x=>x.trim()).filter(Boolean);}
+function expMonthFromDate(d){if(!d)return '';const m=parseInt(String(d).slice(5,7));return m?m+'月':'';}
+
+function openExportModal(id){
+  const rec=allRecords.find(r=>r.id===id);
+  if(!rec){showToast('找不到記錄','error');return;}
+  const items=Array.isArray(rec.items)?rec.items:[];
+  if(!items.length){showToast('這筆紀錄沒有器材可匯出','error');return;}
+  const esc=s=>(s==null?'':String(s)).replace(/"/g,'&quot;');
+  const itemRows=items.map((it,i)=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="exp-item" data-idx="${i}" checked style="width:auto;flex-shrink:0">
+      <span style="flex:1"><strong>${it.name}</strong>${it.spec?'　<span style="color:var(--text2)">'+it.spec+'</span>':''}</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--text2)">總量 ${it.quantity}${it.unit||''}</span>
+    </label>`).join('');
+  showModal('📄 匯出實驗紀錄表',`
+    <div class="info-box" style="margin-bottom:12px">勾選要放進這張表單的器材，並填寫表頭欄位（可留白由老師手寫）。每組數量會在「借用數量 ÷ 組數」能整除時自動算好，否則留空。</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="form-group" style="grid-column:1/-1"><label>分類（表格右上角）</label><input id="exp-category" value="探究與實作"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>實驗名稱</label><input id="exp-name" value="${esc(rec.note)}"></div>
+      <div class="form-group"><label>年級（也當班級前綴）</label><input id="exp-grade" placeholder="例如：高二"></div>
+      <div class="form-group"><label>月份</label><input id="exp-month" value="${esc(expMonthFromDate(rec.borrowDate))}"></div>
+      <div class="form-group"><label>週次</label><input id="exp-week" placeholder="例如：1"></div>
+      <div class="form-group"><label>教師（可多位，用、分隔）</label><input id="exp-teacher" value="${esc(rec.name)}"></div>
+      <div class="form-group"><label>填表人</label><input id="exp-filler" value="${esc(rec.name)}"></div>
+      <div class="form-group"><label>組數</label><input id="exp-groupcount" type="number" min="0" placeholder="例如：12"></div>
+    </div>
+    <div style="margin-top:8px">
+      <label style="font-size:12px;font-weight:600;color:var(--text2)">班級快速產生（用上面「年級」當前綴）</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('國中')">國中10班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('高中')">高中6班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('自然組')">自然組4班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="expGenClasses('社會組')">社會組2班</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('exp-classes').value=''">清空</button>
+      </div>
+      <textarea id="exp-classes" rows="2" placeholder="班級名稱，一行一個或用、分隔（例如：高二甲、高二乙…）留白則整個班級區塊空白可手寫"></textarea>
+      <div style="font-size:11px;color:var(--text2);margin-top:2px">上課日期／節次欄位會留白，方便老師手寫（借用單沒有逐班排課資料）。</div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">🔬 要匯出的器材（預設全選）</div>
+      ${itemRows}
+    </div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'⬇️ 下載 Excel',cls:'btn-primary',fn:`doExport('${id}')`}
+  ]);
+}
+
+function expGenClasses(kind){
+  const prefix=(document.getElementById('exp-grade')?.value||'').trim();
+  const list=(EXPORT_CLASS_PRESETS[kind]||[]).map(c=>prefix+c);
+  document.getElementById('exp-classes').value=list.join('、');
+}
+
+async function doExport(id){
+  const rec=allRecords.find(r=>r.id===id);
+  if(!rec){showToast('找不到記錄','error');return;}
+  if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
+  const items=Array.isArray(rec.items)?rec.items:[];
+  const chosen=[];
+  document.querySelectorAll('.exp-item').forEach(cb=>{if(cb.checked){const it=items[parseInt(cb.dataset.idx)];if(it)chosen.push(it);}});
+  if(!chosen.length){showToast('請至少勾選一項器材','error');return;}
+  const classesRaw=(document.getElementById('exp-classes').value||'').split(/[\n、,，;；]+/).map(s=>s.trim()).filter(Boolean);
+  const meta={
+    category:document.getElementById('exp-category').value.trim(),
+    name:document.getElementById('exp-name').value.trim(),
+    grade:document.getElementById('exp-grade').value.trim(),
+    month:document.getElementById('exp-month').value.trim(),
+    week:document.getElementById('exp-week').value.trim(),
+    teacher:document.getElementById('exp-teacher').value.trim(),
+    filler:document.getElementById('exp-filler').value.trim(),
+    groupCount:parseInt(document.getElementById('exp-groupcount').value)||0,
+    classNames:classesRaw
+  };
+  meta.classCount=classesRaw.length;
+  closeModal();
+  try{
+    await buildReportXlsx(meta,chosen,rec);
+    showToast('已產生 Excel，請查看下載','success');
+  }catch(e){showToast('匯出失敗：'+e.message,'error');}
+}
+
+async function buildReportXlsx(meta,items,rec){
+  const FONT='Times New Roman';
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet('實驗紀錄表');
+  const widths=[9,29.9,11.6,7.4,9,23.4];
+  widths.forEach((w,i)=>{ws.getColumn(i+1).width=w;});
+  const thin={style:'thin'};
+  const allBorder={top:thin,left:thin,bottom:thin,right:thin};
+  const setCell=(addr,val,opt={})=>{
+    const c=ws.getCell(addr);
+    if(val!==undefined&&val!==null)c.value=val;
+    c.font={name:FONT,size:opt.size||11,bold:!!opt.bold};
+    c.alignment={vertical:'middle',horizontal:opt.h||'left',wrapText:!!opt.wrap};
+    if(opt.border)c.border=allBorder;
+    return c;
+  };
+  const borderRange=(r1,r2)=>{for(let r=r1;r<=r2;r++)for(let col=1;col<=6;col++){ws.getCell(r,col).border=allBorder;}};
+
+  // ── 表頭 1~6 列 ──
+  setCell('A1','曉明女中　自然與生活科技',{size:16,bold:true});
+  setCell('C1',meta.category||'',{size:16,bold:true});
+  setCell('E1','實驗紀錄表',{size:16,bold:true});
+  setCell('A2','實驗名稱',{size:12});setCell('B2',meta.name||'',{size:12});
+  setCell('A3','年級',{size:12});setCell('B3',meta.grade||'',{size:12});ws.mergeCells('D3:E3');
+  setCell('A4','月份',{size:12});setCell('B4',meta.month||'',{size:12});setCell('C4','週次',{size:12});ws.mergeCells('D4:E4');setCell('D4',meta.week||'',{size:12,h:'center'});
+  setCell('A5','教師',{size:12});setCell('B5',meta.teacher||'',{size:12});setCell('C5','班數',{size:12});ws.mergeCells('D5:E5');setCell('D5',meta.classCount||0,{size:12,h:'center'});
+  setCell('A6','填表人',{size:12});setCell('B6',meta.filler||'',{size:12});setCell('C6','組數',{size:12});ws.mergeCells('D6:E6');setCell('D6',meta.groupCount||0,{size:12,h:'center'});
+
+  ws.getRow(1).height=30;
+
+  // ── 班級／時段／簽名區塊（班數>0 才畫）──
+  let headerRow;
+  const cc=meta.classCount||0;
+  if(cc>0){
+    const blockStart=8, blockEnd=8+cc*2-1;
+    for(let i=0;i<cc;i++){
+      const r1=blockStart+i*2, r2=r1+1;
+      ws.mergeCells(`A${r1}:A${r2}`);setCell(`A${r1}`,meta.classNames[i]||'',{h:'center'});
+      ws.mergeCells(`B${r1}:C${r2}`);setCell(`B${r1}`,'',{h:'center',wrap:true});
+    }
+    // 教師簽名：把班級平均分給各老師（班級數≥老師數時依班級切，否則整塊放全部老師）
+    const teachers=splitTeachers(meta.teacher);
+    const nT=teachers.length;
+    if(nT>=1&&cc>=nT){
+      const base=Math.floor(cc/nT), rem=cc%nT;
+      let cIdx=0;
+      for(let t=0;t<nT;t++){
+        const cnt=base+(t<rem?1:0);
+        const segStart=blockStart+cIdx*2, segEnd=blockStart+(cIdx+cnt)*2-1;
+        ws.mergeCells(`D${segStart}:E${segEnd}`);setCell(`D${segStart}`,'教師簽名',{h:'center'});
+        ws.mergeCells(`F${segStart}:F${segEnd}`);setCell(`F${segStart}`,teachers[t]||'',{h:'center'});
+        cIdx+=cnt;
+      }
+    }else{
+      ws.mergeCells(`D${blockStart}:E${blockEnd}`);setCell(`D${blockStart}`,'教師簽名',{h:'center'});
+      ws.mergeCells(`F${blockStart}:F${blockEnd}`);setCell(`F${blockStart}`,teachers.join('、'),{h:'center'});
+    }
+    borderRange(blockStart,blockEnd);
+    headerRow=blockEnd+2;       // 區塊後空一列，再放器材表頭
+  }else{
+    headerRow=8;                // 無班級區塊：第7列空白，第8列起器材表
+  }
+
+  // ── 器材表頭 ──
+  const heads=['編號','器材項目','樣式','數量','總量','備註'];
+  heads.forEach((h,i)=>setCell(ws.getRow(headerRow).getCell(i+1).address,h,{h:'center',wrap:true,border:true}));
+
+  // ── 器材項目列 ──
+  const firstItemRow=headerRow+1;
+  items.forEach((it,k)=>{
+    const r=firstItemRow+k;
+    const total=parseInt(it.quantity)||0;
+    const per=(meta.groupCount>0&&total%meta.groupCount===0)?(total/meta.groupCount):null;
+    ws.getCell(`A${r}`).value={formula:`SUBTOTAL(103,$B$${firstItemRow}:$B${r})`};
+    setCell(`A${r}`,undefined,{h:'center',wrap:true,border:true});
+    setCell(`B${r}`,it.name||'',{h:'center',wrap:true,border:true});
+    setCell(`C${r}`,(it.spec==null?'':it.spec),{h:'center',wrap:true,border:true});
+    setCell(`D${r}`,(per==null?'':per),{h:'center',wrap:true,border:true});
+    setCell(`E${r}`,total,{h:'center',wrap:true,border:true});
+    setCell(`F${r}`,it.note||'',{h:'center',wrap:true,border:true});
+  });
+
+  // ── 列高（第1列30，其餘到最後一列15）──
+  const lastRow=firstItemRow+items.length-1;
+  for(let r=2;r<=lastRow;r++){if(!ws.getRow(r).height)ws.getRow(r).height=15;}
+
+  // ── 輸出下載 ──
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const base=`實驗紀錄表_${meta.name||rec.id}${meta.grade?'_'+meta.grade:''}`.replace(/[\\/:*?"<>|\s]+/g,'_');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=base+'.xlsx';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
 }
 
 // ── 借用記錄刪除 ──────────────────────────────────────────
