@@ -273,6 +273,20 @@
     .bn-item.active{color:var(--accent);font-weight:700;}
     .cart-fab,.search-fab{bottom:calc(84px + env(safe-area-inset-bottom));}
   }
+  /* 藥品列表 */
+.chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
+.chem-row:last-child{border-bottom:none;}
+.chem-row:hover{background:#f5f9fd;border-radius:8px;}
+.chem-cat-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);white-space:nowrap;}
+.chem-cat-酸{background:#fde8e8;color:#b91c1c;}
+.chem-cat-鹼{background:#e0f2fe;color:#0369a1;}
+.chem-cat-鹽{background:#f0fdf4;color:#15803d;}
+.chem-cat-有機{background:#fef9c3;color:#a16207;}
+.chem-cat-無機鹽{background:#ede9fe;color:#6d28d9;}
+.chem-cat-氧\/硫化物{background:#fff7ed;color:#c2410c;}
+.chem-recycle-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10.5px;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);}
+.chem-bottles{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
+.chem-unavail{opacity:0.45;}
 </style>
 </head>
 <body>
@@ -287,6 +301,7 @@
     <button onclick="showPage('venue')">場地預約</button>
     <button onclick="showPage('equipment')">器材查詢</button>
     <button onclick="showPage('myrecords')">我的記錄</button>
+    <button onclick="showPage('chemicals')">藥品查詢</button>
   </nav>
 </header>
 <main>
@@ -473,6 +488,27 @@
     <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>填寫姓名或學號後查詢</p></div></div>
   </div>
 </div>
+  <!-- 藥品查詢 -->
+<div id="page-chemicals" class="page">
+  <div class="card">
+    <div class="card-title">🧪 實驗室藥品查詢</div>
+    <div class="info-box">藥品不開放自行領取，申請後由管理員或老師備藥。配製溶液請填寫濃度與用量。</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" id="chemSearch" placeholder="搜尋中文或英文名稱…" oninput="filterChemicals()" style="flex:1;min-width:140px">
+      <select id="chemCatFilter" onchange="filterChemicals()" style="min-width:100px">
+        <option value="">全部分類</option>
+        <option value="酸">酸</option>
+        <option value="鹼">鹼</option>
+        <option value="鹽">鹽</option>
+        <option value="有機">有機</option>
+        <option value="無機鹽">無機鹽</option>
+        <option value="氧/硫化物">氧/硫化物</option>
+        <option value="其他">其他</option>
+      </select>
+    </div>
+    <div id="chemList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+  </div>
+</div>
 </main>
 
 <!-- 底部導覽列（手機顯示） -->
@@ -481,6 +517,7 @@
   <button class="bn-item" data-page="venue" onclick="showPage('venue')"><span>🏛️</span>場地</button>
   <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查詢</button>
   <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
+  <button class="bn-item" data-page="chemicals" onclick="showPage('chemicals')"><span>🧪</span>藥品</button>
 </nav>
 
 <!-- 購物車（右下，常駐，僅圖標） -->
@@ -1347,11 +1384,12 @@ function showPage(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords'][i]===page));
+  document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords','chemicals'][i]===page));
   // 同步底部導覽列
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   // 購物車 / 搜尋 FAB 只在借用頁顯示，離開時收起抽屜
   const onBorrow=(page==='borrow');
+if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=onBorrow?'flex':'none';
   document.getElementById('searchFab').style.display=onBorrow?'flex':'none';
   if(!onBorrow){closeCart();closeSearch();}
@@ -1556,6 +1594,234 @@ function clearAppliedTemplate(removeItems){
   const sum=document.getElementById('appliedTemplateSummary');if(sum)sum.innerHTML='';
   const sel=document.getElementById('tplPickerSelect');if(sel)sel.value='';
   calcDeposit();
+}
+// ── 藥品查詢 ────────────────────────────────────────────
+let allChemicals = [], filteredChemicals = [];
+
+async function loadChemicals() {
+  if (allChemicals.length) { renderChemList(filteredChemicals.length ? filteredChemicals : allChemicals); return; }
+  try {
+    const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' });
+    allChemicals = Array.isArray(rows) ? rows : [];
+    filteredChemicals = allChemicals;
+    renderChemList(allChemicals);
+  } catch(e) {
+    document.getElementById('chemList').innerHTML = '<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';
+  }
+}
+
+function filterChemicals() {
+  const q = document.getElementById('chemSearch').value.toLowerCase();
+  const cat = document.getElementById('chemCatFilter').value;
+  filteredChemicals = allChemicals.filter(c =>
+    (!q || c.name_zh?.toLowerCase().includes(q) || c.name_en?.toLowerCase().includes(q)) &&
+    (!cat || c.category === cat)
+  );
+  renderChemList(filteredChemicals);
+}
+
+function renderChemList(items) {
+  const box = document.getElementById('chemList');
+  if (!items.length) { box.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>'; return; }
+  box.innerHTML = '<div class="equip-list">' + items.map(c => {
+    const avail = c.is_available !== false;
+    const catCls = 'chem-cat-' + (c.category || '其他');
+    return `<div class="chem-row ${avail ? '' : 'chem-unavail'}">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:700">${c.name_zh}</span>
+          <span class="chem-cat-tag ${catCls}">${c.category || '其他'}</span>
+          ${c.recycle_type ? `<span class="chem-recycle-tag">♻️ ${c.recycle_type}</span>` : ''}
+        </div>
+        ${c.name_en ? `<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${c.name_en}</div>` : ''}
+        ${c.location ? `<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${c.location}</div>` : ''}
+        ${c.note && c.note !== '附註' ? `<div style="font-size:11px;color:var(--accent);margin-top:1px">📝 ${c.note}</div>` : ''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+        <span class="chem-bottles">${c.bottles_left ?? '?'} 瓶</span>
+        ${avail
+          ? `<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${c.id})">申請借用</button>`
+          : `<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// ── 藥品申請 Modal ──────────────────────────────────────
+function openChemRequestModal(id) {
+  const c = allChemicals.find(x => x.id === id);
+  if (!c) return;
+  showModal(`🧪 申請藥品 — ${c.name_zh}`,`
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${c.name_en || ''}</div>
+    <div class="form-group">
+      <label>借用方式 *</label>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)">
+          <input type="radio" name="chemMode" value="原液" id="chemModeBottle" onchange="toggleChemMode()" checked style="width:auto"> 原液（整瓶）
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)">
+          <input type="radio" name="chemMode" value="配製" id="chemModeMix" onchange="toggleChemMode()" style="width:auto"> 配製溶液
+        </label>
+      </div>
+    </div>
+
+    <!-- 原液 -->
+    <div id="chemBottleSection">
+      <div class="form-group">
+        <label>瓶數 *</label>
+        <input type="number" id="chemBottles" min="1" value="1" placeholder="需要幾瓶">
+      </div>
+    </div>
+
+    <!-- 配製溶液 -->
+    <div id="chemMixSection" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group">
+          <label>濃度（選填）</label>
+          <input type="text" id="chemConc" placeholder="例：0.1M、5%、1N">
+        </div>
+        <div class="form-group">
+          <label>配製方式</label>
+          <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
+              <input type="radio" name="chemPrecision" value="精準" checked style="width:auto"> 精準（定量瓶）
+            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
+              <input type="radio" name="chemPrecision" value="不精準" style="width:auto"> 大約（燒杯量筒）
+            </label>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">用量計算方式（擇一）</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px;cursor:pointer;color:var(--text)">
+          <input type="radio" name="chemVolMode" value="班" id="chemByClass" onchange="toggleChemVolMode()" checked style="width:auto"> 依班數計算
+        </label>
+        <div id="chemByClassSection" style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="form-group" style="flex:1;min-width:80px">
+            <label>每班用量（mL）*</label>
+            <input type="number" id="chemVolPerClass" min="1" placeholder="500" oninput="calcChemTotal()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:60px">
+            <label>班數 *</label>
+            <input type="number" id="chemClassCount" min="1" placeholder="3" oninput="calcChemTotal()">
+          </div>
+          <div class="form-group" style="flex:1;min-width:80px">
+            <label>共需（mL）</label>
+            <input type="number" id="chemTotalVolClass" placeholder="自動計算" readonly style="background:var(--surface2)">
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px;cursor:pointer;color:var(--text)">
+          <input type="radio" name="chemVolMode" value="總量" id="chemByTotal" onchange="toggleChemVolMode()" style="width:auto"> 直接填總量
+        </label>
+        <div id="chemByTotalSection" style="display:none;margin-top:6px">
+          <div class="form-group">
+            <label>說明（選填，如「全年級」）</label>
+            <input type="text" id="chemTotalDesc" placeholder="例：全年級、高一甲乙丙">
+          </div>
+          <div class="form-group">
+            <label>總量（mL）*</label>
+            <input type="number" id="chemTotalVolDirect" min="1" placeholder="1000">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>由誰配製</label>
+        <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="radio" name="chemPrepBy" value="管理員配置" checked style="width:auto"> 管理員配置
+          </label>
+          <label style="display:flex;align-items:center;gap=5px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="radio" name="chemPrepBy" value="老師自行配置" style="width:auto"> 老師自行配置
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>備註說明</label>
+      <textarea id="chemNote" rows="2" placeholder="其他說明…"></textarea>
+    </div>
+  `, [
+    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
+    { label: '加入購物車 🛒', cls: 'btn-primary', fn: `addChemToCart(${id})` }
+  ]);
+}
+
+function toggleChemMode() {
+  const isMix = document.getElementById('chemModeMix').checked;
+  document.getElementById('chemBottleSection').style.display = isMix ? 'none' : 'block';
+  document.getElementById('chemMixSection').style.display = isMix ? 'block' : 'none';
+}
+
+function toggleChemVolMode() {
+  const byClass = document.getElementById('chemByClass').checked;
+  document.getElementById('chemByClassSection').style.display = byClass ? 'flex' : 'none';
+  document.getElementById('chemByTotalSection').style.display = byClass ? 'none' : 'block';
+}
+
+function calcChemTotal() {
+  const perClass = parseInt(document.getElementById('chemVolPerClass')?.value) || 0;
+  const classes = parseInt(document.getElementById('chemClassCount')?.value) || 0;
+  const total = document.getElementById('chemTotalVolClass');
+  if (total) total.value = perClass && classes ? perClass * classes : '';
+}
+
+function addChemToCart(id) {
+  const c = allChemicals.find(x => x.id === id);
+  if (!c) return;
+  const isMix = document.getElementById('chemModeMix').checked;
+  let desc = '', quantity = 0, unit = '';
+
+  if (!isMix) {
+    // 原液
+    const bottles = parseInt(document.getElementById('chemBottles').value) || 0;
+    if (!bottles) { showToast('請填寫瓶數', 'error'); return; }
+    desc = `原液 × ${bottles}瓶`;
+    quantity = bottles;
+    unit = '瓶';
+  } else {
+    // 配製溶液
+    const conc = document.getElementById('chemConc').value.trim();
+    const precision = document.querySelector('input[name="chemPrecision"]:checked')?.value || '精準';
+    const prepBy = document.querySelector('input[name="chemPrepBy"]:checked')?.value || '管理員配置';
+    const byClass = document.getElementById('chemByClass').checked;
+    let volDesc = '', totalVol = 0;
+
+    if (byClass) {
+      const perClass = parseInt(document.getElementById('chemVolPerClass').value) || 0;
+      const classCount = parseInt(document.getElementById('chemClassCount').value) || 0;
+      totalVol = perClass * classCount;
+      if (!perClass || !classCount) { showToast('請填寫每班用量與班數', 'error'); return; }
+      volDesc = `× ${perClass}mL × ${classCount}班，共 ${totalVol}mL`;
+    } else {
+      totalVol = parseInt(document.getElementById('chemTotalVolDirect').value) || 0;
+      const totalDescText = document.getElementById('chemTotalDesc').value.trim();
+      if (!totalVol) { showToast('請填寫總量', 'error'); return; }
+      volDesc = `${totalDescText ? totalDescText + '　' : ''}共 ${totalVol}mL`;
+    }
+
+    desc = `配製${conc ? ' ' + conc : ''} ${volDesc}　｜${precision}配置｜${prepBy}`;
+    quantity = totalVol;
+    unit = 'mL';
+  }
+
+  const note = document.getElementById('chemNote').value.trim();
+  const key = 'CHEM__' + c.id;
+  selectedItems[key] = {
+    room: 'chemicals',
+    name: c.name_zh,
+    spec: desc,
+    unit,
+    quantity,
+    note,
+    _isChem: true
+  };
+  updateCartBadge();
+  calcDeposit();
+  closeModal();
+  showToast(`已加入：${c.name_zh}　${desc}`, 'success');
+  openCart();
 }
 </script>
 </body>
