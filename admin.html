@@ -326,14 +326,15 @@
   <div class="card">
     <div class="card-title">📋 藥品清單</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
-      <select id="adminChemCat" onchange="filterAdminChems()">
-        <option value="">全部分類</option>
-        <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
-        <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
-        <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
-      </select>
-    </div>
+  <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
+  <select id="adminChemCat" onchange="filterAdminChems()">
+    <option value="">全部分類</option>
+    <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
+    <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
+    <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
+  </select>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
+</div>
     <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
   </div>
 </div>  
@@ -1963,6 +1964,72 @@ async function doDeleteChem(id) {
     await sb('DELETE', 'chemicals', { filter: 'id=eq.' + id, prefer: 'return=minimal' });
     showToast('已刪除', 'success'); loadAdminChems();
   } catch(e) { showToast('刪除失敗', 'error'); }
+}
+  async function checkChemDuplicates() {
+  if (!allAdminChems.length) {
+    try { const rows = await sb('GET', 'chemicals', { order: 'name_zh' }); allAdminChems = Array.isArray(rows) ? rows : []; }
+    catch(e) { showToast('載入失敗', 'error'); return; }
+  }
+
+  // 用清掉引號後的名稱做 key
+  const clean = s => (s || '').replace(/"/g, '').trim();
+  const keyMap = {};
+  allAdminChems.forEach(c => {
+    const zh = clean(c.name_zh);
+    const en = clean(c.name_en || '');
+    const key = en ? `${zh}||${en}` : zh;
+    if (!keyMap[key]) keyMap[key] = [];
+    keyMap[key].push(c);
+  });
+
+  const dupGroups = Object.values(keyMap).filter(g => g.length > 1);
+
+  if (!dupGroups.length) {
+    showModal('🔍 檢查重複', '<div class="empty"><div class="empty-icon">✅</div><p>目前沒有重複的藥品</p></div>', [
+      { label: '關閉', cls: 'btn-secondary', fn: 'closeModal()' }
+    ]);
+    return;
+  }
+
+  const rows = dupGroups.map(group => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff5f5">
+      <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px">
+        「${group[0].name_zh}」共 ${group.length} 筆
+      </div>
+      ${group.map(c => `
+        <label style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:12.5px;cursor:pointer;margin-bottom:3px;background:var(--surface2)">
+          <input type="checkbox" class="dup-del" data-id="${c.id}" style="width:auto;flex-shrink:0">
+          <span style="flex:1">
+            <strong>${c.name_zh}</strong>
+            ${c.name_en ? `<span style="color:var(--text2)"> ${c.name_en}</span>` : ''}
+            ${c.location ? `　📍 ${c.location}` : ''}
+            　<span style="font-family:'DM Mono',monospace">${c.bottles_left ?? 0} 瓶</span>
+            ${c.category ? `　${c.category}` : ''}
+          </span>
+          <span style="font-size:11px;color:var(--text2)">#${c.id}</span>
+        </label>`).join('')}
+    </div>`).join('');
+
+  showModal(`🔍 發現 ${dupGroups.length} 組重複藥品`,
+    `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">勾選要刪除的項目，每組至少保留一筆。</div>${rows}`,
+    [
+      { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
+      { label: '刪除勾選項目', cls: 'btn-danger', fn: 'doDeleteDuplicates()' }
+    ]
+  );
+}
+
+async function doDeleteDuplicates() {
+  const checked = [...document.querySelectorAll('.dup-del:checked')];
+  if (!checked.length) { showToast('請先勾選要刪除的項目', 'error'); return; }
+  closeModal();
+  let ok = 0, fail = 0;
+  for (const cb of checked) {
+    try { await sb('DELETE', 'chemicals', { filter: 'id=eq.' + cb.dataset.id, prefer: 'return=minimal' }); ok++; }
+    catch(e) { fail++; }
+  }
+  showToast(`刪除完成：${ok} 筆成功${fail ? '，' + fail + ' 筆失敗' : ''}`, ok ? 'success' : 'error');
+  loadAdminChems();
 }
 
 // ── CSV 批次匯入 ─────────────────────────────────────────
