@@ -331,8 +331,9 @@
         <label>借用目的 *</label>
         <select id="f-purpose" onchange="onPurposeChange()">
           <option value="">-- 請選擇 --</option>
-          <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="選修">選修</option>
+          <option value="自主學習">自主學習</option>
+          <option value="科展">科展</option>
+          <option value="社團">社團</option>
           <option value="其他">其他（自填）</option>
         </select>
         <input type="text" id="f-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
@@ -422,8 +423,10 @@
       <div class="form-group">
         <label>借用目的 *</label>
         <select id="vf-purpose" onchange="onVenuePurposeChange()">
-          <option value="課程">課程</option><option value="自主學習">自主學習</option>
-          <option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="選修">選修</option><option value="其他">其他（自填）</option>
+          <option value="自主學習">自主學習</option>
+          <option value="科展">科展</option>
+          <option value="社團">社團</option>
+          <option value="其他">其他（自填）</option>
         </select>
         <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
       </div>
@@ -680,11 +683,36 @@ function setMinDates(){
 }
 
 // ── 身份切換 ──────────────────────────────────────────────
+const STUDENT_PURPOSES=[
+  {value:'自主學習',label:'自主學習'},
+  {value:'科展',label:'科展'},
+  {value:'社團',label:'社團'},
+  {value:'其他',label:'其他（自填）'},
+];
+const TEACHER_PURPOSES=[
+  {value:'課程',label:'課程'},
+  {value:'探究',label:'探究'},
+  {value:'選修',label:'選修'},
+  {value:'自主學習',label:'自主學習'},
+  {value:'科展',label:'科展'},
+  {value:'社團',label:'社團'},
+  {value:'其他',label:'其他（自填）'},
+];
+function setPurposeOptions(role){
+  const sel=document.getElementById('f-purpose');
+  const cur=sel.value;
+  const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
+  sel.innerHTML='<option value="">-- 請選擇 --</option>'+opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  // 若原本選的選項在新清單中仍存在就保留，否則清空
+  sel.value=opts.some(o=>o.value===cur)?cur:'';
+  onPurposeChange();
+}
 function setRole(role){
   currentRole=role;
   document.getElementById('roleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('roleTabTeacher').classList.toggle('active',role==='老師');
   document.getElementById('studentIdGroup').style.display=role==='學生'?'flex':'none';
+  setPurposeOptions(role);
   // 課程模板僅老師可見、可用
   const tplCard=document.getElementById('courseTemplateCard');
   if(tplCard)tplCard.style.display=role==='老師'?'block':'none';
@@ -696,6 +724,12 @@ function setVenueRole(role){
   document.getElementById('vroleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('vroleTabTeacher').classList.toggle('active',role==='老師');
   document.getElementById('vStudentIdGroup').style.display=role==='學生'?'flex':'none';
+  const sel=document.getElementById('vf-purpose');
+  const cur=sel.value;
+  const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
+  sel.innerHTML=opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.value=opts.some(o=>o.value===cur)?cur:opts[0].value;
+  onVenuePurposeChange();
 }
 
 // ── 場地預約時段 ──────────────────────────────────────────
