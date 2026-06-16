@@ -839,7 +839,15 @@ function buildWeekSelector(){
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
-  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
+  sel.innerHTML=weeks.map(w=>{
+  const monday=new Date(w.date);
+  monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
+  const dateRange=`${fmt(monday)}～${fmt(sunday)}`;
+  const label=w.type!=='開學週期'?`（${w.label}）`:'';
+  return `<option value="${w.week}">第${w.week}週${label}　${dateRange}</option>`;
+}).join('');
 }
 
 // 跳到指定週次
@@ -1333,8 +1341,12 @@ function renderEquipBrowse(items){
 function openLightbox(url,name){if(!url)return;event&&event.stopPropagation();document.getElementById('lightboxImg').src=url;document.getElementById('lightboxInfo').textContent=name||'';document.getElementById('lightbox').classList.add('show');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
 function showPage(page){
+  const currentPage=document.querySelector('.page.active')?.id?.replace('page-','');
+  // 同一頁再點 → 直接捲回頂端
+  if(currentPage===page){window.scrollTo({top:0,behavior:'smooth'});return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
   document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','myrecords'][i]===page));
   // 同步底部導覽列
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
