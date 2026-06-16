@@ -289,7 +289,7 @@
     <textarea id="chemCsvInput" rows="6" placeholder="貼上從 Google Sheet 複製的資料…" style="font-family:'DM Mono',monospace;font-size:12px"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn btn-secondary" onclick="previewChemCsv()">👁️ 預覽</button>
-      <button class="btn btn-primary" onclick="importChemCsv()">📥 確認匯入</button>
+      <button class="btn btn-primary" onclick="importChemCsv()">🔍 比對並匯入</button>
     </div>
     <div id="chemCsvPreview" style="margin-top:10px"></div>
   </div>
@@ -1967,19 +1967,25 @@ async function doDeleteChem(id) {
 
 // ── CSV 批次匯入 ─────────────────────────────────────────
 function parseChemCsv(raw) {
-  const lines = raw.trim().split('\n').map(l => l.split('\t'));
-  // 自動跳過標題列（第一欄是「中文名稱」）
+  const stripQuotes = s => (s || '').trim().replace(/^"|"$/g, '').trim();
+  const lines = raw.trim().split('\n').map(l => l.split('\t').map(stripQuotes));
   const dataLines = lines[0][0]?.includes('中文') ? lines.slice(1) : lines;
   return dataLines.map(cols => ({
-    name_zh: (cols[0] || '').trim(),
-    name_en: (cols[1] || '').trim() || null,
-    location: (cols[2] || '').trim() || null,
-    category: (cols[3] || '').trim() || null,
+    name_zh: cols[0] || '',
+    name_en: cols[1] || null,
+    location: cols[2] || null,
+    category: cols[3] || null,
     bottles_left: parseInt(cols[4]) || 0,
-    recycle_type: (cols[5] || '').trim() || null,
-    note: (cols[6] || '').trim() === '附註' ? null : (cols[6] || '').trim() || null,
+    recycle_type: cols[5] || null,
+    note: (cols[6] === '附註' || !cols[6]) ? null : cols[6],
     is_available: true
   })).filter(r => r.name_zh);
+}
+
+function chemMatchKey(name_zh, name_en) {
+  const zh = (name_zh || '').trim();
+  const en = (name_en || '').trim();
+  return en ? `${zh}||${en}` : zh;
 }
 
 function previewChemCsv() {
@@ -1999,24 +2005,116 @@ function previewChemCsv() {
 async function importChemCsv() {
   const raw = document.getElementById('chemCsvInput').value;
   if (!raw.trim()) { showToast('請先貼上資料', 'error'); return; }
-  const items = parseChemCsv(raw);
-  if (!items.length) { showToast('解析失敗', 'error'); return; }
-  showModal('確認匯入', `<p>確定匯入 <strong>${items.length}</strong> 筆藥品資料嗎？（不會刪除已有資料，僅新增）</p>`, [
-    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
-    { label: '確認匯入', cls: 'btn-primary', fn: 'doImportChemCsv()' }
-  ]);
-  window._pendingChemImport = items;
+  const newItems = parseChemCsv(raw);
+  if (!newItems.length) { showToast('解析失敗', 'error'); return; }
+
+  if (!allAdminChems.length) {
+    try { const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' }); allAdminChems = Array.isArray(rows) ? rows : []; }
+    catch(e) { showToast('載入現有藥品失敗', 'error'); return; }
+  }
+
+  const existingMap = {};
+  allAdminChems.forEach(c => { existingMap[chemMatchKey(c.name_zh, c.name_en)] = c; });
+  const newMap = {};
+  newItems.forEach(c => { newMap[chemMatchKey(c.name_zh, c.name_en)] = c; });
+
+  const added = [], removed = [], changed = [];
+
+  newItems.forEach(c => {
+    const key = chemMatchKey(c.name_zh, c.name_en);
+    if (!existingMap[key]) {
+      added.push(c);
+    } else {
+      const old = existingMap[key];
+      const diffs = [];
+      if ((c.location||'') !== (old.location||'')) diffs.push(`位置：${old.location||'—'} → ${c.location||'—'}`);
+      if (c.bottles_left !== (old.bottles_left??0)) diffs.push(`瓶數：${old.bottles_left??0} → ${c.bottles_left}`);
+      if ((c.category||'') !== (old.category||'')) diffs.push(`分類：${old.category||'—'} → ${c.category||'—'}`);
+      if ((c.recycle_type||'') !== (old.recycle_type||'')) diffs.push(`回收：${old.recycle_type||'—'} → ${c.recycle_type||'—'}`);
+      if ((c.note||'') !== (old.note||'')) diffs.push(`附註：${old.note||'—'} → ${c.note||'—'}`);
+      if (diffs.length) changed.push({ newData: c, oldData: old, diffs });
+    }
+  });
+
+  allAdminChems.forEach(c => {
+    const key = chemMatchKey(c.name_zh, c.name_en);
+    if (!newMap[key]) removed.push(c);
+  });
+
+  if (!added.length && !removed.length && !changed.length) {
+    showToast('與現有資料完全相同，無需變更', 'success'); return;
+  }
+
+  window._pendingChemDiff = { added, removed, changed };
+  showChemDiffModal(added, removed, changed);
 }
 
-async function doImportChemCsv() {
+function showChemDiffModal(added, removed, changed) {
+  const removedRows = removed.map((c, i) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="diff-remove" data-idx="${i}" style="width:auto;flex-shrink:0">
+      <span style="flex:1"><strong>${c.name_zh}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+c.name_en+'</span>':''}</span>
+      <span style="font-size:11px;color:var(--danger)">刪除</span>
+    </label>`).join('');
+
+  const changedRows = changed.map((item, i) => `
+    <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;background:#fef3c7;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="diff-change" data-idx="${i}" checked style="width:auto;flex-shrink:0;margin-top:2px">
+      <div style="flex:1">
+        <div><strong>${item.newData.name_zh}</strong>${item.newData.name_en?' <span style="color:var(--text2);font-size:12px">'+item.newData.name_en+'</span>':''}</div>
+        <div style="font-size:11px;color:#92400e;margin-top:2px">${item.diffs.join('　')}</div>
+      </div>
+      <span style="font-size:11px;color:#92400e;white-space:nowrap">更新</span>
+    </label>`).join('');
+
+  const addedRows = added.map((c, i) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#d1fae5;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="diff-add" data-idx="${i}" checked style="width:auto;flex-shrink:0">
+      <span style="flex:1"><strong>${c.name_zh}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+c.name_en+'</span>':''}</span>
+      <span style="font-size:11px;color:#065f46">新增</span>
+    </label>`).join('');
+
+  const body = `
+    <div style="font-size:13px;margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap">
+      ${removed.length ? `<span style="color:var(--danger)">● 少了 ${removed.length} 筆</span>` : ''}
+      ${added.length ? `<span style="color:#065f46">● 多了 ${added.length} 筆</span>` : ''}
+      ${changed.length ? `<span style="color:#92400e">● 變更 ${changed.length} 筆</span>` : ''}
+    </div>
+    ${removed.length ? `<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">🗑️ 新清單中消失的藥品（預設保留，勾選才刪除）</div>${removedRows}` : ''}
+    ${changed.length ? `<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">🔄 資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}` : ''}
+    ${added.length ? `<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">➕ 新清單中新增的藥品（預設新增，取消勾選則跳過）</div>${addedRows}` : ''}
+  `;
+
+  showModal('📋 與現有藥品的差異', body, [
+    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
+    { label: '確認執行', cls: 'btn-primary', fn: 'doApplyChemDiff()' }
+  ]);
+}
+
+async function doApplyChemDiff() {
+  const { added, removed, changed } = window._pendingChemDiff || {};
   closeModal();
-  const items = window._pendingChemImport || [];
   let ok = 0, fail = 0;
-  for (const item of items) {
-    try { await sb('POST', 'chemicals', { body: item, prefer: 'return=minimal' }); ok++; }
+
+  const toRemove = [...document.querySelectorAll('.diff-remove:checked')].map(cb => removed[parseInt(cb.dataset.idx)]);
+  const toChange = [...document.querySelectorAll('.diff-change:checked')].map(cb => changed[parseInt(cb.dataset.idx)]);
+  const toAdd = [...document.querySelectorAll('.diff-add:checked')].map(cb => added[parseInt(cb.dataset.idx)]);
+
+  for (const c of toRemove) {
+    try { await sb('DELETE', 'chemicals', { filter: 'id=eq.' + c.id, prefer: 'return=minimal' }); ok++; }
     catch(e) { fail++; }
   }
-  showToast(`匯入完成：${ok} 筆成功${fail ? '，' + fail + ' 筆失敗' : ''}`, ok ? 'success' : 'error');
+  for (const item of toChange) {
+    try {
+      await sb('PATCH', 'chemicals', { filter: 'id=eq.' + item.oldData.id, body: { ...item.newData, updated_at: new Date().toISOString() }, prefer: 'return=minimal' }); ok++;
+    } catch(e) { fail++; }
+  }
+  for (const c of toAdd) {
+    try { await sb('POST', 'chemicals', { body: { ...c, updated_at: new Date().toISOString() }, prefer: 'return=minimal' }); ok++; }
+    catch(e) { fail++; }
+  }
+
+  showToast(`完成：${ok} 筆成功${fail ? '，' + fail + ' 筆失敗' : ''}`, ok ? 'success' : 'error');
   document.getElementById('chemCsvInput').value = '';
   document.getElementById('chemCsvPreview').innerHTML = '';
   loadAdminChems();
