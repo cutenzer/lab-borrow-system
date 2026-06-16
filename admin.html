@@ -1834,6 +1834,8 @@ async function loadAdminChems() {
   } catch(e) { showToast('載入藥品失敗', 'error'); }
 }
 
+const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機','無機鹽','氧/硫化物','其他'];
+
 function filterAdminChems() {
   const q = (document.getElementById('adminChemSearch')?.value || '').toLowerCase();
   const cat = document.getElementById('adminChemCat')?.value || '';
@@ -1843,26 +1845,76 @@ function filterAdminChems() {
   );
   const list = document.getElementById('adminChemList');
   if (!items.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合藥品</p></div>'; return; }
-  list.innerHTML = '<div class="record-list">' + items.map(c => `
-    <div class="record-card">
+  list.innerHTML = '<div class="record-list">' + items.map(c => {
+    const esc = s => (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/`/g, '&#96;');
+    const catOpts = CHEM_CATEGORIES.map(v => `<option value="${v}" ${c.category===v?'selected':''}>${v||'不指定'}</option>`).join('');
+    return `
+    <div class="record-card" id="chemcard-${c.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
-          <div style="font-size:15px;font-weight:700">${c.name_zh} ${c.is_available === false ? '<span class="badge badge-rejected">不開放</span>' : '<span class="badge badge-approved">可借</span>'}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.name_en || ''}</div>
+          <div style="font-size:15px;font-weight:700">${c.name_zh} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.name_en||''}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-            ${c.category ? `<span>${c.category}</span>` : ''}
-            ${c.location ? `<span>📍 ${c.location}</span>` : ''}
-            <span style="font-family:'DM Mono',monospace;font-weight:700">${c.bottles_left ?? 0} 瓶</span>
-            ${c.recycle_type ? `<span>♻️ ${c.recycle_type}</span>` : ''}
+            ${c.category?`<span>${c.category}</span>`:''}
+            ${c.location?`<span>📍 ${c.location}</span>`:''}
+            <span style="font-family:'DM Mono',monospace;font-weight:700">${c.bottles_left??0} 瓶</span>
+            ${c.recycle_type?`<span>♻️ ${c.recycle_type}</span>`:''}
           </div>
-          ${c.note && c.note !== '附註' ? `<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${c.note}</div>` : ''}
+          ${c.note&&c.note!=='附註'?`<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${c.note}</div>`:''}
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="editChem(${c.id})">✏️ 編輯</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteChem(${c.id})">🗑️ 刪除</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="toggleChemEdit(${c.id})">✏️ 編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteChem(${c.id})">🗑️</button>
         </div>
       </div>
-    </div>`).join('') + '</div>';
+      <div id="cheминеdit-${c.id}" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div class="form-group"><label>中文名稱 *</label><input id="ci-zh-${c.id}" value="${esc(c.name_zh)}"></div>
+          <div class="form-group"><label>英文名稱</label><input id="ci-en-${c.id}" value="${esc(c.name_en||'')}"></div>
+          <div class="form-group"><label>位置</label><input id="ci-loc-${c.id}" value="${esc(c.location||'')}"></div>
+          <div class="form-group"><label>分類</label><select id="ci-cat-${c.id}">${catOpts}</select></div>
+          <div class="form-group"><label>剩餘瓶數</label><input type="number" id="ci-btl-${c.id}" min="0" value="${c.bottles_left??0}"></div>
+          <div class="form-group"><label>藥品回收</label><input id="ci-rec-${c.id}" value="${esc(c.recycle_type||'')}"></div>
+          <div class="form-group" style="grid-column:1/-1"><label>附註</label><textarea id="ci-note-${c.id}" rows="2">${esc(c.note&&c.note!=='附註'?c.note:'')}</textarea></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <input type="checkbox" id="ci-avail-${c.id}" ${c.is_available!==false?'checked':''} style="width:auto">
+          <label for="ci-avail-${c.id}" style="color:var(--text)">開放借用</label>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="toggleChemEdit(${c.id})">取消</button>
+          <button class="btn btn-primary btn-sm" onclick="saveChemInline(${c.id})">💾 儲存</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+function toggleChemEdit(id) {
+  const el = document.getElementById(`cheминеdit-${id}`);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveChemInline(id) {
+  const name_zh = document.getElementById(`ci-zh-${id}`)?.value.trim();
+  if (!name_zh) { showToast('請填寫中文名稱', 'error'); return; }
+  const body = {
+    name_zh,
+    name_en: document.getElementById(`ci-en-${id}`)?.value.trim() || null,
+    location: document.getElementById(`ci-loc-${id}`)?.value.trim() || null,
+    category: document.getElementById(`ci-cat-${id}`)?.value || null,
+    bottles_left: parseInt(document.getElementById(`ci-btl-${id}`)?.value) || 0,
+    recycle_type: document.getElementById(`ci-rec-${id}`)?.value.trim() || null,
+    note: document.getElementById(`ci-note-${id}`)?.value.trim() || null,
+    is_available: document.getElementById(`ci-avail-${id}`)?.checked ?? true,
+    updated_at: new Date().toISOString()
+  };
+  try {
+    await sb('PATCH', 'chemicals', { filter: 'id=eq.' + id, body, prefer: 'return=minimal' });
+    showToast('已儲存', 'success');
+    await loadAdminChems();
+  } catch(e) { showToast('儲存失敗：' + e.message, 'error'); }
 }
 
 function clearChemForm() {
@@ -1871,21 +1923,6 @@ function clearChemForm() {
   document.getElementById('chem-category').value = '';
   document.getElementById('chem-bottles').value = '0';
   document.getElementById('chem-available').checked = true;
-}
-
-function editChem(id) {
-  const c = allAdminChems.find(x => x.id === id); if (!c) return;
-  editingChemId = id;
-  document.getElementById('chem-name-zh').value = c.name_zh || '';
-  document.getElementById('chem-name-en').value = c.name_en || '';
-  document.getElementById('chem-location').value = c.location || '';
-  document.getElementById('chem-category').value = c.category || '';
-  document.getElementById('chem-bottles').value = c.bottles_left ?? 0;
-  document.getElementById('chem-recycle').value = c.recycle_type || '';
-  document.getElementById('chem-note').value = c.note || '';
-  document.getElementById('chem-available').checked = c.is_available !== false;
-  document.getElementById('chem-name-zh').scrollIntoView({behavior:'smooth',block:'center'});
-  showToast('已載入，可修改後儲存', 'success');
 }
 
 async function saveChem() {
