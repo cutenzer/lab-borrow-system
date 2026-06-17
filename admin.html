@@ -521,7 +521,36 @@ function renderRecord(r,mode){
       ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount} / ${r.depositStatus}</span></div>`:''}
     </div>
     ${itemListHtml}${damageHtml}
-    ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${r.note}</div>`:''}
+    ${(()=>{
+      if(!r.note)return '';
+      const courseMatch=r.note.match(/\[COURSE_NOTE\]([\s\S]*?)\[\/COURSE_NOTE\]/);
+      const courseNote=courseMatch?courseMatch[1].trim():'';
+      const plainNote=r.note.replace(/\[COURSE_NOTE\][\s\S]*?\[\/COURSE_NOTE\]/,'').trim();
+      const lines=courseNote?courseNote.split('\n'):[]; 
+      const chemicals=[],shared=[],recycling=[];
+      let section='';
+      lines.forEach(l=>{
+        if(l.startsWith('🧪'))section='chem';
+        else if(l.startsWith('⚠️'))section='shared';
+        else if(l.startsWith('♻️'))section='recycle';
+        else if(l.trim()){
+          if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
+          else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
+          else if(section==='recycle')recycling.push(l.replace(/^-\s*/,''));
+        }
+      });
+      let html='';
+      if(plainNote)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${plainNote}</div>`;
+      if(shared.length||chemicals.length||recycling.length){
+        html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
+        html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用模板）</div>`;
+        if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
+        if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">🧪 藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
+        if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">♻️ 回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
+        html+=`</div>`;
+      }
+      return html;
+    })()}
     ${actions?`<div class="record-actions">${actions}</div>`:''}
   </div>`;
 }
@@ -1362,6 +1391,26 @@ async function doExport(id){
     classTeacher:classTeacher
   };
   meta.classCount=classesRaw.length;
+  // 解析 course note 中的藥品/共用/回收資料
+  const cnMatch=(rec.note||'').match(/\[COURSE_NOTE\]([\s\S]*?)\[\/COURSE_NOTE\]/);
+  if(cnMatch){
+    const lines=cnMatch[1].trim().split('\n');
+    const chemicals=[],shared=[],recycling=[];
+    let section='';
+    lines.forEach(l=>{
+      if(l.startsWith('🧪'))section='chem';
+      else if(l.startsWith('⚠️'))section='shared';
+      else if(l.startsWith('♻️'))section='recycle';
+      else if(l.trim()){
+        if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
+        else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
+        else if(section==='recycle')recycling.push(l.replace(/^-\s*/,''));
+      }
+    });
+    meta.courseChemicals=chemicals;
+    meta.courseShared=shared;
+    meta.courseRecycling=recycling;
+  }
   closeModal();
   try{
     await buildReportXlsx(meta,chosen,rec);
@@ -1468,6 +1517,34 @@ async function buildReportXlsx(meta,items,rec){
   for(let r=2;r<=lastRow;r++){if(!ws.getRow(r).height)ws.getRow(r).height=15;}
 
   // ── 輸出下載 ──
+  // ── 若有課程備註，新增第二張工作表 ──
+  if((meta.courseChemicals&&meta.courseChemicals.length)||(meta.courseShared&&meta.courseShared.length)||(meta.courseRecycling&&meta.courseRecycling.length)){
+    const ws2=wb.addWorksheet('藥品與備註');
+    ws2.getColumn(1).width=14;ws2.getColumn(2).width=50;
+    const addSection=(title,items,color)=>{
+      if(!items||!items.length)return;
+      const hRow=ws2.addRow([title,'']);
+      hRow.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:color}};
+      hRow.getCell(1).font={name:FONT,bold:true,size:12};
+      hRow.getCell(1).alignment={vertical:'middle',horizontal:'left'};
+      ws2.mergeCells(`A${hRow.number}:B${hRow.number}`);
+      items.forEach(item=>{
+        const r=ws2.addRow(['',item]);
+        r.getCell(1).value='・';
+        r.getCell(1).font={name:FONT,size:11};
+        r.getCell(2).font={name:FONT,size:11};
+        r.getCell(2).alignment={wrapText:true};
+        r.height=18;
+      });
+      ws2.addRow([]);
+    };
+    ws2.addRow(['課程備註','']);ws2.mergeCells(`A1:B1`);
+    const t=ws2.getRow(1);t.getCell(1).font={name:FONT,bold:true,size:14};t.height=28;
+    ws2.addRow([]);
+    addSection('⚠️ 共用／數量待確認',meta.courseShared,'FFFEF3C7');
+    addSection('🧪 藥品項目',meta.courseChemicals,'FFE0F2FE');
+    addSection('♻️ 回收用具',meta.courseRecycling,'FFD1FAE5');
+  }
   const buf=await wb.xlsx.writeBuffer();
   const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const base=`實驗紀錄表_${meta.name||rec.id}${meta.grade?'_'+meta.grade:''}`.replace(/[\\/:*?"<>|\s]+/g,'_');
