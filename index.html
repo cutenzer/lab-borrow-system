@@ -1317,8 +1317,11 @@ async function submitRequest(){
   let purpose=document.getElementById('f-purpose').value;
   const borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
   if(purpose==='其他'){const other=document.getElementById('f-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
-  const venue=document.getElementById('f-venue').value;
+  cconst venue=document.getElementById('f-venue').value;
 let note=document.getElementById('f-note').value.trim();
+if(appliedTemplate&&appliedTemplate.note){
+  note=(note?note+'\n':'')+'[COURSE_NOTE]'+appliedTemplate.note+'[/COURSE_NOTE]';
+}
 // 把套用模板的藥品/備註附加到 note
 if(appliedTemplate&&appliedTemplate.note){
   note=(note?note+'\n\n':'')+'【課程備註】\n'+appliedTemplate.note;
