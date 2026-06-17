@@ -103,12 +103,6 @@
   .sr-spec{font-size:11px;color:var(--text2);}
   .sr-qty{display:flex;align-items:center;gap:4px;margin-left:8px;}
   .search-empty{padding:18px;text-align:center;color:var(--text2);font-size:13px;}
-  /* AI 辨識 */
-  .ai-scan-box{border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.15s;margin-bottom:10px;}
-  .ai-scan-box:hover{border-color:var(--accent);background:#f4f8fd;}
-  .ai-scan-box input{display:none;}
-  .ai-scan-preview{width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:8px;display:none;}
-  .ai-result-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--surface2);border-radius:6px;margin-bottom:6px;font-size:13px;}
   /* 條列式器材 */
   .equip-list{display:flex;flex-direction:column;}
   .equip-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);}
@@ -127,8 +121,9 @@
   .qty-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.1s;}
   .qty-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
   .qty-input{width:36px;text-align:center;padding:2px 4px;border:1px solid var(--border);border-radius:5px;font-size:12.5px;}
-  /* 購物車與搜尋 懸浮鈕（圓形圖標） */
-  .cart-fab,.search-fab{position:fixed;z-index:150;border:none;border-radius:50%;width:56px;height:56px;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+
+  /* ── [修改1] FAB z-index 降到 135，底部導覽列 z-index:140 在其上方，確保導覽列可點擊 ── */
+  .cart-fab,.search-fab{position:fixed;z-index:135;border:none;border-radius:50%;width:56px;height:56px;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
   .cart-fab{bottom:calc(28px + env(safe-area-inset-bottom));right:18px;background:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(53,103,201,0.35);}
   .cart-fab:hover{background:var(--accent-dim);transform:translateY(-2px);}
   .search-fab{bottom:calc(28px + env(safe-area-inset-bottom));left:18px;background:var(--accent2);color:#fff;box-shadow:0 4px 16px rgba(232,146,58,0.35);}
@@ -171,7 +166,6 @@
   .venue-table th:first-child{left:0;z-index:5;background:var(--accent-dim);min-width:44px;}
   .venue-table th:nth-child(2){left:44px;z-index:5;background:var(--accent-dim);min-width:42px;}
   .venue-table td{border:1px solid var(--border);padding:3px;vertical-align:top;min-width:90px;background:var(--surface);}
-  /* 節次交替底色 */
   .venue-table tr.band-shade td{background:#f4f8fc;}
   .venue-table tr.band-shade .vcell{background:#f4f8fc;}
   .venue-table .period-cell{font-weight:700;font-size:12px;text-align:center;white-space:nowrap;vertical-align:middle;position:sticky;left:0;z-index:2;min-width:44px;background:#eaf1fb;color:var(--text2);}
@@ -200,7 +194,6 @@
   .venue-fs-body.scroll-mode{overflow:auto;-webkit-overflow-scrolling:touch;}
   #vfsScaleWrap{transform-origin:top left;display:inline-block;}
   .venue-fs-body .venue-table{min-width:640px;}
-  /* 整體（縮放）模式取消 sticky，縮放才不會錯位 */
   .venue-fs-body:not(.scroll-mode) .venue-table th,
   .venue-fs-body:not(.scroll-mode) .venue-table .period-cell,
   .venue-fs-body:not(.scroll-mode) .venue-table .lab-cell{position:static;}
@@ -263,30 +256,49 @@
   .empty-icon{font-size:36px;margin-bottom:8px;}
   .avail-ok{color:var(--success);}.avail-no{color:var(--danger);}
   .info-box{background:#eaf1ff;border:1px solid #c9dcfb;border-radius:8px;padding:12px 14px;font-size:13px;color:var(--accent-dim);margin-bottom:14px;}
+
+  /* ── [修改3] 老師借課程同步場地時段區塊 ── */
+  .venue-inline-box{background:linear-gradient(135deg,#f0f5fb,#e8f0fa);border:1.5px solid var(--accent);border-radius:10px;padding:14px 16px;margin-top:10px;}
+  .venue-inline-box .period-row{background:var(--surface);border:1px solid var(--border);}
+
   /* 底部導覽列（手機） */
   .bottom-nav{display:none;}
-  @media(max-width:600px){.form-grid{grid-template-columns:minmax(0,1fr);}header nav{display:none;}header h1{font-size:16px;}.sys-online{display:none;}.equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
-    main{padding-bottom:74px;}
-    .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:140;background:var(--surface);border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(15,23,42,0.06);}
+  @media(max-width:600px){
+    .form-grid{grid-template-columns:minmax(0,1fr);}
+    header nav{display:none;}
+    header h1{font-size:16px;}
+    .sys-online{display:none;}
+    .equip-browse-grid{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
+    /* ── [修改1] 手機 main 底部留白加大：導覽列(~56px) + FAB(~80px) + buffer ── */
+    main{padding-bottom:170px;}
+    .bottom-nav{
+      display:flex;position:fixed;bottom:0;left:0;right:0;
+      /* ── [修改1] 底部導覽列 z-index 明確高於 FAB(135)，讓導覽列永遠可點 ── */
+      z-index:145;
+      background:var(--surface);border-top:1px solid var(--border);
+      padding-bottom:env(safe-area-inset-bottom);
+      box-shadow:0 -2px 10px rgba(15,23,42,0.06);
+    }
     .bn-item{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:11px;color:var(--text2);cursor:pointer;transition:color .15s;}
     .bn-item span{font-size:20px;line-height:1;}
     .bn-item.active{color:var(--accent);font-weight:700;}
-    .cart-fab,.search-fab{bottom:calc(84px + env(safe-area-inset-bottom));}
+    /* ── [修改1] 手機 FAB 位置：底部導覽列高度約 56px + safe-area，FAB 浮在其上方 ── */
+    .cart-fab,.search-fab{bottom:calc(64px + env(safe-area-inset-bottom));}
   }
   /* 藥品列表 */
-.chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
-.chem-row:last-child{border-bottom:none;}
-.chem-row:hover{background:#f5f9fd;border-radius:8px;}
-.chem-cat-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);white-space:nowrap;}
-.chem-cat-酸{background:#fde8e8;color:#b91c1c;}
-.chem-cat-鹼{background:#e0f2fe;color:#0369a1;}
-.chem-cat-鹽{background:#f0fdf4;color:#15803d;}
-.chem-cat-有機{background:#fef9c3;color:#a16207;}
-.chem-cat-無機鹽{background:#ede9fe;color:#6d28d9;}
-.chem-cat-氧\/硫化物{background:#fff7ed;color:#c2410c;}
-.chem-recycle-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10.5px;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);}
-.chem-bottles{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
-.chem-unavail{opacity:0.45;}
+  .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
+  .chem-row:last-child{border-bottom:none;}
+  .chem-row:hover{background:#f5f9fd;border-radius:8px;}
+  .chem-cat-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);white-space:nowrap;}
+  .chem-cat-酸{background:#fde8e8;color:#b91c1c;}
+  .chem-cat-鹼{background:#e0f2fe;color:#0369a1;}
+  .chem-cat-鹽{background:#f0fdf4;color:#15803d;}
+  .chem-cat-有機{background:#fef9c3;color:#a16207;}
+  .chem-cat-無機鹽{background:#ede9fe;color:#6d28d9;}
+  .chem-cat-氧\/硫化物{background:#fff7ed;color:#c2410c;}
+  .chem-recycle-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10.5px;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);}
+  .chem-bottles{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
+  .chem-unavail{opacity:0.45;}
 </style>
 </head>
 <body>
@@ -319,7 +331,6 @@
   </div>
   <div class="card">
     <div class="card-title">👤 借用人資料</div>
-    <!-- 身份選擇 -->
     <div class="role-tabs">
       <div class="role-tab active" id="roleTabStudent" onclick="setRole('學生')">🎓 學生</div>
       <div class="role-tab" id="roleTabTeacher" onclick="setRole('老師')">👨‍🏫 老師</div>
@@ -327,6 +338,12 @@
     <div class="form-grid">
       <div class="form-group"><label>姓名 *</label><input type="text" id="f-name" placeholder="輸入姓名"></div>
       <div class="form-group" id="studentIdGroup"><label>學號 *</label><input type="text" id="f-student-id" placeholder="輸入學號"></div>
+      <!-- [修改2] 學生專屬：指導老師欄位 -->
+      <div class="form-group" id="supervisorGroup">
+        <label>指導老師</label>
+        <input type="text" id="f-supervisor" placeholder="輸入指導老師姓名（選填）">
+        <div class="hint">由老師帶隊使用時填寫，便於管理員確認</div>
+      </div>
       <div class="form-group">
         <label>借用目的 *</label>
         <select id="f-purpose" onchange="onPurposeChange()">
@@ -341,7 +358,7 @@
       </div>
       <div class="form-group">
         <label>是否借用場地</label>
-        <select id="f-venue" onchange="calcDeposit()">
+        <select id="f-venue" onchange="onVenueSelectChange()">
           <option value="">否</option>
           <option value="化學實驗室">是（化學實驗室）</option>
           <option value="理化實驗室">是（理化實驗室）</option>
@@ -366,8 +383,27 @@
       </div>
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
+
+    <!-- [修改3] 老師選了場地後，展開「同步預約場地時段」區塊 -->
+    <div id="inlineVenueBlock" style="display:none;margin-top:4px">
+      <div class="venue-inline-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:700;color:var(--accent)">📅 同步預約場地時段（老師課程用）</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:var(--text)">
+            <input type="checkbox" id="inlineVenueEnabled" onchange="toggleInlineVenue()" style="width:auto;cursor:pointer">
+            一起送出場地預約
+          </label>
+        </div>
+        <div id="inlineVenuePeriods" style="display:none">
+          <div class="info-box" style="margin-bottom:10px;font-size:12px">勾選後，送出借用申請的同時，系統會自動建立場地預約申請，無需再到「場地預約」頁重複填寫。</div>
+          <div class="period-list" id="inlinePeriodList"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addInlinePeriodRow()">＋ 新增時段</button>
+        </div>
+      </div>
+    </div>
   </div>
-<div class="card" id="courseTemplateCard" style="display:none">
+
+  <div class="card" id="courseTemplateCard" style="display:none">
     <div class="card-title">📚 套用課程模板（老師專用）</div>
     <div class="info-box">選擇要上的課程，系統會自動把器材清單加入下方的購物車🛒，可再到購物車微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -383,7 +419,6 @@
       <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
       <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
     </div>
-
     <div id="appliedTemplateBox" style="display:none;margin-top:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
@@ -392,9 +427,9 @@
       <div id="appliedTemplateSummary"></div>
     </div>
   </div>
+
   <div class="card">
     <div class="card-title">🔬 選擇借用器材</div>
-   
     <div class="search-wrap">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowSearch" placeholder="搜尋器材名稱…" oninput="doBorrowSearch(this.value)">
@@ -403,7 +438,7 @@
     <div class="room-tabs" id="roomTabs"><div class="loading"><div class="spinner"></div>載入中…</div></div>
     <div class="equip-list" id="equipList"></div>
   </div>
-  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-bottom:80px">
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-bottom:16px">
     <button class="btn btn-secondary" onclick="resetForm()">清除重填</button>
     <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">📋 提交借用申請</button>
   </div>
@@ -432,7 +467,6 @@
       </div>
       <div class="form-group full"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
     </div>
-    <!-- 時段列表 -->
     <div style="margin-top:14px">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 借用時段</div>
       <div class="period-list" id="periodList"></div>
@@ -443,8 +477,6 @@
       <button class="btn btn-primary" onclick="submitVenueRequest()">📋 提交場地預約</button>
     </div>
   </div>
-
-  <!-- 本週時間表 -->
   <div class="card">
     <div class="card-title">📅 場地使用狀況</div>
     <div class="info-box">🟦 固定課程　🟩 已核准　🟨 待審核</div>
@@ -492,7 +524,8 @@
     <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>填寫姓名或學號後查詢</p></div></div>
   </div>
 </div>
-  <!-- 藥品查詢 -->
+
+<!-- 藥品查詢 -->
 <div id="page-chemicals" class="page">
   <div class="card">
     <div class="card-title">🧪 實驗室藥品查詢</div>
@@ -524,7 +557,7 @@
   <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
 </nav>
 
-<!-- 購物車（右下，常駐，僅圖標） -->
+<!-- 購物車（右下） -->
 <button class="cart-fab" id="cartFab" onclick="openCart()" title="已選器材" aria-label="已選器材">🛒<span class="cart-badge" id="cartBadge">0</span></button>
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
@@ -537,7 +570,7 @@
   </div>
 </div>
 
-<!-- 搜尋（左下，常駐，僅圖標） -->
+<!-- 搜尋（左下） -->
 <button class="search-fab" id="searchFab" onclick="openSearch()" title="快速搜尋器材" aria-label="快速搜尋器材">🔎</button>
 <div class="cart-overlay" id="searchOverlay" onclick="closeSearch()"></div>
 <div class="cart-drawer search-drawer" id="searchDrawer">
@@ -594,27 +627,21 @@ const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實�
 const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
 const DAYS=['一','二','三','四','五','六','日'];
 
-// ── 位置編碼解析 ────────────────────────────────────────
+// ── 位置編碼解析（原有邏輯不變）────────────────────────────
 const CABINET_CODE_MAP={
-  'A':{name:'鐵櫃',icon:'🗄️'},
-  'B':{name:'鐵架',icon:'📚'},
-  'C':{name:'玻璃鐵櫃',icon:'🪟'},
-  'D':{name:'桌子的櫃子',icon:'🗃️'},
+  'A':{name:'鐵櫃',icon:'🗄️'},'B':{name:'鐵架',icon:'📚'},
+  'C':{name:'玻璃鐵櫃',icon:'🪟'},'D':{name:'桌子的櫃子',icon:'🗃️'},
   'E':{name:'抽氣櫃的櫃子',icon:'🌀'}
 };
 const ROOM_CODE_INFO=[
   {code:'T',name:'教具室'},{code:'PC',name:'理化實驗室'},{code:'C',name:'化學實驗室'},
   {code:'B',name:'生物實驗室'},{code:'P',name:'物理實驗室'},{code:'G',name:'地科實驗室'}
 ];
-// 器材所屬房間 → 位置編碼開頭代號
 const ROOM_TO_CODE={'Chemistry':'C','Biology':'B','Geoscience':'G','Physics Chemistry':'PC','Physics':'P','TeachingMaterialRoom':'T'};
-// 代號 → 顯示用簡稱（放在每個位置最前面）
 const CODE_SHORT_NAME={'T':'教具室','PC':'理化','C':'化學','B':'生物','P':'物理','G':'地科'};
 
-// 解析單一個位置編碼（如 BB02-2 / A04），回傳「簡稱＋圖示說明 (原始代號)」
 function decodeLocationPart(code,defaultRoomCode){
-  let rest=(code||'').trim();
-  if(!rest)return '';
+  let rest=(code||'').trim();if(!rest)return '';
   let roomCode=defaultRoomCode||'';
   if(rest.startsWith('PC')){roomCode='PC';rest=rest.slice(2);}
   else if(/^[TCBPG]/.test(rest)){roomCode=rest[0];rest=rest.slice(1);}
@@ -622,7 +649,7 @@ function decodeLocationPart(code,defaultRoomCode){
   const prefix=roomShort?roomShort+'・':'';
   const cabinetCode=rest.slice(0,1);
   const cab=CABINET_CODE_MAP[cabinetCode];
-  if(!cab)return `${prefix}${code}`; // 無法解析就只加房間簡稱，保留原始代號
+  if(!cab)return `${prefix}${code}`;
   rest=rest.slice(1);
   const parts=rest.split('-');
   const numPart=parts[0],layerPart=parts[1];
@@ -630,7 +657,6 @@ function decodeLocationPart(code,defaultRoomCode){
   if(layerPart)label+=`・第${layerPart}層`;
   return `${label} (${code})`;
 }
-// 解析完整位置欄位，可能用 & 串接多個位置（同一器材分散放置）
 function decodeLocation(code,room){
   if(!code)return '';
   const defaultRoomCode=ROOM_TO_CODE[room]||'';
@@ -641,14 +667,13 @@ function showLocationGuide(){
   const roomRows=ROOM_CODE_INFO.map(r=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span style="font-family:'DM Mono',monospace;font-weight:700">${r.code}</span><span>${r.name}</span></div>`).join('');
   const cabRows=Object.entries(CABINET_CODE_MAP).map(([code,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span>${c.icon} <span style="font-family:'DM Mono',monospace;font-weight:700">${code}</span></span><span>${c.name}</span></div>`).join('');
   showModal('❓ 器材標籤對照說明',`
-    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。畫面上會同時顯示中文說明與原始代號（括號內），方便對照貼在櫃子上的標籤。</p>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">① 實驗室代號</div>${roomRows}</div>
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">② 櫃別代號＋圖示</div>${cabRows}</div>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號 (PCA01)　／　GC03-1 → 地科室・🪟玻璃鐵櫃03號・第1層 (GC03-1)</p>
-    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 若同一器材分放在多個位置，會以「＋」串接顯示，例如 A04 ＋ CA06，代表分別放在本科鐵櫃04號與化學室鐵櫃06號。</p>
-    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 借到器材後，請依「位置編碼」放回原櫃原層，方便下一位使用者尋找。</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號 (PCA01)</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 若同一器材分放在多個位置，會以「＋」串接顯示。</p>
   `,[{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
 }
 
@@ -672,6 +697,8 @@ let venueWeekOffset=0,venueBookings=[];
 let activeSemester=null;
 let activeBorrowRecords=[];
 let userHomeLab='';
+// [修改3] 同步場地預約的時段列表
+let inlinePeriodRows=[];
 
 window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();loadCourseTemplates();});
 
@@ -684,26 +711,19 @@ function setMinDates(){
 
 // ── 身份切換 ──────────────────────────────────────────────
 const STUDENT_PURPOSES=[
-  {value:'自主學習',label:'自主學習'},
-  {value:'科展',label:'科展'},
-  {value:'社團',label:'社團'},
-  {value:'其他',label:'其他（自填）'},
+  {value:'自主學習',label:'自主學習'},{value:'科展',label:'科展'},
+  {value:'社團',label:'社團'},{value:'其他',label:'其他（自填）'},
 ];
 const TEACHER_PURPOSES=[
-  {value:'課程',label:'課程'},
-  {value:'探究',label:'探究'},
-  {value:'選修',label:'選修'},
-  {value:'自主學習',label:'自主學習'},
-  {value:'科展',label:'科展'},
-  {value:'社團',label:'社團'},
-  {value:'其他',label:'其他（自填）'},
+  {value:'課程',label:'課程'},{value:'探究',label:'探究'},{value:'選修',label:'選修'},
+  {value:'自主學習',label:'自主學習'},{value:'科展',label:'科展'},
+  {value:'社團',label:'社團'},{value:'其他',label:'其他（自填）'},
 ];
 function setPurposeOptions(role){
   const sel=document.getElementById('f-purpose');
   const cur=sel.value;
   const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
   sel.innerHTML='<option value="">-- 請選擇 --</option>'+opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
-  // 若原本選的選項在新清單中仍存在就保留，否則清空
   sel.value=opts.some(o=>o.value===cur)?cur:'';
   onPurposeChange();
 }
@@ -711,13 +731,15 @@ function setRole(role){
   currentRole=role;
   document.getElementById('roleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('roleTabTeacher').classList.toggle('active',role==='老師');
+  // [修改2] 學生顯示學號+指導老師，老師隱藏學號+指導老師
   document.getElementById('studentIdGroup').style.display=role==='學生'?'flex':'none';
+  document.getElementById('supervisorGroup').style.display=role==='學生'?'flex':'none';
   setPurposeOptions(role);
-  // 課程模板僅老師可見、可用
   const tplCard=document.getElementById('courseTemplateCard');
   if(tplCard)tplCard.style.display=role==='老師'?'block':'none';
-  // 切回學生時，把課程模板帶入的器材一併清掉，避免學生送出整批課程器材
   if(role!=='老師'&&appliedTemplate)clearAppliedTemplate(true);
+  // [修改3] 老師才可能用同步場地，切換身份時重置
+  onVenueSelectChange();
 }
 function setVenueRole(role){
   currentVenueRole=role;
@@ -732,52 +754,97 @@ function setVenueRole(role){
   onVenuePurposeChange();
 }
 
-// ── 場地預約時段 ──────────────────────────────────────────
+// ── [修改3] 是否借用場地的下拉變更 ──────────────────────
+function onVenueSelectChange(){
+  calcDeposit();
+  const venue=document.getElementById('f-venue').value;
+  const block=document.getElementById('inlineVenueBlock');
+  // 只有老師選了場地才顯示「同步預約」區塊
+  if(currentRole==='老師'&&venue){
+    block.style.display='block';
+    // 預設把場地選單同步到 inline 時段預設值
+    syncInlineVenueDefault(venue);
+  }else{
+    block.style.display='none';
+    document.getElementById('inlineVenueEnabled').checked=false;
+    document.getElementById('inlineVenuePeriods').style.display='none';
+  }
+}
+function toggleInlineVenue(){
+  const enabled=document.getElementById('inlineVenueEnabled').checked;
+  document.getElementById('inlineVenuePeriods').style.display=enabled?'block':'none';
+  if(enabled&&inlinePeriodRows.length===0)addInlinePeriodRow();
+}
+function syncInlineVenueDefault(venue){
+  // 若已有時段，把場地欄位同步到所有 inline 時段的場地選單
+  inlinePeriodRows.forEach(id=>{
+    const sel=document.getElementById('ipr-venue-'+id);
+    if(sel&&venue)sel.value=venue;
+  });
+}
+
+// ── [修改3] Inline 場地時段列表（與場地預約頁共用邏輯，獨立 id 前綴 ipr-）──
+function addInlinePeriodRow(){
+  const id=Date.now()+Math.floor(Math.random()*1000);
+  inlinePeriodRows.push(id);
+  appendInlinePeriodRow(id);
+}
+function appendInlinePeriodRow(id){
+  const list=document.getElementById('inlinePeriodList');
+  const emptyMsg=list.querySelector('.iperiod-empty');
+  if(emptyMsg)emptyMsg.remove();
+  const div=document.createElement('div');
+  div.className='period-row';div.id='ipr-'+id;
+  const venueDefault=document.getElementById('f-venue').value||VENUES[0];
+  div.innerHTML=`
+    <span style="font-size:12px;color:var(--text2);min-width:24px">${inlinePeriodRows.length}.</span>
+    <select id="ipr-date-${id}" style="min-width:130px">
+      ${getNextDates(30).map(d=>`<option value="${d.val}">${d.label}</option>`).join('')}
+    </select>
+    <select id="ipr-period-${id}">
+      ${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}
+    </select>
+    <select id="ipr-venue-${id}">
+      ${VENUES.map(v=>`<option value="${v}" ${v===venueDefault?'selected':''}>${v}</option>`).join('')}
+    </select>
+    <button class="period-row-remove" onclick="removeInlinePeriodRow(${id})">✕</button>`;
+  list.appendChild(div);
+}
+function removeInlinePeriodRow(id){
+  inlinePeriodRows=inlinePeriodRows.filter(r=>r!==id);
+  const row=document.getElementById('ipr-'+id);if(row)row.remove();
+  document.querySelectorAll('#inlinePeriodList .period-row span').forEach((s,i)=>{s.textContent=(i+1)+'.';});
+  if(!inlinePeriodRows.length){document.getElementById('inlinePeriodList').innerHTML='<div class="iperiod-empty" style="font-size:13px;color:var(--text2)">尚未新增時段</div>';}
+}
+
+// ── 場地預約頁時段（維持原有邏輯）──────────────────────
 let periodRows=[];
 function addPeriodRow(){
   const id=Date.now()+Math.floor(Math.random()*1000);
-  periodRows.push(id);
-  appendPeriodRow(id);
+  periodRows.push(id);appendPeriodRow(id);
 }
 function appendPeriodRow(id){
   const list=document.getElementById('periodList');
-  // 移除空狀態提示
-  const emptyMsg=list.querySelector('.period-empty');
-  if(emptyMsg)emptyMsg.remove();
-  const div=document.createElement('div');
-  div.className='period-row';
-  div.id='pr-'+id;
+  const emptyMsg=list.querySelector('.period-empty');if(emptyMsg)emptyMsg.remove();
+  const div=document.createElement('div');div.className='period-row';div.id='pr-'+id;
   div.innerHTML=`
     <span style="font-size:12px;color:var(--text2);min-width:24px">${periodRows.length}.</span>
     <select id="pr-date-${id}" style="min-width:130px">
       ${getNextDates(30).map(d=>`<option value="${d.val}">${d.label}</option>`).join('')}
     </select>
-    <select id="pr-period-${id}">
-      ${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}
-    </select>
-    <select id="pr-venue-${id}">
-      ${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}
-    </select>
+    <select id="pr-period-${id}">${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
+    <select id="pr-venue-${id}">${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
     <button class="period-row-remove" onclick="removePeriodRow(${id})">✕</button>`;
   list.appendChild(div);
 }
 function removePeriodRow(id){
   periodRows=periodRows.filter(r=>r!==id);
-  const row=document.getElementById('pr-'+id);
-  if(row)row.remove();
-  // 重新編號
+  const row=document.getElementById('pr-'+id);if(row)row.remove();
   document.querySelectorAll('#periodList .period-row span').forEach((s,i)=>{s.textContent=(i+1)+'.';});
   if(!periodRows.length){document.getElementById('periodList').innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增時段，請點下方按鈕新增</div>';}
 }
-function renderPeriodList(){
-  const list=document.getElementById('periodList');
-  list.innerHTML='';
-  if(!periodRows.length){list.innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增時段，請點下方按鈕新增</div>';return;}
-  periodRows.forEach(id=>appendPeriodRow(id));
-}
 function getNextDates(days){
-  const result=[];
-  const today=new Date();
+  const result=[],today=new Date();
   for(let i=0;i<days;i++){
     const d=new Date(today);d.setDate(today.getDate()+i);
     const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day2=String(d.getDate()).padStart(2,'0');
@@ -803,31 +870,22 @@ async function submitVenueRequest(){
     venue:document.getElementById('pr-venue-'+id).value,
     status:'待審核'
   }));
-  // 衝突檢查：同 日期+節次+場地 已有固定課程或已核准的預約
   try{
     const existing=await sb('GET','venue_bookings',{});
     const taken=(d,pd,v)=>(Array.isArray(existing)?existing:[]).some(b=>(b.periods||[]).some(p=>p.date===d&&p.period===pd&&p.venue===v&&(b.is_fixed||p.status==='已核准')));
     const conflicts=periods.filter(p=>taken(p.date,p.period,p.venue));
     if(conflicts.length){
-      showModal('⚠️ 時段衝突',`<p>以下時段已被預約或為固定課程，無法重複申請：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:8px;font-size:13px;color:var(--text2)">請移除或更換這些時段後再提交。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
+      showModal('⚠️ 時段衝突',`<p>以下時段已被預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
       return;
     }
-  }catch(e){/* 檢查失敗就放行，交給管理員把關 */}
+  }catch(e){}
   try{
     const id='VEN-'+Date.now();
     await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note}});
-    showModal('✅ 場地預約申請已送出',`
-      <p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p>
-      <p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段，請等待管理員確認。</p>
-      <div style="margin-top:10px;font-size:13px">
-        ${periods.map((p,i)=>`<div style="padding:3px 0;border-bottom:1px solid var(--surface2)">${i+1}. ${p.date} ${p.period} ${p.venue}</div>`).join('')}
-      </div>
-    `,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
-    resetVenueForm();
-    loadVenue();
+    showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
+    resetVenueForm();loadVenue();
   }catch(e){showToast('申請失敗：'+e.message,'error');}
 }
-
 function resetVenueForm(){
   document.getElementById('vf-name').value='';
   document.getElementById('vf-student-id').value='';
@@ -847,25 +905,17 @@ function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeWeek(delta){venueWeekOffset+=delta;loadVenue();}
 function goThisWeek(){venueWeekOffset=0;loadVenue();}
 
-// 載入啟用中的學期設定
 async function loadActiveSemester(){
   try{
     const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
-    activeSemester=rows.length?rows[0]:null;
-    buildWeekSelector();
+    activeSemester=rows.length?rows[0]:null;buildWeekSelector();
   }catch(e){activeSemester=null;}
 }
-
-// 取得某個 offset 對應週的週一日期
 function getMondayOfOffset(offset){
   const now=new Date(),day=now.getDay(),monday=new Date(now);
-  monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);
-  return monday;
+  monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);return monday;
 }
 function getMondayOf(d){const day=d.getDay(),monday=new Date(d);monday.setDate(d.getDate()-((day+6)%7));monday.setHours(0,0,0,0);return monday;}
-
-// ── 學期週次計算（依「期間」設定）──────────────────────────
-// 取得某日期所在的期間與週次：{week, type, label} 或 null（不在任何期間內）
 function getWeekInfo(date,semester){
   if(!semester||!Array.isArray(semester.periods))return null;
   const ds=fmtDate(date);
@@ -880,7 +930,6 @@ function getWeekInfo(date,semester){
   }
   return null;
 }
-// 列出整個學期所有「週」，用於週次跳轉下拉選單
 function getSemesterWeeks(semester){
   if(!semester||!Array.isArray(semester.periods))return [];
   const weeks=[];
@@ -895,51 +944,37 @@ function getSemesterWeeks(semester){
       weeks.push({week:(parseInt(p.week_start)||1)+i,label:p.label||p.type,type:p.type,date:wDate});
     }
   });
-  weeks.sort((a,b)=>a.week-b.week);
-  return weeks;
+  weeks.sort((a,b)=>a.week-b.week);return weeks;
 }
-function weekBadgeText(info){
-  if(!info)return '';
-  return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
-}
-
-// 建立「第幾週」下拉選單
+function weekBadgeText(info){if(!info)return '';return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;}
 function buildWeekSelector(){
-  const sel=document.getElementById('weekJump');
-  const wrap=document.getElementById('weekSelector');
+  const sel=document.getElementById('weekJump'),wrap=document.getElementById('weekSelector');
   if(!activeSemester){wrap.style.display='none';return;}
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
   sel.innerHTML=weeks.map(w=>{
-  const monday=new Date(w.date);
-  monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
-  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
-  const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
-  const dateRange=`${fmt(monday)}～${fmt(sunday)}`;
-  const label=w.type!=='開學週期'?`（${w.label}）`:'';
-  return `<option value="${w.week}">第${w.week}週${label}　${dateRange}</option>`;
-}).join('');
+    const monday=new Date(w.date);monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+    const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+    const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
+    const label=w.type!=='開學週期'?`（${w.label}）`:'';
+    return `<option value="${w.week}">第${w.week}週${label}　${fmt(monday)}～${fmt(sunday)}</option>`;
+  }).join('');
 }
-
-// 跳到指定週次
 function jumpToWeek(week){
   if(!activeSemester)return;
   week=parseInt(week);
   const weeks=getSemesterWeeks(activeSemester);
-  const target=weeks.find(w=>w.week===week);
-  if(!target)return;
+  const target=weeks.find(w=>w.week===week);if(!target)return;
   const targetMonday=getMondayOf(target.date);
   const thisMonday=getMondayOfOffset(0);
   venueWeekOffset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
   loadVenue();
 }
-
 async function loadVenue(){
   if(!activeSemester)await loadActiveSemester();
   const dates=getWeekDates(venueWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
-  // 顯示週次標籤
   const weekInfo=getWeekInfo(dates[0],activeSemester);
   const badge=document.getElementById('currentWeekBadge');
   const weekSel=document.getElementById('weekJump');
@@ -957,36 +992,31 @@ async function loadVenue(){
     all.forEach(b=>{
       const periods=Array.isArray(b.periods)?b.periods:[];
       periods.forEach(p=>{
-        if(p.date>=startStr&&p.date<=endStr){
+        if(p.date>=startStr&&p.date<=endStr)
           venueBookings.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status||b.status});
-        }
       });
     });
     renderVenueTable(dates);
   }catch(e){showToast('載入場地資料失敗','error');}
 }
-
-// 場地格子顯示文字：目的-老師名 或 目的-學號（學生保護個資）
 function venueLabel(b){
   const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團'}[b.purpose]||b.purpose||'';
   const who=(b.role==='學生'&&b.student_id)?b.student_id:b.borrower_name;
   return `${purposeShort}-${who}`;
 }
-
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
   const LABS=['生物','化學','理化','物理','地科'];
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
   let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>`<th>週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span></th>`).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
-    const shade=pi%2===1; // 奇數節次加底色（早休白、第1節灰、第2節白…）
+    const shade=pi%2===1;
     LABS.forEach((lab,li)=>{
       html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''}">`;
       if(li===0)html+=`<td rowspan="5" class="period-cell">${period}</td>`;
       html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
-        const dateStr=fmtDate(date);
-        const venueFull=labFull[lab];
+        const dateStr=fmtDate(date),venueFull=labFull[lab];
         const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
         html+=`<td class="vcell">`;
         cellBookings.forEach(b=>{
@@ -1000,49 +1030,30 @@ function renderVenueTable(dates){
   });
   html+=`</tbody>`;
   table.innerHTML=html;
-  // 同步全螢幕檢視表格
-  const fsTable=document.getElementById('venueTableFS');
-  if(fsTable)fsTable.innerHTML=html;
+  const fsTable=document.getElementById('venueTableFS');if(fsTable)fsTable.innerHTML=html;
   const fsTitle=document.getElementById('venueFsTitle');
   if(fsTitle){const lbl=document.getElementById('venueWeekLabel').textContent;fsTitle.textContent=lbl?('場地使用狀況　'+lbl):'場地使用狀況';}
   if(document.getElementById('venueFsOverlay').classList.contains('show')){requestAnimationFrame(fitVenueFs);}
 }
-
-// ── 場地全螢幕檢視 ────────────────────────────────────────
 function venueFsOpen(){return document.getElementById('venueFsOverlay').classList.contains('show');}
-function openVenueFullscreen(){
-  document.getElementById('venueFsOverlay').classList.add('show');
-  loadVenue(); // 載入並同步資料，renderVenueTable 會自動套用縮放
-}
-function closeVenueFullscreen(e){
-  if(!e||e.target===document.getElementById('venueFsOverlay')){
-    document.getElementById('venueFsOverlay').classList.remove('show');
-  }
-}
-// 整體（縮放）⇄ 細看（捲動）切換
+function openVenueFullscreen(){document.getElementById('venueFsOverlay').classList.add('show');loadVenue();}
+function closeVenueFullscreen(e){if(!e||e.target===document.getElementById('venueFsOverlay'))document.getElementById('venueFsOverlay').classList.remove('show');}
 function toggleVenueFsMode(){
   const body=document.getElementById('venueFsBody');
   const scroll=body.classList.toggle('scroll-mode');
   document.getElementById('vfsModeBtn').textContent=scroll?'🗺️ 整體檢視':'🔍 放大細看';
   fitVenueFs();
 }
-// 把整張表縮放到剛好塞進視窗（A3 縮成 A4 的概念）
 function fitVenueFs(){
-  const body=document.getElementById('venueFsBody');
-  const wrap=document.getElementById('vfsScaleWrap');
+  const body=document.getElementById('venueFsBody'),wrap=document.getElementById('vfsScaleWrap');
   if(!wrap)return;
   if(body.classList.contains('scroll-mode')){wrap.style.transform='';wrap.style.marginLeft='';return;}
-  // 先還原再量測自然尺寸
   wrap.style.transform='none';wrap.style.marginLeft='0';
-  const tw=wrap.offsetWidth,th=wrap.offsetHeight;
-  if(!tw||!th)return;
+  const tw=wrap.offsetWidth,th=wrap.offsetHeight;if(!tw||!th)return;
   const availW=body.clientWidth-4,availH=body.clientHeight-4;
-  let scale=Math.min(availW/tw,availH/th);
-  scale=Math.min(scale,2); // 桌機有留白時最多放大到 2 倍
+  let scale=Math.min(availW/tw,availH/th);scale=Math.min(scale,2);
   const offsetX=Math.max(0,(availW-tw*scale)/2);
-  wrap.style.transformOrigin='top left';
-  wrap.style.transform='scale('+scale+')';
-  wrap.style.marginLeft=offsetX+'px';
+  wrap.style.transformOrigin='top left';wrap.style.transform='scale('+scale+')';wrap.style.marginLeft=offsetX+'px';
 }
 window.addEventListener('resize',()=>{if(venueFsOpen())fitVenueFs();});
 
@@ -1075,7 +1086,6 @@ function doBorrowSearch(q){
     }).join('')+'</div>';
   },200);
 }
-
 function getBorrowerInfo(name,room){
   const active=activeBorrowRecords.filter(r=>(r.status==='已核准'||r.status==='逾期')&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
   if(!active.length)return '';
@@ -1090,7 +1100,6 @@ function updateCartBadge(){
   const total=Object.values(selectedItems).reduce((s,i)=>s+i.quantity,0);
   document.getElementById('cartBadge').textContent=total;
 }
-// 左下角搜尋抽屜
 function openSearch(){document.getElementById('searchDrawer').classList.add('open');document.getElementById('searchOverlay').classList.add('show');document.getElementById('fabSearch').focus();}
 function closeSearch(){document.getElementById('searchDrawer').classList.remove('open');document.getElementById('searchOverlay').classList.remove('show');}
 let fabSearchTimer=null;
@@ -1140,7 +1149,7 @@ function renderCart(){
   }).join('');
 }
 
-// ── 器材載入（合併前台兩個畫面，可借量改為即時推導）──────────
+// ── 器材載入 ──────────────────────────────────────────────
 async function loadEquipmentData(){
   try{
     const [rows,borrows]=await Promise.all([
@@ -1148,7 +1157,6 @@ async function loadEquipmentData(){
       sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'})
     ]);
     activeBorrowRecords=Array.isArray(borrows)?borrows:[];
-    // 已核准/逾期（尚未歸還）的借出量
     const borrowedMap={};
     activeBorrowRecords.forEach(r=>{
       (Array.isArray(r.items)?r.items:[]).forEach(it=>{
@@ -1157,14 +1165,11 @@ async function loadEquipmentData(){
       });
     });
     const mapped=rows.map(r=>{
-      const total=parseInt(r.total)||0;
-      const borrowed=borrowedMap[r.room+'__'+r.name]||0;
+      const total=parseInt(r.total)||0,borrowed=borrowedMap[r.room+'__'+r.name]||0;
       return {id:r.id,room:r.room,name:r.name,spec:r.spec||'',total,
-        available:Math.max(0,total-borrowed),   // ← 推導，不再讀 DB 的 available
-        unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''};
+        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''};
     });
-    allEquipment=mapped;
-    allEquipBrowse=mapped;                       // 兩個畫面共用同一份資料
+    allEquipment=mapped;allEquipBrowse=mapped;
     allRooms=[...new Set(rows.map(r=>r.room))];
     const rf=document.getElementById('equipRoomFilter');
     if(rf)rf.innerHTML='<option value="">全部房間</option>'+allRooms.map(r=>`<option value="${r}">${rn(r)}</option>`).join('');
@@ -1201,21 +1206,15 @@ function renderEquipList(){
 }
 function changeQty(room,name,spec,unit,avail,delta){
   const key=room+'__'+name,cur=selectedItems[key]?.quantity||0;
-  // 跨科借用提示：新增、跨科、且本科還有現貨時，先詢問是否改借本科
   if(delta>0&&cur===0&&userHomeLab&&room!==userHomeLab){
     const homeEquip=allEquipment.find(e=>e.room===userHomeLab&&e.name===name&&parseInt(e.available)>0);
     if(homeEquip){
       const safeN=name.replace(/'/g,"\\'"),safeS=(spec||'').replace(/'/g,"\\'");
       const hSafeS=(homeEquip.spec||'').replace(/'/g,"\\'");
       showModal('💡 本科還有現貨',
-        `<p style="font-size:13px">您正在借用 <strong>${rn(room)}</strong> 的「${name}」，但 <strong>${rn(userHomeLab)}</strong> 目前還有 <strong>${homeEquip.available}</strong> ${homeEquip.unit} 可借。</p>
-         <p style="font-size:12.5px;color:var(--text2);margin-top:6px">建議優先使用本科器材，跨科借用的部分留給真正不足的人。</p>`,
-        [
-          {label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',
-            fn:`closeModal();_addQty('${userHomeLab}','${safeN}','${hSafeS}','${homeEquip.unit}',${homeEquip.available},1)`},
-          {label:'仍要借此項',cls:'btn-secondary',
-            fn:`closeModal();_addQty('${room}','${safeN}','${safeS}','${unit}',${avail},1)`}
-        ]);
+        `<p style="font-size:13px">您正在借用 <strong>${rn(room)}</strong> 的「${name}」，但 <strong>${rn(userHomeLab)}</strong> 目前還有 <strong>${homeEquip.available}</strong> ${homeEquip.unit} 可借。</p>`,
+        [{label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',fn:`closeModal();_addQty('${userHomeLab}','${safeN}','${hSafeS}','${homeEquip.unit}',${homeEquip.available},1)`},
+         {label:'仍要借此項',cls:'btn-secondary',fn:`closeModal();_addQty('${room}','${safeN}','${safeS}','${unit}',${avail},1)`}]);
       return;
     }
   }
@@ -1227,18 +1226,33 @@ function _addQty(room,name,spec,unit,avail,delta){
   renderEquipList();updateCartBadge();calcDeposit();
   const q=document.getElementById('borrowSearch').value;if(q)doBorrowSearch(q);
 }
-function setQty(room,name,spec,unit,avail,val){const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};renderEquipList();updateCartBadge();calcDeposit();}
+function setQty(room,name,spec,unit,avail,val){
+  const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;
+  if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};
+  renderEquipList();updateCartBadge();calcDeposit();
+}
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();}
 
-function onPurposeChange(){const p=document.getElementById('f-purpose').value;document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';const noDeposit=['','課程','探究','選修'];document.getElementById('depositBanner').classList.toggle('show',p!==''&&!noDeposit.includes(p));calcDeposit();}
+function onPurposeChange(){
+  const p=document.getElementById('f-purpose').value;
+  document.getElementById('f-purpose-other').style.display=p==='其他'?'block':'none';
+  const noDeposit=['','課程','探究','選修'];
+  document.getElementById('depositBanner').classList.toggle('show',p!==''&&!noDeposit.includes(p));
+  calcDeposit();
+}
 function onVenuePurposeChange(){const p=document.getElementById('vf-purpose').value;document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';}
 function onHomeLabChange(){
   userHomeLab=document.getElementById('f-home-lab').value;
   renderRoomTabs();
   if(userHomeLab&&allRooms.includes(userHomeLab)){currentRoom=userHomeLab;renderEquipList();}
 }
-// 保證金計算：器材（含課程模板帶入的）已經全部進購物車，所以只看 selectedItems
-function calcDeposit(){const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;let a=0;const noDeposit=['課程','探究','選修'];if(p!==''&&!noDeposit.includes(p)){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();}
+function calcDeposit(){
+  const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
+  let a=0;const noDeposit=['課程','探究','選修'];
+  if(p!==''&&!noDeposit.includes(p)){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}
+  document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();
+}
+
 // ── 購物車送出前補填資料 ──────────────────────────────────
 function cartSubmit(){
   const missing=[];
@@ -1247,7 +1261,6 @@ function cartSubmit(){
   if(!document.getElementById('f-purpose').value)missing.push('purpose');
   if(!document.getElementById('f-borrow-date').value)missing.push('borrowDate');
   if(!document.getElementById('f-return-date').value)missing.push('returnDate');
-
   if(!Object.keys(selectedItems).length){showToast('購物車是空的，請先選擇器材','error');return;}
   if(!missing.length){closeCart();submitRequest();return;}
   showQuickFillModal(missing);
@@ -1299,46 +1312,80 @@ function confirmQuickFill(){
 async function submitRequest(){
   const name=document.getElementById('f-name').value.trim();
   const studentId=currentRole==='學生'?document.getElementById('f-student-id').value.trim():'';
+  // [修改2] 讀取指導老師欄位
+  const supervisor=currentRole==='學生'?(document.getElementById('f-supervisor').value.trim()||''):'';
   let purpose=document.getElementById('f-purpose').value;
   const borrowDate=document.getElementById('f-borrow-date').value,returnDate=document.getElementById('f-return-date').value;
   if(purpose==='其他'){const other=document.getElementById('f-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
- const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim();
-  // 課程模板帶入的器材已直接進購物車（selectedItems），這裡只要送購物車即可
+  const venue=document.getElementById('f-venue').value,note=document.getElementById('f-note').value.trim();
   const items=Object.values(selectedItems);
   if(!name){showToast('請填寫姓名','error');return;}
   if(currentRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
   if(!purpose||!borrowDate||!returnDate){showToast('請填寫所有必填欄位','error');return;}
   if(returnDate<borrowDate){showToast('歸還日期不能早於借用日期','error');return;}
+
+  // [修改3] 確認同步場地時段是否填寫
+  const doInlineVenue=document.getElementById('inlineVenueEnabled')?.checked;
+  let inlinePeriods=[];
+  if(doInlineVenue){
+    if(!inlinePeriodRows.length){showToast('已勾選同步場地但尚未新增時段','error');return;}
+    inlinePeriods=inlinePeriodRows.map(id=>({
+      date:document.getElementById('ipr-date-'+id).value,
+      period:document.getElementById('ipr-period-'+id).value,
+      venue:document.getElementById('ipr-venue-'+id).value,
+      status:'待審核'
+    }));
+  }
+
   closeCart();
   const btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='提交中…';
   try{
     const id='REQ-'+Date.now();let dt='無',da=0;
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
-    const recBody={id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note};
+    // [修改2] 把 supervisor 寫進 note（相容現有 schema，不需新增欄位）
+    const noteWithSupervisor=supervisor?`[指導老師：${supervisor}]${note?' '+note:''}`:note;
+    const recBody={id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note:noteWithSupervisor};
     if(appliedTemplate&&appliedTemplate.rawName)recBody.course_name=appliedTemplate.rawName;
     try{
       await sb('POST','borrow_records',{body:recBody});
     }catch(err){
-      // 若資料庫尚未新增 course_name 欄位，移除後重送，確保申請仍能成功
       if(recBody.course_name&&/course_name|column|schema cache|PGRST/i.test(err.message||'')){
-        delete recBody.course_name;
-        await sb('POST','borrow_records',{body:recBody});
+        delete recBody.course_name;await sb('POST','borrow_records',{body:recBody});
       }else throw err;
     }
-    // 提交僅建立「待審核」記錄，不扣庫存；可借量由「核准/逾期」記錄即時推導，待管理員核准時才真正佔用
-    showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${da>0?'<br>保證金：NT$'+da+'（'+dt+'），請至辦公室繳納。':''}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
+
+    // [修改3] 若勾選同步場地，自動建立 venue_bookings 記錄
+    let venueId='';
+    if(doInlineVenue&&inlinePeriods.length){
+      venueId='VEN-'+Date.now();
+      try{
+        await sb('POST','venue_bookings',{body:{
+          id:venueId,borrower_name:name,student_id:null,role:currentRole,
+          purpose,periods:inlinePeriods,status:'待審核',
+          note:`[關聯借用申請 ${id}]${note?' '+note:''}`,
+        }});
+      }catch(ve){console.warn('場地預約同步失敗（器材借用仍成功）：',ve.message);}
+    }
+
+    const depositMsg=da>0?`<br>保證金：NT$${da}（${dt}），請至辦公室繳納。`:'';
+    const venueMsg=venueId?`<br>📅 場地預約已同步送出（編號 <strong style="font-family:'DM Mono',monospace">${venueId}</strong>）`:'';
+    showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${depositMsg}${venueMsg}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
   btn.disabled=false;btn.textContent='📋 提交借用申請';
 }
 function resetForm(){
-  ['f-name','f-student-id','f-note'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-student-id','f-supervisor','f-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('f-purpose').value='';document.getElementById('f-venue').value='';
   document.getElementById('depositBanner').classList.remove('show');
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
   clearAppliedTemplate();
+  // [修改3] 重置同步場地
+  document.getElementById('inlineVenueBlock').style.display='none';
+  document.getElementById('inlineVenueEnabled').checked=false;
+  document.getElementById('inlineVenuePeriods').style.display='none';
+  inlinePeriodRows=[];document.getElementById('inlinePeriodList').innerHTML='';
 }
-// 注意：保留 f-home-lab / userHomeLab，借用人通常多次借用都是同一科，不需每次重設
 
 async function loadMyRecords(){
   const name=document.getElementById('queryName').value.trim();
@@ -1347,10 +1394,9 @@ async function loadMyRecords(){
   const list=document.getElementById('myRecordsList');
   list.innerHTML='<div class="loading"><div class="spinner"></div>查詢中…</div>';
   try{
-    const nm=name, sid=studentId;
     let borrowFilter='',venueFilter='';
-    if(sid){borrowFilter=`student_id=eq.${encodeURIComponent(sid)}`;venueFilter=borrowFilter;}
-    else{borrowFilter=`borrower_name=ilike.*${encodeURIComponent(nm)}*`;venueFilter=borrowFilter;}
+    if(studentId){borrowFilter=`student_id=eq.${encodeURIComponent(studentId)}`;venueFilter=borrowFilter;}
+    else{borrowFilter=`borrower_name=ilike.*${encodeURIComponent(name)}*`;venueFilter=borrowFilter;}
     const[rows,venueRows]=await Promise.all([sb('GET','borrow_records',{filter:borrowFilter,order:'created_at.desc'}),sb('GET','venue_bookings',{filter:venueFilter,order:'created_at.desc'})]);
     let html='';
     if(rows.length){html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(rows);}
@@ -1369,7 +1415,6 @@ async function loadMyRecords(){
     list.innerHTML=html;
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
 }
-
 function renderRecordListHTML(rows){
   return '<div class="record-list">'+rows.map(r=>{
     const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
@@ -1389,8 +1434,10 @@ function renderRecordListHTML(rows){
 }
 
 let allEquipBrowse=[];
-// loadEquipBrowse 已併入 loadEquipmentData，兩個畫面共用同一份資料
-function filterEquipBrowse(){const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));}
+function filterEquipBrowse(){
+  const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;
+  renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));
+}
 function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
   if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';return;}
@@ -1414,171 +1461,86 @@ function openLightbox(url,name){if(!url)return;event&&event.stopPropagation();do
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
 function showPage(page){
   const currentPage=document.querySelector('.page.active')?.id?.replace('page-','');
-  // 同一頁再點 → 直接捲回頂端
   if(currentPage===page){window.scrollTo({top:0,behavior:'smooth'});return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
   document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','chemicals','myrecords'][i]===page));
-  // 同步底部導覽列
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-  // 購物車 / 搜尋 FAB 只在借用頁顯示，離開時收起抽屜
   const onBorrow=(page==='borrow');
-if(page==='chemicals')loadChemicals();
+  if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=onBorrow?'flex':'none';
   document.getElementById('searchFab').style.display=onBorrow?'flex':'none';
   if(!onBorrow){closeCart();closeSearch();}
   if(page==='venue')loadVenue();
 }
-function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
+function showModal(title,body,actions){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('modalBody').innerHTML=body;
+  document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
+  document.getElementById('modalOverlay').classList.add('show');
+}
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
 
-  // ── 課程模板（前台套用，僅老師可見；套用＝自動加入購物車）──────────
-let allCourseTemplates=[], appliedTemplate=null;
-// 科別代號 → 中文簡稱（用來組課名）
+// ── 課程模板（維持原有邏輯）──────────────────────────────
+let allCourseTemplates=[],appliedTemplate=null;
 const SUBJECT_FROM_ROOM={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具'};
-// 可辨識的科別關鍵字（當 default_room 未對應時，從分類／課名推斷）
 const SUBJECTS=['地球科學','物理','化學','生物','地科','理化','數學','資訊','生活科技','國文','英文','歷史','地理','公民'];
-// 需特別標示的課程類型；一般課程不顯示
 const SPECIAL_TAGS=['探究','菁英','選修','資優','實驗班','科學班','先修','專題','加深加廣'];
-
-// 偵測特殊類型（從 分類/課名/週次/月份/年級 任一欄位找關鍵字）
-function detectSpecialTag(t){
-  const hay=`${t.category||''} ${t.name||''} ${t.week||''} ${t.month||''} ${t.grade||''}`;
-  for(const tag of SPECIAL_TAGS){if(hay.includes(tag))return tag;}
-  return '';
-}
-// 偵測科別：先用實驗室代號，對不到再從分類／課名找關鍵字
-function detectSubject(t){
-  if(SUBJECT_FROM_ROOM[t.default_room])return SUBJECT_FROM_ROOM[t.default_room];
-  const hay=`${t.category||''} ${t.name||''}`;
-  for(const s of SUBJECTS){if(hay.includes(s))return s==='地球科學'?'地科':s;}
-  return '';
-}
-// 把課名前面重複的「科別／特殊類型／年級」片段剝掉（含各種排列與全半形括號）
-function stripLeadingTokens(name,tokens){
-  let s=(name||'').trim();
-  const seps=['-','－','—','～','~','｜','|','/','／','：',':','　',' ','．','.','、'];
-  let changed=true;
-  while(changed){
-    changed=false;
-    for(const sep of seps){while(s.startsWith(sep)){s=s.slice(sep.length);changed=true;}}
-    for(const tk of tokens){if(tk&&s.startsWith(tk)){s=s.slice(tk.length);changed=true;break;}}
-  }
-  return s.trim();
-}
-// 取出乾淨的年級（把年級欄位裡夾帶的科別／特殊類型／括號內容清掉，只留年級）
-function cleanGrade(grade,subject,special){
-  let g=(grade||'').trim().replace(/[（(][^）)]*[）)]/g,''); // 去掉括號內容
-  if(subject)g=g.split(subject).join('');
-  if(special)g=g.split(special).join('');
-  return g.replace(/[-－—～~｜|\/／：:．.、，,\s（）()]/g,'').trim();
-}
-// 統一課名格式：年級＋科別＋特殊標籤－課程名稱（不含教師名、不重複）
-// 例：高二物理探究-不確定度的測量與計算 ／ 高一化學-溶解度的測定
+function detectSpecialTag(t){const hay=`${t.category||''} ${t.name||''} ${t.week||''} ${t.month||''} ${t.grade||''}`;for(const tag of SPECIAL_TAGS){if(hay.includes(tag))return tag;}return '';}
+function detectSubject(t){if(SUBJECT_FROM_ROOM[t.default_room])return SUBJECT_FROM_ROOM[t.default_room];const hay=`${t.category||''} ${t.name||''}`;for(const s of SUBJECTS){if(hay.includes(s))return s==='地球科學'?'地科':s;}return '';}
+function stripLeadingTokens(name,tokens){let s=(name||'').trim();const seps=['-','－','—','～','~','｜','|','/','／','：',':','　',' ','．','.','、'];let changed=true;while(changed){changed=false;for(const sep of seps){while(s.startsWith(sep)){s=s.slice(sep.length);changed=true;}}for(const tk of tokens){if(tk&&s.startsWith(tk)){s=s.slice(tk.length);changed=true;break;}}}return s.trim();}
+function cleanGrade(grade,subject,special){let g=(grade||'').trim().replace(/[（(][^）)]*[）)]/g,'');if(subject)g=g.split(subject).join('');if(special)g=g.split(special).join('');return g.replace(/[-－—～~｜|\/／：:．.、，,\s（）()]/g,'').trim();}
 function formatTemplateName(t){
-  const rawGrade=(t.grade||'').trim();
-  const subject=detectSubject(t);
-  const special=detectSpecialTag(t);
-  // 先把年級洗乾淨，再依序組合，避免年級欄位本身已含科別／類型造成重複
-  const pureGrade=cleanGrade(rawGrade,subject,special);
-  let head=pureGrade;
-  if(subject&&!head.includes(subject))head+=subject;
-  if(special&&!head.includes(special))head+=special;
-  // 要從課名開頭剝除的重複片段（各種組合＋全半形括號），長的先剝避免殘留
-  const tokens=[];
-  if(head)tokens.push(head);
-  if(subject&&special)tokens.push(
-    subject+special, special+subject,
-    `${special}（${subject}）`,`${special}(${subject})`,
-    `${subject}（${special}）`,`${subject}(${special})`);
-  if(subject)tokens.push(`（${subject}）`,`(${subject})`,subject);
-  if(special)tokens.push(`（${special}）`,`(${special})`,special);
-  if(rawGrade)tokens.push(rawGrade);
-  if(pureGrade)tokens.push(pureGrade);
+  const rawGrade=(t.grade||'').trim();const subject=detectSubject(t);const special=detectSpecialTag(t);
+  const pureGrade=cleanGrade(rawGrade,subject,special);let head=pureGrade;
+  if(subject&&!head.includes(subject))head+=subject;if(special&&!head.includes(special))head+=special;
+  const tokens=[];if(head)tokens.push(head);
+  if(subject&&special)tokens.push(subject+special,special+subject,`${special}（${subject}）`,`${special}(${subject})`,`${subject}（${special}）`,`${subject}(${special})`);
+  if(subject)tokens.push(`（${subject}）`,`(${subject})`,subject);if(special)tokens.push(`（${special}）`,`(${special})`,special);
+  if(rawGrade)tokens.push(rawGrade);if(pureGrade)tokens.push(pureGrade);
   tokens.sort((a,b)=>b.length-a.length);
   const pure=stripLeadingTokens(t.name,tokens);
-  if(head&&pure)return `${head}-${pure}`;
-  return head||pure||(t.name||'').trim()||'（未命名課程）';
+  if(head&&pure)return `${head}-${pure}`;return head||pure||(t.name||'').trim()||'（未命名課程）';
 }
-
 async function loadCourseTemplates(){
-  try{
-    allCourseTemplates=await sb('GET','course_templates',{order:'name'});
-    allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];
-    renderTemplatePicker();
-  }catch(e){}
+  try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();}catch(e){}
 }
-
 function renderTemplatePicker(){
-  const room=document.getElementById('tplFilterRoom').value;
-  const q=document.getElementById('tplFilterSearch').value.trim();
+  const room=document.getElementById('tplFilterRoom').value,q=document.getElementById('tplFilterSearch').value.trim();
   const sel=document.getElementById('tplPickerSelect');
   let items=allCourseTemplates;
   if(room)items=items.filter(t=>t.default_room===room);
   if(q)items=items.filter(t=>formatTemplateName(t).includes(q)||(t.name||'').includes(q)||(t.grade||'').includes(q));
   if(!items.length){sel.innerHTML='<option value="">（找不到符合的課程）</option>';return;}
-  // 依統一課名排序，老師比較好找
   items=[...items].sort((a,b)=>formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant'));
   sel.innerHTML='<option value="">— 選擇課程 —</option>'+items.map(t=>`<option value="${t.id}">${formatTemplateName(t)}</option>`).join('');
 }
-
-function applySelectedTemplate(){
-  const id=document.getElementById('tplPickerSelect').value;
-  if(!id){showToast('請先選擇課程','error');return;}
-  applyTemplate(id);
-}
-
-// 套用課程模板：把器材清單「直接加入購物車」（依實際庫存上限）
+function applySelectedTemplate(){const id=document.getElementById('tplPickerSelect').value;if(!id){showToast('請先選擇課程','error');return;}applyTemplate(id);}
 function applyTemplate(id){
   const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
-  const av=e=>parseInt(e.available)||0;
-  const added=[];
+  const av=e=>parseInt(e.available)||0;const added=[];
   (t.equipment_items||[]).forEach(it=>{
-    const want=parseInt(it.quantity)||0;
-    if(want<=0)return;
+    const want=parseInt(it.quantity)||0;if(want<=0)return;
     const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
-    const itName=norm(it.name), itSpec=norm(it.spec);
-    // 1) 先精準同名
+    const itName=norm(it.name),itSpec=norm(it.spec);
     let allCands=allEquipment.filter(e=>e.name===it.name);
-    // 2) 找不到 → 模糊比對：庫存品名常把規格寫進名稱（例如「100mL量筒」），
-    //    所以用「名稱關鍵字＋規格關鍵字」一起比對名稱+規格欄位
-    if(!allCands.length&&itName){
-      allCands=allEquipment.filter(e=>{
-        const ct=norm(e.name)+norm(e.spec);
-        const en=norm(e.name);
-        const nameOk=ct.includes(itName)||(en&&itName.includes(en));
-        if(!nameOk)return false;
-        if(itSpec&&!ct.includes(itSpec))return false; // 有指定規格就要對得上
-        return true;
-      });
-    }
-    // 3) 同名多規格時，優先規格相符的（精準同名的情況）
+    if(!allCands.length&&itName){allCands=allEquipment.filter(e=>{const ct=norm(e.name)+norm(e.spec);const en=norm(e.name);const nameOk=ct.includes(itName)||(en&&itName.includes(en));if(!nameOk)return false;if(itSpec&&!ct.includes(itSpec))return false;return true;});}
     const specCands=itSpec?allCands.filter(e=>{const es=norm(e.spec);return es&&(es.includes(itSpec)||itSpec.includes(es));}):[];
     const cands=specCands.length?specCands:allCands;
     let room,name,spec,unit,info='';
     if(cands.length){
       const totalAvail=cands.reduce((s,e)=>s+av(e),0);
-      // 取用地點：模板指定 → 預設科別（須足量）→ 任一足量(庫存最多) → 模板/預設 → 庫存最多
       let pick=null;
       for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r&&av(e)>=want);if(c){pick=c;break;}}}
       if(!pick){const sat=cands.filter(e=>av(e)>=want).sort((a,b)=>av(b)-av(a));if(sat.length)pick=sat[0];}
       if(!pick){for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r);if(c){pick=c;break;}}}}
       if(!pick)pick=[...cands].sort((a,b)=>av(b)-av(a))[0];
-      // 用「實際庫存的品名」當購物車鍵值，核准後才扣得到正確的那筆庫存
-      // 單位以「課程模板填的」為準（老師的需求數量＝12 張，而非庫存的整批單位 12 包）
       room=pick.room;name=pick.name;spec=pick.spec||it.spec||'';unit=it.unit||pick.unit||'個';
-      if(av(pick)>=want){/* 該處足量，免提醒 */}
-      else if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別／教具室合計尚有，請確認取用地點`;
-      else info=`全校目前可借約 ${totalAvail}（原需 ${want}），可能在教具室或其他科別，請向辦公室確認`;
-    }else{
-      // 模板有列＝學校理應有，只是庫存清單尚未建檔；仍依課程帶入，交由管理員核對
-      room=it.room||t.default_room||'';name=it.name;spec=it.spec||'';unit=it.unit||'個';
-      info='庫存清單中查無相符品名，已依課程帶入，請向管理員確認';
-    }
-    // 數量＝課程需求（不依即時庫存砍量），保留老師的完整需求供管理員與歷年比對
+      if(av(pick)<want){if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別合計尚有`;else info=`全校目前可借約 ${totalAvail}（原需 ${want}），請向辦公室確認`;}
+    }else{room=it.room||t.default_room||'';name=it.name;spec=it.spec||'';unit=it.unit||'個';info='庫存清單中查無相符品名，請向管理員確認';}
     selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
     added.push({room,name,unit,qty:want,info});
   });
@@ -1588,18 +1550,13 @@ function applyTemplate(id){
   renderAppliedTemplate();
   document.getElementById('appliedTemplateName').textContent=appliedTemplate.name;
   document.getElementById('appliedTemplateBox').style.display='block';
-  const msg=added.length?`已帶入 ${added.length} 項器材到購物車`:'此課程沒有設定器材';
-  showToast('已套用：'+appliedTemplate.name+'（'+msg+'）','success');
+  showToast('已套用：'+appliedTemplate.name+'（已帶入 '+added.length+' 項器材）','success');
 }
-
-// 套用後的唯讀摘要（不可在前台修改原始模板）
 function renderAppliedTemplate(){
-  const box=document.getElementById('appliedTemplateSummary');
-  if(!box)return;
-  if(!appliedTemplate){box.innerHTML='';return;}
+  const box=document.getElementById('appliedTemplateSummary');if(!box)return;if(!appliedTemplate){box.innerHTML='';return;}
   let html='';
   if(appliedTemplate.added.length){
-    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">已帶入購物車的器材（數量＝課程需求，可到 🛒 微調）</div>`;
+    html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">已帶入購物車的器材</div>`;
     html+=appliedTemplate.added.map((a,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
       <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);min-width:18px">${i+1}.</span>
       <span style="font-weight:600;flex:1;min-width:90px">${a.name}</span>
@@ -1607,18 +1564,14 @@ function renderAppliedTemplate(){
       <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600">× ${a.qty} ${a.unit}</span>
       ${a.info?`<span style="flex-basis:100%;font-size:11px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;margin-top:2px">ℹ️ ${a.info}</span>`:''}
     </div>`).join('')+`</div>`;
-  }else{
-    html+=`<div style="font-size:12.5px;color:var(--text2);padding:6px 0">此課程沒有設定任何器材。</div>`;
   }
   if(appliedTemplate.note){
     const safeNote=appliedTemplate.note.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    html+=`<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">📝 參考備註（藥品／注意事項，僅供參考）</div>
-      <div style="white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--text)">${safeNote}</div></div>`;
+    html+=`<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">📝 參考備註（藥品／注意事項）</div>
+      <div style="white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12.5px">${safeNote}</div></div>`;
   }
   box.innerHTML=html;
 }
-
-// 移除套用：可選擇是否一併清掉帶入購物車的器材
 function clearAppliedTemplate(removeItems){
   if(removeItems&&appliedTemplate&&Array.isArray(appliedTemplate.added)){
     appliedTemplate.added.forEach(a=>{delete selectedItems[a.room+'__'+a.name];});
@@ -1630,233 +1583,107 @@ function clearAppliedTemplate(removeItems){
   const sel=document.getElementById('tplPickerSelect');if(sel)sel.value='';
   calcDeposit();
 }
-// ── 藥品查詢 ────────────────────────────────────────────
-let allChemicals = [], filteredChemicals = [];
 
-async function loadChemicals() {
-  if (allChemicals.length) { renderChemList(filteredChemicals.length ? filteredChemicals : allChemicals); return; }
-  try {
-    const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' });
-    allChemicals = Array.isArray(rows) ? rows : [];
-    filteredChemicals = allChemicals;
-    renderChemList(allChemicals);
-  } catch(e) {
-    document.getElementById('chemList').innerHTML = '<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';
-  }
+// ── 藥品查詢（維持原有邏輯）──────────────────────────────
+let allChemicals=[],filteredChemicals=[];
+async function loadChemicals(){
+  if(allChemicals.length){renderChemList(filteredChemicals.length?filteredChemicals:allChemicals);return;}
+  try{const rows=await sb('GET','chemicals',{order:'category,name_zh'});allChemicals=Array.isArray(rows)?rows:[];filteredChemicals=allChemicals;renderChemList(allChemicals);}
+  catch(e){document.getElementById('chemList').innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
 }
-
-function filterChemicals() {
-  const q = document.getElementById('chemSearch').value.toLowerCase();
-  const cat = document.getElementById('chemCatFilter').value;
-  filteredChemicals = allChemicals.filter(c =>
-    (!q || c.name_zh?.toLowerCase().includes(q) || c.name_en?.toLowerCase().includes(q)) &&
-    (!cat || c.category === cat)
-  );
+function filterChemicals(){
+  const q=document.getElementById('chemSearch').value.toLowerCase(),cat=document.getElementById('chemCatFilter').value;
+  filteredChemicals=allChemicals.filter(c=>(!q||c.name_zh?.toLowerCase().includes(q)||c.name_en?.toLowerCase().includes(q))&&(!cat||c.category===cat));
   renderChemList(filteredChemicals);
 }
-
-function renderChemList(items) {
-  const box = document.getElementById('chemList');
-  if (!items.length) { box.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>'; return; }
-  box.innerHTML = '<div class="equip-list">' + items.map(c => {
-    const avail = c.is_available !== false;
-    const catCls = 'chem-cat-' + (c.category || '其他');
-    return `<div class="chem-row ${avail ? '' : 'chem-unavail'}">
+function renderChemList(items){
+  const box=document.getElementById('chemList');
+  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>';return;}
+  box.innerHTML='<div class="equip-list">'+items.map(c=>{
+    const avail=c.is_available!==false;const catCls='chem-cat-'+(c.category||'其他');
+    return `<div class="chem-row ${avail?'':'chem-unavail'}">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:700">${c.name_zh}</span>
-          <span class="chem-cat-tag ${catCls}">${c.category || '其他'}</span>
-          ${c.recycle_type ? `<span class="chem-recycle-tag">♻️ ${c.recycle_type}</span>` : ''}
+          <span class="chem-cat-tag ${catCls}">${c.category||'其他'}</span>
+          ${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${c.recycle_type}</span>`:''}
         </div>
-        ${c.name_en ? `<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${c.name_en}</div>` : ''}
-        ${c.location ? `<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${c.location}</div>` : ''}
-        ${c.note && c.note !== '附註' ? `<div style="font-size:11px;color:var(--accent);margin-top:1px">📝 ${c.note}</div>` : ''}
+        ${c.name_en?`<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${c.name_en}</div>`:''}
+        ${c.location?`<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${c.location}</div>`:''}
+        ${c.note&&c.note!=='附註'?`<div style="font-size:11px;color:var(--accent);margin-top:1px">📝 ${c.note}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
-        <span class="chem-bottles">${c.bottles_left ?? '?'} 瓶</span>
-        ${avail
-          ? `<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${c.id})">申請借用</button>`
-          : `<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
+        <span class="chem-bottles">${c.bottles_left??'?'} 瓶</span>
+        ${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${c.id})">申請借用</button>`:`<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
       </div>
     </div>`;
-  }).join('') + '</div>';
+  }).join('')+'</div>';
 }
-
-// ── 藥品申請 Modal ──────────────────────────────────────
-function openChemRequestModal(id) {
-  const c = allChemicals.find(x => x.id === id);
-  if (!c) return;
+function openChemRequestModal(id){
+  const c=allChemicals.find(x=>x.id===id);if(!c)return;
   showModal(`🧪 申請藥品 — ${c.name_zh}`,`
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${c.name_en || ''}</div>
-    <div class="form-group">
-      <label>借用方式 *</label>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${c.name_en||''}</div>
+    <div class="form-group"><label>借用方式 *</label>
       <div style="display:flex;gap:8px;margin-top:4px">
-        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)">
-          <input type="radio" name="chemMode" value="原液" id="chemModeBottle" onchange="toggleChemMode()" checked style="width:auto"> 原液（整瓶）
-        </label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)">
-          <input type="radio" name="chemMode" value="配製" id="chemModeMix" onchange="toggleChemMode()" style="width:auto"> 配製溶液
-        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)"><input type="radio" name="chemMode" value="原液" id="chemModeBottle" onchange="toggleChemMode()" checked style="width:auto"> 原液（整瓶）</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)"><input type="radio" name="chemMode" value="配製" id="chemModeMix" onchange="toggleChemMode()" style="width:auto"> 配製溶液</label>
       </div>
     </div>
-
-    <!-- 原液 -->
-    <div id="chemBottleSection">
-      <div class="form-group">
-        <label>瓶數 *</label>
-        <input type="number" id="chemBottles" min="1" value="1" placeholder="需要幾瓶">
-      </div>
-    </div>
-
-    <!-- 配製溶液 -->
+    <div id="chemBottleSection"><div class="form-group"><label>瓶數 *</label><input type="number" id="chemBottles" min="1" value="1" placeholder="需要幾瓶"></div></div>
     <div id="chemMixSection" style="display:none">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="form-group">
-          <label>濃度（選填）</label>
-          <input type="text" id="chemConc" placeholder="例：0.1M、5%、1N">
-        </div>
-        <div class="form-group">
-          <label>配製方式</label>
+        <div class="form-group"><label>濃度（選填）</label><input type="text" id="chemConc" placeholder="例：0.1M、5%、1N"></div>
+        <div class="form-group"><label>配製方式</label>
           <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
-              <input type="radio" name="chemPrecision" value="精準" checked style="width:auto"> 精準（定量瓶）
-            </label>
-            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
-              <input type="radio" name="chemPrecision" value="不精準" style="width:auto"> 大約（燒杯量筒）
-            </label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)"><input type="radio" name="chemPrecision" value="精準" checked style="width:auto"> 精準（定量瓶）</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)"><input type="radio" name="chemPrecision" value="不精準" style="width:auto"> 大約（燒杯量筒）</label>
           </div>
         </div>
       </div>
       <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:10px">
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">用量計算方式（擇一）</div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px;cursor:pointer;color:var(--text)">
-          <input type="radio" name="chemVolMode" value="班" id="chemByClass" onchange="toggleChemVolMode()" checked style="width:auto"> 依班數計算
-        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:8px;cursor:pointer;color:var(--text)"><input type="radio" name="chemVolMode" value="班" id="chemByClass" onchange="toggleChemVolMode()" checked style="width:auto"> 依班數計算</label>
         <div id="chemByClassSection" style="display:flex;gap:8px;flex-wrap:wrap">
-          <div class="form-group" style="flex:1;min-width:80px">
-            <label>每班用量（mL）*</label>
-            <input type="number" id="chemVolPerClass" min="1" placeholder="500" oninput="calcChemTotal()">
-          </div>
-          <div class="form-group" style="flex:1;min-width:60px">
-            <label>班數 *</label>
-            <input type="number" id="chemClassCount" min="1" placeholder="3" oninput="calcChemTotal()">
-          </div>
-          <div class="form-group" style="flex:1;min-width:80px">
-            <label>共需（mL）</label>
-            <input type="number" id="chemTotalVolClass" placeholder="自動計算" readonly style="background:var(--surface2)">
-          </div>
+          <div class="form-group" style="flex:1;min-width:80px"><label>每班用量（mL）*</label><input type="number" id="chemVolPerClass" min="1" placeholder="500" oninput="calcChemTotal()"></div>
+          <div class="form-group" style="flex:1;min-width:60px"><label>班數 *</label><input type="number" id="chemClassCount" min="1" placeholder="3" oninput="calcChemTotal()"></div>
+          <div class="form-group" style="flex:1;min-width:80px"><label>共需（mL）</label><input type="number" id="chemTotalVolClass" placeholder="自動計算" readonly style="background:var(--surface2)"></div>
         </div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px;cursor:pointer;color:var(--text)">
-          <input type="radio" name="chemVolMode" value="總量" id="chemByTotal" onchange="toggleChemVolMode()" style="width:auto"> 直接填總量
-        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-top:4px;cursor:pointer;color:var(--text)"><input type="radio" name="chemVolMode" value="總量" id="chemByTotal" onchange="toggleChemVolMode()" style="width:auto"> 直接填總量</label>
         <div id="chemByTotalSection" style="display:none;margin-top:6px">
-          <div class="form-group">
-            <label>說明（選填，如「全年級」）</label>
-            <input type="text" id="chemTotalDesc" placeholder="例：全年級、高一甲乙丙">
-          </div>
-          <div class="form-group">
-            <label>總量（mL）*</label>
-            <input type="number" id="chemTotalVolDirect" min="1" placeholder="1000">
-          </div>
+          <div class="form-group"><label>說明（選填）</label><input type="text" id="chemTotalDesc" placeholder="例：全年級、高一甲乙丙"></div>
+          <div class="form-group"><label>總量（mL）*</label><input type="number" id="chemTotalVolDirect" min="1" placeholder="1000"></div>
         </div>
       </div>
-      <div class="form-group">
-        <label>由誰配製</label>
+      <div class="form-group"><label>由誰配製</label>
         <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)">
-            <input type="radio" name="chemPrepBy" value="管理員配置" checked style="width:auto"> 管理員配置
-          </label>
-          <label style="display:flex;align-items:center;gap=5px;font-size:13px;cursor:pointer;color:var(--text)">
-            <input type="radio" name="chemPrepBy" value="老師自行配置" style="width:auto"> 老師自行配置
-          </label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)"><input type="radio" name="chemPrepBy" value="管理員配置" checked style="width:auto"> 管理員配置</label>
+          <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text)"><input type="radio" name="chemPrepBy" value="老師自行配置" style="width:auto"> 老師自行配置</label>
         </div>
       </div>
     </div>
-
-    <div class="form-group">
-      <label>備註說明</label>
-      <textarea id="chemNote" rows="2" placeholder="其他說明…"></textarea>
-    </div>
-  `, [
-    { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
-    { label: '加入購物車 🛒', cls: 'btn-primary', fn: `addChemToCart(${id})` }
-  ]);
+    <div class="form-group"><label>備註說明</label><textarea id="chemNote" rows="2" placeholder="其他說明…"></textarea></div>
+  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'加入購物車 🛒',cls:'btn-primary',fn:`addChemToCart(${id})`}]);
 }
-
-function toggleChemMode() {
-  const isMix = document.getElementById('chemModeMix').checked;
-  document.getElementById('chemBottleSection').style.display = isMix ? 'none' : 'block';
-  document.getElementById('chemMixSection').style.display = isMix ? 'block' : 'none';
-}
-
-function toggleChemVolMode() {
-  const byClass = document.getElementById('chemByClass').checked;
-  document.getElementById('chemByClassSection').style.display = byClass ? 'flex' : 'none';
-  document.getElementById('chemByTotalSection').style.display = byClass ? 'none' : 'block';
-}
-
-function calcChemTotal() {
-  const perClass = parseInt(document.getElementById('chemVolPerClass')?.value) || 0;
-  const classes = parseInt(document.getElementById('chemClassCount')?.value) || 0;
-  const total = document.getElementById('chemTotalVolClass');
-  if (total) total.value = perClass && classes ? perClass * classes : '';
-}
-
-function addChemToCart(id) {
-  const c = allChemicals.find(x => x.id === id);
-  if (!c) return;
-  const isMix = document.getElementById('chemModeMix').checked;
-  let desc = '', quantity = 0, unit = '';
-
-  if (!isMix) {
-    // 原液
-    const bottles = parseInt(document.getElementById('chemBottles').value) || 0;
-    if (!bottles) { showToast('請填寫瓶數', 'error'); return; }
-    desc = `原液 × ${bottles}瓶`;
-    quantity = bottles;
-    unit = '瓶';
-  } else {
-    // 配製溶液
-    const conc = document.getElementById('chemConc').value.trim();
-    const precision = document.querySelector('input[name="chemPrecision"]:checked')?.value || '精準';
-    const prepBy = document.querySelector('input[name="chemPrepBy"]:checked')?.value || '管理員配置';
-    const byClass = document.getElementById('chemByClass').checked;
-    let volDesc = '', totalVol = 0;
-
-    if (byClass) {
-      const perClass = parseInt(document.getElementById('chemVolPerClass').value) || 0;
-      const classCount = parseInt(document.getElementById('chemClassCount').value) || 0;
-      totalVol = perClass * classCount;
-      if (!perClass || !classCount) { showToast('請填寫每班用量與班數', 'error'); return; }
-      volDesc = `× ${perClass}mL × ${classCount}班，共 ${totalVol}mL`;
-    } else {
-      totalVol = parseInt(document.getElementById('chemTotalVolDirect').value) || 0;
-      const totalDescText = document.getElementById('chemTotalDesc').value.trim();
-      if (!totalVol) { showToast('請填寫總量', 'error'); return; }
-      volDesc = `${totalDescText ? totalDescText + '　' : ''}共 ${totalVol}mL`;
-    }
-
-    desc = `配製${conc ? ' ' + conc : ''} ${volDesc}　｜${precision}配置｜${prepBy}`;
-    quantity = totalVol;
-    unit = 'mL';
+function toggleChemMode(){const isMix=document.getElementById('chemModeMix').checked;document.getElementById('chemBottleSection').style.display=isMix?'none':'block';document.getElementById('chemMixSection').style.display=isMix?'block':'none';}
+function toggleChemVolMode(){const byClass=document.getElementById('chemByClass').checked;document.getElementById('chemByClassSection').style.display=byClass?'flex':'none';document.getElementById('chemByTotalSection').style.display=byClass?'none':'block';}
+function calcChemTotal(){const perClass=parseInt(document.getElementById('chemVolPerClass')?.value)||0,classes=parseInt(document.getElementById('chemClassCount')?.value)||0;const total=document.getElementById('chemTotalVolClass');if(total)total.value=perClass&&classes?perClass*classes:'';}
+function addChemToCart(id){
+  const c=allChemicals.find(x=>x.id===id);if(!c)return;
+  const isMix=document.getElementById('chemModeMix').checked;let desc='',quantity=0,unit='';
+  if(!isMix){const bottles=parseInt(document.getElementById('chemBottles').value)||0;if(!bottles){showToast('請填寫瓶數','error');return;}desc=`原液 × ${bottles}瓶`;quantity=bottles;unit='瓶';}
+  else{
+    const conc=document.getElementById('chemConc').value.trim();
+    const precision=document.querySelector('input[name="chemPrecision"]:checked')?.value||'精準';
+    const prepBy=document.querySelector('input[name="chemPrepBy"]:checked')?.value||'管理員配置';
+    const byClass=document.getElementById('chemByClass').checked;
+    let volDesc='',totalVol=0;
+    if(byClass){const perClass=parseInt(document.getElementById('chemVolPerClass').value)||0,classCount=parseInt(document.getElementById('chemClassCount').value)||0;totalVol=perClass*classCount;if(!perClass||!classCount){showToast('請填寫每班用量與班數','error');return;}volDesc=`× ${perClass}mL × ${classCount}班，共 ${totalVol}mL`;}
+    else{totalVol=parseInt(document.getElementById('chemTotalVolDirect').value)||0;const td=document.getElementById('chemTotalDesc').value.trim();if(!totalVol){showToast('請填寫總量','error');return;}volDesc=`${td?td+'　':''}共 ${totalVol}mL`;}
+    desc=`配製${conc?' '+conc:''} ${volDesc}　｜${precision}配置｜${prepBy}`;quantity=totalVol;unit='mL';
   }
-
-  const note = document.getElementById('chemNote').value.trim();
-  const key = 'CHEM__' + c.id;
-  selectedItems[key] = {
-    room: 'chemicals',
-    name: c.name_zh,
-    spec: desc,
-    unit,
-    quantity,
-    note,
-    _isChem: true
-  };
-  updateCartBadge();
-  calcDeposit();
-  closeModal();
-  showToast(`已加入：${c.name_zh}　${desc}`, 'success');
-  openCart();
+  const note=document.getElementById('chemNote').value.trim();
+  selectedItems['CHEM__'+c.id]={room:'chemicals',name:c.name_zh,spec:desc,unit,quantity,note,_isChem:true};
+  updateCartBadge();calcDeposit();closeModal();showToast(`已加入：${c.name_zh}　${desc}`,'success');openCart();
 }
 </script>
 </body>
