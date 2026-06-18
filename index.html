@@ -1522,36 +1522,30 @@ function renderTemplatePicker(){
   const grade=gradeEl?gradeEl.value:'';
   const sel=document.getElementById('tplPickerSelect');
 
-  // 動態填充年級選單（只在尚未填充時）
-  // 固定年級選單（只在尚未填充時）
-  if(gradeEl&&gradeEl.options.length<=1){
-    const gradeGroups=[
-      {label:'─── 高中 ───',options:[]},
-      {label:'高一',options:['高一']},
-      {label:'高二',options:['高二']},
-      {label:'高三',options:['高三']},
-      {label:'─── 國中 ───',options:[]},
-      {label:'國一',options:['國一']},
-      {label:'國二',options:['國二']},
-      {label:'國三',options:['國三']},
-    ];
-    gradeGroups.forEach(g=>{
-      if(!g.options.length){
-        const sep=document.createElement('option');
-        sep.disabled=true;sep.textContent=g.label;
-        gradeEl.appendChild(sep);
-      }else{
-        g.options.forEach(val=>{
-          const o=document.createElement('option');o.value=val;o.textContent=val;
-          gradeEl.appendChild(o);
-        });
-      }
-    });
+  // 純年級抽取：從 grade 字串中找出「高一/高二/高三/國一/國二/國三」
+  const GRADE_LABELS=['高一','高二','高三','國一','國二','國三'];
+  function extractPureGrade(gradeStr){
+    for(const g of GRADE_LABELS){if((gradeStr||'').includes(g))return g;}
+    return '';
+  }
+
+  // 動態填充年級選單（每次重建，因為科別篩選可能影響可用年級）
+  if(gradeEl){
+    const currentGrade=gradeEl.value;
+    // 先依科別篩出候選，再抽取年級
+    let candidatesForGrade=allCourseTemplates;
+    if(room)candidatesForGrade=candidatesForGrade.filter(t=>t.default_room===room);
+    const gradeSet=new Set(candidatesForGrade.map(t=>extractPureGrade(t.grade||'')).filter(Boolean));
+    // 依固定順序排列
+    const orderedGrades=GRADE_LABELS.filter(g=>gradeSet.has(g));
+    gradeEl.innerHTML='<option value="">全部年級</option>'+orderedGrades.map(g=>`<option value="${g}">${g}</option>`).join('');
+    // 若之前選的年級還存在就保留，否則清掉
+    if(currentGrade&&orderedGrades.includes(currentGrade))gradeEl.value=currentGrade;
   }
 
   let items=allCourseTemplates;
   if(room)items=items.filter(t=>t.default_room===room);
-  if(grade)items=items.filter(t=>(t.grade||'').trim()===grade);
+  if(grade)items=items.filter(t=>extractPureGrade(t.grade||'')===grade);
   if(q)items=items.filter(t=>formatTemplateName(t).includes(q)||(t.name||'').includes(q)||(t.grade||'').includes(q));
   if(!items.length){sel.innerHTML='<option value="">（找不到符合的課程）</option>';return;}
   items=[...items].sort((a,b)=>formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant'));
