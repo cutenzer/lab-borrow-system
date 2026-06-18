@@ -1287,7 +1287,8 @@ function showQuickFillModal(missing){
   if(missing.includes('borrowDate'))html+=`<div class="form-group"><label>借用日期 *</label><input type="date" id="qf-borrow-date"></div>`;
   if(missing.includes('returnDate'))html+=`<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="qf-return-date"></div>`;
   // ── 新增：課程名稱、備註、照片 ──
-  html+=`<div class="form-group"><label>課程名稱</label><input id="qf-course-name" placeholder="例：高一化學第三單元（選填）" value="${document.getElementById('f-name').dataset.courseName||''}"></div>`;
+  html+=`<div class="form-group"><label>課程名稱</label><input html+=`<div style="height:1px;background:var(--border);margin:12px 0"></div>`;
+html+=`<div class="form-group"><label>課程名稱</label><input id="qf-course-name" placeholder="例：高一化學第三單元（選填）"></div>`;
   html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" placeholder="其他說明、特殊需求…"></textarea></div>`;
   html+=`<div class="form-group">
     <label>附上照片（給管理員參考，選填）</label>
@@ -1402,8 +1403,8 @@ if(appliedTemplate&&appliedTemplate.note){
     try{
       await sb('POST','borrow_records',{body:recBody});
     }catch(err){
-      if(recBody.course_name&&/course_name|column|schema cache|PGRST/i.test(err.message||'')){
-        delete recBody.course_name;await sb('POST','borrow_records',{body:recBody});
+      if((recBody.course_name||recBody.attachment_base64)&&/column|schema cache|PGRST/i.test(err.message||'')){
+        delete recBody.course_name;delete recBody.attachment_base64;await sb('POST','borrow_records',{body:recBody});
       }else throw err;
     }
 
