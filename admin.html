@@ -426,7 +426,19 @@ async function loadAll(){
       status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
       depositStatus:r.deposit_status,note:r.note,courseName:r.course_name||'',damageNote:r.damage_note||'',finalRefund:r.final_refund
     }));
-    renderStats();
+    // ── 自動標記逾期 ──
+const today = new Date().toISOString().split('T')[0];
+const toMarkOverdue = allRecords.filter(r =>
+  r.status === '已核准' && r.returnDate && r.returnDate < today
+);
+if (toMarkOverdue.length) {
+  await Promise.all(toMarkOverdue.map(r =>
+    sb('PATCH', 'borrow_records', { filter: 'id=eq.' + r.id, body: { status: '逾期' }, prefer: 'return=minimal' })
+      .catch(() => {})
+  ));
+  toMarkOverdue.forEach(r => { r.status = '逾期'; });
+}
+renderStats();
     renderWithFilter('pending');renderWithFilter('approved');renderWithFilter('all');
     renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
     renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
