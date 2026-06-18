@@ -1286,49 +1286,19 @@ function showQuickFillModal(missing){
       <input id="qf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px"></div>`;
   if(missing.includes('borrowDate'))html+=`<div class="form-group"><label>借用日期 *</label><input type="date" id="qf-borrow-date"></div>`;
   if(missing.includes('returnDate'))html+=`<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="qf-return-date"></div>`;
-  // ── 新增：課程名稱、備註、照片 ──
-  html+=`<div class="form-group"><label>課程名稱</label><input html+=`<div style="height:1px;background:var(--border);margin:12px 0"></div>`;
-html+=`<div class="form-group"><label>課程名稱</label><input id="qf-course-name" placeholder="例：高一化學第三單元（選填）"></div>`;
-  html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" placeholder="其他說明、特殊需求…"></textarea></div>`;
-  html+=`<div class="form-group">
-    <label>附上照片（給管理員參考，選填）</label>
-    <input type="file" id="qf-photo" accept="image/*" onchange="previewQfPhoto(this)" style="font-size:13px;padding:6px 8px">
-    <div id="qf-photo-preview" style="margin-top:6px;display:none">
-      <img id="qf-photo-img" style="max-width:100%;max-height:180px;border-radius:8px;border:1px solid var(--border);object-fit:contain">
-      <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="clearQfPhoto()">✕ 移除照片</button>
-    </div>
-    <div class="hint">僅支援圖片格式，供管理員審核時參考</div>
-  </div>`;
   showModal('📋 補填借用人資料',html,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認並送出申請',cls:'btn-primary',fn:'confirmQuickFill()'}
   ]);
   const g=document.getElementById('qf-sid-group');if(g)g.style.display=currentRole==='學生'?'flex':'none';
   if(document.getElementById('qf-borrow-date'))document.getElementById('qf-borrow-date').value=document.getElementById('f-borrow-date').value;
-  // 帶入主表單現有備註
-  const existNote=document.getElementById('f-note').value.trim();
-  if(existNote&&document.getElementById('qf-note'))document.getElementById('qf-note').value=existNote;
-}
-function previewQfPhoto(input){
-  if(!input.files||!input.files[0])return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    document.getElementById('qf-photo-img').src=e.target.result;
-    document.getElementById('qf-photo-preview').style.display='block';
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-function clearQfPhoto(){
-  document.getElementById('qf-photo').value='';
-  document.getElementById('qf-photo-preview').style.display='none';
-  document.getElementById('qf-photo-img').src='';
 }
 function qfSetRole(role){
   currentRole=role;setRole(role);
   document.querySelectorAll('#modalBody .role-tab').forEach(t=>t.classList.toggle('active',t.textContent.includes(role)));
   const g=document.getElementById('qf-sid-group');if(g)g.style.display=role==='學生'?'flex':'none';
 }
-async function confirmQuickFill(){
+function confirmQuickFill(){
   if(document.getElementById('qf-name'))document.getElementById('f-name').value=document.getElementById('qf-name').value.trim();
   if(document.getElementById('qf-sid'))document.getElementById('f-student-id').value=document.getElementById('qf-sid').value.trim();
   if(document.getElementById('qf-purpose')){
@@ -1339,19 +1309,6 @@ async function confirmQuickFill(){
   }
   if(document.getElementById('qf-borrow-date'))document.getElementById('f-borrow-date').value=document.getElementById('qf-borrow-date').value;
   if(document.getElementById('qf-return-date'))document.getElementById('f-return-date').value=document.getElementById('qf-return-date').value;
-  // 課程名稱
-  const qfCourse=(document.getElementById('qf-course-name')?.value||'').trim();
-  if(qfCourse)window._qfCourseName=qfCourse;
-  // 備註
-  const qfNote=(document.getElementById('qf-note')?.value||'').trim();
-  if(qfNote)document.getElementById('f-note').value=qfNote;
-  // 照片 base64
-  const photoFile=document.getElementById('qf-photo')?.files?.[0];
-  if(photoFile){
-    window._qfPhotoBase64=await new Promise((res,rej)=>{
-      const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=()=>rej(new Error('讀取失敗'));r.readAsDataURL(photoFile);
-    });
-  }else{window._qfPhotoBase64=null;}
   closeModal();closeCart();submitRequest();
 }
 
@@ -1394,17 +1351,13 @@ if(appliedTemplate&&appliedTemplate.note){
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
     // [修改2] 把 supervisor 寫進 note（相容現有 schema，不需新增欄位）
     const noteWithSupervisor=supervisor?`[指導老師：${supervisor}]${note?' '+note:''}`:note;
-    // 課程名稱：模板優先，其次是快速補填帶入的值，再來是主表單（若你之後加上主表單課程名稱欄位）
-    const finalCourseName=(appliedTemplate?.rawName)||window._qfCourseName||'';
-    window._qfCourseName=null; // 用完清掉
     const recBody={id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note:noteWithSupervisor};
-    if(finalCourseName)recBody.course_name=finalCourseName;
-    if(window._qfPhotoBase64){recBody.attachment_base64=window._qfPhotoBase64;window._qfPhotoBase64=null;}
+    if(appliedTemplate&&appliedTemplate.rawName)recBody.course_name=appliedTemplate.rawName;
     try{
       await sb('POST','borrow_records',{body:recBody});
     }catch(err){
-      if((recBody.course_name||recBody.attachment_base64)&&/column|schema cache|PGRST/i.test(err.message||'')){
-        delete recBody.course_name;delete recBody.attachment_base64;await sb('POST','borrow_records',{body:recBody});
+      if(recBody.course_name&&/course_name|column|schema cache|PGRST/i.test(err.message||'')){
+        delete recBody.course_name;await sb('POST','borrow_records',{body:recBody});
       }else throw err;
     }
 
