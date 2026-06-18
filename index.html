@@ -406,16 +406,19 @@
   <div class="card" id="courseTemplateCard" style="display:none">
     <div class="card-title">📚 套用課程模板（老師專用）</div>
     <div class="info-box">選擇要上的課程，系統會自動把器材清單加入下方的購物車🛒，可再到購物車微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
-        <option value="">全部科別</option>
-        <option value="Physics">物理</option>
-        <option value="Chemistry">化學</option>
-        <option value="Biology">生物</option>
-        <option value="Geoscience">地科</option>
-        <option value="Physics Chemistry">理化</option>
-      </select>
-      <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
+   <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+  <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
+    <option value="">全部科別</option>
+    <option value="Physics">物理</option>
+    <option value="Chemistry">化學</option>
+    <option value="Biology">生物</option>
+    <option value="Geoscience">地科</option>
+    <option value="Physics Chemistry">理化</option>
+  </select>
+  <select id="tplFilterGrade" onchange="renderTemplatePicker()" style="flex:0 0 100px">
+    <option value="">全部年級</option>
+  </select>
+  <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
       <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
       <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
     </div>
