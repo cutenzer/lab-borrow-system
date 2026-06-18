@@ -1523,9 +1523,30 @@ function renderTemplatePicker(){
   const sel=document.getElementById('tplPickerSelect');
 
   // 動態填充年級選單（只在尚未填充時）
+  // 固定年級選單（只在尚未填充時）
   if(gradeEl&&gradeEl.options.length<=1){
-    const grades=[...new Set(allCourseTemplates.map(t=>(t.grade||'').trim()).filter(Boolean))].sort();
-    grades.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;gradeEl.appendChild(o);});
+    const gradeGroups=[
+      {label:'─── 高中 ───',options:[]},
+      {label:'高一',options:['高一']},
+      {label:'高二',options:['高二']},
+      {label:'高三',options:['高三']},
+      {label:'─── 國中 ───',options:[]},
+      {label:'國一',options:['國一']},
+      {label:'國二',options:['國二']},
+      {label:'國三',options:['國三']},
+    ];
+    gradeGroups.forEach(g=>{
+      if(!g.options.length){
+        const sep=document.createElement('option');
+        sep.disabled=true;sep.textContent=g.label;
+        gradeEl.appendChild(sep);
+      }else{
+        g.options.forEach(val=>{
+          const o=document.createElement('option');o.value=val;o.textContent=val;
+          gradeEl.appendChild(o);
+        });
+      }
+    });
   }
 
   let items=allCourseTemplates;
