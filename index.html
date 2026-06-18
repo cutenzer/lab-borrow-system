@@ -1513,10 +1513,21 @@ async function loadCourseTemplates(){
   try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();}catch(e){}
 }
 function renderTemplatePicker(){
-  const room=document.getElementById('tplFilterRoom').value,q=document.getElementById('tplFilterSearch').value.trim();
+  const room=document.getElementById('tplFilterRoom').value;
+  const q=document.getElementById('tplFilterSearch').value.trim();
+  const gradeEl=document.getElementById('tplFilterGrade');
+  const grade=gradeEl?gradeEl.value:'';
   const sel=document.getElementById('tplPickerSelect');
+
+  // 動態填充年級選單（只在尚未填充時）
+  if(gradeEl&&gradeEl.options.length<=1){
+    const grades=[...new Set(allCourseTemplates.map(t=>(t.grade||'').trim()).filter(Boolean))].sort();
+    grades.forEach(g=>{const o=document.createElement('option');o.value=g;o.textContent=g;gradeEl.appendChild(o);});
+  }
+
   let items=allCourseTemplates;
   if(room)items=items.filter(t=>t.default_room===room);
+  if(grade)items=items.filter(t=>(t.grade||'').trim()===grade);
   if(q)items=items.filter(t=>formatTemplateName(t).includes(q)||(t.name||'').includes(q)||(t.grade||'').includes(q));
   if(!items.length){sel.innerHTML='<option value="">（找不到符合的課程）</option>';return;}
   items=[...items].sort((a,b)=>formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant'));
