@@ -751,6 +751,7 @@ function setVenueRole(role){
   document.getElementById('vroleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('vroleTabTeacher').classList.toggle('active',role==='老師');
   document.getElementById('vStudentIdGroup').style.display=role==='學生'?'flex':'none';
+  document.getElementById('vSupervisorGroup').style.display=role==='學生'?'flex':'none';
   const sel=document.getElementById('vf-purpose');
   const cur=sel.value;
   const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
