@@ -370,17 +370,18 @@
       <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
       <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
       <div class="form-group">
-        <label>您的課程所屬實驗室</label>
-        <select id="f-home-lab" onchange="onHomeLabChange()">
-          <option value="">-- 不指定 --</option>
-          <option value="Chemistry">化學</option>
-          <option value="Biology">生物</option>
-          <option value="Geoscience">地科</option>
-          <option value="Physics Chemistry">理化</option>
-          <option value="Physics">物理</option>
-        </select>
-        <div class="hint">系統會優先顯示本科器材，庫存不足時才建議跨科借用</div>
-      </div>
+        <div class="form-group">
+  <label>您的教學科目</label>
+  <select id="f-home-lab" onchange="onHomeLabChange()">
+    <option value="">-- 不指定 --</option>
+    <option value="Chemistry">化學</option>
+    <option value="Biology">生物</option>
+    <option value="Geoscience">地科</option>
+    <option value="Physics Chemistry">理化</option>
+    <option value="Physics">物理</option>
+  </select>
+  <div class="hint">系統會優先顯示本科器材，庫存不足時才建議跨科借用</div>
+</div>
       <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
 
@@ -1246,6 +1247,12 @@ function onPurposeChange(){
 function onVenuePurposeChange(){const p=document.getElementById('vf-purpose').value;document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';}
 function onHomeLabChange(){
   userHomeLab=document.getElementById('f-home-lab').value;
+  // 同步課程模板科別篩選
+  const tplRoom=document.getElementById('tplFilterRoom');
+  if(tplRoom){
+    tplRoom.value=userHomeLab||'';
+    renderTemplatePicker();
+  }
   renderRoomTabs();
   if(userHomeLab&&allRooms.includes(userHomeLab)){currentRoom=userHomeLab;renderEquipList();}
 }
