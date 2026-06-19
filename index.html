@@ -357,20 +357,6 @@
         <div class="hint">課程、探究、選修以外的目的需繳保證金</div>
       </div>
       <div class="form-group">
-        <label>是否借用場地</label>
-        <select id="f-venue" onchange="onVenueSelectChange()">
-          <option value="">否</option>
-          <option value="化學實驗室">是（化學實驗室）</option>
-          <option value="理化實驗室">是（理化實驗室）</option>
-          <option value="物理實驗室">是（物理實驗室）</option>
-          <option value="生物實驗室">是（生物實驗室）</option>
-          <option value="地科實驗室">是（地科實驗室）</option>
-        </select>
-      </div>
-      <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
-      <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
-      <div class="form-group">
-        <div class="form-group">
   <label>您的教學科目</label>
   <select id="f-home-lab" onchange="onHomeLabChange()">
     <option value="">-- 不指定 --</option>
@@ -382,7 +368,20 @@
   </select>
   <div class="hint">系統會優先顯示本科器材，庫存不足時才建議跨科借用</div>
 </div>
-      <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
+<div class="form-group">
+  <label>是否借用場地</label>
+  <select id="f-venue" onchange="onVenueSelectChange()">
+    <option value="">否</option>
+    <option value="化學實驗室">是（化學實驗室）</option>
+    <option value="理化實驗室">是（理化實驗室）</option>
+    <option value="物理實驗室">是（物理實驗室）</option>
+    <option value="生物實驗室">是（生物實驗室）</option>
+    <option value="地科實驗室">是（地科實驗室）</option>
+  </select>
+</div>
+<div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
+<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
+<div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
     </div>
 
     <!-- [修改3] 老師選了場地後，展開「同步預約場地時段」區塊 -->
@@ -403,7 +402,6 @@
       </div>
     </div>
   </div>
-
   <div class="card" id="courseTemplateCard" style="display:none">
     <div class="card-title">📚 套用課程模板（老師專用）</div>
     <div class="info-box">選擇要上的課程，系統會自動把器材清單加入下方的購物車🛒，可再到購物車微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
