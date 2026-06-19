@@ -342,7 +342,6 @@
       <div class="form-group" id="supervisorGroup">
         <label>指導老師</label>
         <input type="text" id="f-supervisor" placeholder="輸入指導老師姓名（選填）">
-        <div class="hint">由老師帶隊使用時填寫，便於管理員確認</div>
       </div>
       <div class="form-group">
         <label>借用目的 *</label>
@@ -356,7 +355,7 @@
         <input type="text" id="f-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
         <div class="hint">課程、探究、選修以外的目的需繳保證金</div>
       </div>
-      <div class="form-group">
+      <div class="form-group" id="homeLabGroup" style="display:none">
   <label>您的教學科目</label>
   <select id="f-home-lab" onchange="onHomeLabChange()">
     <option value="">-- 不指定 --</option>
@@ -466,6 +465,11 @@
           <option value="其他">其他（自填）</option>
         </select>
         <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
+      </div>
+      <div class="form-group full" id="vSupervisorGroup">
+        <label>指導老師／陪同老師</label>
+        <input type="text" id="vf-supervisor" placeholder="輸入陪同老師姓名">
+        <div class="hint">⚠️ 無老師陪同不得使用實驗室 ⚠️ </div>
       </div>
       <div class="form-group full"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
     </div>
@@ -733,14 +737,13 @@ function setRole(role){
   currentRole=role;
   document.getElementById('roleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('roleTabTeacher').classList.toggle('active',role==='老師');
-  // [修改2] 學生顯示學號+指導老師，老師隱藏學號+指導老師
   document.getElementById('studentIdGroup').style.display=role==='學生'?'flex':'none';
   document.getElementById('supervisorGroup').style.display=role==='學生'?'flex':'none';
+  document.getElementById('homeLabGroup').style.display=role==='老師'?'flex':'none';
   setPurposeOptions(role);
   const tplCard=document.getElementById('courseTemplateCard');
   if(tplCard)tplCard.style.display=role==='老師'?'block':'none';
   if(role!=='老師'&&appliedTemplate)clearAppliedTemplate(true);
-  // [修改3] 老師才可能用同步場地，切換身份時重置
   onVenueSelectChange();
 }
 function setVenueRole(role){
@@ -860,11 +863,13 @@ function getNextDates(days){
 async function submitVenueRequest(){
   const name=document.getElementById('vf-name').value.trim();
   const studentId=currentVenueRole==='學生'?document.getElementById('vf-student-id').value.trim():'';
+  const supervisor=currentVenueRole==='學生'?(document.getElementById('vf-supervisor').value.trim()||''):'';
   let purpose=document.getElementById('vf-purpose').value;
   if(purpose==='其他'){const other=document.getElementById('vf-purpose-other').value.trim();if(!other){showToast('請填寫其他目的','error');return;}purpose=other;}
   const note=document.getElementById('vf-note').value.trim();
   if(!name){showToast('請填寫姓名','error');return;}
   if(currentVenueRole==='學生'&&!studentId){showToast('請填寫學號','error');return;}
+  if(currentVenueRole==='學生'&&!supervisor){showToast('請填寫指導老師／陪同老師姓名','error');return;}
   if(!periodRows.length){showToast('請新增至少一個時段','error');return;}
   const periods=periodRows.map(id=>({
     date:document.getElementById('pr-date-'+id).value,
@@ -883,7 +888,8 @@ async function submitVenueRequest(){
   }catch(e){}
   try{
     const id='VEN-'+Date.now();
-    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note}});
+    const noteWithSupervisor=supervisor?`[陪同老師：${supervisor}]${note?' '+note:''}`:note;
+    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note:noteWithSupervisor}});
     showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     resetVenueForm();loadVenue();
   }catch(e){showToast('申請失敗：'+e.message,'error');}
@@ -891,6 +897,7 @@ async function submitVenueRequest(){
 function resetVenueForm(){
   document.getElementById('vf-name').value='';
   document.getElementById('vf-student-id').value='';
+  document.getElementById('vf-supervisor').value='';
   document.getElementById('vf-note').value='';
   periodRows=[];addPeriodRow();
 }
@@ -1071,7 +1078,7 @@ function doBorrowSearch(q){
     box.innerHTML='<div class="search-dropdown">'+filtered.map(e=>{
       const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
       const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
-      const imgHtml=e.image_url?`<img class="sr-thumb" src="${e.image_url}" loading="lazy" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
+      const imgHtml=e.image_url?`<img class="sr-thumb" src="${e.image_url}" loading="lazy" style="cursor:pointer" onclick="openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
       const borrowerInfo=getBorrowerInfo(e.name,e.room);
       return `<div class="search-result-item">
         ${imgHtml}
