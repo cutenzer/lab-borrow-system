@@ -424,7 +424,8 @@ async function loadAll(){
       role:r.role,purpose:r.purpose,items:r.items||[],
       borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,
       status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
-      depositStatus:r.deposit_status,note:r.note,courseName:r.course_name||'',damageNote:r.damage_note||'',finalRefund:r.final_refund
+      depositStatus:r.deposit_status,note:r.note,courseName:r.course_name||'',damageNote:r.damage_note||'',finalRefund:r.final_refund,
+      photos:Array.isArray(r.photos)?r.photos:[]
     }));
     // ── 自動標記逾期 ──
 const today = new Date().toISOString().split('T')[0];
@@ -505,6 +506,8 @@ function renderRecord(r,mode){
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
   const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${i.name}</span><span class="item-room">${rn(i.room)}</span><span class="item-qty">× ${i.quantity} ${i.unit||''}</span></div>`).join('')}</div>`:'';
+  const photos=Array.isArray(r.photos)?r.photos:[];
+  const photosHtml=photos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${photos.map(u=>`<img src="${u}" loading="lazy" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${u}','_blank')">`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${r.damageNote}${r.finalRefund!=null?' | 退還：NT$'+r.finalRefund:''}</div>`:'';
   let actions='';
   if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
@@ -532,7 +535,7 @@ function renderRecord(r,mode){
       ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${r.actualReturn}</span></div>`:''}
       ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount} / ${r.depositStatus}</span></div>`:''}
     </div>
-    ${itemListHtml}${damageHtml}
+    ${itemListHtml}${photosHtml}${damageHtml}
     ${(()=>{
       if(!r.note)return '';
       const courseMatch=r.note.match(/\[COURSE_NOTE\]([\s\S]*?)\[\/COURSE_NOTE\]/);
