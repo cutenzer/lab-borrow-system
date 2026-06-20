@@ -381,6 +381,12 @@
 <div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
 <div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
 <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
+<div class="form-group full">
+  <label>📷 上傳照片（選填，最多3張） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+  <input type="file" id="f-photos" accept="image/*" multiple onchange="addPhotos(this.files);this.value=''">
+  <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB；用購物車快速送出時也會帶著走</div>
+  <div id="f-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
+</div>
     </div>
 
     <!-- [修改3] 老師選了場地後，展開「同步預約場地時段」區塊 -->
@@ -706,7 +712,7 @@ let userHomeLab='';
 // [修改3] 同步場地預約的時段列表
 let inlinePeriodRows=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();loadCourseTemplates();});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
@@ -1102,6 +1108,69 @@ function getBorrowerInfo(name,room){
   return active.map(r=>`<div class="borrower-tag">📌 ${r.borrower_name} 借用中</div>`).join('');
 }
 
+// ── 照片上傳（備註用，主表單與購物車快速送出共用）──────────
+let pendingPhotos=[]; // {file:File, url:string}
+const MAX_PHOTOS=3;
+function addPhotos(fileList){
+  if(!fileList||!fileList.length)return;
+  const arr=Array.from(fileList);
+  let skipped=0,overLimit=false;
+  for(const f of arr){
+    if(pendingPhotos.length>=MAX_PHOTOS){overLimit=true;break;}
+    if(!f.type||!f.type.startsWith('image/')){skipped++;continue;}
+    if(f.size>5*1024*1024){skipped++;continue;}
+    pendingPhotos.push({file:f,url:URL.createObjectURL(f)});
+  }
+  if(skipped)showToast(`有 ${skipped} 張照片格式或大小不符（限圖片、單張5MB內），已略過`,'error');
+  if(overLimit)showToast(`最多只能上傳 ${MAX_PHOTOS} 張照片`,'error');
+  renderPhotoPreviews();
+}
+function removePendingPhoto(idx){
+  const p=pendingPhotos[idx];
+  if(p)URL.revokeObjectURL(p.url);
+  pendingPhotos.splice(idx,1);
+  renderPhotoPreviews();
+}
+function clearPendingPhotos(){
+  pendingPhotos.forEach(p=>URL.revokeObjectURL(p.url));
+  pendingPhotos=[];
+  renderPhotoPreviews();
+  ['f-photos','qf-photos'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+function renderPhotoPreviews(){
+  const html=pendingPhotos.length?pendingPhotos.map((p,i)=>`
+    <div style="position:relative;width:56px;height:56px">
+      <img src="${p.url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">
+      <button type="button" onclick="removePendingPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer">✕</button>
+    </div>`).join(''):'<div style="font-size:11.5px;color:var(--text2)">尚未選擇照片</div>';
+  ['f-photos-preview','qf-photos-preview'].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.innerHTML=html;
+  });
+  const countText=pendingPhotos.length?`已選 ${pendingPhotos.length}/${MAX_PHOTOS} 張`:'';
+  ['f-photos-count','qf-photos-count'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=countText;});
+}
+async function uploadPendingPhotos(reqId){
+  if(!pendingPhotos.length)return [];
+  const urls=[];
+  for(let i=0;i<pendingPhotos.length;i++){
+    const file=pendingPhotos[i].file;
+    const extRaw=(file.name||'').split('.').pop()||'jpg';
+    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path=`${reqId}/${Date.now()}_${i}.${ext}`;
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},
+      body:file
+    });
+    if(!res.ok){
+      const t=await res.text().catch(()=>'');
+      throw new Error(t||res.statusText||'照片上傳失敗');
+    }
+    urls.push(`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`);
+  }
+  return urls;
+}
+
 // ── 購物車 ────────────────────────────────────────────────
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');document.getElementById('cartOverlay').classList.remove('show');}
@@ -1281,6 +1350,7 @@ function cartSubmit(){
   if(!missing.length){closeCart();submitRequest();return;}
   showQuickFillModal(missing);
 }
+function escHtmlAttr(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function showQuickFillModal(missing){
   let html='<p style="font-size:13px;color:var(--text2);margin-bottom:10px">請補齊以下資料即可送出申請：</p>';
   html+=`<div class="form-group"><label>身份</label>
@@ -1299,12 +1369,21 @@ function showQuickFillModal(missing){
       <input id="qf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px"></div>`;
   if(missing.includes('borrowDate'))html+=`<div class="form-group"><label>借用日期 *</label><input type="date" id="qf-borrow-date"></div>`;
   if(missing.includes('returnDate'))html+=`<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="qf-return-date"></div>`;
+  // 備註與照片：固定顯示，不論其他欄位是否缺漏
+  html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" placeholder="其他說明、特殊需求…">${escHtmlAttr(document.getElementById('f-note').value)}</textarea></div>`;
+  html+=`<div class="form-group">
+    <label>📷 上傳照片（選填，最多${MAX_PHOTOS}張） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+    <input type="file" id="qf-photos" accept="image/*" multiple onchange="addPhotos(this.files);this.value=''">
+    <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB</div>
+    <div id="qf-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
+  </div>`;
   showModal('📋 補填借用人資料',html,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認並送出申請',cls:'btn-primary',fn:'confirmQuickFill()'}
   ]);
   const g=document.getElementById('qf-sid-group');if(g)g.style.display=currentRole==='學生'?'flex':'none';
   if(document.getElementById('qf-borrow-date'))document.getElementById('qf-borrow-date').value=document.getElementById('f-borrow-date').value;
+  renderPhotoPreviews();
 }
 function qfSetRole(role){
   currentRole=role;setRole(role);
@@ -1322,6 +1401,7 @@ function confirmQuickFill(){
   }
   if(document.getElementById('qf-borrow-date'))document.getElementById('f-borrow-date').value=document.getElementById('qf-borrow-date').value;
   if(document.getElementById('qf-return-date'))document.getElementById('f-return-date').value=document.getElementById('qf-return-date').value;
+  if(document.getElementById('qf-note'))document.getElementById('f-note').value=document.getElementById('qf-note').value.trim();
   closeModal();closeCart();submitRequest();
 }
 
@@ -1364,13 +1444,27 @@ if(appliedTemplate&&appliedTemplate.note){
     if(purpose!=='課程'){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
     // [修改2] 把 supervisor 寫進 note（相容現有 schema，不需新增欄位）
     const noteWithSupervisor=supervisor?`[指導老師：${supervisor}]${note?' '+note:''}`:note;
+
+    // 照片：先上傳到 Supabase Storage（borrow-photos bucket），失敗不阻擋申請送出
+    let photoUrls=[];
+    try{
+      photoUrls=await uploadPendingPhotos(id);
+    }catch(photoErr){
+      console.warn('照片上傳失敗（借用申請仍會送出）：',photoErr.message);
+      showToast('照片上傳失敗，已略過照片但申請仍會送出','error');
+      photoUrls=[];
+    }
+
     const recBody={id,borrower_name:name,student_id:studentId||null,role:currentRole,purpose,items,borrow_date:borrowDate,return_date:returnDate,status:'待審核',deposit_type:dt,deposit_amount:da,deposit_status:da>0?'待繳納':'不需要',note:noteWithSupervisor};
     if(appliedTemplate&&appliedTemplate.rawName)recBody.course_name=appliedTemplate.rawName;
+    if(photoUrls.length)recBody.photos=photoUrls;
     try{
       await sb('POST','borrow_records',{body:recBody});
     }catch(err){
-      if(recBody.course_name&&/course_name|column|schema cache|PGRST/i.test(err.message||'')){
-        delete recBody.course_name;await sb('POST','borrow_records',{body:recBody});
+      const msg=err.message||'';
+      if((recBody.course_name||recBody.photos)&&/column|schema cache|PGRST/i.test(msg)){
+        delete recBody.course_name;delete recBody.photos;
+        await sb('POST','borrow_records',{body:recBody});
       }else throw err;
     }
 
@@ -1400,6 +1494,7 @@ function resetForm(){
   document.getElementById('depositBanner').classList.remove('show');
   selectedItems={};renderEquipList();updateCartBadge();setMinDates();
   clearAppliedTemplate();
+  clearPendingPhotos();
   // [修改3] 重置同步場地
   document.getElementById('inlineVenueBlock').style.display='none';
   document.getElementById('inlineVenueEnabled').checked=false;
@@ -1439,6 +1534,8 @@ function renderRecordListHTML(rows){
   return '<div class="record-list">'+rows.map(r=>{
     const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
     const items=Array.isArray(r.items)?r.items:[];
+    const photos=Array.isArray(r.photos)?r.photos:[];
+    const photosHtml=photos.length?`<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">${photos.map(u=>`<img src="${u}" loading="lazy" style="width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="openLightbox('${u}','借用照片')">`).join('')}</div>`:'';
     return `<div class="record-card">
       <div class="record-header"><div><span class="record-id">${r.id}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.borrower_name}</div><div style="font-size:12px;color:var(--text2)">${r.role||''} ${r.student_id?'・ '+r.student_id:''}</div></div><span class="badge ${sc}">${r.status}</span></div>
       <div class="record-meta">
@@ -1449,6 +1546,7 @@ function renderRecordListHTML(rows){
       </div>
       <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${rn(i.room)} ${i.name} × ${i.quantity}${i.unit||''}`).join('<br>')}</div>
       ${r.note?`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${r.note}</div>`:''}
+      ${photosHtml}
     </div>`;
   }).join('')+'</div>';
 }
