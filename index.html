@@ -1839,7 +1839,7 @@ function addChemToCart(id){
   selectedItems['CHEM__'+c.id]={room:'chemicals',name:c.name_zh,spec:desc,unit,quantity,note,_isChem:true};
   updateCartBadge();calcDeposit();closeModal();showToast(`已加入：${c.name_zh}　${desc}`,'success');openCart();
 }
-</script>
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').catch(err => {
