@@ -322,6 +322,7 @@
   <button class="active" onclick="showPage('borrow')">器材借用</button>
   <button onclick="showPage('venue')">場地預約</button>
   <button onclick="showPage('equipment')">器材查詢</button>
+  <button onclick="showPage('floorplan')">平面圖</button>
   <button onclick="showPage('chemicals')">藥品查詢</button>
   <button onclick="showPage('myrecords')">我的記錄</button>
   </nav>
@@ -568,6 +569,29 @@
     <div id="chemList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
 </div>
+
+  <!-- 平面圖 -->
+<div id="page-floorplan" class="page">
+  <div class="card">
+    <div class="card-title">🏫 實驗室平面圖</div>
+    <div class="info-box">點選實驗室切換平面圖，點圖片可放大檢視櫃位位置。</div>
+    <div class="room-tabs" id="floorplanTabs">
+      <div class="room-tab active" onclick="showFloorplan('bio', this)">🧬 生物</div>
+      <div class="room-tab" onclick="showFloorplan('chem', this)">⚗️ 化學</div>
+      <div class="room-tab" onclick="showFloorplan('geo', this)">🌍 地科</div>
+      <div class="room-tab" onclick="showFloorplan('pc', this)">🔭 理化</div>
+      <div class="room-tab" onclick="showFloorplan('phy', this)">⚡ 物理</div>
+      <div class="room-tab" onclick="showFloorplan('tmt', this)">📦 教具室</div>
+    </div>
+    <div style="text-align:center;margin-top:10px">
+      <img id="floorplanImg" src="./floorplans/bio.jpg" alt="實驗室平面圖"
+           style="max-width:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
+           onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
+    </div>
+    <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「器材查詢」頁的「❓ 找物說明」</div>
+  </div>
+</div>
+  
 </main>
 
 <!-- 底部導覽列（手機顯示） -->
@@ -575,6 +599,7 @@
   <button class="bn-item active" data-page="borrow" onclick="showPage('borrow')"><span>🔬</span>借用</button>
   <button class="bn-item" data-page="venue" onclick="showPage('venue')"><span>🏛️</span>場地</button>
   <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查詢</button>
+  <button class="bn-item" data-page="floorplan" onclick="showPage('floorplan')"><span>🏫</span>平面圖</button>
   <button class="bn-item" data-page="chemicals" onclick="showPage('chemicals')"><span>🧪</span>藥品</button>
   <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
 </nav>
@@ -699,6 +724,19 @@ function showLocationGuide(){
   `,[{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
 }
 
+  // ── 平面圖切換 ──
+const floorplanNames = {
+  bio:'生物實驗室', chem:'化學實驗室', geo:'地科實驗室',
+  pc:'理化實驗室', phy:'物理實驗室', tmt:'教具室'
+};
+let currentFloorplan = 'bio';
+function showFloorplan(key, el){
+  currentFloorplan = key;
+  document.getElementById('floorplanImg').src = './floorplans/' + key + '.jpg';
+  document.querySelectorAll('#floorplanTabs .room-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+  
 async function sb(method,table,opts={}){
   let url=SUPABASE_URL+'/rest/v1/'+table;
   const p=[];
