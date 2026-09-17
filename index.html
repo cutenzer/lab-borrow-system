@@ -203,6 +203,11 @@
   .venue-booking.st-rejected{opacity:0.5;text-decoration:line-through;outline:1px solid #dc2626;outline-offset:-1px;}
   .cat-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
   .cat-legend-item{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:20px;}
+  .venue-table th.holiday-col{background:#fbcfe8!important;color:#831843!important;}
+  .venue-table td.holiday-col{background:#fdf2f8;}
+  .venue-table tr.band-shade td.holiday-col{background:#fce7f3;}
+  .holiday-tag{font-size:9px;font-weight:700;display:block;}
+  .holiday-legend-note{font-size:11.5px;color:#831843;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:20px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px;}
   .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);}
   /* 場地全螢幕檢視 */
@@ -720,7 +725,7 @@ function venueLabel(b){
 }
 function renderCatLegend(){
   const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
-  const html=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('');
+  const html=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span>';
   const el1=document.getElementById('catLegendFront');if(el1)el1.innerHTML=html;
   const el2=document.getElementById('vfsLegend');if(el2)el2.innerHTML=html+'　・ 點擊空白處可關閉';
 }
@@ -1077,7 +1082,23 @@ function getSemesterWeeks(semester){
   });
   weeks.sort((a,b)=>a.week-b.week);return weeks;
 }
-function weekBadgeText(info){if(!info)return '';return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;}
+function examLabelForWeek(week){
+  if(!activeSemester||!Array.isArray(activeSemester.exam_weeks))return '';
+  const found=activeSemester.exam_weeks.find(e=>e.week===week);
+  return found?found.label:'';
+}
+function weekDisplayLabel(w){
+  let label=`第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}`;
+  const exam=examLabelForWeek(w.week);
+  if(exam)label+=`〔${exam}〕`;
+  return label;
+}
+function weekBadgeText(info){
+  if(!info)return '';
+  const base=info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
+  const exam=examLabelForWeek(info.week);
+  return exam?`${base}〔${exam}〕`:base;
+}
 function buildWeekSelector(){
   const sel=document.getElementById('weekJump'),wrap=document.getElementById('weekSelector');
   if(!activeSemester){wrap.style.display='none';return;}
@@ -1088,8 +1109,7 @@ function buildWeekSelector(){
     const monday=new Date(w.date);monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
     const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
     const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
-    const label=w.type!=='開學週期'?`（${w.label}）`:'';
-    return `<option value="${w.week}">第${w.week}週${label}　${fmt(monday)}～${fmt(sunday)}</option>`;
+    return `<option value="${w.week}">${weekDisplayLabel(w)}　${fmt(monday)}～${fmt(sunday)}</option>`;
   }).join('');
 }
 function jumpToWeek(week){
@@ -1102,9 +1122,20 @@ function jumpToWeek(week){
   venueWeekOffset=Math.round((targetMonday-thisMonday)/(1000*60*60*24*7));
   loadVenue();
 }
+let allHolidaysFront=[];
+async function loadHolidaysFront(){
+  try{
+    const rows=await sb('GET','holidays',{order:'start_date'});
+    allHolidaysFront=Array.isArray(rows)?rows:[];
+  }catch(e){allHolidaysFront=[];}
+}
+function holidayForDate(dateStr){
+  return allHolidaysFront.find(h=>dateStr>=h.start_date&&dateStr<=h.end_date);
+}
 async function loadVenue(){
   if(!activeSemester)await loadActiveSemester();
   if(!allTeachersFront.length)await loadTeachersFront();
+  if(!allHolidaysFront.length)await loadHolidaysFront();
   const dates=getWeekDates(venueWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
   const weekInfo=getWeekInfo(dates[0],activeSemester);
@@ -1136,7 +1167,10 @@ function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
   const LABS=['生物','化學','理化','物理','地科'];
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
-  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>`<th>週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span></th>`).join('')}</tr></thead><tbody>`;
+  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>{
+    const holiday=holidayForDate(fmtDate(d));
+    return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
+  }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
     LABS.forEach((lab,li)=>{
@@ -1145,8 +1179,9 @@ function renderVenueTable(dates){
       html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
         const dateStr=fmtDate(date),venueFull=labFull[lab];
+        const isHoliday=!!holidayForDate(dateStr);
         const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
-        html+=`<td class="vcell">`;
+        html+=`<td class="vcell ${isHoliday?'holiday-col':''}">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
