@@ -88,10 +88,23 @@
   .venue-table .lab-生物{color:#15803d;}.venue-table .lab-化學{color:#b45309;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#1d4ed8;}.venue-table .lab-地科{color:#0e7490;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;cursor:pointer;text-align:center;}
-  .venue-booking.approved{background:#d1fae5;color:#065f46;}
-  .venue-booking.pending{background:#fef3c7;color:#92400e;}
-  .venue-booking.fixed{background:#e0e7ff;color:#3730a3;}
-  .venue-booking.rejected{background:#fee2e2;color:#991b1b;text-decoration:line-through;}
+  /* 類別配色（依科目／目的），狀態改用邊框樣式表示 */
+  .venue-booking.cat-bio{background:#dcfce7;color:#15803d;}
+  .venue-booking.cat-chem{background:#fef3c7;color:#b45309;}
+  .venue-booking.cat-phys{background:#dbeafe;color:#1d4ed8;}
+  .venue-booking.cat-pc{background:#ede9fe;color:#6d28d9;}
+  .venue-booking.cat-geo{background:#cffafe;color:#0e7490;}
+  .venue-booking.cat-inquiry{background:#fce7f3;color:#be185d;}
+  .venue-booking.cat-elective{background:#e0e7ff;color:#4338ca;}
+  .venue-booking.cat-elite{background:#ffedd5;color:#c2410c;}
+  .venue-booking.cat-club{background:#ccfbf1;color:#0f766e;}
+  .venue-booking.cat-other{background:#f1f5f9;color:#475569;}
+  .venue-booking.cat-default{background:#e2e8f0;color:#334155;}
+  .venue-booking.st-pending{outline:2px dashed #d97706;outline-offset:-2px;}
+  .venue-booking.st-approved{outline:1px solid rgba(0,0,0,0.06);}
+  .venue-booking.st-rejected{opacity:0.5;text-decoration:line-through;outline:1px solid #dc2626;outline-offset:-1px;}
+  .cat-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .cat-legend-item{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:20px;}
   .venue-add-admin{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:2px;font-size:10.5px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-admin:hover{border-color:var(--accent);color:var(--accent);}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
@@ -122,6 +135,7 @@
   .period-setting-row .ps-weeklabel{font-size:12px;color:var(--text2);white-space:nowrap;}
   .period-setting-row .ps-weekstart{max-width:64px;flex:0 0 64px;}
   .period-setting-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
+  .teacher-chip{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:20px;padding:4px 6px 4px 12px;background:var(--surface);}
   @media(max-width:600px){.tab{padding:7px 9px;font-size:12px;}}
 </style>
 </head>
@@ -154,6 +168,7 @@
   <button class="tab" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
   <button class="tab" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
   <button class="tab" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
+  <button class="tab" onclick="showTab('teachers')">👩‍🏫 教師管理</button>
   <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
   <button class="tab" onclick="showTab('templates')">📚 課程模板</button>
   <button class="tab" onclick="showTab('chemicals')">🧪 藥品管理</button>
@@ -186,6 +201,7 @@
   </div>
   <div class="card" style="margin-bottom:0">
     <div class="card-title">🏛️ 場地週曆</div>
+    <div class="cat-legend" id="catLegend"></div>
     <div class="week-selector" id="adminWeekSelector" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
       <select id="adminWeekJump" onchange="adminJumpToWeek(this.value)" style="min-width:110px"></select>
@@ -198,6 +214,33 @@
       <button class="btn btn-primary btn-sm" onclick="goAdminThisWeek()">本週</button>
     </div>
     <div class="venue-table-wrap"><table class="venue-table" id="adminVenueTable"></table></div>
+  </div>
+</div>
+
+<div id="panel-teachers" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">👩‍🏫 新增 / 編輯教師科目</div>
+    <div class="info-box">在這裡登記每位老師固定教授的科目，之後在「場地管理」新增課程時，只要輸入老師姓名，系統就會自動依此判斷顏色分類（生物/化學/物理/地科/理化）。若某筆場地預約需要不同分類，也可以在該筆記錄上手動指定科目或探究/選修/菁英/社團/其他。</div>
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
+      <div class="form-group"><label>老師姓名 *</label><input type="text" id="teacher-name" placeholder="例如：戴德禮"></div>
+      <div class="form-group"><label>科目 *</label>
+        <select id="teacher-subject">
+          <option value="生物">生物</option>
+          <option value="化學">化學</option>
+          <option value="物理">物理</option>
+          <option value="地科">地科</option>
+          <option value="理化">理化</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="clearTeacherForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveTeacher()">💾 儲存</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📋 已登記的教師</div>
+    <div id="teacherList"><div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div></div>
   </div>
 </div>
 
@@ -444,6 +487,7 @@ renderStats();
     renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
     renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
     renderPurposeTabs('pending');renderPurposeTabs('approved');renderPurposeTabs('all');
+    if(!allTeachers.length){try{await loadTeachers();}catch(e){}}
     renderVenuePending();loadAdminVenue();
   }catch(e){showToast('載入失敗：'+e.message,'error');}
 }
@@ -486,10 +530,11 @@ function renderWithFilter(panel){
 }
 
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','semester','templates','all'][i]===tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','teachers','semester','templates','chemicals','all'][i]===tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
+  if(tab==='teachers')loadTeachers();
   if(tab==='semester')loadSemesters();
   if(tab==='templates')loadTemplates();
   if(tab==='chemicals')loadAdminChems();
@@ -570,6 +615,110 @@ function renderRecord(r,mode){
   </div>`;
 }
 
+// ── 教師科目管理 ──────────────────────────────────────────
+const TEACHER_SUBJECTS=['生物','化學','物理','地科','理化'];
+let allTeachers=[],editingTeacherId=null;
+
+async function loadTeachers(){
+  const list=document.getElementById('teacherList');
+  if(!list)return;
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    allTeachers=await sb('GET','teachers',{order:'subject,name'});
+    allTeachers=Array.isArray(allTeachers)?allTeachers:[];
+    renderTeacherList();
+    renderCatLegend();
+  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 teachers 資料表（欄位：id, name, subject）</p></div>';}
+}
+function renderTeacherList(){
+  const list=document.getElementById('teacherList');if(!list)return;
+  if(!allTeachers.length){list.innerHTML='<div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div>';return;}
+  const bySubject={};
+  TEACHER_SUBJECTS.forEach(s=>bySubject[s]=[]);
+  allTeachers.forEach(t=>{(bySubject[t.subject]=bySubject[t.subject]||[]).push(t);});
+  list.innerHTML=TEACHER_SUBJECTS.map(subj=>{
+    const teachers=bySubject[subj]||[];
+    if(!teachers.length)return '';
+    return `<div style="margin-bottom:14px">
+      <div class="cat-legend-item ${categoryClass(subj)}" style="margin-bottom:6px;font-weight:700">${subj}（${teachers.length}位）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${teachers.map(t=>`<div class="teacher-chip">
+          <span style="font-size:13px;font-weight:600">${t.name}</span>
+          <button class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="editTeacher('${t.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="deleteTeacher('${t.id}')">✕</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function renderCatLegend(){
+  const el=document.getElementById('catLegend');if(!el)return;
+  const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
+  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('');
+}
+function clearTeacherForm(){
+  editingTeacherId=null;
+  document.getElementById('teacher-name').value='';
+  document.getElementById('teacher-subject').value='生物';
+}
+function editTeacher(id){
+  const t=allTeachers.find(x=>x.id===id);if(!t)return;
+  editingTeacherId=id;
+  document.getElementById('teacher-name').value=t.name||'';
+  document.getElementById('teacher-subject').value=t.subject||'生物';
+  document.getElementById('teacher-name').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveTeacher(){
+  const name=document.getElementById('teacher-name').value.trim();
+  const subject=document.getElementById('teacher-subject').value;
+  if(!name){showToast('請填寫老師姓名','error');return;}
+  try{
+    if(editingTeacherId){
+      await sb('PATCH','teachers',{filter:'id=eq.'+editingTeacherId,body:{name,subject},prefer:'return=minimal'});
+      showToast('已更新','success');
+    }else{
+      const dup=allTeachers.find(t=>t.name===name);
+      if(dup){showToast('已有相同姓名的老師，如需修改科目請直接編輯','error');return;}
+      await sb('POST','teachers',{body:{id:'TCH-'+Date.now(),name,subject},prefer:'return=minimal'});
+      showToast('已新增','success');
+    }
+    clearTeacherForm();loadTeachers();loadAdminVenue();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+function deleteTeacher(id){
+  showModal('確認刪除',`<p>確定刪除這位老師的科目設定嗎？（不會刪除他過去的場地預約記錄）</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteTeacher('${id}')`}
+  ]);
+}
+async function doDeleteTeacher(id){
+  closeModal();
+  try{await sb('DELETE','teachers',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadTeachers();loadAdminVenue();}
+  catch(e){showToast('刪除失敗','error');}
+}
+
+// ── 場地類別（科目／目的）配色 ────────────────────────────
+const DIRECT_PURPOSE_CATS=['探究','選修','菁英','社團','其他'];
+const CATEGORY_CLASS_MAP={'生物':'cat-bio','化學':'cat-chem','物理':'cat-phys','理化':'cat-pc','地科':'cat-geo','探究':'cat-inquiry','選修':'cat-elective','菁英':'cat-elite','社團':'cat-club','其他':'cat-other'};
+function categoryClass(cat){return CATEGORY_CLASS_MAP[cat]||'cat-default';}
+function resolveCategory(b){
+  const purpose=b.purpose;
+  if(DIRECT_PURPOSE_CATS.includes(purpose))return purpose;
+  if(b.subject)return b.subject;
+  if(purpose==='課程'){
+    const t=allTeachers.find(t=>t.name===b.borrower_name);
+    if(t&&t.subject)return t.subject;
+  }
+  return '';
+}
+function venueLabel(b){
+  const grade=(b.grade||'').trim();
+  const who=(b.role==='學生'&&b.student_id)?b.student_id:b.borrower_name;
+  if(grade)return `${grade}-${who}`;
+  const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團','選修':'選修','菁英':'菁英'}[b.purpose]||b.purpose||'';
+  return `${purposeShort}-${who}`;
+}
+
 // ── 場地管理 ──────────────────────────────────────────────
 function renderVenuePending(){
   const list=document.getElementById('venuePendingList');
@@ -582,7 +731,7 @@ function renderVenuePending(){
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
           <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${b.id}</span>
-          <div style="font-size:14px;font-weight:700;margin-top:2px">${b.borrower_name} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${b.purpose}】</span></div>
+          <div style="font-size:14px;font-weight:700;margin-top:2px">${b.borrower_name} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${b.grade?b.grade+'・':''}${b.purpose}】</span></div>
           <div style="font-size:12px;color:var(--text2)">${b.role||'學生'}${b.student_id?' ・ '+b.student_id:''}</div>
         </div>
         <span class="badge badge-pending">待審核 ${pendingCount} 筆</span>
@@ -776,6 +925,7 @@ async function loadAdminVenue(){
     document.getElementById('adminVenueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
     if(badge)badge.style.display='none';
   }
+  renderCatLegend();
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     const expanded=[];
@@ -940,12 +1090,6 @@ async function doDeleteSemester(id){
   catch(e){showToast('刪除失敗','error');}
 }
 
-function venueLabel(b){
-  const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團'}[b.purpose]||b.purpose||'';
-  const who=(b.role==='學生'&&b.student_id)?b.student_id:b.borrower_name;
-  return `${purposeShort}-${who}`;
-}
-
 function renderAdminVenueTable(dates,expanded){
   const table=document.getElementById('adminVenueTable');
   const LABS=['生物','化學','理化','物理','地科'];
@@ -963,8 +1107,10 @@ function renderAdminVenueTable(dates,expanded){
         const cellBookings=expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
         html+=`<td class="vcell">`;
         cellBookings.forEach(b=>{
-          const cls=b.is_fixed?'fixed':b.periodStatus==='已核准'?'approved':b.periodStatus==='已拒絕'?'rejected':'pending';
-          html+=`<div class="venue-booking ${cls}" onclick="clickAdminBooking('${b.id}','${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
+          const cat=resolveCategory(b);
+          const catCls=categoryClass(cat);
+          const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
+          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="clickAdminBooking('${b.id}','${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${venueFull}')">＋</button>`;
         html+=`</td>`;
@@ -982,7 +1128,7 @@ function clickAdminBooking(bookingId,date,period,venue){
   const target=periods.find(p=>p.date===date&&p.period===period&&p.venue===venue);
   const rec=booking.recurrence;
   showModal(`場地預約 — ${date} ${period}`,`
-    <div style="font-size:14px;margin-bottom:6px"><strong>${booking.borrower_name}</strong> 【${booking.purpose}】</div>
+    <div style="font-size:14px;margin-bottom:6px"><strong>${booking.borrower_name}</strong> 【${booking.grade?booking.grade+'・':''}${booking.purpose}】</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${booking.role||''}${booking.student_id?' ・ '+booking.student_id:''}</div>
     <div style="font-size:13px;margin-bottom:10px">${venue}　${period}　狀態：<strong>${target?.status||booking.status}</strong></div>
     ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${booking.note}</div>`:''}
@@ -994,12 +1140,39 @@ function clickAdminBooking(bookingId,date,period,venue){
       {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准')`},
       {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已拒絕')`}
     ]:[]),
+    {label:'✏️ 編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal('${bookingId}')`},
     ...(rec?[
       {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal('${bookingId}')`},
       {label:'🗑️ 刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries('${bookingId}')`}
     ]:[]),
     {label:'🗑️ 刪除此時段',cls:'btn-danger',fn:`deletePeriod('${bookingId}','${date}','${period}','${venue}')`}
   ]);
+}
+
+// 編輯單筆場地預約的「年級」與「科目（顏色）」
+function openEditGradeSubjectModal(bookingId){
+  const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
+  showModal('✏️ 編輯年級／科目',`
+    <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="egs-grade" value="${(booking.grade||'').replace(/"/g,'&quot;')}" placeholder="例如：高一戊、高二選"></div>
+    <div class="form-group"><label>科目（顏色分類，留空則依「教師管理」的老師姓名自動判斷）</label>
+      <select id="egs-subject">
+        <option value="">(自動依老師清單判斷)</option>
+        ${[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS].map(s=>`<option value="${s}" ${booking.subject===s?'selected':''}>${s}</option>`).join('')}
+      </select>
+    </div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'儲存',cls:'btn-primary',fn:`saveGradeSubject('${bookingId}')`}
+  ]);
+}
+async function saveGradeSubject(bookingId){
+  const grade=document.getElementById('egs-grade').value.trim();
+  const subject=document.getElementById('egs-subject').value;
+  closeModal();
+  try{
+    await sb('PATCH','venue_bookings',{filter:'id=eq.'+bookingId,body:{grade:grade||null,subject:subject||null},prefer:'return=minimal'});
+    showToast('已更新','success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
 
 // 衝突 = 同 date+period+venue 已有「固定課程」或「已核准」的其他預約
@@ -1057,9 +1230,14 @@ function openAdminAddVenue(date,period,presetVenue){
         <option value="老師">老師</option><option value="學生">學生</option>
       </select>
     </div>
-    <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師 / 王小美"></div>
+    <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師 / 王小美" list="teacherNameList" oninput="avfAutoFillSubject()"></div>
+    <datalist id="teacherNameList">${allTeachers.map(t=>`<option value="${t.name}">`).join('')}</datalist>
     <div class="form-group" id="avf-sid-group" style="display:none"><label>學號 *</label><input type="text" id="avf-sid" placeholder="例如：191010"></div>
-    <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
+    <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="avf-grade" placeholder="例如：高一戊、高二選"></div>
+    <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="選修">選修</option><option value="菁英">菁英</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
+    <div class="form-group"><label>科目（顏色分類，留空則依老師姓名自動判斷）</label>
+      <select id="avf-subject"><option value="">(自動依老師清單判斷)</option>${TEACHER_SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
+    </div>
     <div class="form-group"><label>實驗室 *</label><select id="avf-venue">${VENUES.map(v=>`<option value="${v}" ${v===presetVenue?'selected':''}>${v}</option>`).join('')}</select></div>
     <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto" ${hasWeeks?'':'disabled'}><label for="avf-fixed" style="color:var(--text)">📌 固定課程（依週次套用）</label></div>
     <div id="weekRangeWrap" style="display:none">
@@ -1081,6 +1259,12 @@ function openAdminAddVenue(date,period,presetVenue){
     document.getElementById('avf-week-end').value=defaultEnd;
   }
 }
+function avfAutoFillSubject(){
+  const name=document.getElementById('avf-name').value.trim();
+  const t=allTeachers.find(t=>t.name===name);
+  const sel=document.getElementById('avf-subject');
+  if(t&&sel&&!sel.value)sel.value=t.subject;
+}
 
 async function adminAddVenue(date,period,dow){
   const name=document.getElementById('avf-name').value.trim();
@@ -1088,7 +1272,9 @@ async function adminAddVenue(date,period,dow){
   const sid=role==='學生'?document.getElementById('avf-sid').value.trim():'';
   if(!name){showToast('請填寫姓名','error');return;}
   if(role==='學生'&&!sid){showToast('學生請填寫學號','error');return;}
+  const grade=document.getElementById('avf-grade').value.trim();
   const purpose=document.getElementById('avf-purpose').value;
+  const subject=document.getElementById('avf-subject').value;
   const venue=document.getElementById('avf-venue').value;
   const isFixed=document.getElementById('avf-fixed').checked;
   const note=document.getElementById('avf-note').value.trim();
@@ -1110,7 +1296,7 @@ async function adminAddVenue(date,period,dow){
     recurrence={day_of_week:dow,period,venue,week_start:weekStart,week_end:weekEnd};
   }
 
-  const opts={name,role,sid,purpose,venue,isFixed,note,periods,recurrence};
+  const opts={name,role,sid,grade,purpose,subject,venue,isFixed,note,periods,recurrence};
   const conflicts=periods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,null));
   if(conflicts.length){
     window._pendingVenueAdd=opts;
@@ -1130,10 +1316,10 @@ async function adminAddVenue(date,period,dow){
 
 async function doAdminAddVenue(opts){
   closeModal();
-  const{name,role,sid,purpose,venue,isFixed,note,periods,recurrence}=opts;
+  const{name,role,sid,grade,purpose,subject,venue,isFixed,note,periods,recurrence}=opts;
   try{
     const id='VEN-ADM-'+Date.now();
-    const body={id,borrower_name:name,student_id:sid||null,role,purpose,periods,status:'已核准',note,is_fixed:isFixed};
+    const body={id,borrower_name:name,student_id:sid||null,role,purpose,periods,status:'已核准',note,is_fixed:isFixed,grade:grade||null,subject:subject||null};
     if(recurrence)body.recurrence=recurrence;
     await sb('POST','venue_bookings',{body});
     showToast(`已新增 ${periods.length} 筆時段`,'success');loadAll();
