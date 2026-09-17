@@ -105,6 +105,13 @@
   .venue-booking.st-rejected{opacity:0.5;text-decoration:line-through;outline:1px solid #dc2626;outline-offset:-1px;}
   .cat-legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
   .cat-legend-item{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:20px;}
+  .venue-table th.holiday-col{background:#fbcfe8!important;color:#831843!important;}
+  .venue-table td.holiday-col{background:#fdf2f8;}
+  .venue-table tr.band-shade td.holiday-col{background:#fce7f3;}
+  .holiday-tag{font-size:9px;font-weight:700;display:block;}
+  .holiday-legend-note{font-size:11.5px;color:#831843;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:20px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px;}
+  .exam-week-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:8px 10px;flex-wrap:wrap;margin-bottom:6px;}
+  .exam-week-row input{flex:1;min-width:70px;}
   .venue-add-admin{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:2px;font-size:10.5px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-admin:hover{border-color:var(--accent);color:var(--accent);}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;}
@@ -261,14 +268,37 @@
       <div id="periodSettingList"></div>
       <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addPeriodSettingRow()">＋ 新增期間</button>
     </div>
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📝 特殊週次標註（期中考／期末考等，屬於此學期）</div>
+      <div class="info-box" style="margin-bottom:10px">例如「第5週」是期中考週，設定後所有顯示週次的地方都會自動加註「第5週〔期中考週〕」。週次要對照上面「學期期間設定」計算出來的週次。</div>
+      <div id="examWeekList"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addExamWeekRow()">＋ 新增特殊週次標註</button>
+    </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" onclick="clearSemesterForm()">清除</button>
       <button class="btn btn-primary" onclick="saveSemester()">💾 儲存學期</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:0">
+  <div class="card" style="margin-bottom:16px">
     <div class="card-title">📋 已建立的學期</div>
     <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🎉 國定假日／連假設定</div>
+    <div class="info-box">設定日期範圍後，週曆上這幾天會用粉紅色底標示為假期，但仍可正常新增／預約場地，只是提醒大家這幾天是假期。例如：9/25（五）～9/28（一）共放4天，開始日期填 9/25，結束日期填 9/28。</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+      <div class="form-group"><label>開始日期 *</label><input type="date" id="hol-start"></div>
+      <div class="form-group"><label>結束日期 *</label><input type="date" id="hol-end"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>標籤</label><input type="text" id="hol-label" placeholder="例如：教師節連假、國慶連假"></div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="clearHolidayForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveHoliday()">💾 儲存假期</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title">📋 已設定的假期</div>
+    <div id="holidayList"><div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div></div>
   </div>
 </div>
 
@@ -535,7 +565,7 @@ function showTab(tab){
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
   if(tab==='teachers')loadTeachers();
-  if(tab==='semester')loadSemesters();
+  if(tab==='semester'){loadSemesters();loadHolidays();}
   if(tab==='templates')loadTemplates();
   if(tab==='chemicals')loadAdminChems();
 }
@@ -654,7 +684,7 @@ function renderTeacherList(){
 function renderCatLegend(){
   const el=document.getElementById('catLegend');if(!el)return;
   const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
-  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('');
+  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span>';
 }
 function clearTeacherForm(){
   editingTeacherId=null;
@@ -867,7 +897,9 @@ function getSemesterWeeks(semester){
 }
 function weekBadgeText(info){
   if(!info)return '';
-  return info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
+  const base=info.type==='開學週期'?`第${info.week}週`:`${info.label}（第${info.week}週）`;
+  const exam=examLabelForWeek(info.week);
+  return exam?`${base}〔${exam}〕`:base;
 }
 
 // 將「第 week 週 + 星期 dayOfWeek（1=一...7=日）」換算成具體日期字串
@@ -896,7 +928,7 @@ function buildAdminWeekSelector(){
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
-  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
+  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
 }
 
 function adminJumpToWeek(week){
@@ -913,6 +945,7 @@ function adminJumpToWeek(week){
 
 async function loadAdminVenue(){
   if(!activeSemester)await loadActiveSemester();
+  if(!allHolidays.length)await loadHolidays();
   const dates=getWeekDates(adminWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
   const weekInfo=getWeekInfo(dates[0],activeSemester);
@@ -1016,12 +1049,141 @@ function collectPeriodSettings(){
   })).filter(p=>p.start_date&&p.end_date);
 }
 
+// ── 特殊週次標註（期中考／期末考等）─────────────────────
+let examWeekRows=[];
+function addExamWeekRow(data){
+  const id=Date.now()+Math.floor(Math.random()*1000);
+  examWeekRows.push(id);
+  appendExamWeekRow(id,data);
+}
+function appendExamWeekRow(id,data){
+  data=data||{};
+  const list=document.getElementById('examWeekList');
+  const emptyMsg=list.querySelector('.exam-empty');
+  if(emptyMsg)emptyMsg.remove();
+  const div=document.createElement('div');
+  div.className='exam-week-row';
+  div.id='ew-'+id;
+  div.innerHTML=`
+    <span style="font-size:12px;color:var(--text2);white-space:nowrap">第</span>
+    <input type="number" id="ew-week-${id}" min="1" style="max-width:64px" placeholder="5">
+    <span style="font-size:12px;color:var(--text2);white-space:nowrap">週</span>
+    <input type="text" id="ew-label-${id}" placeholder="例如：期中考週">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('ew-label-${id}').value='期中考週'">期中考週</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('ew-label-${id}').value='期末考週'">期末考週</button>
+    <button class="period-setting-remove" onclick="removeExamWeekRow(${id})">✕</button>`;
+  list.appendChild(div);
+  if(data.week)document.getElementById('ew-week-'+id).value=data.week;
+  if(data.label)document.getElementById('ew-label-'+id).value=data.label;
+}
+function removeExamWeekRow(id){
+  examWeekRows=examWeekRows.filter(r=>r!==id);
+  const row=document.getElementById('ew-'+id);if(row)row.remove();
+  if(!examWeekRows.length)document.getElementById('examWeekList').innerHTML='<div class="exam-empty" style="font-size:13px;color:var(--text2)">尚未新增任何特殊週次標註</div>';
+}
+function renderExamWeekList(examWeeks){
+  const list=document.getElementById('examWeekList');
+  list.innerHTML='';examWeekRows=[];
+  if(!examWeeks||!examWeeks.length){list.innerHTML='<div class="exam-empty" style="font-size:13px;color:var(--text2)">尚未新增任何特殊週次標註</div>';return;}
+  examWeeks.forEach(e=>addExamWeekRow(e));
+}
+function collectExamWeeks(){
+  return examWeekRows.map(id=>({
+    week:parseInt(document.getElementById('ew-week-'+id).value)||0,
+    label:document.getElementById('ew-label-'+id).value.trim()
+  })).filter(e=>e.week>0&&e.label);
+}
+function examLabelForWeek(week){
+  if(!activeSemester||!Array.isArray(activeSemester.exam_weeks))return '';
+  const found=activeSemester.exam_weeks.find(e=>e.week===week);
+  return found?found.label:'';
+}
+function weekDisplayLabel(w){
+  let label=`第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}`;
+  const exam=examLabelForWeek(w.week);
+  if(exam)label+=`〔${exam}〕`;
+  return label;
+}
+
+// ── 國定假日／連假 ────────────────────────────────────────
+let allHolidays=[],editingHolidayId=null;
+async function loadHolidays(){
+  try{
+    allHolidays=await sb('GET','holidays',{order:'start_date'});
+    allHolidays=Array.isArray(allHolidays)?allHolidays:[];
+  }catch(e){allHolidays=[];}
+  renderHolidayList();
+}
+function holidayForDate(dateStr){
+  return allHolidays.find(h=>dateStr>=h.start_date&&dateStr<=h.end_date);
+}
+function renderHolidayList(){
+  const list=document.getElementById('holidayList');if(!list)return;
+  if(!allHolidays.length){list.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div>';return;}
+  list.innerHTML='<div class="record-list">'+allHolidays.map(h=>`
+    <div class="record-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-size:14px;font-weight:700">${h.label||'假期'}</div>
+          <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${h.start_date} ～ ${h.end_date}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="editHoliday('${h.id}')">✏️ 編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHoliday('${h.id}')">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+function clearHolidayForm(){
+  editingHolidayId=null;
+  document.getElementById('hol-start').value='';
+  document.getElementById('hol-end').value='';
+  document.getElementById('hol-label').value='';
+}
+function editHoliday(id){
+  const h=allHolidays.find(x=>x.id===id);if(!h)return;
+  editingHolidayId=id;
+  document.getElementById('hol-start').value=h.start_date||'';
+  document.getElementById('hol-end').value=h.end_date||'';
+  document.getElementById('hol-label').value=h.label||'';
+  document.getElementById('hol-start').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveHoliday(){
+  const start=document.getElementById('hol-start').value;
+  const end=document.getElementById('hol-end').value;
+  const label=document.getElementById('hol-label').value.trim()||'假期';
+  if(!start||!end){showToast('請填寫開始與結束日期','error');return;}
+  if(end<start){showToast('結束日期不能早於開始日期','error');return;}
+  try{
+    if(editingHolidayId){
+      await sb('PATCH','holidays',{filter:'id=eq.'+editingHolidayId,body:{start_date:start,end_date:end,label},prefer:'return=minimal'});
+      showToast('已更新','success');
+    }else{
+      await sb('POST','holidays',{body:{id:'HOL-'+Date.now(),start_date:start,end_date:end,label},prefer:'return=minimal'});
+      showToast('已新增','success');
+    }
+    clearHolidayForm();loadHolidays();loadAdminVenue();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+function deleteHoliday(id){
+  showModal('確認刪除',`<p>確定刪除這筆假期設定嗎？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHoliday('${id}')`}
+  ]);
+}
+async function doDeleteHoliday(id){
+  closeModal();
+  try{await sb('DELETE','holidays',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadHolidays();loadAdminVenue();}
+  catch(e){showToast('刪除失敗','error');}
+}
+
 let editingSemesterId=null;
 function clearSemesterForm(){
   editingSemesterId=null;
   document.getElementById('sem-name').value='';
   document.getElementById('sem-active').checked=false;
   renderPeriodSettingList([]);
+  renderExamWeekList([]);
 }
 
 function editSemester(id){
@@ -1030,6 +1192,7 @@ function editSemester(id){
   document.getElementById('sem-name').value=s.name||'';
   document.getElementById('sem-active').checked=!!s.is_active;
   renderPeriodSettingList(Array.isArray(s.periods)?s.periods:[]);
+  renderExamWeekList(Array.isArray(s.exam_weeks)?s.exam_weeks:[]);
   document.getElementById('chem-name-zh').scrollIntoView({ behavior: 'smooth', block: 'center' });
   showToast('已載入學期資料，可修改後儲存','success');
 }
@@ -1039,6 +1202,7 @@ async function saveSemester(){
   if(!name){showToast('請填寫學期名稱','error');return;}
   const periods=collectPeriodSettings();
   if(!periods.length){showToast('請至少新增一個期間','error');return;}
+  const examWeeks=collectExamWeeks();
   const isActive=document.getElementById('sem-active').checked;
   // 為了相容舊欄位，順帶寫入第一個期間的起始日與最大週次
   const totalWeeks=Math.max(...periods.map(p=>{
@@ -1048,7 +1212,7 @@ async function saveSemester(){
   }));
   const sortedByStart=[...periods].sort((a,b)=>a.start_date<b.start_date?-1:1);
   const body={
-    name,periods,is_active:isActive,
+    name,periods,is_active:isActive,exam_weeks:examWeeks,
     start_date:sortedByStart[0].start_date,
     total_weeks:totalWeeks
   };
@@ -1094,7 +1258,10 @@ function renderAdminVenueTable(dates,expanded){
   const table=document.getElementById('adminVenueTable');
   const LABS=['生物','化學','理化','物理','地科'];
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
-  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>`<th>週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span></th>`).join('')}</tr></thead><tbody>`;
+  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>{
+    const holiday=holidayForDate(fmtDate(d));
+    return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
+  }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
     LABS.forEach((lab,li)=>{
@@ -1104,8 +1271,9 @@ function renderAdminVenueTable(dates,expanded){
       dates.forEach(date=>{
         const dateStr=fmtDate(date);
         const venueFull=labFull[lab];
+        const isHoliday=!!holidayForDate(dateStr);
         const cellBookings=expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
-        html+=`<td class="vcell">`;
+        html+=`<td class="vcell ${isHoliday?'holiday-col':''}">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -1223,7 +1391,7 @@ function openAdminAddVenue(date,period,presetVenue){
   const curInfo=getWeekInfo(dateObj,activeSemester);
   const defaultStart=curInfo?curInfo.week:(hasWeeks?weeks[0].week:1);
   const defaultEnd=hasWeeks?weeks[weeks.length-1].week:defaultStart;
-  const weekOptions=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
+  const weekOptions=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
   showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
     <div class="form-group"><label>身份 *</label>
       <select id="avf-role" onchange="document.getElementById('avf-sid-group').style.display=this.value==='學生'?'flex':'none'">
@@ -1332,7 +1500,7 @@ function openEditRecurrenceModal(bookingId){
   const rec=booking.recurrence;
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){showToast('找不到學期週次設定，無法編輯排程','error');return;}
-  const weekOptions=weeks.map(w=>`<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}</option>`).join('');
+  const weekOptions=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
   showModal('✏️ 編輯整學期排程',`
     <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${booking.borrower_name}　【${booking.purpose}】　${rec.venue}　${rec.period}　每週${DAYS[rec.day_of_week-1]}</div>
     <div style="display:flex;gap:8px">
@@ -1473,7 +1641,7 @@ async function openExportModal(id){
   const weeks=getSemesterWeeks(activeSemester);
   let weekField;
   if(weeks.length){
-    const opts=weeks.map(w=>{const st=w.date;const en=new Date(st);en.setDate(st.getDate()+6);return `<option value="${w.week}">第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}　${fmtDateTW(st)}～${fmtDateTW(en)}</option>`;}).join('');
+    const opts=weeks.map(w=>{const st=w.date;const en=new Date(st);en.setDate(st.getDate()+6);return `<option value="${w.week}">${weekDisplayLabel(w)}　${fmtDateTW(st)}～${fmtDateTW(en)}</option>`;}).join('');
     weekField=`<select id="exp-week-sel" onchange="expWeekSel()"><option value="">— 選擇週次 —</option>${opts}<option value="__other__">其他（自填）</option></select><input id="exp-week-other" placeholder="自填週次" style="display:none;margin-top:6px">`;
   }else{
     weekField=`<input id="exp-week-other" placeholder="例如：1"><input type="hidden" id="exp-week-sel" value="__other__">`;
@@ -1818,6 +1986,7 @@ function closeModal(event){if(!event||event.target===document.getElementById('mo
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
 renderPeriodSettingList([]);
+renderExamWeekList([]);
   // ── 課程模板：Excel 解析 ──────────────────────────────────
 const TPL_LABELS = ['實驗名稱','年級','月份','週次','關鍵字','教師','填表人','班數','組數'];
 const TPL_ROOM_GUESS_RULES = [
