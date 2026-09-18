@@ -310,6 +310,19 @@
     <div id="tplParseMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
   </div>
 
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💾 課程模板備份／批次編輯</div>
+    <div class="info-box">「匯出」會把目前所有課程模板整理成一個 Excel 檔（每個器材一列），可以當備份，也可以直接在 Excel 裡改內容（例如批次調整某項器材的數量），改完再用「匯入」整批更新回來。匯入時若該列的「課程ID」跟現有模板一樣就會更新該模板，ID留空則視為新課程。</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary" onclick="exportTemplatesXlsx()">📥 匯出全部模板（Excel備份）</button>
+      <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
+        📤 匯入模板 Excel
+        <input type="file" id="tpl-import-file" accept=".xlsx" style="display:none" onchange="handleTemplateImport(this)">
+      </label>
+    </div>
+    <div id="tplImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
+  </div>
+
   <div class="card" id="tplFormCard" style="margin-bottom:16px;display:none">
     <div class="card-title">📚 新增 / 編輯課程模板</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
@@ -2240,7 +2253,135 @@ async function loadTemplates(){
         </div>
       </div>`;
     }).join('')+'</div>';
-  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+}
+// ── 課程模板 匯出／匯入（備份、批次編輯用）──────────────────
+async function exportTemplatesXlsx(){
+  if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
+  try{
+    const rows=await sb('GET','course_templates',{order:'created_at.desc'});
+    const templates=Array.isArray(rows)?rows:[];
+    const wb=new ExcelJS.Workbook();
+    const ws=wb.addWorksheet('課程模板');
+    const headers=['課程ID','課程名稱','分類','年級','教師','月份','週次','班數','組數','預設科別','器材名稱','規格','數量','單位','器材科別','器材備註','參考備註'];
+    ws.addRow(headers);
+    ws.getRow(1).font={bold:true};
+    headers.forEach((h,i)=>{ws.getColumn(i+1).width=Math.max(10,h.length*2);});
+    const roomLabel=r=>(TPL_ROOM_OPTIONS.find(([v])=>v===r)||['',r||''])[1];
+    templates.forEach(t=>{
+      const items=Array.isArray(t.equipment_items)?t.equipment_items:[];
+      const base=[t.id,t.name||'',t.category||'',t.grade||'',t.teacher||'',t.month||'',t.week||'',t.class_count??'',t.group_count??'',roomLabel(t.default_room)];
+      if(!items.length){
+        ws.addRow([...base,'','','','','','',t.reference_note||'']);
+      }else{
+        items.forEach(it=>{
+          ws.addRow([...base,it.name||'',it.spec||'',it.quantity??'',it.unit||'',roomLabel(it.room),it.note||'',t.reference_note||'']);
+        });
+      }
+    });
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='課程模板備份_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    showToast('已匯出備份','success');
+  }catch(e){showToast('匯出失敗：'+e.message,'error');}
+}
+function tplRoomLabelToCode(label){
+  const found=TPL_ROOM_OPTIONS.find(([,l])=>l===(label||'').trim());
+  return found?found[0]:'';
+}
+function handleTemplateImport(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const msg=document.getElementById('tplImportMsg');
+  msg.textContent='解析中…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      const header=rows[0]||[];
+      const idx=name=>header.indexOf(name);
+      const iId=idx('課程ID'),iName=idx('課程名稱'),iCategory=idx('分類'),iGrade=idx('年級'),iTeacher=idx('教師'),
+        iMonth=idx('月份'),iWeek=idx('週次'),iClassCount=idx('班數'),iGroupCount=idx('組數'),iRoom=idx('預設科別'),
+        iItemName=idx('器材名稱'),iSpec=idx('規格'),iQty=idx('數量'),iUnit=idx('單位'),iItemRoom=idx('器材科別'),
+        iItemNote=idx('器材備註'),iRefNote=idx('參考備註');
+      if(iName<0){msg.textContent='⚠️ 找不到「課程名稱」欄位，請確認是用「匯出全部模板」產生的檔案格式';return;}
+      const groups=new Map();
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r];if(!row||row.every(c=>c===null||c===''))continue;
+        const gs=v=>(v===null||v===undefined)?'':String(v).trim();
+        const key=iId>=0&&gs(row[iId])?('id:'+gs(row[iId])):('meta:'+[iName,iCategory,iGrade,iTeacher,iMonth,iWeek,iClassCount,iGroupCount,iRoom].map(i=>i>=0?gs(row[i]):'').join('|'));
+        if(!groups.has(key)){
+          groups.set(key,{
+            id:iId>=0?gs(row[iId]):'',
+            name:iName>=0?gs(row[iName]):'',
+            category:iCategory>=0?gs(row[iCategory]):'',
+            grade:iGrade>=0?gs(row[iGrade]):'',
+            teacher:iTeacher>=0?gs(row[iTeacher]):'',
+            month:iMonth>=0?gs(row[iMonth]):'',
+            week:iWeek>=0?gs(row[iWeek]):'',
+            class_count:iClassCount>=0&&row[iClassCount]!==null&&row[iClassCount]!==''?parseInt(row[iClassCount])||null:null,
+            group_count:iGroupCount>=0&&row[iGroupCount]!==null&&row[iGroupCount]!==''?parseInt(row[iGroupCount])||null:null,
+            default_room:iRoom>=0?tplRoomLabelToCode(gs(row[iRoom])):'',
+            reference_note:iRefNote>=0?gs(row[iRefNote]):'',
+            equipment_items:[]
+          });
+        }
+        const g=groups.get(key);
+        const itemName=iItemName>=0?gs(row[iItemName]):'';
+        if(itemName){
+          g.equipment_items.push({
+            name:itemName,
+            spec:iSpec>=0?gs(row[iSpec]):'',
+            quantity:iQty>=0&&row[iQty]!==null&&row[iQty]!==''?parseInt(row[iQty])||0:0,
+            unit:iUnit>=0?(gs(row[iUnit])||'個'):'個',
+            room:iItemRoom>=0?tplRoomLabelToCode(gs(row[iItemRoom])):'',
+            note:iItemNote>=0?gs(row[iItemNote]):''
+          });
+        }
+      }
+      const parsed=[...groups.values()].filter(g=>g.name);
+      if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的課程列';return;}
+      window._pendingTemplateImport=parsed;
+      msg.innerHTML=`✅ 解析到 <strong>${parsed.length}</strong> 個課程，`+
+        `<button class="btn btn-primary btn-sm" onclick="confirmTemplateImport()">確認匯入</button>`;
+    }catch(err){msg.textContent='解析失敗：'+err.message;}
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+async function confirmTemplateImport(){
+  const parsed=window._pendingTemplateImport;if(!parsed||!parsed.length)return;
+  const msg=document.getElementById('tplImportMsg');
+  msg.textContent='匯入中…';
+  let created=0,updated=0,failed=0;
+  for(const g of parsed){
+    const body={
+      name:g.name,category:g.category,grade:g.grade,teacher:g.teacher,month:g.month,week:g.week,
+      class_count:g.class_count,group_count:g.group_count,default_room:g.default_room,
+      equipment_items:g.equipment_items,reference_note:g.reference_note,
+      updated_at:new Date().toISOString()
+    };
+    try{
+      const existing=g.id?allTemplates.find(t=>String(t.id)===g.id):null;
+      if(existing){
+        await sb('PATCH','course_templates',{filter:'id=eq.'+existing.id,body,prefer:'return=minimal'});
+        updated++;
+      }else{
+        body.id=g.id||('TPL-'+Date.now()+'-'+Math.floor(Math.random()*1000));
+        await sb('POST','course_templates',{body,prefer:'return=minimal'});
+        created++;
+      }
+    }catch(e){failed++;}
+  }
+  msg.textContent=`匯入完成：新增 ${created} 筆、更新 ${updated} 筆${failed?`，失敗 ${failed} 筆`:''}`;
+  window._pendingTemplateImport=null;
+  loadTemplates();
 }
 function editTemplate(id){
   const t=allTemplates.find(x=>x.id===id);if(!t)return;
