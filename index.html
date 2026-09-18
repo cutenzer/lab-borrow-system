@@ -798,7 +798,7 @@ let userHomeLab='';
 // [修改3] 同步場地預約的時段列表
 let inlinePeriodRows=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();addPeriodRow();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();setRole('老師');});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();setRole('老師');});
 
 function setMinDates(){
   const today=new Date().toISOString().split('T')[0];
@@ -923,6 +923,7 @@ function addPeriodRow(){
 }
 function appendPeriodRow(id){
   const list=document.getElementById('periodList');
+  if(!list)return;
   const emptyMsg=list.querySelector('.period-empty');if(emptyMsg)emptyMsg.remove();
   const div=document.createElement('div');div.className='period-row';div.id='pr-'+id;
   div.innerHTML=`
@@ -939,7 +940,8 @@ function removePeriodRow(id){
   periodRows=periodRows.filter(r=>r!==id);
   const row=document.getElementById('pr-'+id);if(row)row.remove();
   document.querySelectorAll('#periodList .period-row span').forEach((s,i)=>{s.textContent=(i+1)+'.';});
-  if(!periodRows.length){document.getElementById('periodList').innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增時段，請點下方按鈕新增</div>';}
+  const list=document.getElementById('periodList');
+  if(list&&!periodRows.length){list.innerHTML='<div class="period-empty" style="font-size:13px;color:var(--text2)">尚未新增時段，請點下方按鈕新增</div>';}
 }
 function getNextDates(days){
   const result=[],today=new Date();
