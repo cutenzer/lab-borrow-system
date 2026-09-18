@@ -166,7 +166,9 @@
   .period-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 12px;flex-wrap:wrap;}
   .period-row select{flex:1;min-width:100px;}
   .period-row-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
-  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
+  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+  .venue-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px;}
+  .venue-actions .btn{justify-content:center;}
   .venue-nav-week{font-size:14px;font-weight:700;color:var(--accent-dim);}
   .venue-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh;border-radius:8px;}
   .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
@@ -315,6 +317,8 @@
   }
   @media(min-width:601px){
     #inlineZoomBtn{display:none;}
+    .venue-actions{display:flex;flex-wrap:wrap;justify-content:space-between;}
+    .venue-actions .btn{flex:0 0 auto;}
   }
   /* 藥品列表 */
   .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
@@ -492,16 +496,17 @@
     <div class="week-selector" id="weekSelector" style="display:none">
       <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
       <select id="weekJump" onchange="jumpToWeek(this.value)"></select>
-      <span class="week-badge" id="currentWeekBadge"></span>
     </div>
     <div class="venue-nav">
       <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
       <span class="venue-nav-week" id="venueWeekLabel"></span>
       <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
+    </div>
+    <div class="venue-actions">
       <button class="btn btn-primary btn-sm" onclick="goThisWeek()">本週</button>
       <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()">🔍 放大</button>
       <button class="btn btn-primary btn-sm" onclick="openVenueFullscreen()">🔳 全螢幕</button>
-      <button class="btn btn-secondary btn-sm" onclick="openVenueBookingModal()">✏️ 新增時段</button>
+      <button class="btn btn-secondary btn-sm" onclick="openVenueBookingModal()">✏️ 新增</button>
     </div>
     <div class="venue-table-wrap" id="venueTableWrapEl">
       <div id="venueScaleOuter"><div id="venueScaleInner"><table class="venue-table" id="venueTable"></table></div></div>
@@ -1129,15 +1134,12 @@ async function loadVenue(){
   const dates=getWeekDates(venueWeekOffset);
   const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[6]);
   const weekInfo=getWeekInfo(dates[0],activeSemester);
-  const badge=document.getElementById('currentWeekBadge');
   const weekSel=document.getElementById('weekJump');
   if(weekInfo){
     document.getElementById('venueWeekLabel').textContent=`${weekBadgeText(weekInfo)}　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
-    if(badge){badge.textContent=weekBadgeText(weekInfo);badge.style.display='inline-block';}
     if(weekSel)weekSel.value=weekInfo.week;
   }else{
     document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
-    if(badge)badge.style.display='none';
   }
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
