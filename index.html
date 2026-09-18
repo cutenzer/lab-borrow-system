@@ -473,7 +473,6 @@
 
   <div class="card">
     <div class="card-title">🛒 已選器材</div>
-    <div class="hint" style="margin-bottom:8px">需要借器材的話，到「器材查詢」頁面挑選、加入清單即可，這裡只顯示目前選了什麼。</div>
     <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">📦 到器材查詢頁面挑選</button>
@@ -490,8 +489,6 @@
 <div id="page-venue" class="page">
   <div class="card">
     <div class="card-title">📅 場地課表</div>
-    <div class="cat-legend" id="catLegendFront"></div>
-    <div class="hint" style="margin-bottom:10px">📱 手機上預設縮小顯示整週方便比對課表；想實際點選預約時，按「🔍 放大細看」切換成正常大小。空白格點「＋」可直接把該時段加入下方申請表單；已有課的格子點下去可以看是誰、審核到哪了。</div>
     <div class="week-selector" id="weekSelector" style="display:none">
       <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
       <select id="weekJump" onchange="jumpToWeek(this.value)"></select>
@@ -504,50 +501,10 @@
       <button class="btn btn-primary btn-sm" onclick="goThisWeek()">本週</button>
       <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()">🔍 放大細看</button>
       <button class="btn btn-primary btn-sm" onclick="openVenueFullscreen()">🔳 全螢幕檢視</button>
+      <button class="btn btn-secondary btn-sm" onclick="openVenueBookingModal()">✏️ 手動新增時段</button>
     </div>
     <div class="venue-table-wrap" id="venueTableWrapEl">
       <div id="venueScaleOuter"><div id="venueScaleInner"><table class="venue-table" id="venueTable"></table></div></div>
-    </div>
-  </div>
-  <div class="card" id="venueFormAnchor">
-    <div class="card-title">🏛️ 場地預約申請表</div>
-    <div class="hint" style="margin-bottom:10px">💡 在上面課表點空白格的「＋」最快，會自動幫你把時段加進下面；這裡也可以手動一筆一筆新增。</div>
-    <div class="role-tabs">
-      <div class="role-tab active" id="vroleTabStudent" onclick="setVenueRole('學生')">🎓 學生</div>
-      <div class="role-tab" id="vroleTabTeacher" onclick="setVenueRole('老師')">👨‍🏫 老師</div>
-    </div>
-    <div class="form-grid">
-      <div class="form-group"><label>姓名 *</label><input type="text" id="vf-name" placeholder="輸入姓名"></div>
-      <div class="form-group" id="vStudentIdGroup"><label>學號 *</label><input type="text" id="vf-student-id" placeholder="輸入學號"></div>
-      <div class="form-group">
-        <label>借用目的 *</label>
-        <select id="vf-purpose" onchange="onVenuePurposeChange()">
-          <option value="自主學習">自主學習</option>
-          <option value="科展">科展</option>
-          <option value="社團">社團</option>
-          <option value="其他">其他（自填）</option>
-        </select>
-        <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
-      </div>
-      <div class="form-group" id="vGradeGroup" style="display:none">
-        <label>年級／班級（例如：高一戊）</label>
-        <input type="text" id="vf-grade" placeholder="例如：高一戊、高二選">
-      </div>
-      <div class="form-group full" id="vSupervisorGroup">
-        <label>指導老師／陪同老師</label>
-        <input type="text" id="vf-supervisor" placeholder="輸入陪同老師姓名">
-        <div class="hint">⚠️ 無老師陪同不得使用實驗室 ⚠️ </div>
-      </div>
-      <div class="form-group full"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
-    </div>
-    <div style="margin-top:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 借用時段</div>
-      <div class="period-list" id="periodList"></div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addPeriodRow()">＋ 新增時段</button>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <button class="btn btn-secondary" onclick="resetVenueForm()">清除重填</button>
-      <button class="btn btn-primary" onclick="submitVenueRequest()">📋 提交場地預約</button>
     </div>
   </div>
 </div>
@@ -558,7 +515,6 @@
     <div class="card-title">📦 器材庫存查詢
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
     </div>
-    <div class="hint" style="margin-bottom:10px">📷 這裡可以看照片、找放置位置；看到想借的可以直接在下方調整數量，會加入右下角 🛒 購物車，跟「器材借用」頁面共用同一份清單。</div>
     <div class="browse-filters">
       <input type="text" id="equipSearch" placeholder="搜尋器材名稱…" oninput="filterEquipBrowse()">
       <select id="equipRoomFilter" onchange="filterEquipBrowse()"><option value="">全部房間</option></select>
@@ -669,7 +625,6 @@
         <button class="btn btn-danger btn-sm" onclick="closeVenueFullscreen()">✕ 關閉</button>
       </div>
     </div>
-    <div class="venue-fs-legend" id="vfsLegend">點擊空白處可關閉</div>
     <div class="venue-fs-body" id="venueFsBody">
       <div id="vfsScaleWrap"><table class="venue-table" id="venueTableFS"></table></div>
     </div>
@@ -745,18 +700,11 @@ function venueLabel(b){
   const purposeShort={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團','選修':'選修','菁英':'菁英'}[b.purpose]||b.purpose||'';
   return `${purposeShort}-${who}`;
 }
-function renderCatLegend(){
-  const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
-  const html=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span>';
-  const el1=document.getElementById('catLegendFront');if(el1)el1.innerHTML=html;
-  const el2=document.getElementById('vfsLegend');if(el2)el2.innerHTML=html+'　・ 點擊空白處可關閉';
-}
 async function loadTeachersFront(){
   try{
     const rows=await sb('GET','teachers',{order:'subject,name'});
     allTeachersFront=Array.isArray(rows)?rows:[];
   }catch(e){allTeachersFront=[];}
-  renderCatLegend();
 }
 
 // ── 位置編碼解析（原有邏輯不變）────────────────────────────
@@ -1056,16 +1004,19 @@ async function submitVenueRequest(){
       `${name}（${currentVenueRole}）申請了 ${periods.length} 個時段：\n`+periods.map(p=>`・${p.date} ${p.period} ${p.venue}`).join('\n')+`\n目的：${purpose}${grade?'\n年級：'+grade:''}${note?'\n備註：'+note:''}\n申請編號：${id}`
     );
     showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
-    resetVenueForm();loadVenue();
+    periodRows=[];
+    loadVenue();
   }catch(e){showToast('申請失敗：'+e.message,'error');}
 }
 function resetVenueForm(){
-  document.getElementById('vf-name').value='';
-  document.getElementById('vf-student-id').value='';
-  document.getElementById('vf-supervisor').value='';
-  document.getElementById('vf-note').value='';
-  if(document.getElementById('vf-grade'))document.getElementById('vf-grade').value='';
-  periodRows=[];addPeriodRow();
+  const el=id=>document.getElementById(id);
+  if(el('vf-name'))el('vf-name').value='';
+  if(el('vf-student-id'))el('vf-student-id').value='';
+  if(el('vf-supervisor'))el('vf-supervisor').value='';
+  if(el('vf-note'))el('vf-note').value='';
+  if(el('vf-grade'))el('vf-grade').value='';
+  periodRows=[];
+  if(el('periodList')){el('periodList').innerHTML='';addPeriodRow();}
 }
 
 // ── 場地週曆 ──────────────────────────────────────────────
@@ -1188,7 +1139,6 @@ async function loadVenue(){
     document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
     if(badge)badge.style.display='none';
   }
-  renderCatLegend();
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     venueBookings=[];
@@ -1219,26 +1169,63 @@ function showVenueSlotInfo(dateStr,period,venue){
   }).join('');
   showModal(`${dateStr} ${period} ${venue}`,rows,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
-function addVenueSlotToForm(dateStr,period,venue){
-  const conflict=findVenueConflict(dateStr,period,venue);
-  if(conflict){
-    const statusLabel=(conflict.is_fixed||conflict.periodStatus==='已核准')?'已核准':'待審核（尚未確認）';
-    showModal('⚠️ 此時段已有人使用',`<p><strong>${conflict.borrower_name}</strong>（${conflict.purpose}）— ${statusLabel}</p><p style="margin-top:8px;font-size:13px;color:var(--text2)">${dateStr} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">一般課堂原則上一班一教室，請改選其他空堂時段。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
-    return;
+function openVenueBookingModal(dateStr,period,venue){
+  if(dateStr&&period&&venue){
+    const conflict=findVenueConflict(dateStr,period,venue);
+    if(conflict){
+      const statusLabel=(conflict.is_fixed||conflict.periodStatus==='已核准')?'已核准':'待審核（尚未確認）';
+      showModal('⚠️ 此時段已有人使用',`<p><strong>${conflict.borrower_name}</strong>（${conflict.purpose}）— ${statusLabel}</p><p style="margin-top:8px;font-size:13px;color:var(--text2)">${dateStr} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">一般課堂原則上一班一教室，請改選其他空堂時段。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
+      return;
+    }
   }
-  const id=Date.now()+Math.floor(Math.random()*1000);
-  periodRows.push(id);
-  appendPeriodRow(id);
-  const dateSel=document.getElementById('pr-date-'+id);
-  if(dateSel&&![...dateSel.options].some(o=>o.value===dateStr)){
-    const opt=document.createElement('option');opt.value=dateStr;opt.textContent=dateStr;dateSel.appendChild(opt);
+  const body=`
+    <div class="role-tabs" style="margin-bottom:12px">
+      <div class="role-tab" id="vroleTabStudent" onclick="setVenueRole('學生')">🎓 學生</div>
+      <div class="role-tab active" id="vroleTabTeacher" onclick="setVenueRole('老師')">👨‍🏫 老師</div>
+    </div>
+    <div class="form-group"><label>姓名 *</label><input type="text" id="vf-name" placeholder="輸入姓名"></div>
+    <div class="form-group" id="vStudentIdGroup" style="display:none"><label>學號 *</label><input type="text" id="vf-student-id" placeholder="輸入學號"></div>
+    <div class="form-group">
+      <label>借用目的 *</label>
+      <select id="vf-purpose" onchange="onVenuePurposeChange()"></select>
+      <input type="text" id="vf-purpose-other" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
+    </div>
+    <div class="form-group" id="vGradeGroup" style="display:none">
+      <label>年級／班級（例如：高一戊）</label>
+      <input type="text" id="vf-grade" placeholder="例如：高一戊、高二選">
+    </div>
+    <div class="form-group" id="vSupervisorGroup" style="display:none">
+      <label>指導老師／陪同老師</label>
+      <input type="text" id="vf-supervisor" placeholder="輸入陪同老師姓名">
+      <div class="hint">⚠️ 無老師陪同不得使用實驗室 ⚠️</div>
+    </div>
+    <div class="form-group"><label>備註說明</label><textarea id="vf-note" rows="2" placeholder="說明用途…"></textarea></div>
+    <div style="margin-top:10px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📅 借用時段</div>
+      <div class="period-list" id="periodList"></div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addPeriodRow()">＋ 新增時段</button>
+    </div>
+  `;
+  showModal(dateStr?`🏛️ 場地預約 — ${dateStr} ${period}`:'🏛️ 場地預約申請',body,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'📋 提交申請',cls:'btn-primary',fn:'submitVenueRequest()'}
+  ]);
+  periodRows=[];
+  document.getElementById('periodList').innerHTML='';
+  addPeriodRow();
+  if(dateStr&&period&&venue){
+    const rowId=periodRows[periodRows.length-1];
+    const dateSel=document.getElementById('pr-date-'+rowId);
+    if(dateSel){
+      if(![...dateSel.options].some(o=>o.value===dateStr)){
+        const opt=document.createElement('option');opt.value=dateStr;opt.textContent=dateStr;dateSel.appendChild(opt);
+      }
+      dateSel.value=dateStr;
+    }
+    const periodSel=document.getElementById('pr-period-'+rowId);if(periodSel)periodSel.value=period;
+    const venueSel=document.getElementById('pr-venue-'+rowId);if(venueSel)venueSel.value=venue;
   }
-  if(dateSel)dateSel.value=dateStr;
-  const periodSel=document.getElementById('pr-period-'+id);if(periodSel)periodSel.value=period;
-  const venueSel=document.getElementById('pr-venue-'+id);if(venueSel)venueSel.value=venue;
-  showToast(`已加入時段：${dateStr} ${period} ${venue}，請完成下方申請表單`,'success');
-  const anchor=document.getElementById('venueFormAnchor');
-  if(anchor)anchor.scrollIntoView({behavior:'smooth',block:'start'});
+  setVenueRole(currentVenueRole||'老師');
 }
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
@@ -1267,7 +1254,7 @@ function renderVenueTable(dates){
           html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="showVenueSlotInfo('${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         if(!blocking){
-          html+=`<button class="venue-add-btn" onclick="event.stopPropagation();addVenueSlotToForm('${dateStr}','${period}','${venueFull}')">＋</button>`;
+          html+=`<button class="venue-add-btn" onclick="event.stopPropagation();openVenueBookingModal('${dateStr}','${period}','${venueFull}')">＋</button>`;
         }
         html+=`</td>`;
       });
