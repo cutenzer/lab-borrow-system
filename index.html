@@ -184,6 +184,10 @@
   .venue-table tr.band-shade .lab-cell{background:#e7eff9;}
   .venue-table .lab-生物{color:#1f9d6f;}.venue-table .lab-化學{color:#c2780b;}.venue-table .lab-理化{color:#7c3aed;}.venue-table .lab-物理{color:#3567c9;}.venue-table .lab-地科{color:#0e8aa0;}
   .venue-table .period-group-start td{border-top:2px solid var(--accent);}
+  .venue-table tr.compact-period td{padding:1px 3px;font-size:10.5px;}
+  .venue-table tr.compact-period .period-cell,.venue-table tr.compact-period .lab-cell{font-size:10.5px;}
+  .venue-table .compact-vcell .venue-booking{font-size:9.5px;padding:1px 4px;}
+  .venue-table .compact-vcell .venue-add-btn{padding:0;font-size:9px;}
   .venue-table .vcell{min-width:90px;}
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;text-align:center;}
   /* 類別配色（依科目／目的），與後台一致；狀態改用邊框樣式表示 */
@@ -229,7 +233,7 @@
   .venue-fs-body:not(.scroll-mode) .venue-table .lab-cell{position:static;}
   /* 學期週次選擇 */
   .week-selector{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-  .week-selector select{min-width:90px;width:auto;max-width:200px;}
+  .week-selector select{min-width:90px;width:auto;max-width:340px;}
   .week-badge{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px;}
   /* 器材查詢 */
   .browse-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
@@ -1086,6 +1090,10 @@ function examLabelForWeek(week){
 }
 function weekDisplayLabel(w){
   let label=`第${w.week}週${w.type!=='開學週期'?'（'+w.label+'）':''}`;
+  const monday=new Date(w.date);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
+  label+=`　${fmt(monday)}～${fmt(sunday)}`;
   const exam=examLabelForWeek(w.week);
   if(exam)label+=`〔${exam}〕`;
   return label;
@@ -1102,12 +1110,7 @@ function buildWeekSelector(){
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){wrap.style.display='none';return;}
   wrap.style.display='flex';
-  sel.innerHTML=weeks.map(w=>{
-    const monday=new Date(w.date);monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
-    const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
-    const fmt=d=>`${d.getMonth()+1}/${d.getDate()}`;
-    return `<option value="${w.week}">${weekDisplayLabel(w)}　${fmt(monday)}～${fmt(sunday)}</option>`;
-  }).join('');
+  sel.innerHTML=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
 }
 function jumpToWeek(week){
   if(!activeSemester)return;
@@ -1235,12 +1238,39 @@ function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
   const LABS=['生物','化學','理化','物理','地科'];
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
+  const COMPACT_PERIODS=['早休','午休'];
   let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
     return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
+    if(COMPACT_PERIODS.includes(period)){
+      html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''}">`;
+      html+=`<td class="period-cell">${period}</td>`;
+      html+=`<td class="lab-cell">－</td>`;
+      dates.forEach(date=>{
+        const dateStr=fmtDate(date);
+        const isHoliday=!!holidayForDate(dateStr);
+        const cellBookings=[];
+        LABS.forEach(lab=>{
+          const venueFull=labFull[lab];
+          venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull)
+            .forEach(b=>cellBookings.push({...b,_lab:lab,_venueFull:venueFull}));
+        });
+        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''}">`;
+        cellBookings.forEach(b=>{
+          const cat=resolveCategory(b);
+          const catCls=categoryClass(cat);
+          const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
+          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="showVenueSlotInfo('${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'📌':''}[${b._lab}] ${venueLabel(b)}</div>`;
+        });
+        html+=`<button class="venue-add-btn" onclick="event.stopPropagation();openVenueBookingModal('${dateStr}','${period}','${labFull['生物']}')">＋</button>`;
+        html+=`</td>`;
+      });
+      html+=`</tr>`;
+      return;
+    }
     LABS.forEach((lab,li)=>{
       html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''}">`;
       if(li===0)html+=`<td rowspan="5" class="period-cell">${period}</td>`;
