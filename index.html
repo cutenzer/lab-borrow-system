@@ -316,6 +316,13 @@
     .bn-item{flex:1;background:none;border:none;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 0;font-size:11px;color:var(--text2);cursor:pointer;transition:color .15s;}
     .bn-item span{font-size:20px;line-height:1;}
     .bn-item.active{color:var(--accent);font-weight:700;}
+    .bn-more-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:141;}
+    .bn-more-overlay.show{display:block;}
+    .bn-more-menu{display:none;position:fixed;left:12px;right:12px;bottom:calc(64px + env(safe-area-inset-bottom));z-index:142;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 -6px 24px rgba(15,23,42,0.18);overflow:hidden;}
+    .bn-more-menu.show{display:block;}
+    .bn-more-menu button{width:100%;display:flex;align-items:center;gap:10px;padding:14px 16px;background:none;border:none;border-bottom:1px solid var(--surface2);font-family:inherit;font-size:15px;color:var(--text);cursor:pointer;}
+    .bn-more-menu button:last-child{border-bottom:none;}
+    .bn-more-menu button span{font-size:18px;}
     /* ── [修改1] 手機 FAB 位置：底部導覽列高度約 56px + safe-area，FAB 浮在其上方 ── */
     .cart-fab{bottom:calc(64px + env(safe-area-inset-bottom));}
   }
@@ -350,12 +357,12 @@
     </span>
   </div>
   <nav>
-  <button class="active" onclick="showPage('borrow')">器材借用</button>
-  <button onclick="showPage('venue')">場地預約</button>
-  <button onclick="showPage('equipment')">器材查詢</button>
-  <button onclick="showPage('floorplan')">平面圖</button>
-  <button onclick="showPage('chemicals')">藥品查詢</button>
-  <button onclick="showPage('myrecords')">我的記錄</button>
+  <button class="active" data-page="borrow" onclick="showPage('borrow')">器材借用</button>
+  <button data-page="venue" onclick="showPage('venue')">場地預約</button>
+  <button data-page="equipment" onclick="showPage('equipment')">器材查詢</button>
+  <button data-page="floorplan" onclick="showPage('floorplan')">平面圖</button>
+  <button data-page="chemicals" onclick="showPage('chemicals')">藥品查詢</button>
+  <button data-page="myrecords" onclick="showPage('myrecords')">我的記錄</button>
   </nav>
 </header>
 <main>
@@ -468,7 +475,12 @@
 <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
 <div class="form-group full">
   <label>📷 上傳照片（選填，最多3張） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
-  <input type="file" id="f-photos" accept="image/*" multiple onchange="addPhotos(this.files);this.value=''">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()">📷 拍照</button>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()">🖼️ 從相簿選</button>
+  </div>
+  <input type="file" id="f-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
+  <input type="file" id="f-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
   <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB；用購物車快速送出時也會帶著走</div>
   <div id="f-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
 </div>
@@ -618,12 +630,16 @@
 <!-- 底部導覽列（手機顯示） -->
 <nav class="bottom-nav">
   <button class="bn-item active" data-page="borrow" onclick="showPage('borrow')"><span>🔬</span>借用</button>
+  <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查器材</button>
   <button class="bn-item" data-page="venue" onclick="showPage('venue')"><span>🏛️</span>場地</button>
-  <button class="bn-item" data-page="equipment" onclick="showPage('equipment')"><span>📦</span>查詢</button>
-  <button class="bn-item" data-page="floorplan" onclick="showPage('floorplan')"><span>🏫</span>平面圖</button>
-  <button class="bn-item" data-page="chemicals" onclick="showPage('chemicals')"><span>🧪</span>藥品</button>
-  <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>記錄</button>
+  <button class="bn-item" data-page="myrecords" onclick="showPage('myrecords')"><span>📋</span>紀錄</button>
+  <button class="bn-item" id="bnMoreBtn" onclick="toggleBnMore(event)"><span>⋯</span>更多</button>
 </nav>
+<div class="bn-more-overlay" id="bnMoreOverlay" onclick="closeBnMore()"></div>
+<div class="bn-more-menu" id="bnMoreMenu">
+  <button onclick="showPage('floorplan');closeBnMore()"><span>🏫</span>平面圖</button>
+  <button onclick="showPage('chemicals');closeBnMore()"><span>🧪</span>藥品查詢</button>
+</div>
 
 <!-- 購物車（右下） -->
 <button class="cart-fab" id="cartFab" onclick="openCart()" title="已選器材 / 搜尋加入" aria-label="已選器材 / 搜尋加入">🛒<span class="cart-badge" id="cartBadge">0</span></button>
@@ -1547,7 +1563,7 @@ function clearPendingPhotos(){
   pendingPhotos.forEach(p=>URL.revokeObjectURL(p.url));
   pendingPhotos=[];
   renderPhotoPreviews();
-  ['f-photos','qf-photos'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-photos-camera','f-photos-gallery','qf-photos-camera','qf-photos-gallery'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 function renderPhotoPreviews(){
   const html=pendingPhotos.length?pendingPhotos.map((p,i)=>`
@@ -1795,7 +1811,12 @@ function showQuickFillModal(missing){
   html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" placeholder="其他說明、特殊需求…">${escHtmlAttr(document.getElementById('f-note').value)}</textarea></div>`;
   html+=`<div class="form-group">
     <label>📷 上傳照片（選填，最多${MAX_PHOTOS}張） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
-    <input type="file" id="qf-photos" accept="image/*" multiple onchange="addPhotos(this.files);this.value=''">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('qf-photos-camera').click()">📷 拍照</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('qf-photos-gallery').click()">🖼️ 從相簿選</button>
+    </div>
+    <input type="file" id="qf-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
+    <input type="file" id="qf-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
     <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB</div>
     <div id="qf-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
   </div>`;
@@ -2099,17 +2120,33 @@ function openLightbox(url,name){if(!url)return;event&&event.stopPropagation();do
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
 function showPage(page){
   const currentPage=document.querySelector('.page.active')?.id?.replace('page-','');
+  closeBnMore();
   if(currentPage===page){window.scrollTo({top:0,behavior:'smooth'});return;}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
-  document.querySelectorAll('header nav button').forEach((b,i)=>b.classList.toggle('active',['borrow','venue','equipment','chemicals','myrecords'][i]===page));
+  document.querySelectorAll('header nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  const moreBtn=document.getElementById('bnMoreBtn');
+  if(moreBtn)moreBtn.classList.toggle('active',page==='floorplan'||page==='chemicals');
   const showCart=(page==='borrow'||page==='equipment');
   if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
+}
+function toggleBnMore(e){
+  if(e)e.stopPropagation();
+  const menu=document.getElementById('bnMoreMenu'),overlay=document.getElementById('bnMoreOverlay');
+  if(!menu)return;
+  const willShow=!menu.classList.contains('show');
+  menu.classList.toggle('show',willShow);
+  if(overlay)overlay.classList.toggle('show',willShow);
+}
+function closeBnMore(){
+  const menu=document.getElementById('bnMoreMenu'),overlay=document.getElementById('bnMoreOverlay');
+  if(menu)menu.classList.remove('show');
+  if(overlay)overlay.classList.remove('show');
 }
 function showModal(title,body,actions){
   document.getElementById('modalTitle').textContent=title;
