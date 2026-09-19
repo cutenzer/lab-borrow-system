@@ -369,12 +369,55 @@
     <div class="deposit-amount" id="depositCalc">NT$ 0</div>
     <div style="font-size:12px;color:#b8650f">預估保證金（請於借用前至辦公室繳納）</div>
   </div>
+
   <div class="card">
-    <div class="card-title">👤 借用人資料</div>
-    <div class="role-tabs">
+    <div class="card-title">👤 身份</div>
+    <div class="role-tabs" style="margin-bottom:0">
       <div class="role-tab" id="roleTabStudent" onclick="setRole('學生')">🎓 學生</div>
       <div class="role-tab active" id="roleTabTeacher" onclick="setRole('老師')">👨‍🏫 老師</div>
     </div>
+  </div>
+
+  <div class="card" id="courseTemplateCard" style="display:none">
+    <div class="card-title">📚 套用課程模板（老師專用）</div>
+    <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
+   <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+  <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
+    <option value="">全部科別</option>
+    <option value="Physics">物理</option>
+    <option value="Chemistry">化學</option>
+    <option value="Biology">生物</option>
+    <option value="Geoscience">地科</option>
+    <option value="Physics Chemistry">理化</option>
+  </select>
+  <select id="tplFilterGrade" onchange="renderTemplatePicker()" style="flex:0 0 100px">
+    <option value="">全部年級</option>
+  </select>
+  <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
+      <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
+      <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
+    </div>
+    <div id="appliedTemplateBox" style="display:none;margin-top:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
+        <button class="btn btn-secondary btn-sm" onclick="clearAppliedTemplate(true)">✕ 移除並清掉帶入器材</button>
+      </div>
+      <div id="appliedTemplateSummary"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🛒 已選器材</div>
+    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：到「器材查詢」頁面挑，或上面套用課程模板，都會加進這裡。</div>
+    <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">📦 到器材查詢頁面挑選</button>
+      <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">✅ 最後確認：借用人資料</div>
     <div class="form-grid">
       <div class="form-group"><label>姓名 *</label><input type="text" id="f-name" placeholder="輸入姓名"></div>
       <div class="form-group" id="studentIdGroup"><label>學號 *</label><input type="text" id="f-student-id" placeholder="輸入學號"></div>
@@ -418,8 +461,8 @@
     <option value="地科實驗室">是（地科實驗室）</option>
   </select>
 </div>
-<div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date"></div>
-<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date"></div>
+<div class="form-group"><label>借用日期 *</label><input type="date" id="f-borrow-date" lang="zh-TW"><div class="hint" id="f-borrow-date-display"></div></div>
+<div class="form-group"><label>預計歸還日期 *</label><input type="date" id="f-return-date" lang="zh-TW"><div class="hint" id="f-return-date-display"></div></div>
 <div class="form-group full"><label>備註說明</label><textarea id="f-note" placeholder="其他說明、特殊需求…"></textarea></div>
 <div class="form-group full">
   <label>📷 上傳照片（選填，最多3張） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
@@ -449,42 +492,6 @@
           <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="addInlinePeriodRow()">＋ 新增時段</button>
         </div>
       </div>
-    </div>
-  </div>
-  <div class="card" id="courseTemplateCard" style="display:none">
-    <div class="card-title">📚 套用課程模板（老師專用）</div>
-    <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
-   <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-  <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
-    <option value="">全部科別</option>
-    <option value="Physics">物理</option>
-    <option value="Chemistry">化學</option>
-    <option value="Biology">生物</option>
-    <option value="Geoscience">地科</option>
-    <option value="Physics Chemistry">理化</option>
-  </select>
-  <select id="tplFilterGrade" onchange="renderTemplatePicker()" style="flex:0 0 100px">
-    <option value="">全部年級</option>
-  </select>
-  <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
-      <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
-      <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
-    </div>
-    <div id="appliedTemplateBox" style="display:none;margin-top:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-        <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
-        <button class="btn btn-secondary btn-sm" onclick="clearAppliedTemplate(true)">✕ 移除並清掉帶入器材</button>
-      </div>
-      <div id="appliedTemplateSummary"></div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🛒 已選器材</div>
-    <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">📦 到器材查詢頁面挑選</button>
-      <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
     </div>
   </div>
   <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-bottom:16px">
@@ -525,10 +532,15 @@
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
     </div>
     <div class="browse-filters">
-      <input type="text" id="equipSearch" placeholder="搜尋器材名稱…" oninput="filterEquipBrowse()">
+      <input type="text" id="equipSearch" placeholder="搜尋器材名稱…（也支援英文/別名，例如 beaker）" oninput="filterEquipBrowse()">
       <select id="equipRoomFilter" onchange="filterEquipBrowse()"><option value="">全部房間</option></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer">
+        <input type="checkbox" id="equipLowStockFilter" onchange="filterEquipBrowse()" style="width:auto">
+        只看庫存不足
+      </label>
     </div>
     <div class="equip-browse-grid" id="equipBrowseGrid"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+    <div id="equipPagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap"></div>
   </div>
 </div>
 
@@ -804,11 +816,45 @@ let inlinePeriodRows=[];
 
 window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();setRole('老師');});
 
-function setMinDates(){
-  const today=new Date().toISOString().split('T')[0];
-  ['f-borrow-date','f-return-date'].forEach(id=>{document.getElementById(id).min=today;});
-  document.getElementById('f-borrow-date').value=today;
-  document.getElementById('f-borrow-date').addEventListener('change',e=>{document.getElementById('f-return-date').min=e.target.value;});
+let autoReturnDate='';
+function nextSchoolDay(dateStr){
+  let d=new Date(dateStr+'T00:00:00');
+  let guard=0;
+  do{
+    d.setDate(d.getDate()+1);
+    guard++;
+  }while(guard<30&&(d.getDay()===0||d.getDay()===6||holidayForDate(fmtDate(d))));
+  return fmtDate(d);
+}
+function updateDateDisplays(){
+  const bd=document.getElementById('f-borrow-date')?.value;
+  const rd=document.getElementById('f-return-date')?.value;
+  const bEl=document.getElementById('f-borrow-date-display');
+  const rEl=document.getElementById('f-return-date-display');
+  if(bEl)bEl.textContent=bd?`已選：${bd}`:'';
+  if(rEl)rEl.textContent=rd?`已選：${rd}`:'';
+}
+async function setMinDates(){
+  const today=fmtDate(new Date());
+  const bdEl=document.getElementById('f-borrow-date'),rdEl=document.getElementById('f-return-date');
+  bdEl.min=today;rdEl.min=today;
+  bdEl.value=today;
+  if(!allHolidaysFront.length)await loadHolidaysFront();
+  autoReturnDate=nextSchoolDay(today);
+  rdEl.value=autoReturnDate;
+  rdEl.min=today;
+  updateDateDisplays();
+  bdEl.onchange=e=>{
+    const bd=e.target.value;
+    rdEl.min=bd;
+    // 只有在歸還日還沒被手動改過（等於空值或上次自動帶入的值）時，才跟著自動更新
+    if(!rdEl.value||rdEl.value===autoReturnDate){
+      autoReturnDate=nextSchoolDay(bd);
+      rdEl.value=autoReturnDate;
+    }
+    updateDateDisplays();
+  };
+  rdEl.onchange=updateDateDisplays;
 }
 
 // ── 身份切換 ──────────────────────────────────────────────
@@ -1364,7 +1410,7 @@ function doBorrowSearch(q){
   clearTimeout(searchTimer);
   if(!q.trim()){box.innerHTML='';return;}
   searchTimer=setTimeout(()=>{
-    const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q));
+    const filtered=allEquipment.filter(e=>matchesEquip(e,q));
     if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+q+'」相關器材</div>';return;}
     box.innerHTML='<div class="search-dropdown">'+filtered.map(e=>{
       const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
@@ -1478,7 +1524,7 @@ function doCartSearch(q){
   clearTimeout(cartSearchTimer);
   if(!q.trim()){box.innerHTML='';return;}
   cartSearchTimer=setTimeout(()=>{
-    const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q));
+    const filtered=allEquipment.filter(e=>matchesEquip(e,q));
     if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+q+'」相關器材</div>';return;}
     box.innerHTML='<div class="search-dropdown" style="margin:0 18px 10px">'+filtered.map(e=>{
       const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
@@ -1543,6 +1589,7 @@ async function loadEquipmentData(){
     allRooms=[...new Set(rows.map(r=>r.room))];
     const rf=document.getElementById('equipRoomFilter');
     if(rf)rf.innerHTML='<option value="">全部房間</option>'+allRooms.map(r=>`<option value="${r}">${rn(r)}</option>`).join('');
+    equipBrowsePage=1;
     renderEquipBrowse(allEquipBrowse);
   }catch(e){const g=document.getElementById('equipBrowseGrid');if(g)g.innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
 }
@@ -1857,24 +1904,88 @@ function renderRecordListHTML(rows){
   }).join('')+'</div>';
 }
 
+// ── 常見器材中英文／別名對照，讓搜尋「beaker」也找得到「燒杯」──
+const EQUIP_ALIASES=[
+  [['beaker'],'燒杯'],
+  [['flask'],'燒瓶'],
+  [['erlenmeyer','erlenmeyer flask','三角燒瓶'],'錐形瓶'],
+  [['graduated cylinder','cylinder','量杯'],'量筒'],
+  [['burette','buret'],'滴定管'],
+  [['pipette','pipet'],'移液管'],
+  [['test tube'],'試管'],
+  [['alcohol lamp','spirit lamp'],'酒精燈'],
+  [['balance','scale'],'天平'],
+  [['microscope'],'顯微鏡'],
+  [['tripod'],'三腳架'],
+  [['funnel'],'漏斗'],
+  [['thermometer'],'溫度計'],
+  [['forceps','tweezers','clamp','鑷子'],'夾子'],
+  [['crucible'],'坩堝'],
+  [['litmus paper','ph paper','ph試紙'],'石蕊試紙'],
+  [['petri dish'],'培養皿'],
+  [['stopwatch'],'碼錶'],
+  [['magnifying glass'],'放大鏡'],
+  [['goggles'],'護目鏡'],
+];
+function expandSearchTerms(q){
+  const ql=(q||'').trim().toLowerCase();
+  const terms=new Set();
+  if(ql)terms.add(ql);
+  EQUIP_ALIASES.forEach(([aliases,canon])=>{
+    const all=[...aliases,canon].map(a=>a.toLowerCase());
+    if(ql&&all.some(a=>a===ql||a.includes(ql)||ql.includes(a))){
+      all.forEach(a=>terms.add(a));
+    }
+  });
+  return [...terms];
+}
+function matchesEquip(e,q){
+  if(!q||!q.trim())return true;
+  const hay=((e.name||'')+' '+(e.spec||'')).toLowerCase();
+  return expandSearchTerms(q).some(t=>hay.includes(t));
+}
+
 let allEquipBrowse=[];
+let equipBrowsePage=1;
+const EQUIP_PAGE_SIZE=24;
 function filterEquipBrowse(){
-  const q=document.getElementById('equipSearch').value.toLowerCase(),room=document.getElementById('equipRoomFilter').value;
-  renderEquipBrowse(allEquipBrowse.filter(e=>(!room||e.room===room)&&(!q||e.name.toLowerCase().includes(q)||e.spec.toLowerCase().includes(q))));
+  equipBrowsePage=1;
+  applyEquipBrowseFilter();
+}
+function applyEquipBrowseFilter(){
+  const q=document.getElementById('equipSearch').value,room=document.getElementById('equipRoomFilter').value;
+  const lowStockOnly=document.getElementById('equipLowStockFilter')?.checked;
+  const filtered=allEquipBrowse.filter(e=>{
+    if(room&&e.room!==room)return false;
+    if(!matchesEquip(e,q))return false;
+    if(lowStockOnly&&parseInt(e.available)>2)return false;
+    return true;
+  });
+  renderEquipBrowse(filtered);
 }
 function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
-  if(!items.length){grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';return;}
-  grid.innerHTML=items.map(e=>{
+  const pager=document.getElementById('equipPagination');
+  if(!items.length){
+    grid.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';
+    if(pager)pager.innerHTML='';
+    return;
+  }
+  const totalPages=Math.max(1,Math.ceil(items.length/EQUIP_PAGE_SIZE));
+  if(equipBrowsePage>totalPages)equipBrowsePage=totalPages;
+  const start=(equipBrowsePage-1)*EQUIP_PAGE_SIZE;
+  const pageItems=items.slice(start,start+EQUIP_PAGE_SIZE);
+  grid.innerHTML=pageItems.map(e=>{
     const avail=parseInt(e.available)||0,total=parseInt(e.total)||1,pct=Math.round(avail/total*100);
     const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
     const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     const imgHtml=e.image_url?`<img class="equip-browse-img" src="${e.image_url}" loading="lazy" onclick="openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-browse-img-ph" style="display:none;cursor:pointer" onclick="openLightbox('${e.image_url}','${safeN}')">🔬</div>`:`<div class="equip-browse-img-ph">🔬</div>`;
     const crossTag=userHomeLab&&e.room!==userHomeLab?'<span style="font-size:10px;background:var(--surface2);color:var(--text2);padding:1px 6px;border-radius:8px;margin-left:4px">跨科</span>':'';
+    const lowStockTag=avail>0&&avail<=2?'<span style="font-size:10px;background:#fff7ed;color:#c2410c;padding:1px 6px;border-radius:8px;margin-left:4px">庫存不足</span>':'';
     return `<div class="equip-browse-card">
       ${imgHtml}<div class="equip-browse-body">
-        <div class="equip-browse-room">${rn(e.room)}${crossTag}</div><div class="equip-browse-name">${e.name}</div>
+        <div class="equip-browse-room">${rn(e.room)}${crossTag}${lowStockTag}</div><div class="equip-browse-name">${e.name}</div>
         <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+decodeLocation(e.location,e.room):''}</div>
         <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
         ${borrowerInfo}
@@ -1885,6 +1996,20 @@ function renderEquipBrowse(items){
         </div>`:''}
       </div></div>`;
   }).join('');
+  if(pager){
+    if(totalPages<=1){pager.innerHTML='';}
+    else{
+      pager.innerHTML=`
+        <button class="btn btn-secondary btn-sm" ${equipBrowsePage<=1?'disabled':''} onclick="goEquipPage(${equipBrowsePage-1})">← 上一頁</button>
+        <span style="font-size:13px;color:var(--text2)">第 ${equipBrowsePage} / ${totalPages} 頁（共 ${items.length} 項）</span>
+        <button class="btn btn-secondary btn-sm" ${equipBrowsePage>=totalPages?'disabled':''} onclick="goEquipPage(${equipBrowsePage+1})">下一頁 →</button>`;
+    }
+  }
+}
+function goEquipPage(p){
+  equipBrowsePage=p;
+  applyEquipBrowseFilter();
+  document.getElementById('equipBrowseGrid').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function openLightbox(url,name){if(!url)return;event&&event.stopPropagation();document.getElementById('lightboxImg').src=url;document.getElementById('lightboxInfo').textContent=name||'';document.getElementById('lightbox').classList.add('show');}
@@ -2068,7 +2193,7 @@ function doTplExtraSearch(q){
   clearTimeout(tplExtraTimer);
   if(!q.trim()){box.innerHTML='';return;}
   tplExtraTimer=setTimeout(()=>{
-    const filtered=allEquipment.filter(e=>e.name.includes(q)||e.spec.includes(q)).slice(0,8);
+    const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,8);
     const safeQ=q.replace(/'/g,"\\'");
     let html='';
     if(filtered.length){
