@@ -213,6 +213,14 @@
   <div class="card" style="margin-bottom:0">
     <div class="card-title">🏛️ 場地週曆</div>
     <div class="cat-legend" id="catLegend"></div>
+    <div class="purpose-tabs" id="adminVenueLabTabs">
+      <button type="button" class="purpose-tab active" data-lab="" onclick="setAdminVenueLabFilter('')">全部</button>
+      <button type="button" class="purpose-tab" data-lab="生物" onclick="setAdminVenueLabFilter('生物')">生物</button>
+      <button type="button" class="purpose-tab" data-lab="化學" onclick="setAdminVenueLabFilter('化學')">化學</button>
+      <button type="button" class="purpose-tab" data-lab="理化" onclick="setAdminVenueLabFilter('理化')">理化</button>
+      <button type="button" class="purpose-tab" data-lab="物理" onclick="setAdminVenueLabFilter('物理')">物理</button>
+      <button type="button" class="purpose-tab" data-lab="地科" onclick="setAdminVenueLabFilter('地科')">地科</button>
+    </div>
     <div class="week-selector" id="adminWeekSelector" style="display:none;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
       <select id="adminWeekJump" onchange="adminJumpToWeek(this.value)" style="min-width:110px;max-width:320px;width:auto"></select>
@@ -395,8 +403,8 @@
         <select id="chem-category">
           <option value="">不指定</option>
           <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
-          <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
-          <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
+          <option value="有機溶劑">有機溶劑</option><option value="指示劑">指示劑</option>
+          <option value="培養基／生化">培養基／生化</option><option value="溶液成品">溶液成品</option><option value="其他">其他</option>
         </select>
       </div>
       <div class="form-group"><label>剩餘瓶數</label><input type="number" id="chem-bottles" min="0" value="0"></div>
@@ -413,6 +421,12 @@
     </div>
   </div>
 
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🏷️ 快速歸類「其他／未分類」藥品</div>
+    <div class="info-box">把目前分類是「其他」或還沒填分類的藥品集中列在這裡，每一筆旁邊直接選新分類即可儲存，不用逐筆點進去編輯。</div>
+    <div id="chemQuickSortList"><div class="empty"><div class="empty-icon">🏷️</div><p>點重新整理載入</p></div></div>
+  </div>
+
   <div class="card">
     <div class="card-title">📋 藥品清單</div>
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -420,8 +434,8 @@
   <select id="adminChemCat" onchange="filterAdminChems()">
     <option value="">全部分類</option>
     <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
-    <option value="有機">有機</option><option value="無機鹽">無機鹽</option>
-    <option value="氧/硫化物">氧/硫化物</option><option value="其他">其他</option>
+    <option value="有機溶劑">有機溶劑</option><option value="指示劑">指示劑</option>
+    <option value="培養基／生化">培養基／生化</option><option value="溶液成品">溶液成品</option><option value="其他">其他</option>
   </select>
   <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
 </div>
@@ -1276,18 +1290,26 @@ async function doDeleteSemester(id){
   catch(e){showToast('刪除失敗','error');}
 }
 
+let adminVenueLabFilter='';
+function setAdminVenueLabFilter(lab){
+  adminVenueLabFilter=lab;
+  document.querySelectorAll('#adminVenueLabTabs .purpose-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===lab));
+  loadAdminVenue();
+}
 function renderAdminVenueTable(dates,expanded){
   const table=document.getElementById('adminVenueTable');
-  const LABS=['生物','化學','理化','物理','地科'];
+  const ALL_LABS=['生物','化學','理化','物理','地科'];
+  const LABS=adminVenueLabFilter?[adminVenueLabFilter]:ALL_LABS;
+  const showLabCol=!adminVenueLabFilter;
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
   const COMPACT_PERIODS=['早休','午休'];
-  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>{
+  let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
     return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
-    if(COMPACT_PERIODS.includes(period)){
+    if(!adminVenueLabFilter&&COMPACT_PERIODS.includes(period)){
       html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''}">`;
       html+=`<td class="period-cell">${period}</td>`;
       html+=`<td class="lab-cell">－</td>`;
@@ -1315,8 +1337,8 @@ function renderAdminVenueTable(dates,expanded){
     }
     LABS.forEach((lab,li)=>{
       html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''}">`;
-      if(li===0)html+=`<td rowspan="5" class="period-cell">${period}</td>`;
-      html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
+      if(li===0)html+=`<td rowspan="${LABS.length}" class="period-cell">${period}</td>`;
+      if(showLabCol)html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
         const dateStr=fmtDate(date);
         const venueFull=labFull[lab];
@@ -2456,10 +2478,39 @@ async function loadAdminChems() {
     const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' });
     allAdminChems = Array.isArray(rows) ? rows : [];
     filterAdminChems();
+    renderChemQuickSort();
   } catch(e) { showToast('載入藥品失敗', 'error'); }
 }
 
-const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機','無機鹽','氧/硫化物','其他'];
+const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機溶劑','指示劑','培養基／生化','溶液成品','其他'];
+const CHEM_CAT_CLASS_MAP = {'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','有機溶劑':'cat-organic','指示劑':'cat-indicator','培養基／生化':'cat-bio','溶液成品':'cat-solution','其他':'cat-other'};
+function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
+
+function renderChemQuickSort(){
+  const box=document.getElementById('chemQuickSortList');if(!box)return;
+  const targets=allAdminChems.filter(c=>!c.category||c.category==='其他');
+  if(!targets.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>目前沒有「其他／未分類」的藥品</p></div>';return;}
+  box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">共 ${targets.length} 筆</div>`+targets.map(c=>{
+    const catOpts=CHEM_CATEGORIES.filter(v=>v).map(v=>`<option value="${v}" ${c.category===v?'selected':''}>${v}</option>`).join('');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
+      <span style="flex:1;min-width:120px;font-weight:600">${c.name_zh}${c.name_en?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+c.name_en+'</span>':''}</span>
+      <select style="max-width:160px" onchange="quickSetChemCategory(${c.id},this.value)">
+        <option value="">未分類</option>
+        ${catOpts}
+      </select>
+    </div>`;
+  }).join('');
+}
+async function quickSetChemCategory(id,category){
+  if(!category)return;
+  try{
+    await sb('PATCH','chemicals',{filter:'id=eq.'+id,body:{category,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    const c=allAdminChems.find(x=>x.id===id);if(c)c.category=category;
+    showToast('已更新分類','success');
+    renderChemQuickSort();
+    filterAdminChems();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
 
 function filterAdminChems() {
   const q = (document.getElementById('adminChemSearch')?.value || '').toLowerCase();
