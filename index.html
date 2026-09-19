@@ -329,12 +329,14 @@
   .chem-row:last-child{border-bottom:none;}
   .chem-row:hover{background:#f5f9fd;border-radius:8px;}
   .chem-cat-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:var(--surface2);color:var(--text2);white-space:nowrap;}
-  .chem-cat-酸{background:#fde8e8;color:#b91c1c;}
-  .chem-cat-鹼{background:#e0f2fe;color:#0369a1;}
-  .chem-cat-鹽{background:#f0fdf4;color:#15803d;}
-  .chem-cat-有機{background:#fef9c3;color:#a16207;}
-  .chem-cat-無機鹽{background:#ede9fe;color:#6d28d9;}
-  .chem-cat-氧\/硫化物{background:#fff7ed;color:#c2410c;}
+  .chem-cat-tag.cat-acid{background:#fde8e8;color:#b91c1c;}
+  .chem-cat-tag.cat-base{background:#e0f2fe;color:#0369a1;}
+  .chem-cat-tag.cat-salt{background:#f0fdf4;color:#15803d;}
+  .chem-cat-tag.cat-organic{background:#fef9c3;color:#a16207;}
+  .chem-cat-tag.cat-indicator{background:#ede9fe;color:#6d28d9;}
+  .chem-cat-tag.cat-bio{background:#fff7ed;color:#c2410c;}
+  .chem-cat-tag.cat-solution{background:#e0e7ff;color:#4338ca;}
+  .chem-cat-tag.cat-other{background:var(--surface2);color:var(--text2);}
   .chem-recycle-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10.5px;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);}
   .chem-bottles{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--accent);white-space:nowrap;}
   .chem-unavail{opacity:0.45;}
@@ -504,6 +506,14 @@
 <div id="page-venue" class="page">
   <div class="card">
     <div class="card-title">📅 場地課表</div>
+    <div class="room-tabs" id="venueLabTabs">
+      <button type="button" class="room-tab active" data-lab="" onclick="setVenueLabFilter('')">全部</button>
+      <button type="button" class="room-tab" data-lab="生物" onclick="setVenueLabFilter('生物')">生物</button>
+      <button type="button" class="room-tab" data-lab="化學" onclick="setVenueLabFilter('化學')">化學</button>
+      <button type="button" class="room-tab" data-lab="理化" onclick="setVenueLabFilter('理化')">理化</button>
+      <button type="button" class="room-tab" data-lab="物理" onclick="setVenueLabFilter('物理')">物理</button>
+      <button type="button" class="room-tab" data-lab="地科" onclick="setVenueLabFilter('地科')">地科</button>
+    </div>
     <div class="week-selector" id="weekSelector" style="display:none">
       <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
       <select id="weekJump" onchange="jumpToWeek(this.value)"></select>
@@ -569,9 +579,10 @@
         <option value="酸">酸</option>
         <option value="鹼">鹼</option>
         <option value="鹽">鹽</option>
-        <option value="有機">有機</option>
-        <option value="無機鹽">無機鹽</option>
-        <option value="氧/硫化物">氧/硫化物</option>
+        <option value="有機溶劑">有機溶劑</option>
+        <option value="指示劑">指示劑</option>
+        <option value="培養基／生化">培養基／生化</option>
+        <option value="溶液成品">溶液成品</option>
         <option value="其他">其他</option>
       </select>
     </div>
@@ -583,7 +594,7 @@
 <div id="page-floorplan" class="page">
   <div class="card">
     <div class="card-title">🏫 實驗室平面圖</div>
-    <div class="info-box">點選實驗室切換平面圖，點圖片可放大檢視櫃位位置。</div>
+    <div class="info-box">點選實驗室切換平面圖，點圖片可放大檢視櫃位位置；下方櫃位清單可以直接點開看裡面有什麼。</div>
     <div class="room-tabs" id="floorplanTabs">
       <div class="room-tab active" onclick="showFloorplan('bio', this)">🧬 生物</div>
       <div class="room-tab" onclick="showFloorplan('chem', this)">⚗️ 化學</div>
@@ -597,6 +608,7 @@
            style="max-width:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
            onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
     </div>
+    <div id="floorplanLocList" style="margin-top:14px"></div>
     <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「器材查詢」頁的「❓ 找物說明」</div>
   </div>
 </div>
@@ -783,12 +795,74 @@ const floorplanNames = {
   bio:'生物實驗室', chem:'化學實驗室', geo:'地科實驗室',
   pc:'理化實驗室', phy:'物理實驗室', tmt:'教具室'
 };
+const FLOORPLAN_KEY_TO_ROOM={'bio':'Biology','chem':'Chemistry','geo':'Geoscience','pc':'Physics Chemistry','phy':'Physics','tmt':'TeachingMaterialRoom'};
+const ROOM_TO_FLOORPLAN_KEY={'Biology':'bio','Chemistry':'chem','Geoscience':'geo','Physics Chemistry':'pc','Physics':'phy','TeachingMaterialRoom':'tmt'};
 let currentFloorplan = 'bio';
+let floorplanOpenLoc = '';
 function showFloorplan(key, el){
   currentFloorplan = key;
+  floorplanOpenLoc = '';
   document.getElementById('floorplanImg').src = './floorplans/' + key + '.jpg';
   document.querySelectorAll('#floorplanTabs .room-tab').forEach(t=>t.classList.remove('active'));
   if(el) el.classList.add('active');
+  else{
+    const idx=['bio','chem','geo','pc','phy','tmt'].indexOf(key);
+    const tabs=document.querySelectorAll('#floorplanTabs .room-tab');
+    if(tabs[idx])tabs[idx].classList.add('active');
+  }
+  renderFloorplanLocations();
+}
+function renderFloorplanLocations(){
+  const box=document.getElementById('floorplanLocList');if(!box)return;
+  const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
+  const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
+  const codeMap=new Map();
+  items.forEach(e=>{
+    (e.location||'').split('&').map(s=>s.trim()).filter(Boolean).forEach(code=>{
+      if(!codeMap.has(code))codeMap.set(code,[]);
+      codeMap.get(code).push(e);
+    });
+  });
+  const codes=[...codeMap.keys()].sort();
+  if(!codes.length){box.innerHTML='<div class="hint">這個房間目前沒有登記位置代碼的器材</div>';return;}
+  box.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">📍 這個房間的櫃位（點一下看裡面有什麼）</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${codes.map(c=>{
+        const hasStock=codeMap.get(c).some(e=>parseInt(e.available)>0);
+        const safeC=c.replace(/'/g,"\\'");
+        return `<button type="button" class="room-tab ${floorplanOpenLoc===c?'active':''}" style="${hasStock?'':'opacity:.5'}" onclick="toggleFloorplanLoc('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
+      }).join('')}
+    </div>
+    <div id="floorplanLocDetail" style="margin-top:10px"></div>`;
+  renderFloorplanLocDetail();
+}
+function toggleFloorplanLoc(code){
+  floorplanOpenLoc=(floorplanOpenLoc===code)?'':code;
+  renderFloorplanLocations();
+}
+function renderFloorplanLocDetail(){
+  const detail=document.getElementById('floorplanLocDetail');if(!detail)return;
+  if(!floorplanOpenLoc){detail.innerHTML='';return;}
+  const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
+  const items=(allEquipment||[]).filter(e=>e.room===room&&(e.location||'').split('&').map(s=>s.trim()).includes(floorplanOpenLoc));
+  detail.innerHTML=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+    <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">📦 ${floorplanOpenLoc} 裡面有：</div>
+    ${items.map(e=>{
+      const avail=parseInt(e.available)||0;
+      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:13px">
+        <span>${e.name}${e.spec?' ・ '+e.spec:''}</span>
+        <span class="${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借 '+avail+e.unit:'無庫存'}</span>
+      </div>`;
+    }).join('')||'<div style="font-size:12px;color:var(--text2)">（沒有找到對應器材資料）</div>'}
+  </div>`;
+}
+function jumpToFloorplanLocation(room,code){
+  const key=ROOM_TO_FLOORPLAN_KEY[room];
+  if(!key)return;
+  showPage('floorplan');
+  showFloorplan(key,null);
+  floorplanOpenLoc=(code||'').split('&')[0].trim();
+  renderFloorplanLocations();
 }
   
 async function sb(method,table,opts={}){
@@ -1280,18 +1354,26 @@ function openVenueBookingModal(dateStr,period,venue){
   }
   setVenueRole(currentVenueRole||'老師');
 }
+let venueLabFilter='';
+function setVenueLabFilter(lab){
+  venueLabFilter=lab;
+  document.querySelectorAll('#venueLabTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===lab));
+  loadVenue();
+}
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
-  const LABS=['生物','化學','理化','物理','地科'];
+  const ALL_LABS=['生物','化學','理化','物理','地科'];
+  const LABS=venueLabFilter?[venueLabFilter]:ALL_LABS;
+  const showLabCol=!venueLabFilter;
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
   const COMPACT_PERIODS=['早休','午休'];
-  let html=`<thead><tr><th>節次</th><th>實驗室</th>${dates.map((d,i)=>{
+  let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
     return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
-    if(COMPACT_PERIODS.includes(period)){
+    if(!venueLabFilter&&COMPACT_PERIODS.includes(period)){
       html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''}">`;
       html+=`<td class="period-cell">${period}</td>`;
       html+=`<td class="lab-cell">－</td>`;
@@ -1319,8 +1401,8 @@ function renderVenueTable(dates){
     }
     LABS.forEach((lab,li)=>{
       html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''}">`;
-      if(li===0)html+=`<td rowspan="5" class="period-cell">${period}</td>`;
-      html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
+      if(li===0)html+=`<td rowspan="${LABS.length}" class="period-cell">${period}</td>`;
+      if(showLabCol)html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
         const dateStr=fmtDate(date),venueFull=labFull[lab];
         const isHoliday=!!holidayForDate(dateStr);
@@ -1591,6 +1673,7 @@ async function loadEquipmentData(){
     if(rf)rf.innerHTML='<option value="">全部房間</option>'+allRooms.map(r=>`<option value="${r}">${rn(r)}</option>`).join('');
     equipBrowsePage=1;
     renderEquipBrowse(allEquipBrowse);
+    renderFloorplanLocations();
   }catch(e){const g=document.getElementById('equipBrowseGrid');if(g)g.innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
 }
 // 借用頁面已不再內嵌器材清單（改到「器材查詢」頁面挑選），
@@ -1986,7 +2069,7 @@ function renderEquipBrowse(items){
     return `<div class="equip-browse-card">
       ${imgHtml}<div class="equip-browse-body">
         <div class="equip-browse-room">${rn(e.room)}${crossTag}${lowStockTag}</div><div class="equip-browse-name">${e.name}</div>
-        <div class="equip-browse-spec">${e.spec||'─'}${e.location?' ・ '+decodeLocation(e.location,e.room):''}</div>
+        <div class="equip-browse-spec">${e.spec||'─'}${e.location?` ・ <span style="text-decoration:underline;cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();jumpToFloorplanLocation('${e.room}','${e.location.replace(/'/g,"\\'")}')">${decodeLocation(e.location,e.room)}</span>`:''}</div>
         <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
         ${borrowerInfo}
         ${avail>0?`<div class="equip-row-qty" style="margin-top:8px;justify-content:flex-end">
@@ -2267,6 +2350,8 @@ async function loadChemicals(){
   try{const rows=await sb('GET','chemicals',{order:'category,name_zh'});allChemicals=Array.isArray(rows)?rows:[];filteredChemicals=allChemicals;renderChemList(allChemicals);}
   catch(e){document.getElementById('chemList').innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
 }
+const CHEM_CAT_CLASS_MAP={'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','有機溶劑':'cat-organic','指示劑':'cat-indicator','培養基／生化':'cat-bio','溶液成品':'cat-solution','其他':'cat-other'};
+function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
 function filterChemicals(){
   const q=document.getElementById('chemSearch').value.toLowerCase(),cat=document.getElementById('chemCatFilter').value;
   filteredChemicals=allChemicals.filter(c=>(!q||c.name_zh?.toLowerCase().includes(q)||c.name_en?.toLowerCase().includes(q))&&(!cat||c.category===cat));
@@ -2276,7 +2361,7 @@ function renderChemList(items){
   const box=document.getElementById('chemList');
   if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>';return;}
   box.innerHTML='<div class="equip-list">'+items.map(c=>{
-    const avail=c.is_available!==false;const catCls='chem-cat-'+(c.category||'其他');
+    const avail=c.is_available!==false;const catCls=chemCatClass(c.category);
     return `<div class="chem-row ${avail?'':'chem-unavail'}">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
