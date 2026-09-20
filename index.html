@@ -618,6 +618,7 @@
       <div class="room-tab" onclick="showFloorplan('pc', this)">🔭 理化</div>
       <div class="room-tab" onclick="showFloorplan('phy', this)">⚡ 物理</div>
       <div class="room-tab" onclick="showFloorplan('tmt', this)">📦 教具室</div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">🔄 重新整理位置</button>
     </div>
     <div style="text-align:center;margin-top:10px">
       <div id="floorplanImgWrap" style="position:relative;display:inline-block;max-width:100%">
@@ -836,6 +837,12 @@ async function loadFloorplanHotspotsFromDB(){
     FLOORPLAN_HOTSPOTS=grouped;
   }catch(e){console.warn('平面圖熱區載入失敗',e);}
   floorplanHotspotsLoaded=true;
+}
+async function refreshFloorplanHotspots(){
+  floorplanHotspotsLoaded=false;
+  await loadFloorplanHotspotsFromDB();
+  renderFloorplanHotspots();
+  showToast('已重新整理熱區位置','success');
 }
 const floorplanNames = {
   bio:'生物實驗室', chem:'化學實驗室', geo:'地科實驗室',
@@ -2191,7 +2198,11 @@ function showPage(page){
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
-  if(page==='floorplan'&&!floorplanInitialized)showFloorplan(currentFloorplan,null);
+  if(page==='floorplan'){
+    floorplanHotspotsLoaded=false;
+    if(!floorplanInitialized)showFloorplan(currentFloorplan,null);
+    else loadFloorplanHotspotsFromDB().then(renderFloorplanHotspots);
+  }
 }
 function toggleBnMore(e){
   if(e)e.stopPropagation();
