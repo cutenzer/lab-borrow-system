@@ -411,6 +411,7 @@
     <div class="card-title" style="flex-wrap:wrap">📋 目前房間的熱區清單
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">🔍 檢查全部房間的重複代碼</button>
       <button class="btn btn-danger btn-sm" onclick="checkCalibOversized()">⚠️ 檢查異常尺寸</button>
+      <button class="btn btn-danger btn-sm" onclick="clearRoomHotspots()">🗑️ 清空這個房間全部熱區</button>
     </div>
     <div id="calibList"><div class="empty"><div class="empty-icon">🗺️</div><p>點重新整理載入</p></div></div>
   </div>
@@ -3691,6 +3692,24 @@ async function doDeleteCalibOversized(){
     catch(e){fail++;}
   }
   showToast(`刪除完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}，請記得重新畫回正常大小的框`,ok?'success':'error');
+  loadCalibHotspots();
+}
+function clearRoomHotspots(){
+  const roomLabel={'bio':'生物','chem':'化學','geo':'地科','pc':'理化','phy':'物理','tmt':'教具室'}[calibRoom]||calibRoom;
+  showModal('確認清空',`<p>確定要刪除「${roomLabel}」這個房間目前<strong>全部 ${allCalibHotspots.length} 筆</strong>熱區資料嗎？</p><p style="margin-top:8px;font-size:13px;color:var(--danger)">此操作無法復原，其他房間不受影響。清空後可以重新一個一個乾淨地拖拉畫框。</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認清空',cls:'btn-danger',fn:'doClearRoomHotspots()'}
+  ]);
+}
+async function doClearRoomHotspots(){
+  closeModal();
+  const room=FLOORPLAN_KEY_TO_ROOM[calibRoom];
+  let ok=0,fail=0;
+  for(const h of allCalibHotspots){
+    try{await sb('DELETE','floorplan_hotspots',{filter:'id=eq.'+h.id,prefer:'return=minimal'});ok++;}
+    catch(e){fail++;}
+  }
+  showToast(`已清空：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`,'success');
   loadCalibHotspots();
 }
 </script>
