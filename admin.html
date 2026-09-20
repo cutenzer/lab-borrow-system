@@ -183,6 +183,7 @@
   <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
   <button class="tab" onclick="showTab('templates')">📚 課程模板</button>
   <button class="tab" onclick="showTab('chemicals')">🧪 藥品管理</button>
+  <button class="tab" onclick="showTab('equipment')">📦 器材管理</button>
   <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
 </div>
 
@@ -442,6 +443,102 @@
     <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
   </div>
 </div>  
+<div id="panel-equipment" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🏷️ 新增 / 編輯器材</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+      <div class="form-group">
+        <label>房間 *</label>
+        <select id="eq-room">
+          <option value="Physics">物理</option>
+          <option value="Chemistry">化學</option>
+          <option value="Biology">生物</option>
+          <option value="Geoscience">地科</option>
+          <option value="Physics Chemistry">理化</option>
+          <option value="TeachingMaterialRoom">教具室</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:span 2"><label>名稱 *</label><input type="text" id="eq-name"></div>
+      <div class="form-group"><label>規格</label><input type="text" id="eq-spec"></div>
+      <div class="form-group"><label>單位</label><input type="text" id="eq-unit" value="個"></div>
+      <div class="form-group"><label>總數 *</label><input type="number" id="eq-total" min="0" value="0"></div>
+      <div class="form-group"><label>櫃位編碼</label><input type="text" id="eq-location" placeholder="例如：BB01-1"></div>
+      <div class="form-group"><label>別名（搜尋用，選填）</label><input type="text" id="eq-alias" placeholder="例如：beaker、燒杯仔"></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="eq-available" checked style="width:auto">
+        <label for="eq-available" style="color:var(--text)">開放借用</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+      <button class="btn btn-secondary" onclick="clearEquipForm()">清除</button>
+      <button class="btn btn-primary" onclick="saveEquip()">💾 儲存</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🔢 盤點模式</div>
+    <div class="info-box">選一個房間，把每一項的「實點數量」改成現場清點到的數字，按「儲存這個房間的盤點」一次寫入，並記錄盤點時間。只會更新總數，不會動到目前已借出、審核中的資料。</div>
+    <div class="room-tabs" id="stocktakeRoomTabs">
+      <button type="button" class="room-tab active" data-room="Physics" onclick="setStocktakeRoom('Physics')">物理</button>
+      <button type="button" class="room-tab" data-room="Chemistry" onclick="setStocktakeRoom('Chemistry')">化學</button>
+      <button type="button" class="room-tab" data-room="Biology" onclick="setStocktakeRoom('Biology')">生物</button>
+      <button type="button" class="room-tab" data-room="Geoscience" onclick="setStocktakeRoom('Geoscience')">地科</button>
+      <button type="button" class="room-tab" data-room="Physics Chemistry" onclick="setStocktakeRoom('Physics Chemistry')">理化</button>
+      <button type="button" class="room-tab" data-room="TeachingMaterialRoom" onclick="setStocktakeRoom('TeachingMaterialRoom')">教具室</button>
+    </div>
+    <div id="stocktakeList" style="margin-top:10px"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px">
+      <button class="btn btn-primary" onclick="saveStocktake()">💾 儲存這個房間的盤點</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💾 器材清單備份／批次編輯</div>
+    <div class="info-box">「匯出」把目前所有器材整理成 Excel（一列一項），可以直接在 Excel 裡改總數、規格、櫃位、別名，改完再「匯入」整批更新回來。比對用「房間＋名稱」或「器材ID」自動判斷是更新還是新增；匯入後清單裡消失的列預設「保留不刪」，避免貼錯整批清空。「可借數」欄只供參考，匯入時不會被寫入（可借數永遠由系統即時計算：總數－已核准未還）。</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary" onclick="exportEquipmentXlsx()">📥 匯出器材清單（Excel備份）</button>
+      <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
+        📤 匯入器材 Excel
+        <input type="file" id="eq-import-file" accept=".xlsx" style="display:none" onchange="handleEquipmentImport(this)">
+      </label>
+    </div>
+    <div id="eqImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📜 報廢紀錄</div>
+    <div class="info-box">「♻️ 報廢」會從總數扣除指定數量並留下紀錄（數量、原因、時間），跟直接刪除不一樣——刪除是整筆資料消失，報廢是留痕跡的減量，方便對照校內財產報廢流程。</div>
+    <button class="btn btn-secondary btn-sm" onclick="exportWriteoffLog()">📥 匯出報廢紀錄（Excel）</button>
+    <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><div class="empty-icon">📜</div><p>點重新整理載入</p></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 器材清單</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="filterAdminEquip()" style="flex:1">
+      <select id="adminEquipRoomFilter" onchange="filterAdminEquip()">
+        <option value="">全部房間</option>
+        <option value="Physics">物理</option>
+        <option value="Chemistry">化學</option>
+        <option value="Biology">生物</option>
+        <option value="Geoscience">地科</option>
+        <option value="Physics Chemistry">理化</option>
+        <option value="TeachingMaterialRoom">教具室</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="adminEquipLowStock" onchange="filterAdminEquip()" style="width:auto">
+        只看庫存不足（可借≤2）
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+        <input type="checkbox" id="adminEquipNotCounted" onchange="filterAdminEquip()" style="width:auto">
+        只看超過90天未盤點
+      </label>
+    </div>
+    <div id="adminEquipList"><div class="empty"><div class="empty-icon">📦</div><p>點重新整理載入</p></div></div>
+  </div>
+</div>
 <div id="panel-all" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
@@ -591,7 +688,7 @@ function renderWithFilter(panel){
 }
 
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','teachers','semester','templates','chemicals','all'][i]===tab));
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','teachers','semester','templates','chemicals','equipment','all'][i]===tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
@@ -599,6 +696,7 @@ function showTab(tab){
   if(tab==='semester'){loadSemesters();loadHolidays();}
   if(tab==='templates')loadTemplates();
   if(tab==='chemicals')loadAdminChems();
+  if(tab==='equipment')loadAdminEquipment();
 }
 
 function renderList(records,container,mode){
@@ -2860,6 +2958,447 @@ async function doApplyChemDiff() {
   document.getElementById('chemCsvInput').value = '';
   document.getElementById('chemCsvPreview').innerHTML = '';
   loadAdminChems();
+}
+
+// ══════════════════════════════════════════════════════════
+// 器材管理（照藥品那套：搜尋/房間篩選/單筆編輯/盤點模式/Excel匯出入）
+// ══════════════════════════════════════════════════════════
+let allAdminEquipment=[],editingEquipId=null,equipBorrowedMap={};
+
+async function loadAdminEquipment(){
+  const list=document.getElementById('adminEquipList');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    const [rows,borrows]=await Promise.all([
+      sb('GET','equipment',{order:'room,name'}),
+      sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'})
+    ]);
+    allAdminEquipment=Array.isArray(rows)?rows:[];
+    equipBorrowedMap={};
+    (Array.isArray(borrows)?borrows:[]).forEach(r=>{
+      (r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+    });
+    filterAdminEquip();
+    renderStocktakeList();
+    loadWriteoffLog();
+  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+}
+function equipAvailable(e){
+  const borrowed=equipBorrowedMap[e.room+'__'+e.name]||0;
+  return Math.max(0,(parseInt(e.total)||0)-borrowed);
+}
+function clearEquipForm(){
+  editingEquipId=null;
+  ['eq-name','eq-spec','eq-location','eq-alias'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('eq-unit').value='個';
+  document.getElementById('eq-total').value='0';
+  document.getElementById('eq-room').value='Physics';
+  document.getElementById('eq-available').checked=true;
+}
+function editEquip(id){
+  const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
+  editingEquipId=e.id;
+  document.getElementById('eq-room').value=e.room||'Physics';
+  document.getElementById('eq-name').value=e.name||'';
+  document.getElementById('eq-spec').value=e.spec||'';
+  document.getElementById('eq-unit').value=e.unit||'個';
+  document.getElementById('eq-total').value=e.total??0;
+  document.getElementById('eq-location').value=e.location||'';
+  document.getElementById('eq-alias').value=e.alias||'';
+  document.getElementById('eq-available').checked=e.is_available!==false;
+  document.getElementById('eq-name').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveEquip(){
+  const name=document.getElementById('eq-name').value.trim();
+  if(!name){showToast('請填寫名稱','error');return;}
+  const body={
+    room:document.getElementById('eq-room').value,
+    name,
+    spec:document.getElementById('eq-spec').value.trim(),
+    unit:document.getElementById('eq-unit').value.trim()||'個',
+    total:parseInt(document.getElementById('eq-total').value)||0,
+    location:document.getElementById('eq-location').value.trim(),
+    alias:document.getElementById('eq-alias').value.trim()||null,
+    is_available:document.getElementById('eq-available').checked
+  };
+  try{
+    if(editingEquipId){
+      await sb('PATCH','equipment',{filter:'id=eq.'+editingEquipId,body,prefer:'return=minimal'});
+      showToast('已更新','success');
+    }else{
+      const dup=allAdminEquipment.find(e=>e.room===body.room&&e.name===body.name);
+      if(dup){showToast('這個房間已經有相同名稱的器材，如需修改請直接編輯','error');return;}
+      await sb('POST','equipment',{body,prefer:'return=minimal'});
+      showToast('已新增','success');
+    }
+    clearEquipForm();loadAdminEquipment();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+function deleteEquip(id){
+  showModal('確認刪除',`<p>確定刪除這筆器材資料嗎？此操作無法復原。</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteEquip('${id}')`}
+  ]);
+}
+async function doDeleteEquip(id){
+  closeModal();
+  try{await sb('DELETE','equipment',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadAdminEquipment();}
+  catch(e){showToast('刪除失敗','error');}
+}
+function filterAdminEquip(){
+  const q=(document.getElementById('adminEquipSearch')?.value||'').toLowerCase();
+  const room=document.getElementById('adminEquipRoomFilter')?.value||'';
+  const lowStockOnly=document.getElementById('adminEquipLowStock')?.checked;
+  const notCountedOnly=document.getElementById('adminEquipNotCounted')?.checked;
+  const cutoff=Date.now()-90*24*60*60*1000;
+  const items=allAdminEquipment.filter(e=>{
+    if(room&&e.room!==room)return false;
+    if(q&&!((e.name||'').toLowerCase().includes(q)||(e.spec||'').toLowerCase().includes(q)||(e.alias||'').toLowerCase().includes(q)))return false;
+    if(lowStockOnly&&equipAvailable(e)>2)return false;
+    if(notCountedOnly&&e.last_counted_at&&new Date(e.last_counted_at).getTime()>=cutoff)return false;
+    return true;
+  });
+  const list=document.getElementById('adminEquipList');
+  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合器材</p></div>';return;}
+  list.innerHTML='<div class="record-list">'+items.map(e=>{
+    const avail=equipAvailable(e);
+    const imgHtml=e.image_url?`<img src="${e.image_url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔬</div>`;
+    return `<div class="record-card" id="eqcard-${e.id}">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        ${imgHtml}
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700">${e.name} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}</div>
+          <div style="font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">
+            <span>總數 <strong>${e.total??0}</strong> ${e.unit||'個'}</span>
+            <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
+            ${e.location?`<span>📍 ${e.location}</span>`:''}
+            ${e.alias?`<span>別名：${e.alias}</span>`:''}
+          </div>
+          ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" onclick="editEquip('${e.id}')">✏️ 編輯</button>
+          <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload('${e.id}')">🖼️ 換照片</button>
+          <button class="btn btn-warn btn-sm" onclick="openWriteoffModal('${e.id}')">♻️ 報廢</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEquip('${e.id}')">🗑️</button>
+        </div>
+      </div>
+      <input type="file" id="eq-photo-input-${e.id}" accept="image/*" style="display:none" onchange="uploadEquipPhoto('${e.id}',this)">
+    </div>`;
+  }).join('')+'</div>';
+}
+function openEquipPhotoUpload(id){
+  const el=document.getElementById('eq-photo-input-'+id);if(el)el.click();
+}
+async function uploadEquipPhoto(id,input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  showToast('照片上傳中…','success');
+  try{
+    const extRaw=(file.name||'').split('.').pop()||'jpg';
+    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path=`equipment/${id}/${Date.now()}.${ext}`;
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':file.type||'application/octet-stream'},
+      body:file
+    });
+    if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
+    const url=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
+    await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{image_url:url},prefer:'return=minimal'});
+    showToast('照片已更新','success');
+    loadAdminEquipment();
+  }catch(e){showToast('上傳失敗：'+e.message,'error');}
+  input.value='';
+}
+
+// ── 盤點模式 ──────────────────────────────────────────────
+let stocktakeRoom='Physics';
+function setStocktakeRoom(room){
+  stocktakeRoom=room;
+  document.querySelectorAll('#stocktakeRoomTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.room===room));
+  renderStocktakeList();
+}
+function renderStocktakeList(){
+  const box=document.getElementById('stocktakeList');if(!box)return;
+  const items=allAdminEquipment.filter(e=>e.room===stocktakeRoom);
+  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">📦</div><p>這個房間目前沒有器材資料</p></div>';return;}
+  box.innerHTML=items.map(e=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
+      <span style="flex:1;min-width:120px;font-weight:600">${e.name}${e.spec?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+e.spec+'</span>':''}</span>
+      <span style="font-size:12px;color:var(--text2)">目前總數：${e.total??0}</span>
+      <label style="font-size:12px;color:var(--text2)">實點數量：</label>
+      <input type="number" min="0" id="stk-${e.id}" value="${e.total??0}" style="max-width:90px">
+    </div>`).join('');
+}
+async function saveStocktake(){
+  const items=allAdminEquipment.filter(e=>e.room===stocktakeRoom);
+  let changed=0,failed=0;
+  const now=new Date().toISOString();
+  for(const e of items){
+    const input=document.getElementById('stk-'+e.id);if(!input)continue;
+    const newTotal=parseInt(input.value)||0;
+    if(newTotal===(parseInt(e.total)||0))continue;
+    try{
+      await sb('PATCH','equipment',{filter:'id=eq.'+e.id,body:{total:newTotal,last_counted_at:now},prefer:'return=minimal'});
+      changed++;
+    }catch(err){failed++;}
+  }
+  showToast(changed?`已更新 ${changed} 筆盤點結果${failed?'，'+failed+' 筆失敗':''}`:'沒有數量變動','success');
+  loadAdminEquipment();
+}
+
+// ── 匯出／匯入 Excel（同一套比對邏輯：以「房間＋名稱」或器材ID當鍵）──
+async function exportEquipmentXlsx(){
+  if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
+  try{
+    const rows=await sb('GET','equipment',{order:'room,name'});
+    const items=Array.isArray(rows)?rows:[];
+    const wb=new ExcelJS.Workbook();
+    const ws=wb.addWorksheet('器材清單');
+    const headers=['器材ID','房間','名稱','規格','單位','總數','可借數（僅供參考，匯入不會寫入）','櫃位編碼','別名','照片網址'];
+    ws.addRow(headers);
+    ws.getRow(1).font={bold:true};
+    headers.forEach((h,i)=>{ws.getColumn(i+1).width=Math.max(10,Math.min(32,h.length));});
+    items.forEach(e=>{
+      const avail=equipAvailable(e);
+      ws.addRow([e.id,rn(e.room),e.name||'',e.spec||'',e.unit||'',e.total??0,avail,e.location||'',e.alias||'',e.image_url||'']);
+    });
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='器材清單備份_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    showToast('已匯出備份','success');
+  }catch(e){showToast('匯出失敗：'+e.message,'error');}
+}
+const EQUIP_ROOM_LABEL_TO_CODE={'物理':'Physics','化學':'Chemistry','生物':'Biology','地科':'Geoscience','理化':'Physics Chemistry','教具室':'TeachingMaterialRoom','生物實驗室':'Biology','化學實驗室':'Chemistry','地球科學實驗室':'Geoscience','理化實驗室':'Physics Chemistry','物理實驗室':'Physics'};
+function equipRoomLabelToCode(label){
+  label=(label||'').trim();
+  if(EQUIP_ROOM_LABEL_TO_CODE[label])return EQUIP_ROOM_LABEL_TO_CODE[label];
+  if(['Physics','Chemistry','Biology','Geoscience','Physics Chemistry','TeachingMaterialRoom'].includes(label))return label;
+  return '';
+}
+function equipMatchKey(room,name){return room+'__'+name;}
+function handleEquipmentImport(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const msg=document.getElementById('eqImportMsg');
+  msg.textContent='解析中…';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+      const header=rows[0]||[];
+      const idx=name=>header.indexOf(name);
+      const iId=idx('器材ID'),iRoom=idx('房間'),iName=idx('名稱'),iSpec=idx('規格'),iUnit=idx('單位'),
+        iTotal=idx('總數'),iLoc=idx('櫃位編碼'),iAlias=idx('別名'),iImg=idx('照片網址');
+      if(iName<0||iRoom<0){msg.textContent='⚠️ 找不到「房間」或「名稱」欄位，請確認是用「匯出器材清單」產生的檔案格式';return;}
+      const gs=v=>(v===null||v===undefined)?'':String(v).trim();
+      const parsed=[];
+      for(let r=1;r<rows.length;r++){
+        const row=rows[r];if(!row||row.every(c=>c===null||c===''))continue;
+        const name=gs(row[iName]);if(!name)continue;
+        const roomCode=equipRoomLabelToCode(row[iRoom]);
+        if(!roomCode)continue;
+        parsed.push({
+          id:iId>=0?gs(row[iId]):'',
+          room:roomCode,
+          name,
+          spec:iSpec>=0?gs(row[iSpec]):'',
+          unit:iUnit>=0?(gs(row[iUnit])||'個'):'個',
+          total:iTotal>=0&&row[iTotal]!==null&&row[iTotal]!==''?parseInt(row[iTotal])||0:0,
+          location:iLoc>=0?gs(row[iLoc]):'',
+          alias:iAlias>=0?gs(row[iAlias]):'',
+          image_url:iImg>=0?gs(row[iImg]):''
+        });
+      }
+      if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的器材列';return;}
+      buildEquipmentDiff(parsed);
+    }catch(err){msg.textContent='解析失敗：'+err.message;}
+  };
+  reader.readAsArrayBuffer(file);
+  input.value='';
+}
+function buildEquipmentDiff(parsed){
+  const existingByKey={};
+  allAdminEquipment.forEach(e=>{existingByKey[equipMatchKey(e.room,e.name)]=e;});
+  const existingById={};
+  allAdminEquipment.forEach(e=>{existingById[String(e.id)]=e;});
+  const newKeys=new Set(parsed.map(p=>equipMatchKey(p.room,p.name)));
+
+  const added=[],changed=[],removed=[];
+  parsed.forEach(p=>{
+    const existing=(p.id&&existingById[p.id])?existingById[p.id]:existingByKey[equipMatchKey(p.room,p.name)];
+    if(!existing){added.push(p);return;}
+    const diffs=[];
+    if((p.spec||'')!==(existing.spec||''))diffs.push(`規格：${existing.spec||'—'} → ${p.spec||'—'}`);
+    if((p.unit||'個')!==(existing.unit||'個'))diffs.push(`單位：${existing.unit||'—'} → ${p.unit||'—'}`);
+    if(p.total!==(parseInt(existing.total)||0))diffs.push(`總數：${existing.total??0} → ${p.total}`);
+    if((p.location||'')!==(existing.location||''))diffs.push(`櫃位：${existing.location||'—'} → ${p.location||'—'}`);
+    if((p.alias||'')!==(existing.alias||''))diffs.push(`別名：${existing.alias||'—'} → ${p.alias||'—'}`);
+    if(p.image_url&&p.image_url!==(existing.image_url||''))diffs.push(`照片網址已變更`);
+    if(diffs.length)changed.push({newData:p,oldData:existing,diffs});
+  });
+  allAdminEquipment.forEach(e=>{
+    if(!newKeys.has(equipMatchKey(e.room,e.name)))removed.push(e);
+  });
+
+  if(!added.length&&!removed.length&&!changed.length){
+    document.getElementById('eqImportMsg').textContent='與現有資料完全相同，無需變更';return;
+  }
+  window._pendingEquipDiff={added,removed,changed};
+  showEquipDiffModal(added,removed,changed);
+}
+function showEquipDiffModal(added,removed,changed){
+  const removedRows=removed.map((e,i)=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="eqdiff-remove" data-idx="${i}" style="width:auto;flex-shrink:0">
+      <span style="flex:1"><strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}</span></span>
+      <span style="font-size:11px;color:var(--danger)">刪除</span>
+    </label>`).join('');
+  const changedRows=changed.map((item,i)=>`
+    <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;background:#fef3c7;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="eqdiff-change" data-idx="${i}" checked style="width:auto;flex-shrink:0;margin-top:2px">
+      <div style="flex:1">
+        <div><strong>${item.newData.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(item.newData.room)}</span></div>
+        <div style="font-size:11px;color:#92400e;margin-top:2px">${item.diffs.join('　')}</div>
+      </div>
+      <span style="font-size:11px;color:#92400e;white-space:nowrap">更新</span>
+    </label>`).join('');
+  const addedRows=added.map((e,i)=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#d1fae5;margin-bottom:4px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="eqdiff-add" data-idx="${i}" checked style="width:auto;flex-shrink:0">
+      <span style="flex:1"><strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}</span>　總數 ${e.total}</span>
+      <span style="font-size:11px;color:#065f46">新增</span>
+    </label>`).join('');
+  const body=`
+    <div style="font-size:13px;margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap">
+      ${removed.length?`<span style="color:var(--danger)">● 清單裡消失 ${removed.length} 筆</span>`:''}
+      ${added.length?`<span style="color:#065f46">● 新增 ${added.length} 筆</span>`:''}
+      ${changed.length?`<span style="color:#92400e">● 變更 ${changed.length} 筆</span>`:''}
+    </div>
+    ${removed.length?`<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">🗑️ 新清單中消失的器材（預設保留，勾選才刪除）</div>${removedRows}`:''}
+    ${changed.length?`<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">🔄 資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}`:''}
+    ${added.length?`<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">➕ 新清單中新增的器材（預設新增，取消勾選則跳過）</div>${addedRows}`:''}
+  `;
+  showModal('📋 與現有器材的差異',body,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認執行',cls:'btn-primary',fn:'doApplyEquipDiff()'}
+  ]);
+}
+async function doApplyEquipDiff(){
+  const {added,removed,changed}=window._pendingEquipDiff||{};
+  closeModal();
+  let ok=0,fail=0;
+  const toRemove=[...document.querySelectorAll('.eqdiff-remove:checked')].map(cb=>removed[parseInt(cb.dataset.idx)]);
+  const toChange=[...document.querySelectorAll('.eqdiff-change:checked')].map(cb=>changed[parseInt(cb.dataset.idx)]);
+  const toAdd=[...document.querySelectorAll('.eqdiff-add:checked')].map(cb=>added[parseInt(cb.dataset.idx)]);
+  for(const e of toRemove){
+    try{await sb('DELETE','equipment',{filter:'id=eq.'+e.id,prefer:'return=minimal'});ok++;}catch(err){fail++;}
+  }
+  for(const item of toChange){
+    try{
+      const body={spec:item.newData.spec,unit:item.newData.unit,total:item.newData.total,location:item.newData.location,alias:item.newData.alias||null};
+      if(item.newData.image_url)body.image_url=item.newData.image_url;
+      await sb('PATCH','equipment',{filter:'id=eq.'+item.oldData.id,body,prefer:'return=minimal'});ok++;
+    }catch(err){fail++;}
+  }
+  for(const e of toAdd){
+    try{
+      const body={room:e.room,name:e.name,spec:e.spec,unit:e.unit,total:e.total,location:e.location,alias:e.alias||null};
+      if(e.image_url)body.image_url=e.image_url;
+      await sb('POST','equipment',{body,prefer:'return=minimal'});ok++;
+    }catch(err){fail++;}
+  }
+  document.getElementById('eqImportMsg').textContent=`匯入完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`;
+  window._pendingEquipDiff=null;
+  loadAdminEquipment();
+}
+
+// ── 報廢（留紀錄的減量，跟刪除不一樣）────────────────────
+const WRITEOFF_REASONS=['損壞','遺失','過舊汰換','其他'];
+function openWriteoffModal(id){
+  const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
+  const avail=equipAvailable(e);
+  showModal(`♻️ 報廢 — ${e.name}`,`
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}　目前總數 ${e.total??0}，可借 ${avail}</div>
+    <div class="form-group"><label>報廢數量 *</label><input type="number" id="wo-qty" min="1" max="${e.total??0}" value="1"></div>
+    <div class="form-group"><label>原因 *</label>
+      <select id="wo-reason">${WRITEOFF_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>備註（選填）</label><textarea id="wo-note" rows="2" placeholder="例如：110年度報廢單編號、細節說明…"></textarea></div>
+  `,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認報廢',cls:'btn-danger',fn:`doWriteoff('${id}')`}
+  ]);
+}
+async function doWriteoff(id){
+  const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
+  const qty=parseInt(document.getElementById('wo-qty').value)||0;
+  const reason=document.getElementById('wo-reason').value;
+  const note=document.getElementById('wo-note').value.trim();
+  if(qty<=0){showToast('請填寫報廢數量','error');return;}
+  const curTotal=parseInt(e.total)||0;
+  if(qty>curTotal){showToast('報廢數量不能超過目前總數','error');return;}
+  closeModal();
+  try{
+    const newTotal=curTotal-qty;
+    await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{total:newTotal},prefer:'return=minimal'});
+    await sb('POST','equipment_writeoffs',{body:{
+      id:'WO-'+Date.now(),equipment_id:String(id),room:e.room,name:e.name,quantity:qty,reason,note:note||null
+    },prefer:'return=minimal'});
+    showToast(`已報廢 ${qty} ${e.unit||'個'}，總數更新為 ${newTotal}`,'success');
+    loadAdminEquipment();
+  }catch(err){showToast('報廢失敗：'+err.message,'error');}
+}
+async function loadWriteoffLog(){
+  const box=document.getElementById('writeoffLogList');if(!box)return;
+  try{
+    const rows=await sb('GET','equipment_writeoffs',{order:'created_at.desc'});
+    const items=(Array.isArray(rows)?rows:[]).slice(0,30);
+    if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">📜</div><p>目前沒有報廢紀錄</p></div>';return;}
+    box.innerHTML='<div class="record-list">'+items.map(w=>`
+      <div class="record-card" style="padding:10px 14px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <span style="font-weight:700">${w.name}</span>
+            <span style="font-size:12px;color:var(--text2)">　${rn(w.room)}　－${w.quantity}${w.reason?'　'+w.reason:''}</span>
+          </div>
+          <span style="font-size:11px;color:var(--text2)">${w.created_at?new Date(w.created_at).toLocaleString('zh-TW'):''}</span>
+        </div>
+        ${w.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${w.note}</div>`:''}
+      </div>`).join('')+'</div>';
+  }catch(e){box.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+}
+async function exportWriteoffLog(){
+  if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
+  try{
+    const rows=await sb('GET','equipment_writeoffs',{order:'created_at.desc'});
+    const items=Array.isArray(rows)?rows:[];
+    if(!items.length){showToast('目前沒有報廢紀錄可以匯出','error');return;}
+    const wb=new ExcelJS.Workbook();
+    const ws=wb.addWorksheet('報廢紀錄');
+    const headers=['時間','房間','名稱','報廢數量','原因','備註'];
+    ws.addRow(headers);ws.getRow(1).font={bold:true};
+    headers.forEach((h,i)=>{ws.getColumn(i+1).width=Math.max(10,h.length*2);});
+    items.forEach(w=>{
+      ws.addRow([w.created_at?new Date(w.created_at).toLocaleString('zh-TW'):'',rn(w.room),w.name||'',w.quantity??0,w.reason||'',w.note||'']);
+    });
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='器材報廢紀錄_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    showToast('已匯出報廢紀錄','success');
+  }catch(e){showToast('匯出失敗：'+e.message,'error');}
 }
 </script>
 
