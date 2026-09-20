@@ -1678,10 +1678,10 @@ async function loadEquipmentData(){
         borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);
       });
     });
-    const mapped=rows.map(r=>{
+    const mapped=rows.filter(r=>r.is_available!==false).map(r=>{
       const total=parseInt(r.total)||0,borrowed=borrowedMap[r.room+'__'+r.name]||0;
       return {id:r.id,room:r.room,name:r.name,spec:r.spec||'',total,
-        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||''};
+        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||'',alias:r.alias||''};
     });
     allEquipment=mapped;allEquipBrowse=mapped;
     allRooms=[...new Set(rows.map(r=>r.room))];
@@ -2045,7 +2045,7 @@ function expandSearchTerms(q){
 }
 function matchesEquip(e,q){
   if(!q||!q.trim())return true;
-  const hay=((e.name||'')+' '+(e.spec||'')).toLowerCase();
+  const hay=((e.name||'')+' '+(e.spec||'')+' '+(e.alias||'')).toLowerCase();
   return expandSearchTerms(q).some(t=>hay.includes(t));
 }
 
