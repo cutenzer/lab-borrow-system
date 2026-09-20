@@ -408,8 +408,9 @@
     </div>
   </div>
   <div class="card" style="margin-bottom:0">
-    <div class="card-title">📋 目前房間的熱區清單
+    <div class="card-title" style="flex-wrap:wrap">📋 目前房間的熱區清單
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">🔍 檢查全部房間的重複代碼</button>
+      <button class="btn btn-danger btn-sm" onclick="checkCalibOversized()">⚠️ 檢查異常尺寸</button>
     </div>
     <div id="calibList"><div class="empty"><div class="empty-icon">🗺️</div><p>點重新整理載入</p></div></div>
   </div>
@@ -3496,6 +3497,11 @@ async function doDeleteCalibHotspot(id){
     wrap.addEventListener('mousedown',calibMouseDown);
     document.addEventListener('mousemove',calibMouseMove);
     document.addEventListener('mouseup',calibMouseUp);
+    // 觸控（手機／平板）：加上真正的拖拉支援，避免滑動手勢被誤判成超大範圍的框
+    wrap.addEventListener('touchstart',calibTouchStart,{passive:false});
+    document.addEventListener('touchmove',calibTouchMove,{passive:false});
+    document.addEventListener('touchend',calibTouchEnd);
+    document.addEventListener('touchcancel',calibTouchEnd);
   });
 })();
 function calibGetPct(wrap,clientX,clientY){
@@ -3504,33 +3510,32 @@ function calibGetPct(wrap,clientX,clientY){
   const y=Math.min(Math.max(clientY-rect.top,0),rect.height);
   return {xPct:x/rect.width*100,yPct:y/rect.height*100};
 }
-function calibMouseDown(e){
+function calibStartDrag(clientX,clientY){
   const wrap=document.getElementById('calibImgWrap');
-  if(!wrap||!wrap.contains(e.target))return;
-  if(e.target.closest('#calibNewForm'))return;
-  const p=calibGetPct(wrap,e.clientX,e.clientY);
+  if(!wrap)return;
+  const p=calibGetPct(wrap,clientX,clientY);
   calibDrag={startX:p.xPct,startY:p.yPct,el:null};
   const div=document.createElement('div');
   div.id='calibDrawBox';
   div.style.cssText='position:absolute;border:2px dashed var(--accent2);background:rgba(232,146,58,0.18);pointer-events:none;';
   document.getElementById('calibLayer').appendChild(div);
   calibDrag.el=div;
-  e.preventDefault();
 }
-function calibMouseMove(e){
+function calibMoveDrag(clientX,clientY){
   if(!calibDrag)return;
   const wrap=document.getElementById('calibImgWrap');
-  const p=calibGetPct(wrap,e.clientX,e.clientY);
+  const p=calibGetPct(wrap,clientX,clientY);
   const left=Math.min(calibDrag.startX,p.xPct),top=Math.min(calibDrag.startY,p.yPct);
   const width=Math.abs(p.xPct-calibDrag.startX),height=Math.abs(p.yPct-calibDrag.startY);
   calibDrag.el.style.left=left+'%';calibDrag.el.style.top=top+'%';
   calibDrag.el.style.width=width+'%';calibDrag.el.style.height=height+'%';
   calibDrag.rect={left,top,width,height};
 }
-function calibMouseUp(){
+function calibEndDrag(){
   if(!calibDrag)return;
   const rect=calibDrag.rect;
-  if(!rect||rect.width<0.5||rect.height<0.5){
+  // 尺寸超過圖片一半寬或高，多半是滑動/誤觸，直接捨棄不留資料
+  if(!rect||rect.width<0.5||rect.height<0.5||rect.width>50||rect.height>50){
     if(calibDrag.el)calibDrag.el.remove();
     calibDrag=null;
     return;
@@ -3540,6 +3545,36 @@ function calibMouseUp(){
   document.getElementById('calibNewCode').value='';
   document.getElementById('calibNewCode').focus();
   calibDrag=null;
+}
+function calibMouseDown(e){
+  const wrap=document.getElementById('calibImgWrap');
+  if(!wrap||!wrap.contains(e.target))return;
+  if(e.target.closest('#calibNewForm'))return;
+  calibStartDrag(e.clientX,e.clientY);
+  e.preventDefault();
+}
+function calibMouseMove(e){
+  if(!calibDrag)return;
+  calibMoveDrag(e.clientX,e.clientY);
+}
+function calibMouseUp(){
+  calibEndDrag();
+}
+function calibTouchStart(e){
+  const wrap=document.getElementById('calibImgWrap');
+  if(!wrap||!wrap.contains(e.target))return;
+  if(e.target.closest('#calibNewForm'))return;
+  if(e.touches.length!==1)return;
+  calibStartDrag(e.touches[0].clientX,e.touches[0].clientY);
+  e.preventDefault();
+}
+function calibTouchMove(e){
+  if(!calibDrag||e.touches.length!==1)return;
+  calibMoveDrag(e.touches[0].clientX,e.touches[0].clientY);
+  e.preventDefault();
+}
+function calibTouchEnd(){
+  calibEndDrag();
 }
 function cancelCalibNew(){
   calibPendingRect=null;
@@ -3615,6 +3650,47 @@ async function doDeleteCalibDuplicates(){
     catch(e){fail++;}
   }
   showToast(`刪除完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`,ok?'success':'error');
+  loadCalibHotspots();
+}
+// 一個櫃子正常不會佔到圖片的 30% 寬或高，超過就很可能是拖拉手勢誤觸產生的異常資料
+const CALIB_OVERSIZE_LIMIT=30;
+async function checkCalibOversized(){
+  try{
+    const rows=await sb('GET','floorplan_hotspots',{order:'room,code'});
+    const all=Array.isArray(rows)?rows:[];
+    const bad=all.filter(h=>parseFloat(h.width_pct)>CALIB_OVERSIZE_LIMIT||parseFloat(h.height_pct)>CALIB_OVERSIZE_LIMIT);
+    if(!bad.length){
+      showModal('⚠️ 檢查異常尺寸',`<div class="empty"><div class="empty-icon">✅</div><p>沒有發現寬或高超過 ${CALIB_OVERSIZE_LIMIT}% 的異常熱區</p></div>`,[
+        {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
+      ]);
+      return;
+    }
+    const roomLabel=r=>({'Biology':'生物','Chemistry':'化學','Geoscience':'地科','Physics Chemistry':'理化','Physics':'物理','TeachingMaterialRoom':'教具室'}[r]||r);
+    const rowsHtml=bad.map(h=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
+        <input type="checkbox" class="calibbad-del" data-id="${h.id}" checked style="width:auto;flex-shrink:0">
+        <span style="flex:1"><strong>${roomLabel(h.room)}・${h.code}</strong>　寬:${h.width_pct}% 高:${h.height_pct}%（#${h.id}）</span>
+        <span style="font-size:11px;color:var(--danger)">建議刪除</span>
+      </label>`).join('');
+    showModal(`⚠️ 發現 ${bad.length} 筆異常尺寸熱區`,
+      `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">寬或高超過 ${CALIB_OVERSIZE_LIMIT}%，正常一個櫃子不會這麼大，很可能是拖拉時手勢誤觸（例如手機上滑動被誤判成拖拉）產生的。預設全部勾選刪除，刪完請重新在該代碼上拖拉畫一個正常大小的框。</div>${rowsHtml}`,
+      [
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'刪除勾選項目',cls:'btn-danger',fn:'doDeleteCalibOversized()'}
+      ]
+    );
+  }catch(e){showToast('檢查失敗：'+e.message,'error');}
+}
+async function doDeleteCalibOversized(){
+  const checked=[...document.querySelectorAll('.calibbad-del:checked')];
+  if(!checked.length){showToast('沒有勾選任何項目','error');return;}
+  closeModal();
+  let ok=0,fail=0;
+  for(const cb of checked){
+    try{await sb('DELETE','floorplan_hotspots',{filter:'id=eq.'+cb.dataset.id,prefer:'return=minimal'});ok++;}
+    catch(e){fail++;}
+  }
+  showToast(`刪除完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}，請記得重新畫回正常大小的框`,ok?'success':'error');
   loadCalibHotspots();
 }
 </script>
