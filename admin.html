@@ -408,7 +408,9 @@
     </div>
   </div>
   <div class="card" style="margin-bottom:0">
-    <div class="card-title">📋 目前房間的熱區清單</div>
+    <div class="card-title">📋 目前房間的熱區清單
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">🔍 檢查全部房間的重複代碼</button>
+    </div>
     <div id="calibList"><div class="empty"><div class="empty-icon">🗺️</div><p>點重新整理載入</p></div></div>
   </div>
 </div>
@@ -3551,14 +3553,69 @@ async function saveCalibNew(){
   const room=FLOORPLAN_KEY_TO_ROOM[calibRoom];
   const r=calibPendingRect;
   try{
+    // 先刪掉這個房間裡同代碼的舊資料，避免新舊兩筆疊在一起（這是先前重複疊框的根本原因）
+    const dup=allCalibHotspots.filter(h=>h.code===code);
+    for(const d of dup){
+      await sb('DELETE','floorplan_hotspots',{filter:'id=eq.'+d.id,prefer:'return=minimal'});
+    }
     await sb('POST','floorplan_hotspots',{body:{
       room,code,left_pct:Math.round(r.left*10)/10,top_pct:Math.round(r.top*10)/10,
       width_pct:Math.round(r.width*10)/10,height_pct:Math.round(r.height*10)/10
     }});
-    showToast('已新增熱區：'+code,'success');
+    showToast(dup.length?`已取代舊的 ${code}（原本有 ${dup.length} 筆重複）`:'已新增熱區：'+code,'success');
     cancelCalibNew();
     loadCalibHotspots();
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+async function checkCalibDuplicates(){
+  try{
+    const rows=await sb('GET','floorplan_hotspots',{order:'room,code'});
+    const all=Array.isArray(rows)?rows:[];
+    const groups={};
+    all.forEach(h=>{
+      const key=h.room+'__'+h.code;
+      (groups[key]=groups[key]||[]).push(h);
+    });
+    const dupGroups=Object.values(groups).filter(g=>g.length>1);
+    if(!dupGroups.length){
+      showModal('🔍 檢查重複代碼','<div class="empty"><div class="empty-icon">✅</div><p>目前沒有重複的熱區代碼</p></div>',[
+        {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
+      ]);
+      return;
+    }
+    const roomLabel=r=>({'Biology':'生物','Chemistry':'化學','Geoscience':'地科','Physics Chemistry':'理化','Physics':'物理','TeachingMaterialRoom':'教具室'}[r]||r);
+    const rowsHtml=dupGroups.map(g=>{
+      const sorted=[...g].sort((a,b)=>a.id-b.id); // 舊的在前，最新一筆（通常是你後來校正的）在後
+      return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff5f5">
+        <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:6px">${roomLabel(sorted[0].room)}・${sorted[0].code}　共 ${sorted.length} 筆</div>
+        ${sorted.map((h,i)=>`
+          <label style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;font-size:12.5px;cursor:pointer;margin-bottom:2px;background:var(--surface2)">
+            <input type="checkbox" class="calibdup-del" data-id="${h.id}" ${i<sorted.length-1?'checked':''} style="width:auto;flex-shrink:0">
+            <span style="flex:1">left:${h.left_pct} top:${h.top_pct} width:${h.width_pct} height:${h.height_pct}</span>
+            <span style="font-size:11px;color:var(--text2)">#${h.id}${i===sorted.length-1?'（最新）':''}</span>
+          </label>`).join('')}
+      </div>`;
+    }).join('');
+    showModal(`🔍 發現 ${dupGroups.length} 組重複代碼`,
+      `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">預設勾選保留「最新」一筆、刪除其他較舊的（通常舊的是校正前的錯誤位置）。確認前可以自行調整勾選。</div>${rowsHtml}`,
+      [
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'刪除勾選項目',cls:'btn-danger',fn:'doDeleteCalibDuplicates()'}
+      ]
+    );
+  }catch(e){showToast('檢查失敗：'+e.message,'error');}
+}
+async function doDeleteCalibDuplicates(){
+  const checked=[...document.querySelectorAll('.calibdup-del:checked')];
+  if(!checked.length){showToast('沒有勾選任何項目','error');return;}
+  closeModal();
+  let ok=0,fail=0;
+  for(const cb of checked){
+    try{await sb('DELETE','floorplan_hotspots',{filter:'id=eq.'+cb.dataset.id,prefer:'return=minimal'});ok++;}
+    catch(e){fail++;}
+  }
+  showToast(`刪除完成：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`,ok?'success':'error');
+  loadCalibHotspots();
 }
 </script>
 
