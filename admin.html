@@ -476,23 +476,6 @@
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">🔢 盤點模式</div>
-    <div class="info-box">選一個房間，把每一項的「實點數量」改成現場清點到的數字，按「儲存這個房間的盤點」一次寫入，並記錄盤點時間。只會更新總數，不會動到目前已借出、審核中的資料。</div>
-    <div class="room-tabs" id="stocktakeRoomTabs">
-      <button type="button" class="room-tab active" data-room="Physics" onclick="setStocktakeRoom('Physics')">物理</button>
-      <button type="button" class="room-tab" data-room="Chemistry" onclick="setStocktakeRoom('Chemistry')">化學</button>
-      <button type="button" class="room-tab" data-room="Biology" onclick="setStocktakeRoom('Biology')">生物</button>
-      <button type="button" class="room-tab" data-room="Geoscience" onclick="setStocktakeRoom('Geoscience')">地科</button>
-      <button type="button" class="room-tab" data-room="Physics Chemistry" onclick="setStocktakeRoom('Physics Chemistry')">理化</button>
-      <button type="button" class="room-tab" data-room="TeachingMaterialRoom" onclick="setStocktakeRoom('TeachingMaterialRoom')">教具室</button>
-    </div>
-    <div id="stocktakeList" style="margin-top:10px"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:10px">
-      <button class="btn btn-primary" onclick="saveStocktake()">💾 儲存這個房間的盤點</button>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
     <div class="card-title">💾 器材清單備份／批次編輯</div>
     <div class="info-box">「匯出」把目前所有器材整理成 Excel（一列一項），可以直接在 Excel 裡改總數、規格、櫃位、別名，改完再「匯入」整批更新回來。比對用「房間＋名稱」或「器材ID」自動判斷是更新還是新增；匯入後清單裡消失的列預設「保留不刪」，避免貼錯整批清空。「可借數」欄只供參考，匯入時不會被寫入（可借數永遠由系統即時計算：總數－已核准未還）。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
@@ -513,7 +496,8 @@
   </div>
 
   <div class="card">
-    <div class="card-title">📋 器材清單</div>
+    <div class="card-title">📋 器材清單 ／ 盤點</div>
+    <div class="info-box">「實點數量」可以直接改，改完按下面「💾 儲存目前顯示的盤點數量」一次寫入（會自動記錄盤點時間），適合現場點貨；其他欄位（規格、櫃位、別名、照片）要改就用「✏️ 編輯」。用上面搜尋/房間篩選縮小範圍，就等於是在對那個房間盤點。</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="filterAdminEquip()" style="flex:1">
       <select id="adminEquipRoomFilter" onchange="filterAdminEquip()">
@@ -537,6 +521,9 @@
       </label>
     </div>
     <div id="adminEquipList"><div class="empty"><div class="empty-icon">📦</div><p>點重新整理載入</p></div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存目前顯示的盤點數量</button>
+    </div>
   </div>
 </div>
 <div id="panel-all" class="panel">
@@ -2979,7 +2966,6 @@ async function loadAdminEquipment(){
       (r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+(parseInt(it.quantity)||0);});
     });
     filterAdminEquip();
-    renderStocktakeList();
     loadWriteoffLog();
   }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
 }
@@ -3069,8 +3055,8 @@ function filterAdminEquip(){
         <div style="flex:1;min-width:0">
           <div style="font-size:15px;font-weight:700">${e.name} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}</div>
-          <div style="font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap">
-            <span>總數 <strong>${e.total??0}</strong> ${e.unit||'個'}</span>
+          <div style="font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <span style="display:flex;align-items:center;gap:4px">實點數量：<input type="number" min="0" id="stk-${e.id}" value="${e.total??0}" data-orig="${e.total??0}" style="width:64px;padding:3px 6px;font-size:13px"> ${e.unit||'個'}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
             ${e.location?`<span>📍 ${e.location}</span>`:''}
             ${e.alias?`<span>別名：${e.alias}</span>`:''}
@@ -3113,35 +3099,19 @@ async function uploadEquipPhoto(id,input){
   input.value='';
 }
 
-// ── 盤點模式 ──────────────────────────────────────────────
-let stocktakeRoom='Physics';
-function setStocktakeRoom(room){
-  stocktakeRoom=room;
-  document.querySelectorAll('#stocktakeRoomTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.room===room));
-  renderStocktakeList();
-}
-function renderStocktakeList(){
-  const box=document.getElementById('stocktakeList');if(!box)return;
-  const items=allAdminEquipment.filter(e=>e.room===stocktakeRoom);
-  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">📦</div><p>這個房間目前沒有器材資料</p></div>';return;}
-  box.innerHTML=items.map(e=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
-      <span style="flex:1;min-width:120px;font-weight:600">${e.name}${e.spec?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+e.spec+'</span>':''}</span>
-      <span style="font-size:12px;color:var(--text2)">目前總數：${e.total??0}</span>
-      <label style="font-size:12px;color:var(--text2)">實點數量：</label>
-      <input type="number" min="0" id="stk-${e.id}" value="${e.total??0}" style="max-width:90px">
-    </div>`).join('');
-}
-async function saveStocktake(){
-  const items=allAdminEquipment.filter(e=>e.room===stocktakeRoom);
+// ── 盤點（已併入器材清單，直接改「實點數量」）─────────────
+async function saveVisibleStocktake(){
+  const inputs=document.querySelectorAll('#adminEquipList input[id^="stk-"]');
+  if(!inputs.length){showToast('目前沒有顯示任何器材','error');return;}
   let changed=0,failed=0;
   const now=new Date().toISOString();
-  for(const e of items){
-    const input=document.getElementById('stk-'+e.id);if(!input)continue;
+  for(const input of inputs){
+    const id=input.id.replace('stk-','');
+    const orig=parseInt(input.dataset.orig)||0;
     const newTotal=parseInt(input.value)||0;
-    if(newTotal===(parseInt(e.total)||0))continue;
+    if(newTotal===orig)continue;
     try{
-      await sb('PATCH','equipment',{filter:'id=eq.'+e.id,body:{total:newTotal,last_counted_at:now},prefer:'return=minimal'});
+      await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{total:newTotal,last_counted_at:now},prefer:'return=minimal'});
       changed++;
     }catch(err){failed++;}
   }
