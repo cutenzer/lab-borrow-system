@@ -979,7 +979,7 @@ async function sb(method,table,opts={}){
   if(opts.filter)p.push(opts.filter);
   if(opts.order)p.push('order='+opts.order);
   if(p.length)url+='?'+p.join('&');
-  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
+  const res=await fetch(url,{method,cache:'no-store',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
   if(res.status===204)return[];
   const data=await res.json();
   if(!res.ok)throw new Error(data.message||res.statusText);
