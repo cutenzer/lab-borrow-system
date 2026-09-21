@@ -630,7 +630,7 @@ async function sb(method,table,opts={}){
   if(opts.filter)p.push(opts.filter);
   if(opts.order)p.push('order='+opts.order);
   if(p.length)url+='?'+p.join('&');
-  const res=await fetch(url,{method,headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
+  const res=await fetch(url,{method,cache:'no-store',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
   const text=await res.text();
   const data=text?JSON.parse(text):null;
   if(!res.ok)throw new Error((data&&data.message)||res.statusText);
