@@ -1115,10 +1115,15 @@ function syncInlineVenueDefault(venue){
 // ── [修改3] Inline 場地時段列表（與場地預約頁共用邏輯，獨立 id 前綴 ipr-）──
 function addInlinePeriodRow(){
   const id=Date.now()+Math.floor(Math.random()*1000);
+  let defaultDate='';
+  if(inlinePeriodRows.length){
+    const lastEl=document.getElementById('ipr-date-'+inlinePeriodRows[inlinePeriodRows.length-1]);
+    if(lastEl)defaultDate=lastEl.value;
+  }
   inlinePeriodRows.push(id);
-  appendInlinePeriodRow(id);
+  appendInlinePeriodRow(id,defaultDate);
 }
-function appendInlinePeriodRow(id){
+function appendInlinePeriodRow(id,defaultDate){
   const list=document.getElementById('inlinePeriodList');
   const emptyMsg=list.querySelector('.iperiod-empty');
   if(emptyMsg)emptyMsg.remove();
@@ -1127,9 +1132,7 @@ function appendInlinePeriodRow(id){
   const venueDefault=document.getElementById('f-venue').value||VENUES[0];
   div.innerHTML=`
     <span style="font-size:12px;color:var(--text2);min-width:24px">${inlinePeriodRows.length}.</span>
-    <select id="ipr-date-${id}" style="min-width:130px">
-      ${getNextDates(30).map(d=>`<option value="${d.val}">${d.label}</option>`).join('')}
-    </select>
+    <input type="date" id="ipr-date-${id}" value="${defaultDate||fmtDate(new Date())}" min="${fmtDate(new Date())}" lang="zh-TW" style="min-width:150px">
     <select id="ipr-period-${id}">
       ${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}
     </select>
@@ -1150,18 +1153,22 @@ function removeInlinePeriodRow(id){
 let periodRows=[];
 function addPeriodRow(){
   const id=Date.now()+Math.floor(Math.random()*1000);
-  periodRows.push(id);appendPeriodRow(id);
+  // 預設接續上一個時段的日期，連續新增同一天的多節次時不用每次重選
+  let defaultDate='';
+  if(periodRows.length){
+    const lastEl=document.getElementById('pr-date-'+periodRows[periodRows.length-1]);
+    if(lastEl)defaultDate=lastEl.value;
+  }
+  periodRows.push(id);appendPeriodRow(id,defaultDate);
 }
-function appendPeriodRow(id){
+function appendPeriodRow(id,defaultDate){
   const list=document.getElementById('periodList');
   if(!list)return;
   const emptyMsg=list.querySelector('.period-empty');if(emptyMsg)emptyMsg.remove();
   const div=document.createElement('div');div.className='period-row';div.id='pr-'+id;
   div.innerHTML=`
     <span style="font-size:12px;color:var(--text2);min-width:24px">${periodRows.length}.</span>
-    <select id="pr-date-${id}" style="min-width:130px">
-      ${getNextDates(30).map(d=>`<option value="${d.val}">${d.label}</option>`).join('')}
-    </select>
+    <input type="date" id="pr-date-${id}" value="${defaultDate||fmtDate(new Date())}" min="${fmtDate(new Date())}" lang="zh-TW" style="min-width:150px">
     <select id="pr-period-${id}">${PERIODS.map(p=>`<option value="${p}">${p}</option>`).join('')}</select>
     <select id="pr-venue-${id}">${VENUES.map(v=>`<option value="${v}">${v}</option>`).join('')}</select>
     <button class="period-row-remove" onclick="removePeriodRow(${id})">✕</button>`;
@@ -1446,18 +1453,14 @@ function openVenueBookingModal(dateStr,period,venue){
   ]);
   periodRows=[];
   document.getElementById('periodList').innerHTML='';
-  addPeriodRow();
   if(dateStr&&period&&venue){
-    const rowId=periodRows[periodRows.length-1];
-    const dateSel=document.getElementById('pr-date-'+rowId);
-    if(dateSel){
-      if(![...dateSel.options].some(o=>o.value===dateStr)){
-        const opt=document.createElement('option');opt.value=dateStr;opt.textContent=dateStr;dateSel.appendChild(opt);
-      }
-      dateSel.value=dateStr;
-    }
-    const periodSel=document.getElementById('pr-period-'+rowId);if(periodSel)periodSel.value=period;
-    const venueSel=document.getElementById('pr-venue-'+rowId);if(venueSel)venueSel.value=venue;
+    const id=Date.now()+Math.floor(Math.random()*1000);
+    periodRows.push(id);
+    appendPeriodRow(id,dateStr);
+    const periodSel=document.getElementById('pr-period-'+id);if(periodSel)periodSel.value=period;
+    const venueSel=document.getElementById('pr-venue-'+id);if(venueSel)venueSel.value=venue;
+  }else{
+    addPeriodRow();
   }
   setVenueRole(currentVenueRole||'老師');
 }
