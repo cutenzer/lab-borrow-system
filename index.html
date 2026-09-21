@@ -854,10 +854,24 @@ let currentFloorplan = 'bio';
 let floorplanOpenLoc = '';
 let floorplanInitialized = false;
 // 用「開頭相同」比對，因為器材的位置代碼可能是 BD08-1、BD08-2 這種帶層數的寫法，
-// 平面圖上的標籤只到 BD08 這一層櫃子
+// 平面圖上的標籤只到 BD08 這一層櫃子。另外也支援「BC03-06」這種範圍寫法，
+// 代表 BC03、BC04、BC05、BC06 這幾個都算（用第二段是不是2位數字來跟「-層數」區分）
+function expandLocationRange(code){
+  code=(code||'').trim();
+  const m=code.match(/^([A-Za-z]+)(\d{2,3})-(\d{2,3})$/);
+  if(m&&m[2].length===m[3].length){
+    const prefix=m[1],start=parseInt(m[2]),end=parseInt(m[3]),pad=m[2].length;
+    if(end>=start&&end-start<50){
+      const out=[];
+      for(let n=start;n<=end;n++)out.push(prefix+String(n).padStart(pad,'0'));
+      return out;
+    }
+  }
+  return [code];
+}
 function locCodeMatches(itemCode,hotspotCode){
-  itemCode=(itemCode||'').trim();
-  return itemCode===hotspotCode||itemCode.startsWith(hotspotCode+'-');
+  const expanded=expandLocationRange(itemCode);
+  return expanded.some(c=>c===hotspotCode||c.startsWith(hotspotCode+'-'));
 }
 async function showFloorplan(key, el){
   currentFloorplan = key;
@@ -882,12 +896,12 @@ function renderFloorplanHotspots(){
   const spots=FLOORPLAN_HOTSPOTS[currentFloorplan]||[];
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
   layer.innerHTML=spots.map(s=>{
-    const hasAny=items.some(e=>(e.location||'').split('&').some(c=>locCodeMatches(c.trim(),s.code)));
+    const hasAny=items.some(e=>(e.location||'').split('&').some(c=>locCodeMatches(c,s.code)));
     const safeC=s.code.replace(/'/g,"\\'");
-    return `<div class="floorplan-hotspot ${hasAny?'':'empty'} ${floorplanOpenLoc===s.code?'active':''}"
+    return `<div class="floorplan-hotspot ${hasAny?'':'empty'}"
       style="left:${s.left}%;top:${s.top}%;width:${s.width}%;height:${s.height}%"
       title="${s.code}"
-      onclick="toggleFloorplanLoc('${safeC}')"></div>`;
+      onclick="openFloorplanLocModal('${safeC}')"></div>`;
   }).join('');
 }
 function renderFloorplanLocations(){
@@ -896,9 +910,11 @@ function renderFloorplanLocations(){
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
   const codeMap=new Map();
   items.forEach(e=>{
-    (e.location||'').split('&').map(s=>s.trim()).filter(Boolean).forEach(code=>{
-      if(!codeMap.has(code))codeMap.set(code,[]);
-      codeMap.get(code).push(e);
+    (e.location||'').split('&').map(s=>s.trim()).filter(Boolean).forEach(rawCode=>{
+      expandLocationRange(rawCode).forEach(code=>{
+        if(!codeMap.has(code))codeMap.set(code,[]);
+        codeMap.get(code).push(e);
+      });
     });
   });
   const codes=[...codeMap.keys()].sort();
@@ -908,41 +924,52 @@ function renderFloorplanLocations(){
       ${codes.map(c=>{
         const hasStock=codeMap.get(c).some(e=>parseInt(e.available)>0);
         const safeC=c.replace(/'/g,"\\'");
-        return `<button type="button" class="room-tab ${floorplanOpenLoc===c?'active':''}" style="${hasStock?'':'opacity:.5'}" onclick="toggleFloorplanLoc('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
+        return `<button type="button" class="room-tab" style="${hasStock?'':'opacity:.5'}" onclick="openFloorplanLocModal('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
       }).join('')}
-    </div>
-    <div id="floorplanLocDetail" style="margin-top:10px"></div>`;
-  renderFloorplanLocDetail();
+    </div>`;
 }
-function toggleFloorplanLoc(code){
-  floorplanOpenLoc=(floorplanOpenLoc===code)?'':code;
-  renderFloorplanHotspots();
-  renderFloorplanLocations();
-}
-function renderFloorplanLocDetail(){
-  const detail=document.getElementById('floorplanLocDetail');if(!detail)return;
-  if(!floorplanOpenLoc){detail.innerHTML='';return;}
+function openFloorplanLocModal(code){
+  floorplanOpenLoc=code;
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
-  const items=(allEquipment||[]).filter(e=>e.room===room&&(e.location||'').split('&').some(c=>locCodeMatches(c.trim(),floorplanOpenLoc)));
-  detail.innerHTML=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
-    <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">📦 ${floorplanOpenLoc} 裡面有：</div>
-    ${items.map(e=>{
-      const avail=parseInt(e.available)||0;
-      return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;font-size:13px">
-        <span>${e.name}${e.spec?' ・ '+e.spec:''}</span>
-        <span class="${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借 '+avail+e.unit:'無庫存'}</span>
-      </div>`;
-    }).join('')||'<div style="font-size:12px;color:var(--text2)">（沒有找到對應器材資料）</div>'}
-  </div>`;
+  const items=(allEquipment||[]).filter(e=>e.room===room&&(e.location||'').split('&').some(c=>locCodeMatches(c,code)));
+  const body=items.length?items.map(e=>{
+    const avail=parseInt(e.available)||0;
+    const safeN=e.name.replace(/'/g,"\\'");
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2);cursor:pointer" onclick="openEquipInfoCard('${e.room}','${safeN}')">
+      <div>
+        <div style="font-weight:600">${e.name}</div>
+        ${e.spec?`<div style="font-size:12px;color:var(--text2)">${e.spec}</div>`:''}
+      </div>
+      <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12.5px;white-space:nowrap">${avail>0?'可借 '+avail+e.unit:'無庫存'} ›</span>
+    </div>`;
+  }).join(''):'<div style="font-size:13px;color:var(--text2)">（沒有找到對應器材資料）</div>';
+  showModal(`📦 ${code} 裡面有什麼`,body,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+}
+function openEquipInfoCard(room,name){
+  const e=(allEquipment||[]).find(x=>x.room===room&&x.name===name);
+  if(!e)return;
+  const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
+  const body=`
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">${e.name}</div>
+    <div style="display:flex;flex-direction:column;gap:6px;font-size:13.5px">
+      <div>科別／房間：${rn(e.room)}</div>
+      ${e.spec?`<div>規格：${e.spec}</div>`:''}
+      <div>總數：${total} ${e.unit||'個'}</div>
+      <div>可借數量：<span class="${avail>0?'avail-ok':'avail-no'}">${avail} ${e.unit||'個'}</span></div>
+      ${e.location?`<div>位置代碼：${e.location}</div>`:''}
+      ${e.alias?`<div>別名：${e.alias}</div>`:''}
+    </div>`;
+  showModal('🔬 器材資料',body,[
+    {label:'← 回櫃位',cls:'btn-secondary',fn:`openFloorplanLocModal('${floorplanOpenLoc.replace(/'/g,"\\\\'")}')`},
+    {label:'關閉',cls:'btn-primary',fn:'closeModal()'}
+  ]);
 }
 async function jumpToFloorplanLocation(room,code){
   const key=ROOM_TO_FLOORPLAN_KEY[room];
   if(!key)return;
   showPage('floorplan');
   await showFloorplan(key,null);
-  floorplanOpenLoc=(code||'').split('&')[0].trim();
-  renderFloorplanHotspots();
-  renderFloorplanLocations();
+  openFloorplanLocModal((code||'').split('&')[0].trim());
 }
   
 async function sb(method,table,opts={}){
