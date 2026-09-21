@@ -212,10 +212,9 @@
   .venue-table tr.band-shade td.holiday-col{background:#fce7f3;}
   .holiday-tag{font-size:9px;font-weight:700;display:block;}
   .holiday-legend-note{font-size:11.5px;color:#831843;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:20px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px;}
-  .floorplan-hotspot{position:absolute;border:1.5px solid rgba(53,103,201,0.35);background:rgba(53,103,201,0.08);border-radius:3px;cursor:pointer;pointer-events:auto;transition:all .15s;}
-  .floorplan-hotspot:hover{background:rgba(53,103,201,0.22);border-color:var(--accent);}
-  .floorplan-hotspot.active{background:rgba(232,146,58,0.35);border:2px solid var(--accent2);box-shadow:0 0 0 2px rgba(232,146,58,0.25);}
-  .floorplan-hotspot.empty{border-color:rgba(148,163,184,0.35);background:rgba(148,163,184,0.06);}
+  .floorplan-hotspot{fill:rgba(53,103,201,0.08);stroke:rgba(53,103,201,0.35);stroke-width:2;transition:all .15s;cursor:pointer;}
+  .floorplan-hotspot:hover{fill:rgba(53,103,201,0.22);stroke:var(--accent);}
+  .floorplan-hotspot.empty{stroke:rgba(148,163,184,0.35);fill:rgba(148,163,184,0.06);}
   .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);}
   /* 場地全螢幕檢視 */
@@ -621,11 +620,11 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">🔄 重新整理位置</button>
     </div>
     <div style="text-align:center;margin-top:10px">
-      <div id="floorplanImgWrap" style="position:relative;width:100%;max-width:640px;aspect-ratio:1080/607;margin:0 auto">
+      <div id="floorplanImgWrap" style="position:relative;display:inline-block;max-width:100%">
         <img id="floorplanImg" src="" alt="實驗室平面圖"
-             style="display:block;width:100%;height:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
+             style="max-width:100%;display:block;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
              onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
-        <div id="floorplanHotspotLayer" style="position:absolute;inset:0;pointer-events:none"></div>
+        <svg id="floorplanSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
       </div>
     </div>
     <div id="floorplanLocList" style="margin-top:14px"></div>
@@ -891,17 +890,16 @@ async function showFloorplan(key, el){
   renderFloorplanLocations();
 }
 function renderFloorplanHotspots(){
-  const layer=document.getElementById('floorplanHotspotLayer');if(!layer)return;
+  const svg=document.getElementById('floorplanSvgLayer');if(!svg)return;
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
   const spots=FLOORPLAN_HOTSPOTS[currentFloorplan]||[];
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
-  layer.innerHTML=spots.map(s=>{
+  const VW=1080,VH=607;
+  svg.innerHTML=spots.map(s=>{
     const hasAny=items.some(e=>(e.location||'').split('&').some(c=>locCodeMatches(c,s.code)));
-    const safeC=s.code.replace(/'/g,"\\'");
-    return `<div class="floorplan-hotspot ${hasAny?'':'empty'}"
-      style="left:${s.left}%;top:${s.top}%;width:${s.width}%;height:${s.height}%"
-      title="${s.code}"
-      onclick="openFloorplanLocModal('${safeC}')"></div>`;
+    const safeC=s.code.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const x=s.left/100*VW,y=s.top/100*VH,w=s.width/100*VW,h=s.height/100*VH;
+    return `<rect class="floorplan-hotspot ${hasAny?'':'empty'}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="pointer-events:auto" onclick="openFloorplanLocModal('${safeC}')"><title>${s.code}</title></rect>`;
   }).join('');
 }
 function renderFloorplanLocations(){
