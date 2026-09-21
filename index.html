@@ -621,9 +621,9 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">🔄 重新整理位置</button>
     </div>
     <div style="text-align:center;margin-top:10px">
-      <div id="floorplanImgWrap" style="position:relative;display:inline-block;max-width:100%">
+      <div id="floorplanImgWrap" style="position:relative;width:100%;max-width:640px;aspect-ratio:1080/607;margin:0 auto">
         <img id="floorplanImg" src="" alt="實驗室平面圖"
-             style="max-width:100%;display:block;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
+             style="display:block;width:100%;height:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
              onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
         <div id="floorplanHotspotLayer" style="position:absolute;inset:0;pointer-events:none"></div>
       </div>
