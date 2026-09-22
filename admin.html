@@ -27,7 +27,7 @@
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .tab-badge{display:none;position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:1;min-width:16px;height:16px;border-radius:8px;padding:0 4px;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);}
   .tab-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
-  .tab-more-menu{display:none;position:absolute;top:100%;left:0;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:160px;overflow:hidden;margin-top:4px;}
+  .tab-more-menu{display:none;position:fixed;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:160px;overflow:hidden;}
   .tab-more-menu.show{display:block;}
   .tab-more-menu button{width:100%;text-align:left;padding:10px 14px;background:none;border:none;border-bottom:1px solid var(--surface2);font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;}
   .tab-more-menu button:last-child{border-bottom:none;}
@@ -756,10 +756,14 @@ function showTab(tab){
 function toggleTabMoreMenu(e){
   if(e)e.stopPropagation();
   const menu=document.getElementById('tabMoreMenu');
-  if(!menu)return;
+  const btn=document.getElementById('tabMoreBtn');
+  if(!menu||!btn)return;
   const willShow=!menu.classList.contains('show');
   closeTabMoreMenu();
   if(willShow){
+    const rect=btn.getBoundingClientRect();
+    menu.style.top=(rect.bottom+4)+'px';
+    menu.style.left=rect.left+'px';
     menu.classList.add('show');
     setTimeout(()=>document.addEventListener('click',closeTabMoreMenuOnOutsideClick,{once:true}),0);
   }
