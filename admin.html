@@ -3193,7 +3193,7 @@ function filterAdminEquip(){
   const list=document.getElementById('adminEquipList');
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合器材</p></div>';return;}
   list.innerHTML='<div class="record-list">'+items.map(e=>{
-    if(inlineEditEquipId===e.id)return renderInlineEditEquip(e);
+    if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgHtml=e.image_url?`<img src="${e.image_url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔬</div>`;
     const mismatches=equipLocationMismatches(e);
