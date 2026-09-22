@@ -859,24 +859,45 @@ const ROOM_TO_FLOORPLAN_KEY={'Biology':'bio','Chemistry':'chem','Geoscience':'ge
 let currentFloorplan = 'bio';
 let floorplanOpenLoc = '';
 let floorplanInitialized = false;
-// 用「開頭相同」比對，因為器材的位置代碼可能是 BD08-1、BD08-2 這種帶層數的寫法，
-// 平面圖上的標籤只到 BD08 這一層櫃子。另外也支援「BC03-06」這種範圍寫法，
-// 代表 BC03、BC04、BC05、BC06 這幾個都算（用第二段是不是2位數字來跟「-層數」區分）
-function expandLocationRange(code){
-  code=(code||'').trim();
-  const m=code.match(/^([A-Za-z]+)(\d{2,3})-(\d{2,3})$/);
-  if(m&&m[2].length===m[3].length){
-    const prefix=m[1],start=parseInt(m[2]),end=parseInt(m[3]),pad=m[2].length;
-    if(end>=start&&end-start<50){
-      const out=[];
-      for(let n=start;n<=end;n++)out.push(prefix+String(n).padStart(pad,'0'));
-      return out;
+// 位置代碼寫法比較彈性，統一在這裡解析成一串標準代碼：
+// - 「BD08-1」這種帶子層的：平面圖只到 BD08 這層櫃子，用開頭相同比對即可（locCodeMatches 處理）
+// - 「BC03-06」：dash 後面數字跟前面位數一樣（都2位數）→ 當範圍，展開成 BC03、BC04、BC05、BC06
+// - 「BC03-06、08」：範圍後面用「、」多加的獨立代碼 → 展開成 BC03~BC06 再加上 BC08
+// - 「PC03-1、2、3」：dash 後面數字位數比前面短（變成1位數）→ 當同一個代碼的子層後綴，展開成 PC03-1、PC03-2、PC03-3
+// - 「BA01/BA02」：用「/」隔開的完全獨立代碼，各自展開，不產生複合分類
+function expandLocationCode(raw){
+  const code=(raw||'').trim();
+  if(!code)return [];
+  const m=code.match(/^([A-Za-z]+)(\d+)(?:-(.+))?$/);
+  if(!m)return [code]; // 不是標準代碼格式的自由文字（例如「somewhere」），原樣照放
+  const prefix=m[1],baseNumStr=m[2],rest=m[3];
+  if(!rest)return [code];
+  const tokens=rest.split(/[、,，]/).map(t=>t.trim()).filter(Boolean);
+  if(!tokens.length)return [code];
+  const firstTok=tokens[0],baseLen=baseNumStr.length;
+  if(/^\d+$/.test(firstTok)&&firstTok.length===baseLen){
+    // 範圍模式
+    const start=parseInt(baseNumStr),end=parseInt(firstTok);
+    const out=[];
+    if(end>=start&&end-start<60){
+      for(let n=start;n<=end;n++)out.push(prefix+String(n).padStart(baseLen,'0'));
+    }else{
+      out.push(prefix+baseNumStr,prefix+firstTok);
     }
+    tokens.slice(1).forEach(t=>{
+      out.push(/^\d+$/.test(t)?prefix+t.padStart(baseLen,'0'):prefix+baseNumStr+'-'+t);
+    });
+    return out;
   }
-  return [code];
+  // 子層模式：全部 token 當成 base 代碼的 -子層 後綴
+  return tokens.map(t=>prefix+baseNumStr+'-'+t);
 }
-function locCodeMatches(itemCode,hotspotCode){
-  const expanded=expandLocationRange(itemCode);
+// 拆解一整個位置欄位字串：先用 & 和 / 拆成各自獨立的代碼區塊，每塊再展開範圍/清單寫法
+function expandLocationField(field){
+  return (field||'').split(/[&\/]/).map(s=>s.trim()).filter(Boolean).flatMap(expandLocationCode);
+}
+function locCodeMatches(field,hotspotCode){
+  const expanded=expandLocationField(field);
   return expanded.some(c=>c===hotspotCode||c.startsWith(hotspotCode+'-'));
 }
 let floorplanZoomScale=1;
@@ -927,7 +948,7 @@ function renderFloorplanHotspots(){
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
   const VW=1080,VH=607,PAD=8; // PAD：讓實際可點擊範圍比看得到的框稍微大一點，手機比較好點準
   svg.innerHTML=spots.map(s=>{
-    const hasAny=items.some(e=>(e.location||'').split('&').some(c=>locCodeMatches(c,s.code)));
+    const hasAny=items.some(e=>locCodeMatches(e.location,s.code));
     const safeC=s.code.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const x=s.left/100*VW,y=s.top/100*VH,w=s.width/100*VW,h=s.height/100*VH;
     return `<g>
@@ -954,11 +975,9 @@ function renderFloorplanLocations(){
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
   const codeMap=new Map();
   items.forEach(e=>{
-    (e.location||'').split('&').map(s=>s.trim()).filter(Boolean).forEach(rawCode=>{
-      expandLocationRange(rawCode).forEach(code=>{
-        if(!codeMap.has(code))codeMap.set(code,[]);
-        codeMap.get(code).push(e);
-      });
+    expandLocationField(e.location).forEach(code=>{
+      if(!codeMap.has(code))codeMap.set(code,[]);
+      codeMap.get(code).push(e);
     });
   });
   const codes=[...codeMap.keys()];
@@ -1008,7 +1027,7 @@ function toggleFloorplanGroup(key){
 function openFloorplanLocModal(code){
   floorplanOpenLoc=code;
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
-  const items=(allEquipment||[]).filter(e=>e.room===room&&(e.location||'').split('&').some(c=>locCodeMatches(c,code)));
+  const items=(allEquipment||[]).filter(e=>e.room===room&&locCodeMatches(e.location,code));
   const body=items.length?items.map(e=>{
     const avail=parseInt(e.available)||0;
     const safeN=e.name.replace(/'/g,"\\'");
