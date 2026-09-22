@@ -933,12 +933,16 @@ function openFloorplanLocModal(code){
   const body=items.length?items.map(e=>{
     const avail=parseInt(e.available)||0;
     const safeN=e.name.replace(/'/g,"\\'");
-    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2);cursor:pointer" onclick="openEquipInfoCard('${e.room}','${safeN}')">
-      <div>
-        <div style="font-weight:600">${e.name}</div>
-        ${e.spec?`<div style="font-size:12px;color:var(--text2)">${e.spec}</div>`:''}
+    const thumb=e.image_url?`<img src="${e.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔬</div>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2);cursor:pointer" onclick="openEquipInfoCard('${e.room}','${safeN}')">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0">
+        ${thumb}
+        <div style="min-width:0">
+          <div style="font-weight:600">${e.name}</div>
+          ${e.spec?`<div style="font-size:12px;color:var(--text2)">${e.spec}</div>`:''}
+        </div>
       </div>
-      <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12.5px;white-space:nowrap">${avail>0?'可借 '+avail+e.unit:'無庫存'} ›</span>
+      <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12.5px;white-space:nowrap;flex-shrink:0">${avail>0?'可借 '+avail+e.unit:'無庫存'} ›</span>
     </div>`;
   }).join(''):'<div style="font-size:13px;color:var(--text2)">（沒有找到對應器材資料）</div>';
   showModal(`📦 ${code} 裡面有什麼`,body,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
@@ -947,7 +951,9 @@ function openEquipInfoCard(room,name){
   const e=(allEquipment||[]).find(x=>x.room===room&&x.name===name);
   if(!e)return;
   const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
+  const photoHtml=e.image_url?`<img src="${e.image_url}" style="width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:10px;cursor:zoom-in" onclick="openLightbox('${e.image_url.replace(/'/g,"\\'")}','${e.name.replace(/'/g,"\\'")}')">`:`<div style="width:100%;height:120px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:10px">🔬</div>`;
   const body=`
+    ${photoHtml}
     <div style="font-size:15px;font-weight:700;margin-bottom:8px">${e.name}</div>
     <div style="display:flex;flex-direction:column;gap:6px;font-size:13.5px">
       <div>科別／房間：${rn(e.room)}</div>
