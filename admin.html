@@ -3048,7 +3048,7 @@ function checkEquipLocationMismatch(){
       <div style="color:var(--danger);margin-top:2px">目前位置代碼：${e.location}　→　可疑：${bad.join('、')}</div>
     </div>`).join('');
   showModal(`⚠️ 發現 ${flagged.length} 筆位置代碼開頭可能不對`,
-    `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">對照表：T=教具室、PC=理化、C=化學、B=生物、P=物理、G=地科。物理室自己也有叫 PC01~PC05 的櫃子（跟理化室的 PC 開頭恰好撞名），這幾筆如果是這種情況可以忽略，其餘麻煩逐筆確認。</div>${rows}`,
+    `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">對照表：T=教具室、PC=理化、C=化學、B=生物、P=物理、G=地科（物理室自己的 PC 開頭櫃子已經自動排除，不會誤判）。</div>${rows}`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
   );
 }
@@ -3167,12 +3167,15 @@ function locationSegmentPrefix(seg){
 function equipLocationMismatches(e){
   const expected=ROOM_EXPECTED_PREFIX[e.room];
   if(!expected||!e.location)return [];
-  const segs=e.location.split('&').map(s=>s.trim()).filter(Boolean);
+  const segs=e.location.split(/[&\/]/).map(s=>s.trim()).filter(Boolean);
   const bad=[];
   segs.forEach(seg=>{
     const prefix=locationSegmentPrefix(seg);
     if(!prefix)return; // 抓不到英文開頭的自由文字備註（例如「somewhere」）不列入檢查
-    if(prefix!==expected)bad.push(seg);
+    let ok=(prefix===expected);
+    // 物理室自己的櫃子也會用 PC 這個字母組合（跟理化室的 PC 開頭撞名，但兩邊都是合法用法），這裡特別放行
+    if(!ok&&e.room==='Physics'&&prefix==='PC')ok=true;
+    if(!ok)bad.push(seg);
   });
   return bad;
 }
