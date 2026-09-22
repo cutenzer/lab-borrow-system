@@ -538,7 +538,9 @@
   </div>
 
   <div class="card">
-    <div class="card-title">📋 器材清單 ／ 盤點</div>
+    <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
+      <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
+    </div>
     <div class="info-box">「實點數量」可以直接改，改完按下面「💾 儲存目前顯示的盤點數量」一次寫入（會自動記錄盤點時間），適合現場點貨；其他欄位（規格、櫃位、別名、照片）要改就用「✏️ 編輯」。用上面搜尋/房間篩選縮小範圍，就等於是在對那個房間盤點。</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="filterAdminEquip()" style="flex:1">
@@ -3032,6 +3034,79 @@ function clearEquipForm(){
   document.getElementById('eq-room').value='Physics';
   document.getElementById('eq-available').checked=true;
 }
+function checkEquipLocationMismatch(){
+  const flagged=allAdminEquipment.map(e=>({e,bad:equipLocationMismatches(e)})).filter(x=>x.bad.length);
+  if(!flagged.length){
+    showModal('⚠️ 檢查位置代碼開頭',`<div class="empty"><div class="empty-icon">✅</div><p>沒有發現位置代碼開頭跟房間對不上的器材</p></div>`,[
+      {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
+    ]);
+    return;
+  }
+  const rows=flagged.map(({e,bad})=>`
+    <div style="padding:8px 10px;border-radius:6px;background:#fff5f5;margin-bottom:6px;font-size:13px">
+      <strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）</span>
+      <div style="color:var(--danger);margin-top:2px">目前位置代碼：${e.location}　→　可疑：${bad.join('、')}</div>
+    </div>`).join('');
+  showModal(`⚠️ 發現 ${flagged.length} 筆位置代碼開頭可能不對`,
+    `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">對照表：T=教具室、PC=理化、C=化學、B=生物、P=物理、G=地科。物理室自己也有叫 PC01~PC05 的櫃子（跟理化室的 PC 開頭恰好撞名），這幾筆如果是這種情況可以忽略，其餘麻煩逐筆確認。</div>${rows}`,
+    [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
+  );
+}
+function toggleInlineEditEquip(id){
+  inlineEditEquipId=(inlineEditEquipId===id)?null:id;
+  filterAdminEquip();
+  if(inlineEditEquipId===id){
+    document.getElementById('eqcard-'+id)?.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+function renderInlineEditEquip(e){
+  return `<div class="record-card" id="eqcard-${e.id}" style="background:var(--surface2);border:1.5px solid var(--accent)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+      <div class="form-group"><label>房間</label>
+        <select id="ie-room-${e.id}">
+          <option value="Physics" ${e.room==='Physics'?'selected':''}>物理</option>
+          <option value="Chemistry" ${e.room==='Chemistry'?'selected':''}>化學</option>
+          <option value="Biology" ${e.room==='Biology'?'selected':''}>生物</option>
+          <option value="Geoscience" ${e.room==='Geoscience'?'selected':''}>地科</option>
+          <option value="Physics Chemistry" ${e.room==='Physics Chemistry'?'selected':''}>理化</option>
+          <option value="TeachingMaterialRoom" ${e.room==='TeachingMaterialRoom'?'selected':''}>教具室</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:span 2"><label>名稱</label><input type="text" id="ie-name-${e.id}" value="${(e.name||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label>規格</label><input type="text" id="ie-spec-${e.id}" value="${(e.spec||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label>單位</label><input type="text" id="ie-unit-${e.id}" value="${(e.unit||'個').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label>櫃位編碼</label><input type="text" id="ie-location-${e.id}" value="${(e.location||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group"><label>別名</label><input type="text" id="ie-alias-${e.id}" value="${(e.alias||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="ie-available-${e.id}" ${e.is_available!==false?'checked':''} style="width:auto">
+        <label style="color:var(--text)">開放借用</label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="saveInlineEquip('${e.id}')">💾 儲存</button>
+    </div>
+  </div>`;
+}
+async function saveInlineEquip(id){
+  const name=document.getElementById('ie-name-'+id).value.trim();
+  if(!name){showToast('請填寫名稱','error');return;}
+  const body={
+    room:document.getElementById('ie-room-'+id).value,
+    name,
+    spec:document.getElementById('ie-spec-'+id).value.trim(),
+    unit:document.getElementById('ie-unit-'+id).value.trim()||'個',
+    location:document.getElementById('ie-location-'+id).value.trim(),
+    alias:document.getElementById('ie-alias-'+id).value.trim()||null,
+    is_available:document.getElementById('ie-available-'+id).checked
+  };
+  try{
+    await sb('PATCH','equipment',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
+    showToast('已更新','success');
+    inlineEditEquipId=null;
+    loadAdminEquipment();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
 function editEquip(id){
   const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
   editingEquipId=e.id;
@@ -3082,6 +3157,26 @@ async function doDeleteEquip(id){
   try{await sb('DELETE','equipment',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadAdminEquipment();}
   catch(e){showToast('刪除失敗','error');}
 }
+const ROOM_EXPECTED_PREFIX={'TeachingMaterialRoom':'T','Physics Chemistry':'PC','Chemistry':'C','Biology':'B','Physics':'P','Geoscience':'G'};
+function locationSegmentPrefix(seg){
+  seg=(seg||'').trim().toUpperCase();
+  if(seg.startsWith('PC'))return 'PC';
+  const m=seg.match(/^[A-Z]/);
+  return m?m[0]:'';
+}
+function equipLocationMismatches(e){
+  const expected=ROOM_EXPECTED_PREFIX[e.room];
+  if(!expected||!e.location)return [];
+  const segs=e.location.split('&').map(s=>s.trim()).filter(Boolean);
+  const bad=[];
+  segs.forEach(seg=>{
+    const prefix=locationSegmentPrefix(seg);
+    if(!prefix)return; // 抓不到英文開頭的自由文字備註（例如「somewhere」）不列入檢查
+    if(prefix!==expected)bad.push(seg);
+  });
+  return bad;
+}
+let inlineEditEquipId=null;
 function filterAdminEquip(){
   const q=(document.getElementById('adminEquipSearch')?.value||'').toLowerCase();
   const room=document.getElementById('adminEquipRoomFilter')?.value||'';
@@ -3098,8 +3193,10 @@ function filterAdminEquip(){
   const list=document.getElementById('adminEquipList');
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合器材</p></div>';return;}
   list.innerHTML='<div class="record-list">'+items.map(e=>{
+    if(inlineEditEquipId===e.id)return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgHtml=e.image_url?`<img src="${e.image_url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔬</div>`;
+    const mismatches=equipLocationMismatches(e);
     return `<div class="record-card" id="eqcard-${e.id}">
       <div style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
@@ -3112,10 +3209,11 @@ function filterAdminEquip(){
             ${e.location?`<span>📍 ${e.location}</span>`:''}
             ${e.alias?`<span>別名：${e.alias}</span>`:''}
           </div>
+          ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <button class="btn btn-secondary btn-sm" onclick="editEquip('${e.id}')">✏️ 編輯</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">✏️ 編輯</button>
           <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload('${e.id}')">🖼️ 換照片</button>
           <button class="btn btn-warn btn-sm" onclick="openWriteoffModal('${e.id}')">♻️ 報廢</button>
           <button class="btn btn-danger btn-sm" onclick="deleteEquip('${e.id}')">🗑️</button>
