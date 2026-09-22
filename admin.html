@@ -3588,8 +3588,6 @@ function highlightCalibHotspot(id){
   if(g){
     const r=g.querySelector('rect');
     if(r){r.style.fill='rgba(232,146,58,0.35)';r.style.stroke='var(--accent2)';r.style.strokeWidth='3';}
-    // 讓固定在上方的圖片卡片捲動到看得到的位置（一般情況下本來就是 sticky 固定住，這裡是保險）
-    document.getElementById('calibStickyCard')?.scrollIntoView({behavior:'smooth',block:'start'});
   }
 }
 function renderCalibList(){
