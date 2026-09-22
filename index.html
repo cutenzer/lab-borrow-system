@@ -618,13 +618,20 @@
       <div class="room-tab" onclick="showFloorplan('phy', this)">⚡ 物理</div>
       <div class="room-tab" onclick="showFloorplan('tmt', this)">📦 教具室</div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">🔄 重新整理位置</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(-0.5)">🔍－</button>
+      <span id="floorplanZoomLabel" style="font-size:12px;color:var(--text2);align-self:center">100%</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(0.5)">🔍＋</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoomReset()">↺</button>
     </div>
+    <div class="hint" style="margin-top:6px">格子太小點不準的話，先按「🔍＋」放大，再用手指或滑鼠滾軸/拖曳捲軸左右上下移動查看，放大後點擊會準很多。</div>
     <div style="text-align:center;margin-top:10px">
-      <div id="floorplanImgWrap" style="position:relative;display:inline-block;max-width:100%">
-        <img id="floorplanImg" src="" alt="實驗室平面圖"
-             style="max-width:100%;display:block;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
-             onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
-        <svg id="floorplanSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+      <div id="floorplanScrollWrap" style="overflow:auto;max-width:100%;border-radius:8px">
+        <div id="floorplanImgWrap" style="position:relative;width:100%">
+          <img id="floorplanImg" src="" alt="實驗室平面圖"
+               style="display:block;width:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
+               onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
+          <svg id="floorplanSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+        </div>
       </div>
     </div>
     <div id="floorplanLocList" style="margin-top:14px"></div>
@@ -872,9 +879,11 @@ function locCodeMatches(itemCode,hotspotCode){
   const expanded=expandLocationRange(itemCode);
   return expanded.some(c=>c===hotspotCode||c.startsWith(hotspotCode+'-'));
 }
+let floorplanZoomScale=1;
 async function showFloorplan(key, el){
   currentFloorplan = key;
   floorplanOpenLoc = '';
+  floorplanExpandedGroups = new Set();
   floorplanInitialized = true;
   const img=document.getElementById('floorplanImg');
   img.src = FLOORPLAN_IMAGES[key]||'';
@@ -888,19 +897,56 @@ async function showFloorplan(key, el){
   if(!floorplanHotspotsLoaded)await loadFloorplanHotspotsFromDB();
   renderFloorplanHotspots();
   renderFloorplanLocations();
+  applyFloorplanZoom();
+  if(!window._floorplanResizeBound){
+    window._floorplanResizeBound=true;
+    window.addEventListener('resize',applyFloorplanZoom);
+  }
+}
+function floorplanZoom(delta){
+  floorplanZoomScale=Math.min(4,Math.max(1,Math.round((floorplanZoomScale+delta)*10)/10));
+  applyFloorplanZoom();
+}
+function floorplanZoomReset(){
+  floorplanZoomScale=1;
+  applyFloorplanZoom();
+}
+function applyFloorplanZoom(){
+  const scrollWrap=document.getElementById('floorplanScrollWrap');
+  const wrap=document.getElementById('floorplanImgWrap');
+  if(!scrollWrap||!wrap)return;
+  const baseWidth=scrollWrap.clientWidth||scrollWrap.getBoundingClientRect().width;
+  if(baseWidth>0)wrap.style.width=(baseWidth*floorplanZoomScale)+'px';
+  const label=document.getElementById('floorplanZoomLabel');
+  if(label)label.textContent=Math.round(floorplanZoomScale*100)+'%';
 }
 function renderFloorplanHotspots(){
   const svg=document.getElementById('floorplanSvgLayer');if(!svg)return;
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
   const spots=FLOORPLAN_HOTSPOTS[currentFloorplan]||[];
   const items=(allEquipment||[]).filter(e=>e.room===room&&e.location);
-  const VW=1080,VH=607;
+  const VW=1080,VH=607,PAD=8; // PAD：讓實際可點擊範圍比看得到的框稍微大一點，手機比較好點準
   svg.innerHTML=spots.map(s=>{
     const hasAny=items.some(e=>(e.location||'').split('&').some(c=>locCodeMatches(c,s.code)));
     const safeC=s.code.replace(/'/g,"\\'").replace(/"/g,'&quot;');
     const x=s.left/100*VW,y=s.top/100*VH,w=s.width/100*VW,h=s.height/100*VH;
-    return `<rect class="floorplan-hotspot ${hasAny?'':'empty'}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="pointer-events:auto" onclick="openFloorplanLocModal('${safeC}')"><title>${s.code}</title></rect>`;
+    return `<g>
+      <rect x="${x-PAD}" y="${y-PAD}" width="${w+PAD*2}" height="${h+PAD*2}" style="fill:transparent;pointer-events:auto;cursor:pointer" onclick="openFloorplanLocModal('${safeC}')"></rect>
+      <rect class="floorplan-hotspot ${hasAny?'':'empty'}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="pointer-events:none"><title>${s.code}</title></rect>
+    </g>`;
   }).join('');
+}
+let floorplanExpandedGroups=new Set();
+function floorplanCodeGroupKey(code){
+  const m=(code||'').match(/^[A-Za-z]+/);
+  return m?m[0]:code;
+}
+function naturalCodeCompare(a,b){
+  const pa=a.match(/^(\D*)(\d*)(.*)$/),pb=b.match(/^(\D*)(\d*)(.*)$/);
+  if(pa[1]!==pb[1])return pa[1]<pb[1]?-1:1;
+  const na=parseInt(pa[2])||0,nb=parseInt(pb[2])||0;
+  if(na!==nb)return na-nb;
+  return pa[3]<pb[3]?-1:(pa[3]>pb[3]?1:0);
 }
 function renderFloorplanLocations(){
   const box=document.getElementById('floorplanLocList');if(!box)return;
@@ -915,16 +961,49 @@ function renderFloorplanLocations(){
       });
     });
   });
-  const codes=[...codeMap.keys()].sort();
+  const codes=[...codeMap.keys()];
   if(!codes.length){box.innerHTML='<div class="hint">這個房間目前沒有登記位置代碼的器材</div>';return;}
-  box.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">📍 這個房間的櫃位（也可以直接點上面圖片）</div>
+  const groups=new Map();
+  codes.forEach(c=>{
+    const key=floorplanCodeGroupKey(c);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(c);
+  });
+  const groupKeys=[...groups.keys()].sort();
+  box.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">📍 這個房間的櫃位（也可以直接點上面圖片，點下面的分類會展開細項）</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${codes.map(c=>{
-        const hasStock=codeMap.get(c).some(e=>parseInt(e.available)>0);
-        const safeC=c.replace(/'/g,"\\'");
-        return `<button type="button" class="room-tab" style="${hasStock?'':'opacity:.5'}" onclick="openFloorplanLocModal('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
+      ${groupKeys.map(key=>{
+        const codesInGroup=groups.get(key).sort(naturalCodeCompare);
+        const totalCount=codesInGroup.reduce((s,c)=>s+codeMap.get(c).length,0);
+        const expanded=floorplanExpandedGroups.has(key);
+        // 只有一個代碼的分類（例如單獨的 CA01）直接當按鈕點，不用展開這道手續
+        if(codesInGroup.length===1){
+          const c=codesInGroup[0];
+          const hasStock=codeMap.get(c).some(e=>parseInt(e.available)>0);
+          const safeC=c.replace(/'/g,"\\'");
+          return `<button type="button" class="room-tab" style="${hasStock?'':'opacity:.5'}" onclick="openFloorplanLocModal('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
+        }
+        return `<button type="button" class="room-tab ${expanded?'active':''}" onclick="toggleFloorplanGroup('${key}')">${key} 系列（共${totalCount}）${expanded?'▲':'▼'}</button>`;
       }).join('')}
-    </div>`;
+    </div>
+    ${groupKeys.filter(k=>groups.get(k).length>1&&floorplanExpandedGroups.has(k)).map(key=>{
+      const codesInGroup=groups.get(key).sort(naturalCodeCompare);
+      return `<div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:8px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${key} 系列細項：</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${codesInGroup.map(c=>{
+            const hasStock=codeMap.get(c).some(e=>parseInt(e.available)>0);
+            const safeC=c.replace(/'/g,"\\'");
+            return `<button type="button" class="room-tab" style="${hasStock?'':'opacity:.5'}" onclick="openFloorplanLocModal('${safeC}')">${c}（${codeMap.get(c).length}）</button>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+function toggleFloorplanGroup(key){
+  if(floorplanExpandedGroups.has(key))floorplanExpandedGroups.delete(key);
+  else floorplanExpandedGroups.add(key);
+  renderFloorplanLocations();
 }
 function openFloorplanLocModal(code){
   floorplanOpenLoc=code;
