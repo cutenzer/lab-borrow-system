@@ -26,6 +26,12 @@
   .tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;position:relative;}
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .tab-badge{display:none;position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:1;min-width:16px;height:16px;border-radius:8px;padding:0 4px;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);}
+  .tab-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
+  .tab-more-menu{display:none;position:absolute;top:100%;left:0;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:160px;overflow:hidden;margin-top:4px;}
+  .tab-more-menu.show{display:block;}
+  .tab-more-menu button{width:100%;text-align:left;padding:10px 14px;background:none;border:none;border-bottom:1px solid var(--surface2);font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;}
+  .tab-more-menu button:last-child{border-bottom:none;}
+  .tab-more-menu button:hover{background:var(--surface2);}
   .tab-badge.show{display:flex;}
   .panel{display:none;}.panel.active{display:block;}
   .purpose-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
@@ -174,18 +180,23 @@
 <main>
 <div class="stats-grid" id="statsGrid"></div>
 <div class="tabs">
-  <button class="tab active" onclick="showTab('pending')">⏳ 待審核<span class="tab-badge" id="tb-pending">0</span></button>
-  <button class="tab" onclick="showTab('approved')">✅ 已核准</button>
-  <button class="tab" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
-  <button class="tab" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
-  <button class="tab" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
-  <button class="tab" onclick="showTab('teachers')">👩‍🏫 教師管理</button>
-  <button class="tab" onclick="showTab('semester')">📆 學期設定</button>
-  <button class="tab" onclick="showTab('templates')">📚 課程模板</button>
-  <button class="tab" onclick="showTab('floorplan')">🗺️ 平面圖校正</button>
-  <button class="tab" onclick="showTab('chemicals')">🧪 藥品管理</button>
-  <button class="tab" onclick="showTab('equipment')">📦 器材管理</button>
-  <button class="tab" onclick="showTab('all')">📊 全部記錄</button>
+  <button class="tab active" data-tab="pending" onclick="showTab('pending')">⏳ 待審核<span class="tab-badge" id="tb-pending">0</span></button>
+  <button class="tab" data-tab="approved" onclick="showTab('approved')">✅ 已核准</button>
+  <button class="tab" data-tab="return" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
+  <button class="tab" data-tab="deposit" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
+  <button class="tab" data-tab="venue" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
+  <button class="tab" data-tab="all" onclick="showTab('all')">📊 全部記錄</button>
+  <div class="tab-more-wrap">
+    <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)">⚙️ 設定與資料 ▾</button>
+    <div class="tab-more-menu" id="tabMoreMenu">
+      <button onclick="showTab('teachers')">👩‍🏫 教師管理</button>
+      <button onclick="showTab('semester')">📆 學期設定</button>
+      <button onclick="showTab('templates')">📚 課程模板</button>
+      <button onclick="showTab('floorplan')">🗺️ 平面圖校正</button>
+      <button onclick="showTab('chemicals')">🧪 藥品管理</button>
+      <button onclick="showTab('equipment')">📦 器材管理</button>
+    </div>
+  </div>
 </div>
 
 <div id="panel-pending" class="panel active">
@@ -726,8 +737,12 @@ function renderWithFilter(panel){
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
+const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment'];
 function showTab(tab){
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['pending','approved','return','deposit','venue','teachers','semester','templates','floorplan','chemicals','equipment','all'][i]===tab));
+  closeTabMoreMenu();
+  document.querySelectorAll('.tabs > .tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  const moreBtn=document.getElementById('tabMoreBtn');
+  if(moreBtn)moreBtn.classList.toggle('active',TAB_MORE_GROUP.includes(tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
   if(tab==='venue')loadAdminVenue();
@@ -737,6 +752,24 @@ function showTab(tab){
   if(tab==='floorplan')loadFloorplanCalibration();
   if(tab==='chemicals')loadAdminChems();
   if(tab==='equipment')loadAdminEquipment();
+}
+function toggleTabMoreMenu(e){
+  if(e)e.stopPropagation();
+  const menu=document.getElementById('tabMoreMenu');
+  if(!menu)return;
+  const willShow=!menu.classList.contains('show');
+  closeTabMoreMenu();
+  if(willShow){
+    menu.classList.add('show');
+    setTimeout(()=>document.addEventListener('click',closeTabMoreMenuOnOutsideClick,{once:true}),0);
+  }
+}
+function closeTabMoreMenu(){
+  const menu=document.getElementById('tabMoreMenu');
+  if(menu)menu.classList.remove('show');
+}
+function closeTabMoreMenuOnOutsideClick(){
+  closeTabMoreMenu();
 }
 
 function renderList(records,container,mode){
