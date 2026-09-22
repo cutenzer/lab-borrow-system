@@ -385,7 +385,7 @@
 <div id="panel-floorplan" class="panel">
   <div class="card" id="calibStickyCard" style="position:sticky;top:56px;z-index:20;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
-    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。</div>
+    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
     <div class="purpose-tabs" id="calibRoomTabs">
       <button type="button" class="purpose-tab active" data-room="bio" onclick="setCalibRoom('bio')">生物</button>
       <button type="button" class="purpose-tab" data-room="chem" onclick="setCalibRoom('chem')">化學</button>
@@ -3158,6 +3158,38 @@ async function doDeleteEquip(id){
   catch(e){showToast('刪除失敗','error');}
 }
 const ROOM_EXPECTED_PREFIX={'TeachingMaterialRoom':'T','Physics Chemistry':'PC','Chemistry':'C','Biology':'B','Physics':'P','Geoscience':'G'};
+// 跟前台 borrow.html 同一套位置代碼解析規則，確保兩邊判斷一致
+function expandLocationCode(raw){
+  const code=(raw||'').trim();
+  if(!code)return [];
+  const m=code.match(/^([A-Za-z]+)(\d+)(?:-(.+))?$/);
+  if(!m)return [code];
+  const prefix=m[1],baseNumStr=m[2],rest=m[3];
+  if(!rest)return [code];
+  const tokens=rest.split(/[、,，]/).map(t=>t.trim()).filter(Boolean);
+  if(!tokens.length)return [code];
+  const firstTok=tokens[0],baseLen=baseNumStr.length;
+  if(/^\d+$/.test(firstTok)&&firstTok.length===baseLen){
+    const start=parseInt(baseNumStr),end=parseInt(firstTok);
+    const out=[];
+    if(end>=start&&end-start<60){
+      for(let n=start;n<=end;n++)out.push(prefix+String(n).padStart(baseLen,'0'));
+    }else{
+      out.push(prefix+baseNumStr,prefix+firstTok);
+    }
+    tokens.slice(1).forEach(t=>{
+      out.push(/^\d+$/.test(t)?prefix+t.padStart(baseLen,'0'):prefix+baseNumStr+'-'+t);
+    });
+    return out;
+  }
+  return tokens.map(t=>prefix+baseNumStr+'-'+t);
+}
+function expandLocationField(field){
+  return (field||'').split(/[&\/]/).map(s=>s.trim()).filter(Boolean).flatMap(expandLocationCode);
+}
+function adminLocCodeMatches(field,hotspotCode){
+  return expandLocationField(field).some(c=>c===hotspotCode||c.startsWith(hotspotCode+'-'));
+}
 function locationSegmentPrefix(seg){
   seg=(seg||'').trim().toUpperCase();
   if(seg.startsWith('PC'))return 'PC';
@@ -3577,7 +3609,7 @@ function renderCalibOverlay(){
   const VW=1080,VH=607;
   svg.innerHTML=allCalibHotspots.map(h=>{
     const x=h.left_pct/100*VW,y=h.top_pct/100*VH,w=h.width_pct/100*VW,ht=h.height_pct/100*VH;
-    return `<g id="calib-hs-${h.id}">
+    return `<g id="calib-hs-${h.id}" class="calib-existing-hotspot" style="pointer-events:auto;cursor:pointer" onclick="openCalibLocEditor(${h.id})">
       <rect x="${x}" y="${y}" width="${w}" height="${ht}" rx="3" style="fill:rgba(42,107,79,0.12);stroke:rgba(42,107,79,0.6);stroke-width:2"></rect>
       <text x="${x+4}" y="${y+14}" style="fill:#fff;font-size:14px;font-weight:700" stroke="rgba(42,107,79,0.9)" stroke-width="3" paint-order="stroke">${h.code}</text>
     </g>`;
@@ -3592,6 +3624,41 @@ function highlightCalibHotspot(id){
     const r=g.querySelector('rect');
     if(r){r.style.fill='rgba(232,146,58,0.35)';r.style.stroke='var(--accent2)';r.style.strokeWidth='3';}
   }
+}
+async function openCalibLocEditor(hotspotId){
+  const h=allCalibHotspots.find(x=>String(x.id)===String(hotspotId));if(!h)return;
+  const room=FLOORPLAN_KEY_TO_ROOM[calibRoom];
+  const items=allAdminEquipment.filter(e=>e.room===room&&adminLocCodeMatches(e.location,h.code));
+  const rows=items.map(e=>{
+    const avail=equipAvailable(e);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2)">
+      <div>
+        <div style="font-weight:600">${e.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${e.spec||''}　總數 ${e.total??0}　可借 ${avail}</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal();jumpEditEquipFromCalib('${e.id}')">✏️ 編輯</button>
+    </div>`;
+  }).join('')||'<div style="font-size:13px;color:var(--text2)">目前這個位置還沒有登記任何器材</div>';
+  const safeRoom=room.replace(/'/g,"\\'"),safeCode=h.code.replace(/'/g,"\\'");
+  showModal(`📦 ${h.code}（${rn(room)}）`,
+    `<div style="margin-bottom:10px">${rows}</div>
+     <button class="btn btn-primary btn-sm" onclick="closeModal();openQuickAddToLocation('${safeRoom}','${safeCode}')">➕ 新增器材到這裡</button>`,
+    [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
+  );
+}
+function jumpEditEquipFromCalib(id){
+  showTab('equipment');
+  setTimeout(()=>toggleInlineEditEquip(id),350); // 等器材清單重新載入完成再展開編輯，避免被覆蓋掉
+}
+function openQuickAddToLocation(room,code){
+  showTab('equipment');
+  setTimeout(()=>{
+    clearEquipForm();
+    document.getElementById('eq-room').value=room;
+    document.getElementById('eq-location').value=code;
+    document.getElementById('eq-name').focus();
+    document.getElementById('eq-name').scrollIntoView({behavior:'smooth',block:'center'});
+  },350);
 }
 function renderCalibList(){
   const box=document.getElementById('calibList');if(!box)return;
@@ -3705,6 +3772,7 @@ function calibMouseDown(e){
   const wrap=document.getElementById('calibImgWrap');
   if(!wrap||!wrap.contains(e.target))return;
   if(e.target.closest('#calibNewForm'))return;
+  if(e.target.closest('.calib-existing-hotspot'))return; // 點在既有熱區上是要打開編輯，不要開始畫新框
   calibStartDrag(e.clientX,e.clientY);
   e.preventDefault();
 }
@@ -3719,6 +3787,7 @@ function calibTouchStart(e){
   const wrap=document.getElementById('calibImgWrap');
   if(!wrap||!wrap.contains(e.target))return;
   if(e.target.closest('#calibNewForm'))return;
+  if(e.target.closest('.calib-existing-hotspot'))return; // 點在既有熱區上是要打開編輯，不要開始畫新框
   if(e.touches.length!==1)return;
   if(calibZoomScale>1)return; // 放大狀態下，手指拖曳讓給原生滑動查看用，不畫框
   calibStartDrag(e.touches[0].clientX,e.touches[0].clientY);
