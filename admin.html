@@ -383,9 +383,9 @@
 </div>
 
 <div id="panel-floorplan" class="panel">
-  <div class="card">
+  <div class="card" id="calibStickyCard" style="position:sticky;top:56px;z-index:20;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
-    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置。改完的位置前台會自動套用，不用改程式碼。</div>
+    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。</div>
     <div class="purpose-tabs" id="calibRoomTabs">
       <button type="button" class="purpose-tab active" data-room="bio" onclick="setCalibRoom('bio')">生物</button>
       <button type="button" class="purpose-tab" data-room="chem" onclick="setCalibRoom('chem')">化學</button>
@@ -393,10 +393,16 @@
       <button type="button" class="purpose-tab" data-room="pc" onclick="setCalibRoom('pc')">理化</button>
       <button type="button" class="purpose-tab" data-room="phy" onclick="setCalibRoom('phy')">物理</button>
       <button type="button" class="purpose-tab" data-room="tmt" onclick="setCalibRoom('tmt')">教具室</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(-0.5)">🔍－</button>
+      <span id="calibZoomLabel" style="font-size:12px;color:var(--text2);align-self:center">100%</span>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(0.5)">🔍＋</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoomReset()">↺ 重置</button>
     </div>
-    <div id="calibImgWrap" style="position:relative;display:inline-block;max-width:100%;cursor:crosshair;user-select:none">
-      <img id="calibImg" src="" alt="平面圖" style="max-width:100%;display:block;border:1px solid var(--border);border-radius:8px;pointer-events:none;-webkit-user-drag:none">
-      <svg id="calibSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+    <div id="calibScrollWrap" style="overflow:auto;max-height:45vh;border:1px solid var(--border);border-radius:8px;background:var(--surface2)">
+      <div id="calibImgWrap" style="position:relative;width:1080px;aspect-ratio:1080/607;cursor:crosshair;user-select:none">
+        <img id="calibImg" src="" alt="平面圖" style="display:block;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none">
+        <svg id="calibSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+      </div>
     </div>
     <div id="calibNewForm" style="display:none;margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -3422,8 +3428,11 @@ async function exportWriteoffLog(){
 const FLOORPLAN_KEY_TO_ROOM={'bio':'Biology','chem':'Chemistry','geo':'Geoscience','pc':'Physics Chemistry','phy':'Physics','tmt':'TeachingMaterialRoom'};
 let calibRoom='bio',allCalibHotspots=[],calibDrag=null,calibPendingRect=null;
 
+let calibZoomScale=1;
 function loadFloorplanCalibration(){
   setCalibRoom(calibRoom);
+  applyCalibZoom();
+  window.addEventListener('resize',applyCalibZoom);
 }
 function setCalibRoom(key){
   calibRoom=key;
@@ -3431,6 +3440,23 @@ function setCalibRoom(key){
   document.getElementById('calibImg').src=FLOORPLAN_IMAGES[key]||'';
   cancelCalibNew();
   loadCalibHotspots();
+}
+function calibZoom(delta){
+  calibZoomScale=Math.min(4,Math.max(1,Math.round((calibZoomScale+delta)*10)/10));
+  applyCalibZoom();
+}
+function calibZoomReset(){
+  calibZoomScale=1;
+  applyCalibZoom();
+}
+function applyCalibZoom(){
+  const scrollWrap=document.getElementById('calibScrollWrap');
+  const wrap=document.getElementById('calibImgWrap');
+  if(!scrollWrap||!wrap)return;
+  const baseWidth=scrollWrap.clientWidth||scrollWrap.getBoundingClientRect().width;
+  if(baseWidth>0)wrap.style.width=(baseWidth*calibZoomScale)+'px';
+  const label=document.getElementById('calibZoomLabel');
+  if(label)label.textContent=Math.round(calibZoomScale*100)+'%';
 }
 async function loadCalibHotspots(){
   const list=document.getElementById('calibList');
@@ -3450,11 +3476,23 @@ function renderCalibOverlay(){
   const VW=1080,VH=607;
   svg.innerHTML=allCalibHotspots.map(h=>{
     const x=h.left_pct/100*VW,y=h.top_pct/100*VH,w=h.width_pct/100*VW,ht=h.height_pct/100*VH;
-    return `<g>
+    return `<g id="calib-hs-${h.id}">
       <rect x="${x}" y="${y}" width="${w}" height="${ht}" rx="3" style="fill:rgba(42,107,79,0.12);stroke:rgba(42,107,79,0.6);stroke-width:2"></rect>
       <text x="${x+4}" y="${y+14}" style="fill:#fff;font-size:14px;font-weight:700" stroke="rgba(42,107,79,0.9)" stroke-width="3" paint-order="stroke">${h.code}</text>
     </g>`;
   }).join('');
+}
+function highlightCalibHotspot(id){
+  document.querySelectorAll('#calibSvgLayer rect').forEach(r=>{
+    r.style.fill='rgba(42,107,79,0.12)';r.style.stroke='rgba(42,107,79,0.6)';r.style.strokeWidth='2';
+  });
+  const g=document.getElementById('calib-hs-'+id);
+  if(g){
+    const r=g.querySelector('rect');
+    if(r){r.style.fill='rgba(232,146,58,0.35)';r.style.stroke='var(--accent2)';r.style.strokeWidth='3';}
+    // 讓固定在上方的圖片卡片捲動到看得到的位置（一般情況下本來就是 sticky 固定住，這裡是保險）
+    document.getElementById('calibStickyCard')?.scrollIntoView({behavior:'smooth',block:'start'});
+  }
 }
 function renderCalibList(){
   const box=document.getElementById('calibList');if(!box)return;
@@ -3463,13 +3501,25 @@ function renderCalibList(){
     <div class="record-card" style="padding:10px 14px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <strong style="min-width:70px">${h.code}</strong>
-        <label style="font-size:11px;color:var(--text2)">左</label><input type="number" step="0.1" value="${h.left_pct}" style="max-width:70px" onchange="updateCalibHotspot(${h.id},'left_pct',this.value)">
-        <label style="font-size:11px;color:var(--text2)">上</label><input type="number" step="0.1" value="${h.top_pct}" style="max-width:70px" onchange="updateCalibHotspot(${h.id},'top_pct',this.value)">
-        <label style="font-size:11px;color:var(--text2)">寬</label><input type="number" step="0.1" value="${h.width_pct}" style="max-width:70px" onchange="updateCalibHotspot(${h.id},'width_pct',this.value)">
-        <label style="font-size:11px;color:var(--text2)">高</label><input type="number" step="0.1" value="${h.height_pct}" style="max-width:70px" onchange="updateCalibHotspot(${h.id},'height_pct',this.value)">
+        <label style="font-size:11px;color:var(--text2)">左</label><input type="number" step="0.1" value="${h.left_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'left_pct',this.value)" onchange="updateCalibHotspot(${h.id},'left_pct',this.value)">
+        <label style="font-size:11px;color:var(--text2)">上</label><input type="number" step="0.1" value="${h.top_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'top_pct',this.value)" onchange="updateCalibHotspot(${h.id},'top_pct',this.value)">
+        <label style="font-size:11px;color:var(--text2)">寬</label><input type="number" step="0.1" value="${h.width_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'width_pct',this.value)" onchange="updateCalibHotspot(${h.id},'width_pct',this.value)">
+        <label style="font-size:11px;color:var(--text2)">高</label><input type="number" step="0.1" value="${h.height_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'height_pct',this.value)" onchange="updateCalibHotspot(${h.id},'height_pct',this.value)">
         <button class="btn btn-danger btn-sm" onclick="deleteCalibHotspot(${h.id})">🗑️</button>
       </div>
     </div>`).join('')+'</div>';
+}
+// 打字當下（還沒失焦、還沒存檔）就先在圖上即時預覽移動位置，讓你邊調邊看
+function previewCalibHotspot(id,field,value){
+  const v=parseFloat(value);if(isNaN(v))return;
+  const g=document.getElementById('calib-hs-'+id);if(!g)return;
+  const h=allCalibHotspots.find(x=>x.id===id);if(!h)return;
+  const preview={...h,[field]:v};
+  const VW=1080,VH=607;
+  const x=preview.left_pct/100*VW,y=preview.top_pct/100*VH,w=preview.width_pct/100*VW,ht=preview.height_pct/100*VH;
+  const rect=g.querySelector('rect');const text=g.querySelector('text');
+  if(rect){rect.setAttribute('x',x);rect.setAttribute('y',y);rect.setAttribute('width',w);rect.setAttribute('height',ht);}
+  if(text){text.setAttribute('x',x+4);text.setAttribute('y',y+14);}
 }
 async function updateCalibHotspot(id,field,value){
   const v=parseFloat(value);if(isNaN(v))return;
@@ -3477,6 +3527,7 @@ async function updateCalibHotspot(id,field,value){
     await sb('PATCH','floorplan_hotspots',{filter:'id=eq.'+id,body:{[field]:v},prefer:'return=minimal'});
     const h=allCalibHotspots.find(x=>x.id===id);if(h)h[field]=v;
     renderCalibOverlay();
+    highlightCalibHotspot(id);
     showToast('已更新','success');
   }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
@@ -3570,6 +3621,7 @@ function calibTouchStart(e){
   if(!wrap||!wrap.contains(e.target))return;
   if(e.target.closest('#calibNewForm'))return;
   if(e.touches.length!==1)return;
+  if(calibZoomScale>1)return; // 放大狀態下，手指拖曳讓給原生滑動查看用，不畫框
   calibStartDrag(e.touches[0].clientX,e.touches[0].clientY);
   e.preventDefault();
 }
