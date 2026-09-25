@@ -75,10 +75,11 @@
   .badge-pending{background:#fef3c7;color:#92400e;}.badge-approved{background:#d1fae5;color:#065f46;}
   .badge-rejected{background:#fee2e2;color:#991b1b;}.badge-returned{background:#e0e7ff;color:#3730a3;}
   .badge-overdue{background:#fee2e2;color:#991b1b;}.badge-damaged{background:#fce7f3;color:#9d174d;}
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
-  .stat-num{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;}
-  .stat-label{font-size:11px;color:var(--text2);margin-top:3px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;margin-bottom:24px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+  .stat-card{background:var(--surface);padding:20px 16px;text-align:left;cursor:pointer;transition:background .15s;}
+  .stat-card:hover{background:var(--surface2);}
+  .stat-num{font-size:32px;font-weight:600;font-family:'DM Mono',monospace;line-height:1;letter-spacing:-0.02em;}
+  .stat-label{font-size:12px;color:var(--text2);margin-top:8px;letter-spacing:0.02em;}
   .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;flex-wrap:wrap;}
   .venue-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh;}
   .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
@@ -180,6 +181,7 @@
 <main>
 <div class="stats-grid" id="statsGrid"></div>
 <div class="tabs">
+  <button class="tab" data-tab="overview" onclick="showTab('overview')">🏠 總覽</button>
   <button class="tab active" data-tab="pending" onclick="showTab('pending')">⏳ 待審核<span class="tab-badge" id="tb-pending">0</span></button>
   <button class="tab" data-tab="approved" onclick="showTab('approved')">✅ 已核准</button>
   <button class="tab" data-tab="return" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
@@ -195,6 +197,7 @@
       <button onclick="showTab('floorplan')">🗺️ 平面圖校正</button>
       <button onclick="showTab('chemicals')">🧪 藥品管理</button>
       <button onclick="showTab('equipment')">📦 器材管理</button>
+      <button onclick="showTab('highlights')">📸 精彩時刻管理</button>
     </div>
   </div>
 </div>
@@ -394,6 +397,11 @@
 </div>
 
 <div id="panel-floorplan" class="panel">
+  <div class="card">
+    <div class="card-title">🏫 首頁教室照片</div>
+    <div class="info-box">上傳每間實驗室的實際照片，會顯示在前台首頁「選擇實驗室」那排卡片上。沒上傳的房間會維持顯示預設的色塊圖示，不影響功能，可以之後再慢慢補。</div>
+    <div id="roomCoverUploadGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px"></div>
+  </div>
   <div class="card" id="calibStickyCard" style="position:sticky;top:56px;z-index:20;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
     <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
@@ -431,6 +439,36 @@
       <button class="btn btn-danger btn-sm" onclick="clearRoomHotspots()">🗑️ 清空這個房間全部熱區</button>
     </div>
     <div id="calibList"><div class="empty"><div class="empty-icon">🗺️</div><p>點重新整理載入</p></div></div>
+  </div>
+</div>
+
+<div id="panel-highlights" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📸 新增精彩時刻</div>
+    <div class="info-box">前台預設只顯示「最新一個年份」的公開項目，新到舊排序；舊年份不會刪除，前台可以另外查詢。<strong>「公開」不勾選的話，這張只會留在後台，前台完全看不到</strong>——學生臉部特寫這類建議不要勾公開。</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+      <div class="form-group"><label>年份 *</label><input type="number" id="hl-year" placeholder="例如：2026"></div>
+      <div class="form-group" style="grid-column:span 2"><label>活動名稱 *</label><input type="text" id="hl-event" placeholder="例如：全國科展、化學週活動"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>一句話說明</label><input type="text" id="hl-note" placeholder="選填"></div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="hl-public" style="width:auto">
+        <label style="color:var(--text)">這張要公開在前台</label>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <input type="file" id="hl-photo-input" accept="image/*" style="display:none" onchange="handleHighlightPhoto(this)">
+      <button class="btn btn-secondary" onclick="document.getElementById('hl-photo-input').click()">📷 選擇照片</button>
+      <span id="hl-photo-status" style="font-size:12.5px;color:var(--text2);margin-left:8px"></span>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-primary" onclick="saveHighlight()">💾 儲存</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:0">
+    <div class="card-title" style="flex-wrap:wrap">📋 已上傳的精彩時刻
+      <select id="hlYearFilter" style="margin-left:auto;max-width:130px" onchange="renderHighlightsList()"><option value="">全部年份</option></select>
+    </div>
+    <div id="highlightsList"><div class="empty"><div class="empty-icon">📸</div><p>點重新整理載入</p></div></div>
   </div>
 </div>
 
@@ -520,6 +558,10 @@
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="eq-available" checked style="width:auto">
         <label for="eq-available" style="color:var(--text)">開放借用</label>
+      </div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="eq-featured" style="width:auto">
+        <label for="eq-featured" style="color:var(--text)">⭐ 精選展示（首頁輪播）</label>
       </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
@@ -707,11 +749,23 @@ function renderStats(){
   const venuePending=allVenueBookings.filter(b=>(b.periods||[]).some(p=>p.status==='待審核')).length;
   const depPending=allRecords.filter(r=>r.depositStatus==='待繳納'&&r.depositAmount>0).length;
   const depReturn=allRecords.filter(r=>r.depositStatus==='待退還'&&r.depositAmount>0).length;
+  // 器材健康度：用目前已有的 allEquipment + allRecords 自己算，不用特地先點過器材分頁
+  const borrowedMap={};
+  allRecords.filter(r=>r.status==='已核准'||r.status==='逾期').forEach(r=>{
+    (r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+  });
+  const availOf=e=>Math.max(0,(parseInt(e.total)||0)-(borrowedMap[e.room+'__'+e.name]||0));
+  const cutoff=Date.now()-90*24*60*60*1000;
+  const lowStock=allEquipment.filter(e=>e.is_available!==false&&availOf(e)<=2).length;
+  const notCounted=allEquipment.filter(e=>e.is_available!==false&&(!e.last_counted_at||new Date(e.last_counted_at).getTime()<cutoff)).length;
+  const locMismatch=allEquipment.filter(e=>equipLocationMismatches(e).length>0).length;
   document.getElementById('statsGrid').innerHTML=[
-    {num:pending,label:'器材待審核',color:'#92400e'},{num:approved,label:'器材借用中',color:'#065f46'},
-    {num:overdue,label:'逾期未還',color:'var(--danger)'},{num:venuePending,label:'場地待審核',color:'#1e40af'},
-    {num:depPending,label:'待收保證金',color:'#92400e'},{num:depReturn,label:'待退保證金',color:'#1e40af'},
-  ].map(s=>`<div class="stat-card"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
+    {num:pending,label:'器材待審核',color:'#92400e',tab:'pending'},{num:approved,label:'器材借用中',color:'#065f46',tab:'approved'},
+    {num:overdue,label:'逾期未還',color:'var(--danger)',tab:'return'},{num:venuePending,label:'場地待審核',color:'#1e40af',tab:'venue'},
+    {num:depPending,label:'待收保證金',color:'#92400e',tab:'deposit'},{num:depReturn,label:'待退保證金',color:'#1e40af',tab:'deposit'},
+    {num:lowStock,label:'庫存不足器材',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',color:'var(--text2)',tab:'equipment'},
+    {num:locMismatch,label:'位置代碼異常',color:'var(--danger)',tab:'equipment'},
+  ].map(s=>`<div class="stat-card" onclick="showTab('${s.tab}')"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
   // 分頁紅點：待審核 / 確認歸還(逾期) / 保證金(待收+待退) / 場地待審核
   setTabBadge('tb-pending',pending);
   setTabBadge('tb-return',overdue);
@@ -737,7 +791,7 @@ function renderWithFilter(panel){
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
-const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment'];
+const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment','highlights'];
 function showTab(tab){
   closeTabMoreMenu();
   document.querySelectorAll('.tabs > .tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
@@ -752,6 +806,7 @@ function showTab(tab){
   if(tab==='floorplan')loadFloorplanCalibration();
   if(tab==='chemicals')loadAdminChems();
   if(tab==='equipment')loadAdminEquipment();
+  if(tab==='highlights')loadHighlights();
 }
 function toggleTabMoreMenu(e){
   if(e)e.stopPropagation();
@@ -3070,6 +3125,7 @@ function clearEquipForm(){
   document.getElementById('eq-total').value='0';
   document.getElementById('eq-room').value='Physics';
   document.getElementById('eq-available').checked=true;
+  document.getElementById('eq-featured').checked=false;
 }
 function checkEquipLocationMismatch(){
   const flagged=allAdminEquipment.map(e=>({e,bad:equipLocationMismatches(e)})).filter(x=>x.bad.length);
@@ -3118,6 +3174,10 @@ function renderInlineEditEquip(e){
         <input type="checkbox" id="ie-available-${e.id}" ${e.is_available!==false?'checked':''} style="width:auto">
         <label style="color:var(--text)">開放借用</label>
       </div>
+      <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
+        <input type="checkbox" id="ie-featured-${e.id}" ${e.featured===true?'checked':''} style="width:auto">
+        <label style="color:var(--text)">⭐ 精選展示</label>
+      </div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">取消</button>
@@ -3135,7 +3195,8 @@ async function saveInlineEquip(id){
     unit:document.getElementById('ie-unit-'+id).value.trim()||'個',
     location:document.getElementById('ie-location-'+id).value.trim(),
     alias:document.getElementById('ie-alias-'+id).value.trim()||null,
-    is_available:document.getElementById('ie-available-'+id).checked
+    is_available:document.getElementById('ie-available-'+id).checked,
+    featured:document.getElementById('ie-featured-'+id).checked
   };
   try{
     await sb('PATCH','equipment',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
@@ -3155,6 +3216,7 @@ function editEquip(id){
   document.getElementById('eq-location').value=e.location||'';
   document.getElementById('eq-alias').value=e.alias||'';
   document.getElementById('eq-available').checked=e.is_available!==false;
+  document.getElementById('eq-featured').checked=e.featured===true;
   document.getElementById('eq-name').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function saveEquip(){
@@ -3168,7 +3230,8 @@ async function saveEquip(){
     total:parseInt(document.getElementById('eq-total').value)||0,
     location:document.getElementById('eq-location').value.trim(),
     alias:document.getElementById('eq-alias').value.trim()||null,
-    is_available:document.getElementById('eq-available').checked
+    is_available:document.getElementById('eq-available').checked,
+    featured:document.getElementById('eq-featured').checked
   };
   try{
     if(editingEquipId){
@@ -3603,6 +3666,63 @@ function loadFloorplanCalibration(){
   setCalibRoom(calibRoom);
   applyCalibZoom();
   window.addEventListener('resize',applyCalibZoom);
+  loadRoomCoverUpload();
+}
+const ROOM_COVER_LIST=[
+  {key:'Biology',label:'生物實驗室',emoji:'🧬'},
+  {key:'Chemistry',label:'化學實驗室',emoji:'⚗️'},
+  {key:'Geoscience',label:'地科實驗室',emoji:'🌍'},
+  {key:'Physics Chemistry',label:'理化實驗室',emoji:'🔭'},
+  {key:'Physics',label:'物理實驗室',emoji:'⚡'},
+  {key:'TeachingMaterialRoom',label:'教具室',emoji:'📦'}
+];
+let roomCoverAdminMap={};
+async function loadRoomCoverUpload(){
+  try{
+    const rows=await sb('GET','room_covers',{});
+    roomCoverAdminMap={};
+    (Array.isArray(rows)?rows:[]).forEach(r=>{roomCoverAdminMap[r.room]=r;});
+  }catch(e){roomCoverAdminMap={};}
+  renderRoomCoverUpload();
+}
+function renderRoomCoverUpload(){
+  const box=document.getElementById('roomCoverUploadGrid');if(!box)return;
+  box.innerHTML=ROOM_COVER_LIST.map(r=>{
+    const cover=roomCoverAdminMap[r.key];
+    const img=cover?.image_url?`<img src="${cover.image_url}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`:`<div style="width:100%;height:90px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:32px">${r.emoji}</div>`;
+    return `<div>
+      ${img}
+      <div style="font-size:12.5px;font-weight:600;margin-top:6px">${r.emoji} ${r.label}</div>
+      <input type="file" id="rc-input-${r.key.replace(/[^a-zA-Z]/g,'')}" accept="image/*" style="display:none" onchange="uploadRoomCover('${r.key}',this)">
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;width:100%" onclick="document.getElementById('rc-input-${r.key.replace(/[^a-zA-Z]/g,'')}').click()">📷 上傳／更換</button>
+    </div>`;
+  }).join('');
+}
+async function uploadRoomCover(room,input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  showToast('上傳中…','success');
+  try{
+    const extRaw=(file.name||'').split('.').pop()||'jpg';
+    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path=`room-covers/${room.replace(/[^a-zA-Z]/g,'')}/${Date.now()}.${ext}`;
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':file.type||'application/octet-stream'},
+      body:file
+    });
+    if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
+    const url=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
+    const existing=roomCoverAdminMap[room];
+    if(existing){
+      await sb('PATCH','room_covers',{filter:'id=eq.'+existing.id,body:{image_url:url},prefer:'return=minimal'});
+    }else{
+      await sb('POST','room_covers',{body:{room,image_url:url}});
+    }
+    showToast('照片已更新','success');
+    loadRoomCoverUpload();
+  }catch(e){showToast('上傳失敗：'+e.message,'error');}
+  input.value='';
 }
 function setCalibRoom(key){
   calibRoom=key;
@@ -3972,6 +4092,107 @@ async function doClearRoomHotspots(){
   }
   showToast(`已清空：${ok} 筆成功${fail?'，'+fail+' 筆失敗':''}`,'success');
   loadCalibHotspots();
+}
+
+// ══════════════════════════════════════════════════════════
+// 精彩時刻管理
+// ══════════════════════════════════════════════════════════
+let allHighlights=[],pendingHighlightPhotoUrl='';
+async function handleHighlightPhoto(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const status=document.getElementById('hl-photo-status');
+  if(status)status.textContent='上傳中…';
+  try{
+    const extRaw=(file.name||'').split('.').pop()||'jpg';
+    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    const path=`highlights/${Date.now()}.${ext}`;
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+      method:'POST',
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':file.type||'application/octet-stream'},
+      body:file
+    });
+    if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
+    pendingHighlightPhotoUrl=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
+    if(status)status.textContent='✅ 已上傳，儲存時會一併存檔';
+  }catch(e){
+    if(status)status.textContent='';
+    showToast('照片上傳失敗：'+e.message,'error');
+  }
+}
+async function saveHighlight(){
+  const year=parseInt(document.getElementById('hl-year').value);
+  const event=document.getElementById('hl-event').value.trim();
+  if(!year||!event){showToast('請填寫年份跟活動名稱','error');return;}
+  if(!pendingHighlightPhotoUrl){showToast('請先選擇照片','error');return;}
+  const body={
+    year,event_name:event,
+    note:document.getElementById('hl-note').value.trim()||null,
+    image_url:pendingHighlightPhotoUrl,
+    is_public:document.getElementById('hl-public').checked
+  };
+  try{
+    await sb('POST','highlights',{body});
+    showToast('已新增','success');
+    document.getElementById('hl-year').value='';
+    document.getElementById('hl-event').value='';
+    document.getElementById('hl-note').value='';
+    document.getElementById('hl-public').checked=false;
+    document.getElementById('hl-photo-status').textContent='';
+    pendingHighlightPhotoUrl='';
+    loadHighlights();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+async function loadHighlights(){
+  const list=document.getElementById('highlightsList');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    const rows=await sb('GET','highlights',{order:'year.desc,created_at.desc'});
+    allHighlights=Array.isArray(rows)?rows:[];
+    const years=[...new Set(allHighlights.map(h=>h.year))].sort((a,b)=>b-a);
+    const sel=document.getElementById('hlYearFilter');
+    const curVal=sel.value;
+    sel.innerHTML='<option value="">全部年份</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
+    sel.value=curVal;
+    renderHighlightsList();
+  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 highlights 資料表</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+}
+function renderHighlightsList(){
+  const list=document.getElementById('highlightsList');if(!list)return;
+  const yearFilter=document.getElementById('hlYearFilter')?.value;
+  const items=yearFilter?allHighlights.filter(h=>String(h.year)===yearFilter):allHighlights;
+  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📸</div><p>目前沒有資料</p></div>';return;}
+  list.innerHTML='<div class="record-list">'+items.map(h=>`
+    <div class="record-card" style="display:flex;gap:12px;align-items:flex-start">
+      <img src="${h.image_url}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${h.event_name} <span style="font-weight:400;color:var(--text2);font-size:12px">${h.year}</span></div>
+        ${h.note?`<div style="font-size:12.5px;color:var(--text2);margin-top:2px">${h.note}</div>`:''}
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;margin-top:6px;cursor:pointer">
+          <input type="checkbox" ${h.is_public?'checked':''} style="width:auto" onchange="toggleHighlightPublic('${h.id}',this.checked)">
+          公開在前台
+        </label>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteHighlight('${h.id}')">🗑️</button>
+    </div>`).join('')+'</div>';
+}
+async function toggleHighlightPublic(id,checked){
+  try{
+    await sb('PATCH','highlights',{filter:'id=eq.'+id,body:{is_public:checked},prefer:'return=minimal'});
+    const h=allHighlights.find(x=>String(x.id)===String(id));if(h)h.is_public=checked;
+    showToast('已更新','success');
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+function deleteHighlight(id){
+  showModal('確認刪除',`<p>確定刪除這筆精彩時刻嗎？</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHighlight('${id}')`}
+  ]);
+}
+async function doDeleteHighlight(id){
+  closeModal();
+  try{await sb('DELETE','highlights',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadHighlights();}
+  catch(e){showToast('刪除失敗','error');}
 }
 </script>
 
