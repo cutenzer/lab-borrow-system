@@ -84,6 +84,13 @@
   @media(min-width:900px){.mini-venue .venue-booking.mini-dot{width:24px;height:24px;font-size:13px;}}
   .mini-legend{font-size:12px;color:var(--text2);margin-top:6px;text-align:right;}
   .home-eq-search{margin-top:14px;}
+  #equipBrowseGrid{display:flex;flex-direction:column;gap:10px;}
+  #equipBrowseGrid .home-eq-spec{white-space:normal;}
+  .eq-tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);margin-top:5px;}
+  .eq-tag.warn{background:#fff1e0;color:#c2410c;}
+  .eq-loc{color:var(--accent);background:#e3efec;cursor:pointer;}
+  .home-eq-pill{white-space:nowrap;}
+  @media(min-width:900px){#equipBrowseGrid{display:grid;grid-template-columns:1fr 1fr;}}
   .home-eq-list{display:flex;flex-direction:column;gap:10px;margin-top:10px;}
   .home-eq-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:0 1px 3px rgba(43,38,32,.04);}
   .home-eq-row.added{border-left:4px solid var(--accent);}
@@ -97,6 +104,8 @@
   .home-eq-add{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;flex-shrink:0;}
   .home-eq-add:disabled{background:var(--surface2);color:#b5ab9b;cursor:not-allowed;}
   .home-eq-row .equip-row-qty{flex-shrink:0;}
+  .home-eq-row .qty-btn{width:34px;height:34px;min-width:34px;}
+  .home-eq-info{overflow:hidden;}
   .home-eq-more{display:block;text-align:center;margin-top:12px;color:var(--accent);font-weight:700;font-size:15px;cursor:pointer;}
   .home-eq-skel{height:94px;border-radius:14px;background:linear-gradient(90deg,var(--surface2),#f7f2ea,var(--surface2));background-size:200% 100%;animation:skel 1.2s infinite;}
   @keyframes skel{from{background-position:200% 0;}to{background-position:-200% 0;}}
@@ -178,7 +187,6 @@
   .auto-carousel{position:relative;overflow:hidden;border-radius:16px;isolation:isolate;transform:translateZ(0);contain:paint;}
   main{overflow-x:clip;}
   .home-section{overflow-x:clip;}
-  .home-section .auto-carousel-slide:not(.venue-slide){height:clamp(190px,50vw,300px);}
   .auto-carousel-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);touch-action:pan-y;cursor:grab;}
   .home-section .auto-carousel{max-width:1100px;margin:0 auto;}
   .equip-slide-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px) brightness(.55);transform:scale(1.15);}
@@ -485,12 +493,7 @@
     <div class="card-title">🔬 器材借用</div>
     <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以搜尋、直接加入借用清單</div>
     <div id="homeEquipFeatured"></div>
-    <div class="search-wrap home-eq-search">
-      <span class="search-icon">🔎</span>
-      <input class="search-input" type="text" id="homeEquipSearch" placeholder="搜尋器材名稱，直接加入借用清單…" oninput="renderHomeEquipList()" autocomplete="off">
-    </div>
-    <div class="home-eq-list" id="homeEquipList"></div>
-    <span class="home-eq-more" onclick="showPage('equipment')">查看全部器材 ›</span>
+
   </div>
 </div>
 
@@ -1250,7 +1253,7 @@ function goHomeRoom(key){
 function renderHomeEquipFeatured(){
   const box=document.getElementById('homeEquipFeatured');if(!box)return;
   const items=(allEquipment||[]).filter(e=>e.featured);
-  if(!items.length){box.innerHTML='';renderHomeEquipList();return;}
+  if(!items.length){box.innerHTML='<div class="hint">尚未設定精選器材（後台「器材管理」可以勾選「⭐ 精選展示」）</div>';return;}
   const slides=items.map(e=>{
     const img=e.image_url?`<img class="equip-slide-bg" src="${e.image_url}" alt=""><img class="equip-slide-img" src="${e.image_url}" alt="${escH(e.name)}"><div class="slide-shade"></div>`:'';
     return `<div class="auto-carousel-slide" style="background:linear-gradient(135deg,#475569,#1e293b)" onclick="goHomeEquip()">
@@ -1259,7 +1262,6 @@ function renderHomeEquipFeatured(){
     </div>`;
   });
   buildAutoCarousel('homeEquipFeatured',slides,5000);
-  renderHomeEquipList();
 }
 function renderHomeEquipList(){
   const box=document.getElementById('homeEquipList');if(!box)return;
@@ -2409,14 +2411,14 @@ function changeQty(room,name,spec,unit,avail,delta){
 function _addQty(room,name,spec,unit,avail,delta){
   const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));
   if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};
-  renderEquipList();updateCartBadge();calcDeposit();filterEquipBrowse();
+  renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
 }
 function setQty(room,name,spec,unit,avail,val){
   const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;
   if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};
-  renderEquipList();updateCartBadge();calcDeposit();filterEquipBrowse();
+  renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
 }
-function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();filterEquipBrowse();}
+function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();}
 
 let lastPurposeValue='';
 function onPurposeChange(fromUser){
@@ -2761,26 +2763,20 @@ function renderEquipBrowse(items){
   if(equipBrowsePage>totalPages)equipBrowsePage=totalPages;
   const start=(equipBrowsePage-1)*EQUIP_PAGE_SIZE;
   const pageItems=items.slice(start,start+EQUIP_PAGE_SIZE);
-  grid.innerHTML=pageItems.map(e=>{
-    const avail=parseInt(e.available)||0,total=parseInt(e.total)||1,pct=Math.round(avail/total*100);
-    const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
+  window._browseItems=pageItems;
+  grid.innerHTML=pageItems.map((e,i)=>{
+    const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
     const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
-    const borrowerInfo=getBorrowerInfo(e.name,e.room);
-    const imgHtml=e.image_url?`<img class="equip-browse-img" src="${e.image_url}" loading="lazy" onclick="openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-browse-img-ph" style="display:none;cursor:pointer" onclick="openLightbox('${e.image_url}','${safeN}')">🔬</div>`:`<div class="equip-browse-img-ph">🔬</div>`;
-    const crossTag=userHomeLab&&e.room!==userHomeLab?'<span style="font-size:10px;background:var(--surface2);color:var(--text2);padding:1px 6px;border-radius:8px;margin-left:4px">跨科</span>':'';
-    const lowStockTag=avail>0&&isLowStock(e,avail)?'<span style="font-size:10px;background:#fff7ed;color:#c2410c;padding:1px 6px;border-radius:8px;margin-left:4px">庫存不足</span>':'';
-    return `<div class="equip-browse-card">
-      ${imgHtml}<div class="equip-browse-body">
-        <div class="equip-browse-room">${rn(e.room)}${crossTag}${lowStockTag}</div><div class="equip-browse-name">${e.name}</div>
-        <div class="equip-browse-spec">${e.spec||'─'}${e.location?` ・ <span style="text-decoration:underline;cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();jumpToFloorplanLocation('${e.room}','${e.location.replace(/'/g,"\\'")}')">${decodeLocation(e.location,e.room)}</span>`:''}</div>
-        <div class="equip-browse-count"><span class="count-num ${avail>0?'avail-ok':'avail-no'}">${avail}</span><div class="count-bar-bg"><div class="count-bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text2)">/ ${total} ${e.unit}</span></div>
-        ${borrowerInfo}
-        ${avail>0?`<div class="equip-row-qty" style="margin-top:8px;justify-content:flex-end">
-          <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},-1)">−</button>
-          <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},this.value)">
-          <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},1)">+</button>
-        </div>`:''}
-      </div></div>`;
+    const img=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="browseZoom(${i})">`:`<div class="home-eq-thumb">🔬</div>`;
+    const tags=[];
+    if(userHomeLab&&e.room!==userHomeLab)tags.push('<span class="eq-tag">跨科</span>');
+    if(avail>0&&isLowStock(e,avail))tags.push('<span class="eq-tag warn">庫存不足</span>');
+    const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">📍${escH(e.location)}</span>`:'';
+    const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
+    const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
+      :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button><span style="min-width:28px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
+      :`<button type="button" class="home-eq-add" onclick="browseQty(${i},1)">加入</button>`;
+    return `<div class="home-eq-row ${qty>0?'added':''}">${img}<div class="home-eq-info"><div class="home-eq-name">${escH(e.name)}</div><div class="home-eq-spec">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${pill}${loc}${tags.join('')}</div>${getBorrowerInfo(e.name,e.room)}</div>${action}</div>`;
   }).join('');
   if(pager){
     if(totalPages<=1){pager.innerHTML='';}
@@ -2792,6 +2788,9 @@ function renderEquipBrowse(items){
     }
   }
 }
+function browseQty(i,d){const e=(window._browseItems||[])[i];if(e)changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);}
+function browseZoom(i){const e=(window._browseItems||[])[i];if(e&&e.image_url)openLightbox(e.image_url,e.name);}
+function browseLoc(i){const e=(window._browseItems||[])[i];if(e)jumpToFloorplanLocation(e.room,e.location);}
 function goEquipPage(p){
   equipBrowsePage=p;
   applyEquipBrowseFilter();
@@ -2954,7 +2953,7 @@ function applyTemplate(id){
     }
   });
   appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added,unmatched};
-  updateCartBadge();renderEquipList();calcDeposit();filterEquipBrowse();
+  updateCartBadge();renderEquipList();calcDeposit();applyEquipBrowseFilter();
   renderAppliedTemplate();
   document.getElementById('appliedTemplateName').textContent=appliedTemplate.name;
   document.getElementById('appliedTemplateBox').style.display='block';
