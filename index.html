@@ -58,6 +58,21 @@
   .auto-carousel-slide.venue-slide{height:auto;background:var(--surface);color:var(--text);flex-direction:column;align-items:stretch;padding:12px;border:1px solid var(--border);border-radius:16px;}
   .venue-slide-title{font-weight:700;font-size:16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
   .venue-slide-title small{font-weight:400;font-size:13px;color:var(--text2);}
+  .venue-book-btn{background:var(--accent2);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:14.5px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 2px 8px rgba(198,124,58,.35);white-space:nowrap;}
+  .venue-book-btn:active{transform:scale(.96);}
+  .venue-slide-hint{font-size:12.5px;color:var(--text2);margin:-2px 0 8px;}
+  .ac-nav{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;}
+  .ac-nav .auto-carousel-dots{margin-top:0;}
+  .ac-arrow{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:20px;line-height:1;color:var(--text);cursor:pointer;font-family:inherit;}
+  .venue-zoom{display:none;position:fixed;inset:0;z-index:300;background:rgba(20,18,15,.55);padding:12px;}
+  .venue-zoom.show{display:flex;align-items:center;justify-content:center;}
+  .venue-zoom-box{background:var(--surface);border-radius:14px;width:100%;max-width:1100px;max-height:100%;display:flex;flex-direction:column;overflow:hidden;}
+  .venue-zoom-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);font-weight:700;font-size:17px;flex-wrap:wrap;}
+  .venue-zoom-head>div{display:flex;gap:8px;}
+  .venue-zoom-body{overflow:auto;padding:10px;-webkit-overflow-scrolling:touch;}
+  .venue-zoom-body .mini-venue{font-size:15px;min-width:640px;}
+  .venue-zoom-body .mini-venue td.pcol{width:64px;}
+  .venue-zoom-body .mini-venue .venue-booking{font-size:14px;padding:3px 4px;}
   .mini-venue{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;}
   .mini-venue th,.mini-venue td{border:1px solid var(--border);padding:3px 2px;text-align:center;vertical-align:middle;overflow:hidden;}
   .mini-venue th{background:var(--accent);color:#fff;font-weight:600;}
@@ -716,6 +731,12 @@
 </div>
   
 </main>
+<div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
+  <div class="venue-zoom-box">
+    <div class="venue-zoom-head"><span id="venueZoomTitle"></span><div><button type="button" class="venue-book-btn" id="venueZoomBook">📅 我要預約</button><button type="button" class="btn btn-secondary btn-sm" onclick="closeHomeVenueZoom()">✕ 關閉</button></div></div>
+    <div class="venue-zoom-body" id="venueZoomBody"></div>
+  </div>
+</div>
 
 <!-- 底部導覽列（手機顯示） -->
 <nav class="bottom-nav">
@@ -1014,7 +1035,7 @@ function buildAutoCarousel(containerId,slidesHtml,intervalMs){
   if(!slidesHtml.length){box.innerHTML='';return;}
   box.innerHTML=`<div class="auto-carousel">
     <div class="auto-carousel-track" id="${containerId}-track">${slidesHtml.join('')}</div>
-    ${slidesHtml.length>1?`<div class="auto-carousel-dots" id="${containerId}-dots">${slidesHtml.map((_,i)=>`<span class="ac-dot ${i===0?'active':''}" onclick="event.stopPropagation();setAutoCarouselIndex('${containerId}',${i});restartAutoCarouselTimer('${containerId}')"></span>`).join('')}</div>`:''}
+    ${slidesHtml.length>1?`<div class="ac-nav"><button type="button" class="ac-arrow" aria-label="上一張" onclick="stepAutoCarousel('${containerId}',-1)">‹</button><div class="auto-carousel-dots" id="${containerId}-dots">${slidesHtml.map((_,i)=>`<span class="ac-dot ${i===0?'active':''}" onclick="event.stopPropagation();setAutoCarouselIndex('${containerId}',${i});restartAutoCarouselTimer('${containerId}')"></span>`).join('')}</div><button type="button" class="ac-arrow" aria-label="下一張" onclick="stepAutoCarousel('${containerId}',1)">›</button></div>`:''}
   </div>`;
   box._acIndex=0;box._acCount=slidesHtml.length;box._acInterval=intervalMs||4000;
   requestAnimationFrame(()=>setAutoCarouselIndex(containerId,0));
@@ -1032,11 +1053,16 @@ function startAutoCarouselTimer(containerId){
   },box._acInterval);
 }
 function restartAutoCarouselTimer(containerId){startAutoCarouselTimer(containerId);}
+function stepAutoCarousel(containerId,d){
+  const box=document.getElementById(containerId);if(!box||!box._acCount)return;
+  setAutoCarouselIndex(containerId,((box._acIndex||0)+d+box._acCount)%box._acCount);
+  startAutoCarouselTimer(containerId);
+}
 function attachCarouselSwipe(containerId){
   const track=document.getElementById(containerId+'-track');if(!track)return;
-  let startX=0,startY=0,active=false,dragged=false;
-  const threshold=40;
-  function onStart(x,y){startX=x;startY=y;active=true;dragged=false;}
+  let startX=0,startY=0,lastX=0,lastY=0,active=false,dragged=false;
+  const threshold=30;
+  function onStart(x,y){startX=lastX=x;startY=lastY=y;active=true;dragged=false;}
   function onEnd(x,y){
     if(!active)return;active=false;
     const dx=x-startX,dy=y-startY;
@@ -1050,7 +1076,8 @@ function attachCarouselSwipe(containerId){
     }
   }
   track.addEventListener('touchstart',e=>{const t=e.touches[0];onStart(t.clientX,t.clientY);},{passive:true});
-  track.addEventListener('touchend',e=>{const t=e.changedTouches[0];onEnd(t.clientX,t.clientY);},{passive:true});
+  track.addEventListener('touchmove',e=>{const t=e.touches[0];lastX=t.clientX;lastY=t.clientY;},{passive:true});
+  track.addEventListener('touchend',e=>{const t=e.changedTouches[0];onEnd(t?t.clientX:lastX,t?t.clientY:lastY);},{passive:true});
   track.addEventListener('mousedown',e=>{onStart(e.clientX,e.clientY);});
   window.addEventListener('mouseup',e=>{if(active)onEnd(e.clientX,e.clientY);});
   track.addEventListener('click',e=>{
@@ -1106,6 +1133,7 @@ async function renderHomeVenuePreview(){
       });
     });
     const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
+    window._homeVenueTables={};
     const slides=HOME_VENUE_FILTERS.map(r=>{
       const labs=r.key?[r.key]:['生物','化學','理化','物理','地科'];
       const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?'hol':''}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
@@ -1120,13 +1148,28 @@ async function renderHomeVenuePreview(){
         });
         return `<td>${cells.join('')}</td>`;
       }).join('')}</tr>`).join('');
-      return `<div class="auto-carousel-slide venue-slide" onclick="goHomeVenue('${r.key}')">
-        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表</span><small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}・點我預約 ›</small></div>
-        <table class="mini-venue"><thead>${head}</thead><tbody>${rows}</tbody></table>
+      const table=`<table class="mini-venue"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+      window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}`,table};
+      return `<div class="auto-carousel-slide venue-slide" onclick="openHomeVenueZoom('${r.key}')">
+        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">📅 我要預約</button></div>
+        <div class="venue-slide-hint">🔍 點課表可放大檢視・左右滑動換科別</div>
+        ${table}
       </div>`;
     });
     buildAutoCarousel('homeVenuePreview',slides,8000);
   }catch(e){box.innerHTML='<div class="hint">本週課表載入失敗，請點右上角選單進入「場地預約」查看</div>';}
+}
+function openHomeVenueZoom(key){
+  const t=(window._homeVenueTables||{})[key];if(!t)return;
+  document.getElementById('venueZoomTitle').textContent=t.title;
+  document.getElementById('venueZoomBody').innerHTML=t.table;
+  document.getElementById('venueZoomBook').onclick=()=>{closeHomeVenueZoom();goHomeVenue(key);};
+  document.getElementById('venueZoomOverlay').classList.add('show');
+  if(window._autoCarouselTimers.homeVenuePreview){clearInterval(window._autoCarouselTimers.homeVenuePreview);delete window._autoCarouselTimers.homeVenuePreview;}
+}
+function closeHomeVenueZoom(){
+  document.getElementById('venueZoomOverlay').classList.remove('show');
+  startAutoCarouselTimer('homeVenuePreview');
 }
 function goHomeVenue(labKey){
   venueLabFilter=labKey;
