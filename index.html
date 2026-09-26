@@ -134,9 +134,13 @@
   .home-section:last-child{border-bottom:none;}
   .home-section .card-title{border-bottom:none;padding-bottom:4px;margin-bottom:6px;}
   .auto-carousel{position:relative;overflow:hidden;border-radius:16px;}
-  .auto-carousel-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);touch-action:pan-y;cursor:grab;}
+  .auto-carousel-track{display:flex;align-items:flex-start;transition:transform .5s cubic-bezier(.4,0,.2,1),height .35s ease;touch-action:pan-y;cursor:grab;}
+  .home-section .auto-carousel{max-width:1100px;margin:0 auto;}
+  .equip-slide-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px) brightness(.55);transform:scale(1.15);}
+  .equip-slide-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .slide-shade{position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(transparent,rgba(0,0,0,.55));z-index:1;}
   .auto-carousel-track:active{cursor:grabbing;}
-  .auto-carousel-slide{flex:0 0 100%;width:100%;cursor:pointer;height:230px;position:relative;display:flex;align-items:flex-end;padding:18px;color:#fff;}
+  .auto-carousel-slide{flex:0 0 100%;width:100%;cursor:pointer;height:clamp(230px,56vw,460px);position:relative;display:flex;align-items:flex-end;padding:18px;color:#fff;}
   .auto-carousel-slide .cover-emoji-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;opacity:0.28;}
   .auto-carousel-slide .cover-label{position:relative;z-index:1;font-weight:700;font-size:19px;text-shadow:0 2px 8px rgba(0,0,0,0.4);}
   .auto-carousel-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
@@ -1003,6 +1007,7 @@ function applyHighlightsYearPick(){
   renderHighlightsFront();
 }
 window._autoCarouselTimers=window._autoCarouselTimers||{};
+window.addEventListener('resize',()=>{document.querySelectorAll('.auto-carousel-track').forEach(t=>{const id=t.id.replace(/-track$/,'');const box=document.getElementById(id);if(box)setAutoCarouselIndex(id,box._acIndex||0);});});
 function buildAutoCarousel(containerId,slidesHtml,intervalMs){
   const box=document.getElementById(containerId);if(!box)return;
   if(window._autoCarouselTimers[containerId]){clearInterval(window._autoCarouselTimers[containerId]);delete window._autoCarouselTimers[containerId];}
@@ -1012,6 +1017,7 @@ function buildAutoCarousel(containerId,slidesHtml,intervalMs){
     ${slidesHtml.length>1?`<div class="auto-carousel-dots" id="${containerId}-dots">${slidesHtml.map((_,i)=>`<span class="ac-dot ${i===0?'active':''}" onclick="event.stopPropagation();setAutoCarouselIndex('${containerId}',${i});restartAutoCarouselTimer('${containerId}')"></span>`).join('')}</div>`:''}
   </div>`;
   box._acIndex=0;box._acCount=slidesHtml.length;box._acInterval=intervalMs||4000;
+  requestAnimationFrame(()=>setAutoCarouselIndex(containerId,0));
   if(slidesHtml.length>1){
     startAutoCarouselTimer(containerId);
     attachCarouselSwipe(containerId);
@@ -1056,6 +1062,7 @@ function setAutoCarouselIndex(containerId,idx){
   box._acIndex=idx;
   const track=document.getElementById(containerId+'-track');
   if(track)track.style.transform=`translateX(-${idx*100}%)`;
+  if(track&&track.children[idx])track.style.height=track.children[idx].offsetHeight+'px'; // 高度跟著目前這張，避免被最長那張撐出一大片空白
   document.querySelectorAll('#'+containerId+'-dots .ac-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
 }
 // 只有「耗材類」才需要注意庫存；大型儀器只有一台、以盒/包/袋計的都不算庫存不足
@@ -1156,10 +1163,10 @@ function renderHomeEquipFeatured(){
   const items=(allEquipment||[]).filter(e=>e.featured);
   if(!items.length){box.innerHTML='<div class="hint">尚未設定精選器材（後台「器材管理」可以勾選「⭐ 精選展示」）</div>';return;}
   const slides=items.map(e=>{
-    const img=e.image_url?`<img src="${e.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`:'';
+    const img=e.image_url?`<img class="equip-slide-bg" src="${e.image_url}" alt=""><img class="equip-slide-img" src="${e.image_url}" alt="${escH(e.name)}"><div class="slide-shade"></div>`:'';
     return `<div class="auto-carousel-slide" style="background:linear-gradient(135deg,#475569,#1e293b)" onclick="goHomeEquip()">
       ${img}
-      <span class="cover-label" style="position:relative;z-index:2">${e.name}</span>
+      <span class="cover-label" style="position:relative;z-index:2">${escH(e.name)}</span>
     </div>`;
   });
   buildAutoCarousel('homeEquipFeatured',slides,5000);
