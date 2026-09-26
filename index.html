@@ -466,6 +466,22 @@
     .venue-actions{display:flex;flex-wrap:wrap;justify-content:space-between;}
     .venue-actions .btn{flex:0 0 auto;}
   }
+  /* ── 借用單進行中提示條（跑去挑器材時，提醒還有一張單沒送、含場地） ── */
+  .draft-bar{display:none;position:sticky;top:64px;z-index:90;margin:-6px 0 14px;background:#fff8ee;border:1.5px solid var(--accent2);border-radius:12px;padding:10px 12px;box-shadow:0 4px 14px rgba(198,124,58,.18);font-size:13.5px;line-height:1.5;}
+  .draft-bar.show{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .draft-bar .db-text{flex:1;min-width:180px;}
+  .draft-bar .db-venue{color:var(--accent);font-weight:700;}
+  @media(max-width:900px){.draft-bar{top:60px;}}
+  .cart-form-summary{margin:0 18px 8px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.6;}
+  .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
+  .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:0;}
+  .result-box{border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.6;}
+  .result-box.ok{background:#eaf6ef;border:1px solid #b7dfc6;}
+  .result-box.fail{background:#fff1f0;border:1px solid #f3c0bb;color:var(--danger);}
+  .result-box .rb-title{font-weight:700;font-size:14.5px;margin-bottom:4px;}
+  .result-box ul{margin:4px 0 0 18px;}
+
+  .btn-warn{background:var(--accent2);color:#fff;border:none;}
   /* ── 表單錯誤提示 ── */
   .field-error{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(192,69,63,.15)!important;}
   .hint-error{color:var(--danger)!important;font-weight:600;}
@@ -568,6 +584,7 @@
   </div>
 </header>
 <main>
+<div class="draft-bar" id="borrowDraftBar"></div>
 
 <!-- 器材借用 -->
 <div id="page-home" class="page active">
@@ -930,9 +947,10 @@
   </div>
   <div id="cartSearchResults"></div>
   <div class="cart-drawer-body" id="cartBody"></div>
+  <div class="cart-form-summary" id="cartFormSummary"></div>
   <div class="cart-drawer-footer">
     <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑️ 清空</button>
-    <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="cartSubmit()">📋 直接提交申請</button>
+    <button class="btn btn-primary" id="cartSubmitBtn" style="flex:1;justify-content:center" onclick="cartSubmit()">📋 直接提交申請</button>
   </div>
 </div>
 
@@ -1841,7 +1859,7 @@ async function setMinDates(){
     }
     updateDateDisplays();
   };
-  bdEl.onchange=onBorrow;bdEl.onblur=onBorrow;
+  bdEl.onchange=onBorrow;bdEl.onblur=onBorrow;bdEl.oninput=onBorrow; // iOS Safari 會忽略 min，靠這裡擋
   rdEl.onchange=onReturn;rdEl.onblur=onReturn;rdEl.oninput=()=>rdEl.classList.remove('field-error');
 }
 
@@ -1899,6 +1917,9 @@ function onVenueSelectChange(){
   // 只有老師選了場地才顯示「同步預約」區塊
   if(currentRole==='老師'&&venue){
     block.style.display='block';
+    // 選了場地＝要借教室：預設直接勾「一起送出場地預約」並帶一個時段（日期＝借用日），不想要可以自己取消
+    const cb=document.getElementById('inlineVenueEnabled');
+    if(!cb.checked){cb.checked=true;toggleInlineVenue();}
     // 預設把場地選單同步到 inline 時段預設值
     syncInlineVenueDefault(venue);
   }else{
@@ -2603,11 +2624,86 @@ async function uploadPendingPhotos(reqId){
 }
 
 // ── 購物車 ────────────────────────────────────────────────
-function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();}
+// 讀出借用表單目前「同步場地」的時段（只讀畫面，不做檢查）
+function getInlineVenueDraft(){
+  const on=document.getElementById('inlineVenueEnabled')?.checked;
+  if(!on)return null;
+  return inlinePeriodRows.map(id=>({
+    date:document.getElementById('ipr-date-'+id)?.value||'',
+    period:document.getElementById('ipr-period-'+id)?.value||'',
+    venue:document.getElementById('ipr-venue-'+id)?.value||''
+  }));
+}
+function fmtPeriodShort(p){
+  if(!p.date)return `（未選日期）${escH(p.period)}`;
+  const d=new Date(p.date+'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}(${DAYS[(d.getDay()+6)%7]}) ${escH(p.period)}`;
+}
+// 選了場地但教室其實不會被預約的情況（老師沒勾同步／學生身分）
+function venueNotBookedWarning(){
+  const v=document.getElementById('f-venue')?.value;
+  if(!v||getInlineVenueDraft())return '';
+  return currentRole==='學生'
+    ?`⚠️ 選了「${escH(v)}」，但學生借教室要到「場地預約」頁另外申請，這張單不會預約教室`
+    :`⚠️ 選了「${escH(v)}」但沒勾「一起送出場地預約」，教室不會被預約`;
+}
+function venueDraftText(periods){
+  if(!periods)return '';
+  if(!periods.length)return '已勾選同步場地，但還沒新增時段';
+  const byVenue={};
+  periods.forEach(p=>{(byVenue[p.venue]=byVenue[p.venue]||[]).push(fmtPeriodShort(p));});
+  return Object.entries(byVenue).map(([v,list])=>`${escH(v)}：${list.join('、')}`).join('；');
+}
+// 在「器材查詢／平面圖／藥品」頁面時，頂部提醒：借用單還沒送出（含場地）
+function updateBorrowDraftBar(){
+  const bar=document.getElementById('borrowDraftBar');if(!bar)return;
+  const page=document.querySelector('.page.active')?.id?.replace('page-','');
+  const items=Object.values(selectedItems);
+  const venue=getInlineVenueDraft();
+  const show=['equipment','floorplan','chemicals'].includes(page)&&(items.length>0||venue);
+  bar.classList.toggle('show',!!show);
+  if(!show){bar.innerHTML='';return;}
+  const total=items.reduce((a,i)=>a+(parseInt(i.quantity)||0),0);
+  const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
+  bar.innerHTML=`<div class="db-text">📋 <b>借用單還沒送出</b>　已選 ${items.length} 項／${total} 件　${bd?escH(bd.slice(5))+'～'+escH((rd||'').slice(5)):''}
+    ${venue?`<br><span class="db-venue">📅 會一起預約場地：${venueDraftText(venue)}</span>`:''}${venueNotBookedWarning()?`<br><span style="color:var(--danger);font-weight:600">${venueNotBookedWarning()}</span>`:''}</div>
+    <button class="btn btn-secondary btn-sm" onclick="showPage('borrow')">← 回借用單</button>
+    <button class="btn btn-primary btn-sm" onclick="openCart()">🛒 檢查並送出</button>`;
+}
+// 購物車底部：送出前讓使用者看到這張單的日期、目的、有沒有含場地
+function renderCartFormSummary(){
+  const box=document.getElementById('cartFormSummary');if(!box)return;
+  const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
+  const pSel=document.getElementById('f-purpose').value;
+  const purpose=pSel==='其他'?(document.getElementById('f-purpose-other').value.trim()||'其他（未填）'):(pSel||'（未選）');
+  const name=document.getElementById('f-name').value.trim();
+  const venue=getInlineVenueDraft();
+  box.innerHTML=`<div>👤 ${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　🎯 ${escH(purpose)}</div>
+    <div>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</div>
+    ${venue?`<div class="cfs-venue">📅 場地會一起送出：${venueDraftText(venue)}</div>`:(venueNotBookedWarning()?`<div class="cfs-venue" style="background:#fff1f0;color:var(--danger)">${venueNotBookedWarning()}</div>`:`<div class="cfs-venue none">📅 這張單沒有同步預約場地</div>`)}`;
+  const btn=document.getElementById('cartSubmitBtn');
+  if(btn)btn.textContent=venue&&venue.length?'📋 送出器材＋場地申請':'📋 直接提交申請';
+}
+// 送出後跳到場地課表，並切到該時段所在的那一週
+function goVenueWeekOf(dateStr){
+  if(dateStr){
+    const target=getMondayOf(new Date(dateStr+'T00:00:00')),now=getMondayOf(new Date());
+    venueWeekOffset=Math.round((target-now)/(7*86400000));
+  }
+  closeModal();
+  const cur=document.querySelector('.page.active')?.id;
+  if(cur==='page-venue')loadVenue();else showPage('venue');
+}
+function goMyRecordsFor(name){
+  closeModal();showPage('myrecords');
+  const q=document.getElementById('queryName');if(q){q.value=name||'';if(name)loadMyRecords();}
+}
+function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();renderCartFormSummary();}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');document.getElementById('cartOverlay').classList.remove('show');const si=document.getElementById('cartSearchInput');if(si)si.value='';const sr=document.getElementById('cartSearchResults');if(sr)sr.innerHTML='';}
 function clearCart(){selectedItems={};updateCartBadge();renderEquipList();renderCart();calcDeposit();}
 function updateCartBadge(){
   const items=Object.values(selectedItems);
+  setTimeout(updateBorrowDraftBar,0);
   const total=items.reduce((s,i)=>s+i.quantity,0);
   document.getElementById('cartBadge').textContent=total;
   const summaryEl=document.getElementById('cartSummaryText');
@@ -2839,7 +2935,7 @@ function onHomeLabChange(){
   if(eqf){eqf.value=userHomeLab||'';filterEquipBrowse();}
 }
 const NO_DEPOSIT_PURPOSES=['課程','探究','選修','菁英'];
-let submittingBorrow=false,submittingVenue=false;
+let submittingBorrow=false,submittingVenue=false,lastSubmittedName='';
 function calcDeposit(){
   const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
   let a=0;const noDeposit=NO_DEPOSIT_PURPOSES;
@@ -3078,10 +3174,28 @@ if(courseNoteBody){
       renderHomeVenuePreview();if(document.getElementById('page-venue').classList.contains('active'))loadVenue();
     }
 
-    const depositMsg=da>0?`<br>保證金：NT$${da}（${dt}），請至辦公室繳納。`:'';
-    const venueMsg=venueId?`<br>📅 場地預約已同步送出（編號 <strong style="font-family:'DM Mono',monospace">${venueId}</strong>），課表上會先以虛線框顯示「待審核」`
-      :(venueFail?`<br><span style="color:var(--danger);font-weight:700">⚠️ 場地預約沒有送出成功（${escH(venueFail)}），器材借用已送出，請到「場地預約」頁再預約一次。</span>`:'');
-    showModal('✅ 申請成功',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">請等待管理員審核。${depositMsg}${venueMsg}</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
+    // 結果分兩塊清楚列出：器材一塊、場地一塊（成功列出每個時段，失敗用紅框）
+    const mono=`style="font-family:'DM Mono',monospace"`;
+    let resultHtml=`<div class="result-box ok"><div class="rb-title">✅ 器材借用申請已送出</div>
+      編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(borrowDate)} 借 → ${escH(returnDate)} 還
+      ${da>0?`<br>💰 保證金 NT$${da}（${escH(dt)}），請至辦公室繳納`:''}</div>`;
+    if(venueId){
+      resultHtml+=`<div class="result-box ok"><div class="rb-title">✅ 場地預約也已送出（待審核）</div>
+        編號 <strong ${mono}>${escH(venueId)}</strong>
+        <ul>${inlinePeriods.map(p=>`<li>${fmtPeriodShort(p)}　${escH(p.venue)}</li>`).join('')}</ul>
+        <div style="color:var(--text2);font-size:12.5px;margin-top:4px">課表上已經看得到（虛線框＝待審核），別人不會再借走這些時段。</div></div>`;
+    }else if(venueFail){
+      resultHtml+=`<div class="result-box fail"><div class="rb-title">❌ 場地預約沒有送出成功</div>
+        器材借用已經送出，但教室還沒借到（${escH(venueFail)}）。<br>請按下方「重新預約場地」。</div>`;
+    }else if(venue){
+      resultHtml+=`<div class="result-box" style="background:var(--surface2)">ℹ️ 你在表單選了「${escH(venue)}」但<b>沒有勾選同步預約時段</b>，所以只登記了器材，教室還沒預約。</div>`;
+    }
+    const actions=[];
+    if(venueId)actions.push({label:'📅 看課表確認',cls:'btn-secondary',fn:`goVenueWeekOf('${escH(inlinePeriods[0]?.date||'')}')`});
+    if(venueFail||(!venueId&&venue))actions.push({label:'📅 重新預約場地',cls:'btn-warn',fn:"closeModal();showPage('venue')"});
+    actions.push({label:'確定',cls:'btn-primary',fn:'closeModal()'});
+    showModal(venueFail?'⚠️ 部分完成':'✅ 申請成功',resultHtml,actions);
+    lastSubmittedName=name;
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
   submittingBorrow=false;
@@ -3332,6 +3446,7 @@ function showPage(page){
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   const moreBtn=document.getElementById('bnMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',page==='floorplan'||page==='chemicals'||page==='borrow');
+  updateBorrowDraftBar();
   const showCart=(page==='borrow'||page==='equipment'||page==='floorplan');
   if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
