@@ -86,6 +86,8 @@
   .home-eq-search{margin-top:14px;}
   #equipBrowseGrid{display:flex;flex-direction:column;gap:10px;}
   #equipBrowseGrid .home-eq-spec{white-space:normal;}
+  .chem-sec-title{font-weight:700;font-size:16px;margin:18px 0 8px;padding-top:12px;border-top:1px solid var(--border);}
+  @media(min-width:900px){.chem-sec-list{display:grid;grid-template-columns:1fr 1fr;}}
   .eq-tag{display:inline-block;font-size:11.5px;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--text2);margin-top:5px;}
   .eq-tag.warn{background:#fff1e0;color:#c2410c;}
   .eq-loc{color:var(--accent);background:#e3efec;cursor:pointer;}
@@ -286,6 +288,20 @@
   .venue-actions .btn{justify-content:center;}
   .venue-nav-week{font-size:14px;font-weight:700;color:var(--accent-dim);}
   .venue-table-wrap{overflow:auto;-webkit-overflow-scrolling:touch;max-height:70vh;border-radius:8px;}
+  .venue-table-wrap.fit-wrap{max-height:none;overflow-x:hidden;}
+  .venue-table.fit{min-width:0;table-layout:fixed;}
+  .venue-table.fit td,.venue-table.fit .vcell{min-width:0;}
+  .venue-table.fit th:first-child{width:46px;min-width:0;}
+  .venue-table.fit.has-lab th:nth-child(2){width:40px;min-width:0;}
+  .venue-table.fit .venue-booking{font-size:11.5px;word-break:break-all;}
+  @media(min-width:900px){.venue-table.fit{font-size:13px;}.venue-table.fit .venue-booking{font-size:13px;}.venue-table.fit th:first-child{width:64px;}.venue-table.fit.has-lab th:nth-child(2){width:56px;}}
+  .venue-actions.venue-actions-compact{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;margin-bottom:8px;}
+  .venue-actions.venue-actions-compact .btn{flex:0 0 auto;}
+  .venue-table tr.off-period td,.venue-table tr.off-period .vcell{background:#efe6d6;}
+  .venue-table tr.off-period td.period-cell{background:#e2d3bb;color:#7a5a2e;}
+  .mini-venue tr.off-period td{background:#efe6d6;}
+  .mini-venue tr.off-period td.pcol{background:#e2d3bb;color:#7a5a2e;}
+  .vd-period.off-period{background:#f3ece0;border-radius:8px;padding-left:6px;padding-right:6px;}
   .venue-table{width:100%;border-collapse:separate;border-spacing:0;min-width:700px;font-size:12px;}
   .venue-table th{background:var(--accent);color:#fff;padding:7px 5px;text-align:center;font-weight:600;white-space:nowrap;position:sticky;top:0;z-index:3;border:1px solid var(--accent-dim);}
   .venue-table th:first-child{left:0;z-index:5;background:var(--accent-dim);min-width:44px;}
@@ -340,6 +356,7 @@
   .fp-bubble-title{font-weight:700;font-size:14.5px;color:var(--text);line-height:1.35;}
   .fp-bubble-sub{font-size:12.5px;color:var(--text2);margin-top:2px;}
   .fp-bubble-link{font-size:13px;color:var(--accent);font-weight:700;margin-top:5px;cursor:pointer;}
+  .fp-bubble-links{display:flex;flex-wrap:wrap;gap:4px 10px;}
   .fp-bubble-x{position:absolute;top:4px;right:6px;border:none;background:none;font-size:14px;color:var(--text2);cursor:pointer;padding:2px;}
   @keyframes bubbleIn{from{opacity:0;margin-top:-8px;}to{opacity:1;margin-top:0;}}
   .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
@@ -669,8 +686,24 @@
 <!-- 場地預約 -->
 <div id="page-venue" class="page">
   <div class="card">
-    <div class="card-title">📅 場地課表</div>
-    <div class="room-tabs" id="venueLabTabs">
+    <div class="card-title" style="flex-wrap:wrap;gap:8px">📅 場地課表
+      <span class="week-selector" id="weekSelector" style="display:none;margin:0 0 0 auto"><select id="weekJump" onchange="jumpToWeek(this.value)" style="padding:6px 8px;font-size:14px;width:auto"></select></span>
+    </div>
+    <div class="venue-nav">
+      <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
+      <span class="venue-nav-week" id="venueWeekLabel"></span>
+      <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
+    </div>
+    <div class="venue-actions venue-actions-compact">
+      <button type="button" class="btn btn-secondary btn-sm" id="venueLabToggle" onclick="toggleVenueLabTabs()">🏫 全部實驗室 ▾</button>
+      <button class="btn btn-secondary btn-sm" onclick="goThisWeek()">本週</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="venueWeekendBtn" onclick="toggleVenueWeekend()">＋週末</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="venueViewToggleBtn" onclick="toggleVenueViewMode()">📋 日檢視</button>
+      <button class="btn btn-secondary btn-sm" onclick="openVenueFullscreen()">🔳 全螢幕</button>
+      <button class="btn btn-primary btn-sm" onclick="openVenueBookingModal()">✏️ 新增</button>
+      <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()" style="display:none">🔍 放大</button>
+    </div>
+    <div class="room-tabs" id="venueLabTabs" style="display:none;margin-top:8px">
       <button type="button" class="room-tab active" data-lab="" onclick="setVenueLabFilter('')">全部</button>
       <button type="button" class="room-tab" data-lab="生物" onclick="setVenueLabFilter('生物')">生物</button>
       <button type="button" class="room-tab" data-lab="化學" onclick="setVenueLabFilter('化學')">化學</button>
@@ -678,22 +711,6 @@
       <button type="button" class="room-tab" data-lab="物理" onclick="setVenueLabFilter('物理')">物理</button>
       <button type="button" class="room-tab" data-lab="地科" onclick="setVenueLabFilter('地科')">地科</button>
     </div>
-    <div class="week-selector" id="weekSelector" style="display:none">
-      <span style="font-size:13px;color:var(--text2)">快速跳到：</span>
-      <select id="weekJump" onchange="jumpToWeek(this.value)"></select>
-    </div>
-    <div class="venue-nav">
-      <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
-      <span class="venue-nav-week" id="venueWeekLabel"></span>
-      <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
-    </div>
-    <div class="venue-actions">
-      <button class="btn btn-primary btn-sm" onclick="goThisWeek()">本週</button>
-      <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()">🔍 放大</button>
-      <button class="btn btn-primary btn-sm" onclick="openVenueFullscreen()">🔳 全螢幕</button>
-      <button class="btn btn-secondary btn-sm" onclick="openVenueBookingModal()">✏️ 新增</button>
-    </div>
-    <div class="venue-view-toggle"><button type="button" class="btn btn-secondary btn-sm" id="venueViewToggleBtn" onclick="toggleVenueViewMode()">📋 切換成日檢視</button></div>
     <div id="venueDayView" style="display:none"></div>
     <div class="venue-table-wrap" id="venueTableWrapEl">
       <div id="venueScaleOuter"><div id="venueScaleInner"><table class="venue-table" id="venueTable"></table></div></div>
@@ -708,15 +725,21 @@
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
     </div>
     <div class="browse-filters">
-      <input type="text" id="equipSearch" placeholder="搜尋器材名稱…（也支援英文/別名，例如 beaker）" oninput="filterEquipBrowse()">
+      <input type="text" id="equipSearch" placeholder="搜尋器材或藥品名稱…（也支援英文/別名，例如 beaker）" oninput="filterEquipBrowse()">
       <select id="equipRoomFilter" onchange="filterEquipBrowse()"><option value="">全部房間</option></select>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer">
+      <label style="display:flex;align-items:center;justify-content:flex-start;justify-self:start;gap:6px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer;width:auto">
         <input type="checkbox" id="equipLowStockFilter" onchange="filterEquipBrowse()" style="width:auto">
         只看耗材庫存不足
       </label>
     </div>
+    <div class="room-tabs" id="searchTypeTabs" style="margin:2px 0 10px">
+      <button type="button" class="room-tab active" data-type="all" onclick="setEquipSearchType('all')">全部</button>
+      <button type="button" class="room-tab" data-type="equip" onclick="setEquipSearchType('equip')">🔬 器材</button>
+      <button type="button" class="room-tab" data-type="chem" onclick="setEquipSearchType('chem')">🧪 藥品</button>
+    </div>
     <div class="equip-browse-grid" id="equipBrowseGrid"><div class="loading"><div class="spinner"></div>載入中…</div></div>
     <div id="equipPagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap"></div>
+    <div id="chemSearchSection"></div>
   </div>
 </div>
 
@@ -1116,29 +1139,42 @@ function stepAutoCarousel(containerId,d){
 }
 function attachCarouselSwipe(containerId){
   const track=document.getElementById(containerId+'-track');if(!track)return;
-  let startX=0,startY=0,lastX=0,lastY=0,active=false,dragged=false;
-  const threshold=30;
-  function onStart(x,y){startX=lastX=x;startY=lastY=y;active=true;dragged=false;}
-  function onEnd(x,y){
+  const box=document.getElementById(containerId);
+  let sx=0,sy=0,dx=0,dy=0,active=false,intent=null,dragged=false;
+  function start(x,y){sx=x;sy=y;dx=0;dy=0;active=true;intent=null;dragged=false;}
+  function move(x,y,ev){
+    if(!active)return;
+    dx=x-sx;dy=y-sy;
+    // 先判斷手指是「左右滑」還是「上下捲」，判定是左右滑就接管，不讓瀏覽器把手勢拿去做別的事
+    if(!intent&&(Math.abs(dx)>8||Math.abs(dy)>8))intent=Math.abs(dx)>Math.abs(dy)?'h':'v';
+    if(intent==='h'){
+      if(ev&&ev.cancelable)ev.preventDefault();
+      dragged=true;
+      if(window._autoCarouselTimers[containerId]){clearInterval(window._autoCarouselTimers[containerId]);delete window._autoCarouselTimers[containerId];}
+      track.style.transition='none';
+      track.style.transform=`translateX(calc(${-(box._acIndex||0)*100}% + ${dx}px))`; // 畫面跟著手指移動
+    }
+  }
+  function end(){
     if(!active)return;active=false;
-    const dx=x-startX,dy=y-startY;
-    if(Math.abs(dx)>15)dragged=true;
-    if(Math.abs(dx)>threshold&&Math.abs(dx)>Math.abs(dy)){
-      const box=document.getElementById(containerId);if(!box)return;
-      let idx=box._acIndex;
-      idx=dx<0?(idx+1)%box._acCount:(idx-1+box._acCount)%box._acCount;
+    track.style.transition='';
+    if(intent==='h'){
+      const w=track.parentElement.offsetWidth||300;
+      let idx=box._acIndex||0;
+      if(Math.abs(dx)>Math.min(60,w*0.15))idx=dx<0?(idx+1)%box._acCount:(idx-1+box._acCount)%box._acCount;
       setAutoCarouselIndex(containerId,idx);
       startAutoCarouselTimer(containerId);
     }
+    intent=null;
   }
-  track.addEventListener('touchstart',e=>{const t=e.touches[0];onStart(t.clientX,t.clientY);},{passive:true});
-  track.addEventListener('touchmove',e=>{const t=e.touches[0];lastX=t.clientX;lastY=t.clientY;},{passive:true});
-  track.addEventListener('touchend',e=>{const t=e.changedTouches[0];onEnd(t?t.clientX:lastX,t?t.clientY:lastY);},{passive:true});
-  track.addEventListener('mousedown',e=>{onStart(e.clientX,e.clientY);});
-  window.addEventListener('mouseup',e=>{if(active)onEnd(e.clientX,e.clientY);});
-  track.addEventListener('click',e=>{
-    if(dragged){e.preventDefault();e.stopPropagation();dragged=false;}
-  },true);
+  track.addEventListener('touchstart',e=>{const t=e.touches[0];start(t.clientX,t.clientY);},{passive:true});
+  track.addEventListener('touchmove',e=>{const t=e.touches[0];move(t.clientX,t.clientY,e);},{passive:false});
+  track.addEventListener('touchend',end,{passive:true});
+  track.addEventListener('touchcancel',end,{passive:true});
+  track.addEventListener('mousedown',e=>{start(e.clientX,e.clientY);e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(active)move(e.clientX,e.clientY,null);});
+  window.addEventListener('mouseup',()=>{if(active)end();});
+  track.addEventListener('click',e=>{if(dragged){e.preventDefault();e.stopPropagation();dragged=false;}},true);
 }
 function setAutoCarouselIndex(containerId,idx){
   const box=document.getElementById(containerId);if(!box)return;
@@ -1164,6 +1200,7 @@ function isLowStock(e,avail){
   const total=parseInt(e.total)||0;
   return a<=Math.max(2,Math.ceil(total*0.2));
 }
+const OFF_PERIODS=['早休','午休','晚上'];
 const HOME_VENUE_FILTERS=[
   {key:'',label:'全部',emoji:'🏛️',c1:'#1d6b64',c2:'#154f4a'},
   {key:'生物',label:'生物',emoji:'🧬',c1:'#22c55e',c2:'#15803d'},
@@ -1178,8 +1215,8 @@ async function renderHomeVenuePreview(){
   try{
     if(!allTeachersFront.length)await loadTeachersFront();
     if(!allHolidaysFront.length)await loadHolidaysFront();
-    const dates=getWeekDates(0).slice(0,5); // 預覽只放週一～週五，字才夠大
-    const startStr=fmtDate(dates[0]),endStr=fmtDate(dates[4]);
+    const wk=getWeekDates(0);
+    const startStr=fmtDate(wk[0]),endStr=fmtDate(wk[5]);
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     const list=[];
     (Array.isArray(all)?all:[]).forEach(bk=>{
@@ -1187,13 +1224,15 @@ async function renderHomeVenuePreview(){
         if(p.date>=startStr&&p.date<=endStr)list.push({...bk,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status||bk.status});
       });
     });
+    // 平常只放週一～週五（字才夠大）；這週週六有排課（例如菁英課程）才多顯示週六
+    const dates=list.some(x=>x.displayDate===endStr&&x.periodStatus!=='已拒絕')?wk.slice(0,6):wk.slice(0,5);
     const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
     window._homeVenueTables={};
     const slides=HOME_VENUE_FILTERS.map(r=>{
       const labs=r.key?[r.key]:['生物','化學','理化','物理','地科'];
       const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?'hol':''}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
       // mode: full＝放大檢視完整版；slide＝單科輪播（每格一行，多筆顯示 +N）；dots＝全部輪播（科別色塊）
-      const buildRows=mode=>PERIODS.map(period=>`<tr><td class="pcol">${period}</td>${dates.map(d=>{
+      const buildRows=mode=>PERIODS.map(period=>`<tr class="${OFF_PERIODS.includes(period)?'off-period':''}"><td class="pcol">${period}</td>${dates.map(d=>{
         const ds=fmtDate(d);
         const found=[];
         labs.forEach(lab=>{
@@ -1213,9 +1252,9 @@ async function renderHomeVenuePreview(){
       }).join('')}</tr>`).join('');
       const table=`<table class="mini-venue"><thead>${head}</thead><tbody>${buildRows('full')}</tbody></table>`;
       const slideTable=`<table class="mini-venue mini-fixed"><thead>${head}</thead><tbody>${buildRows(r.key?'slide':'dots')}</tbody></table><div class="mini-legend">${r.key?'「+N」＝同一節還有其他組':'色塊＝該節有課（生／化／理／物／地）'}，點課表看完整內容</div>`;
-      window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}`,table};
+      window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}`,table};
       return `<div class="auto-carousel-slide venue-slide" onclick="openHomeVenueZoom('${r.key}')">
-        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">📅 我要預約</button></div>
+        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">📅 我要預約</button></div>
         <div class="venue-slide-hint">🔍 點課表可放大檢視・左右滑動換科別</div>
         ${slideTable}
       </div>`;
@@ -1554,19 +1593,24 @@ function showFloorplanBubbles(spots,code,itemName){
   const W=wrap.offsetWidth,H=wrap.offsetHeight;
   window._bubbleSpots=spots;
   const all=expandLocationField(code);
-  layer.innerHTML=spots.map((s,i)=>{
-    const cx=s.left+s.width/2,cxPx=cx/100*W;
-    const below=s.top/100*H<95; // 太靠上面就把泡泡放到櫃子下方，避免被切掉
-    const shift=cxPx<115?12:(W-cxPx<115?88:50);
-    const top=below?(s.top+s.height):s.top;
-    const layers=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));
-    return `<div class="fp-bubble ${below?'below':''}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
-      <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
-      <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
-      <div class="fp-bubble-sub">${escH(s.code)}${layers.length?` ・ 第${layers.map(escH).join('、')}層`:''}</div>
-      <div class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${i}].code)">看這櫃還有什麼 ›</div>
-    </div>`;
-  }).join('');
+  // 多個櫃位只放「一個」泡泡，指向這些櫃子的中間；櫃子本身全部閃爍
+  const minL=Math.min(...spots.map(s=>s.left)),maxR=Math.max(...spots.map(s=>s.left+s.width));
+  const minT=Math.min(...spots.map(s=>s.top)),maxB=Math.max(...spots.map(s=>s.top+s.height));
+  const cx=(minL+maxR)/2,cxPx=cx/100*W;
+  const below=minT/100*H<95;
+  const shift=cxPx<115?12:(W-cxPx<115?88:50);
+  const top=below?maxB:minT;
+  const codeLabel=s=>{const ly=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));return escH(s.code)+(ly.length?`（第${ly.map(escH).join('、')}層）`:'');};
+  const sub=spots.length===1?codeLabel(spots[0]):`共 ${spots.length} 個櫃位：${spots.map(codeLabel).join('、')}`;
+  const links=spots.length===1
+    ?`<div class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[0].code)">看這櫃還有什麼 ›</div>`
+    :`<div class="fp-bubble-links">${spots.map((s,i)=>`<span class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${i}].code)">${escH(s.code)} ›</span>`).join('')}</div>`;
+  layer.innerHTML=`<div class="fp-bubble ${below?'below':''}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
+    <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
+    <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
+    <div class="fp-bubble-sub">${sub}</div>
+    ${links}
+  </div>`;
   document.querySelectorAll('#floorplanSvgLayer .floorplan-hotspot').forEach(r=>{
     const t=r.querySelector('title');r.classList.toggle('target',!!t&&spots.some(s=>s.code===t.textContent));
   });
@@ -1996,12 +2040,12 @@ async function loadVenue(){
 // ── 場地日檢視：手機預設，先選日期再看每一節哪間有空 ──
 let venueViewMode=null,venueDayIdx=null;
 function applyVenueViewMode(){
-  if(!venueViewMode)venueViewMode=window.innerWidth<=600?'day':'week';
+  if(!venueViewMode)venueViewMode='week'; // 課表已能不橫向捲動看完整，手機也預設週課表
   const day=venueViewMode==='day';
   const dv=document.getElementById('venueDayView'),tw=document.getElementById('venueTableWrapEl'),btn=document.getElementById('venueViewToggleBtn');
   if(dv)dv.style.display=day?'block':'none';
   if(tw)tw.style.display=day?'none':'';
-  if(btn)btn.textContent=day?'🗓️ 切換成週課表':'📋 切換成日檢視';
+  if(btn)btn.textContent=day?'🗓️ 週課表':'📋 日檢視';
 }
 function toggleVenueViewMode(){venueViewMode=(venueViewMode==='day')?'week':'day';applyVenueViewMode();}
 function setVenueDay(i){venueDayIdx=i;if(window._venueDates)renderVenueDayView(window._venueDates);}
@@ -2026,7 +2070,7 @@ function renderVenueDayView(dates){
       const add=blocking?'':`<button type="button" class="vd-add" onclick="openVenueBookingModal('${dateStr}','${period}','${vf}')">＋ 預約</button>`;
       return `<div class="vd-row">${LABS.length>1?`<span class="vd-lab">${lab}</span>`:''}<div class="vd-slot">${chips}${add}</div></div>`;
     }).join('');
-    return `<div class="vd-period"><div class="vd-period-name">${period}</div><div class="vd-period-body">${rows}</div></div>`;
+    return `<div class="vd-period ${OFF_PERIODS.includes(period)?'off-period':''}"><div class="vd-period-name">${period}</div><div class="vd-period-body">${rows}</div></div>`;
   }).join('');
   box.innerHTML=days+(hol?`<div class="vd-holiday-banner">🎉 ${escH(hol.label)}（仍可預約）</div>`:'')+body;
 }
@@ -2104,11 +2148,25 @@ function openVenueBookingModal(dateStr,period,venue){
 let venueLabFilter='';
 function setVenueLabFilter(lab){
   venueLabFilter=lab;
+  const tabs=document.getElementById('venueLabTabs');if(tabs)tabs.style.display='none';
   document.querySelectorAll('#venueLabTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===lab));
   loadVenue();
 }
+let venueShowWeekend=false;
+function toggleVenueWeekend(){venueShowWeekend=!venueShowWeekend;loadVenue();}
+function toggleVenueLabTabs(){const t=document.getElementById('venueLabTabs');if(t)t.style.display=t.style.display==='none'?'flex':'none';}
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
+  // 週末預設收合：只顯示週一～五，課表可以不用左右滑就看完整；週末有排課會在按鈕上提示筆數
+  const wkEnd=dates.slice(5).map(d=>fmtDate(d));
+  const wkEndCount=venueBookings.filter(x=>wkEnd.includes(x.displayDate)&&x.periodStatus!=='已拒絕'&&(!venueLabFilter||x.displayVenue===venueLabFilter+'實驗室')).length;
+  const wBtn=document.getElementById('venueWeekendBtn');
+  if(wBtn){wBtn.textContent=venueShowWeekend?'－收起週末':`＋週末${wkEndCount?'（'+wkEndCount+'）':''}`;wBtn.classList.toggle('btn-warn',!venueShowWeekend&&wkEndCount>0);}
+  if(!venueShowWeekend)dates=dates.slice(0,5);
+  table.classList.toggle('fit',!venueShowWeekend);
+  table.classList.toggle('has-lab',!venueLabFilter);
+  const tw=document.getElementById('venueTableWrapEl');if(tw)tw.classList.toggle('fit-wrap',!venueShowWeekend);
+  const lt=document.getElementById('venueLabToggle');if(lt)lt.textContent='🏫 '+(venueLabFilter||'全部實驗室')+' ▾';
   const ALL_LABS=['生物','化學','理化','物理','地科'];
   const LABS=venueLabFilter?[venueLabFilter]:ALL_LABS;
   const showLabCol=!venueLabFilter;
@@ -2121,7 +2179,7 @@ function renderVenueTable(dates){
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
     if(!venueLabFilter&&COMPACT_PERIODS.includes(period)){
-      html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''}">`;
+      html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''} ${OFF_PERIODS.includes(period)?'off-period':''}">`;
       html+=`<td class="period-cell">${period}</td>`;
       html+=`<td class="lab-cell">－</td>`;
       dates.forEach(date=>{
@@ -2147,7 +2205,7 @@ function renderVenueTable(dates){
       return;
     }
     LABS.forEach((lab,li)=>{
-      html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''}">`;
+      html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''} ${OFF_PERIODS.includes(period)?'off-period':''}">`;
       if(li===0)html+=`<td rowspan="${LABS.length}" class="period-cell">${period}</td>`;
       if(showLabCol)html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
@@ -2822,7 +2880,42 @@ function filterEquipBrowse(){
   equipBrowsePage=1;
   applyEquipBrowseFilter();
 }
+let equipSearchType='all';
+function setEquipSearchType(t){
+  equipSearchType=t;
+  document.querySelectorAll('#searchTypeTabs .room-tab').forEach(x=>x.classList.toggle('active',x.dataset.type===t));
+  equipBrowsePage=1;applyEquipBrowseFilter();
+}
+// 藥品搜尋結果：「全部」模式有打字才列出（最多 6 筆，可展開）；「藥品」模式列出全部
+async function renderChemSearchSection(){
+  const box=document.getElementById('chemSearchSection');if(!box)return;
+  const getQ=()=>(document.getElementById('equipSearch')?.value||'').trim().toLowerCase();
+  if(equipSearchType==='equip'||(equipSearchType==='all'&&!getQ())){box.innerHTML='';return;}
+  if(!allChemicals.length){
+    box.innerHTML='<div class="loading"><div class="spinner"></div>載入藥品…</div>';
+    try{const rows=await sb('GET','chemicals',{order:'category,name_zh'});allChemicals=Array.isArray(rows)?rows:[];filteredChemicals=allChemicals;}
+    catch(e){box.innerHTML='<div class="hint">藥品資料載入失敗</div>';return;}
+  }
+  const q=getQ();
+  if(equipSearchType==='equip'||(equipSearchType==='all'&&!q)){box.innerHTML='';return;}
+  const list=allChemicals.filter(c=>!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q));
+  const limit=equipSearchType==='all'?6:list.length;
+  if(!list.length){box.innerHTML=equipSearchType==='chem'?'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>':'<div class="hint" style="margin-top:14px">🧪 藥品：沒有符合的結果</div>';return;}
+  box.innerHTML=`<div class="chem-sec-title">🧪 藥品（${list.length} 筆）</div><div class="home-eq-list chem-sec-list">${list.slice(0,limit).map(c=>{
+    const avail=c.is_available!==false;
+    return `<div class="home-eq-row"><div class="home-eq-thumb">🧪</div><div class="home-eq-info">
+      <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en?`<div class="home-eq-spec">${escH(c.name_en)}</div>`:''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?`<span class="eq-tag">📍${escH(c.location)}</span>`:''}</div>
+    </div>${avail?`<button type="button" class="home-eq-add" onclick="openChemRequestModal(${parseInt(c.id)})">申請</button>`:`<button type="button" class="home-eq-add" disabled>暫不開放</button>`}</div>`;
+  }).join('')}</div>${list.length>limit?`<span class="home-eq-more" onclick="setEquipSearchType('chem')">看全部 ${list.length} 筆藥品 ›</span>`:''}`;
+}
 function applyEquipBrowseFilter(){
+  const onlyChem=equipSearchType==='chem';
+  const g=document.getElementById('equipBrowseGrid'),pg=document.getElementById('equipPagination');
+  if(g)g.style.display=onlyChem?'none':'';
+  if(pg)pg.style.display=onlyChem?'none':'';
+  renderChemSearchSection();
+  if(onlyChem)return;
   const q=document.getElementById('equipSearch').value,room=document.getElementById('equipRoomFilter').value;
   const lowStockOnly=document.getElementById('equipLowStockFilter')?.checked;
   const coversWrap=document.getElementById('equipRoomCoversWrap');
