@@ -493,6 +493,12 @@
     <div class="card-title">🔬 器材借用</div>
     <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以搜尋、直接加入借用清單</div>
     <div id="homeEquipFeatured"></div>
+    <div class="search-wrap home-eq-search">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" id="homeEquipSearch" placeholder="搜尋器材名稱，直接加入借用清單…" oninput="renderHomeEquipList()" autocomplete="off">
+    </div>
+    <div class="home-eq-list" id="homeEquipList"></div>
+    <span class="home-eq-more" onclick="showPage('equipment')">查看全部器材 ›</span>
 
   </div>
 </div>
@@ -696,10 +702,6 @@
         <input type="checkbox" id="equipLowStockFilter" onchange="filterEquipBrowse()" style="width:auto">
         只看耗材庫存不足
       </label>
-    </div>
-    <div id="equipRoomCoversWrap" style="margin-bottom:6px">
-      <div class="hint" style="margin-bottom:2px">不知道要找什麼？直接點房間看看：</div>
-      <div id="equipRoomCovers"></div>
     </div>
     <div class="equip-browse-grid" id="equipBrowseGrid"><div class="loading"><div class="spinner"></div>載入中…</div></div>
     <div id="equipPagination" style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap"></div>
@@ -1253,15 +1255,17 @@ function goHomeRoom(key){
 function renderHomeEquipFeatured(){
   const box=document.getElementById('homeEquipFeatured');if(!box)return;
   const items=(allEquipment||[]).filter(e=>e.featured);
-  if(!items.length){box.innerHTML='<div class="hint">尚未設定精選器材（後台「器材管理」可以勾選「⭐ 精選展示」）</div>';return;}
-  const slides=items.map(e=>{
+  if(!items.length){box.innerHTML='';renderHomeEquipList();return;}
+  window._featItems=items;
+  const slides=items.map((e,i)=>{
     const img=e.image_url?`<img class="equip-slide-bg" src="${e.image_url}" alt=""><img class="equip-slide-img" src="${e.image_url}" alt="${escH(e.name)}"><div class="slide-shade"></div>`:'';
-    return `<div class="auto-carousel-slide" style="background:linear-gradient(135deg,#475569,#1e293b)" onclick="goHomeEquip()">
+    return `<div class="auto-carousel-slide" style="background:linear-gradient(135deg,#475569,#1e293b)" onclick="openEquipDetail('feat',${i})">
       ${img}
       <span class="cover-label" style="position:relative;z-index:2">${escH(e.name)}</span>
     </div>`;
   });
   buildAutoCarousel('homeEquipFeatured',slides,5000);
+  renderHomeEquipList();
 }
 function renderHomeEquipList(){
   const box=document.getElementById('homeEquipList');if(!box)return;
@@ -1280,8 +1284,44 @@ function renderHomeEquipList(){
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
       :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="homeEqAdd(${i},-1)">−</button><span style="min-width:28px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="homeEqAdd(${i},1)">+</button></div>`
       :`<button type="button" class="home-eq-add" onclick="homeEqAdd(${i},1)">加入</button>`;
-    return `<div class="home-eq-row ${qty>0?'added':''}">${thumb}<div class="home-eq-info"><div class="home-eq-name">${escH(e.name)}</div>${e.spec?`<div class="home-eq-spec">${escH(e.spec)}</div>`:''}${pill}</div>${action}</div>`;
+    return `<div class="home-eq-row ${qty>0?'added':''}"><span onclick="openEquipDetail('home',${i})" style="cursor:pointer">${thumb}</span><div class="home-eq-info" onclick="openEquipDetail('home',${i})" style="cursor:pointer"><div class="home-eq-name">${escH(e.name)}</div>${e.spec?`<div class="home-eq-spec">${escH(e.spec)}</div>`:''}${pill}</div>${action}</div>`;
   }).join('');
+}
+function openEquipDetail(src,i){
+  const map={feat:window._featItems,home:window._homeEqItems,browse:window._browseItems};
+  const e=(map[src]||[])[i];if(!e)return;
+  window._detailEq=e;
+  showModal('🔬 器材資料','',[
+    {label:'🛒 查看借用清單',cls:'btn-secondary',fn:'closeModal();openCart()'},
+    {label:'關閉',cls:'btn-primary',fn:'closeModal()'}
+  ]);
+  renderEquipDetail();
+}
+function renderEquipDetail(){
+  const e=window._detailEq;const box=document.getElementById('modalBody');if(!e||!box)return;
+  const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
+  const avail=parseInt(cur.available)||0,total=parseInt(cur.total)||0;
+  const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
+  const photo=e.image_url?`<img src="${escH(e.image_url)}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:var(--surface2);cursor:zoom-in" onclick="openLightbox(window._detailEq.image_url,window._detailEq.name)">`:'';
+  const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
+  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location)">📍${escH(e.location)}　看平面圖位置 ›</span>`:'';
+  const action=avail<=0?`<button type="button" class="home-eq-add" disabled style="width:100%">目前無法借用</button>`
+    :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button><span style="min-width:44px;text-align:center;font-weight:700;font-size:18px">${qty}</span><button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
+    :`<button type="button" class="home-eq-add" style="width:100%" onclick="detailQty(1)">加入借用清單</button>`;
+  box.innerHTML=`${photo}
+    <div style="font-size:19px;font-weight:700;margin-top:10px">${escH(e.name)}</div>
+    <div class="hint" style="margin-top:2px">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">${pill}${loc}</div>
+    ${getBorrowerInfo(e.name,e.room)}
+    <div style="margin-top:14px">${action}</div>`;
+}
+function detailQty(d){
+  const e=window._detailEq;if(!e)return;
+  const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
+  changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(cur.available)||0,d);
+  // changeQty 可能改跳「本科還有現貨」的詢問視窗，那種情況就不要蓋掉它
+  if(document.getElementById('modalTitle')?.textContent==='🔬 器材資料')renderEquipDetail();
+  renderHomeEquipList();
 }
 function homeEqAdd(i,d){
   const e=(window._homeEqItems||[])[i];if(!e)return;
@@ -2357,7 +2397,6 @@ async function loadEquipmentData(){
     if(rf)rf.innerHTML='<option value="">全部房間</option>'+allRooms.map(r=>`<option value="${r}">${rn(r)}</option>`).join('');
     equipBrowsePage=1;
     renderEquipBrowse(allEquipBrowse);
-    renderRoomCoverCards('equipRoomCovers','selectEquipRoomCover');
     renderHomeEquipFeatured();
     renderFloorplanLocations();
   }catch(e){const g=document.getElementById('equipBrowseGrid');if(g)g.innerHTML='<p style="color:var(--danger)">載入失敗</p>';}
@@ -2776,7 +2815,7 @@ function renderEquipBrowse(items){
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
       :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button><span style="min-width:28px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
       :`<button type="button" class="home-eq-add" onclick="browseQty(${i},1)">加入</button>`;
-    return `<div class="home-eq-row ${qty>0?'added':''}">${img}<div class="home-eq-info"><div class="home-eq-name">${escH(e.name)}</div><div class="home-eq-spec">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${pill}${loc}${tags.join('')}</div>${getBorrowerInfo(e.name,e.room)}</div>${action}</div>`;
+    return `<div class="home-eq-row ${qty>0?'added':''}">${img}<div class="home-eq-info"><div class="home-eq-name" onclick="openEquipDetail('browse',${i})" style="cursor:pointer">${escH(e.name)}</div><div class="home-eq-spec">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${pill}${loc}${tags.join('')}</div>${getBorrowerInfo(e.name,e.room)}</div>${action}</div>`;
   }).join('');
   if(pager){
     if(totalPages<=1){pager.innerHTML='';}
