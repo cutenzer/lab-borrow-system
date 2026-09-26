@@ -22,7 +22,7 @@
   .btn-danger{background:var(--danger);color:#fff;}.btn-warn{background:var(--warn);color:#fff;}
   .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  .tabs{display:flex;flex-wrap:nowrap;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .tabs{display:flex;flex-wrap:nowrap;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none;}
   .tabs::-webkit-scrollbar{display:none;}
   .tab{flex-shrink:0;}
   .eq-pager{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;font-size:13.5px;color:var(--text2);}
@@ -828,6 +828,8 @@ function toggleTabMoreMenu(e){
   const menu=document.getElementById('tabMoreMenu');
   const btn=document.getElementById('tabMoreBtn');
   if(!menu||!btn)return;
+  // 選單搬到頁面最外層：放在可捲動的分頁列裡面時，iPhone Safari 會把浮動選單裁掉，看起來像點了沒反應
+  if(menu.parentElement!==document.body)document.body.appendChild(menu);
   const willShow=!menu.classList.contains('show');
   closeTabMoreMenu();
   if(willShow){
