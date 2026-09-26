@@ -34,7 +34,7 @@
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .tab-badge{display:none;position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:1;min-width:16px;height:16px;border-radius:8px;padding:0 4px;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);}
   .tab-more-wrap{position:relative;display:inline-block;flex-shrink:0;}
-  .tab-more-menu{display:none;position:fixed;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:160px;overflow:hidden;}
+  .tab-more-menu{display:none;position:absolute;z-index:150;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:160px;overflow:hidden;}
   .tab-more-menu.show{display:block;}
   .tab-more-menu button{width:100%;text-align:left;padding:10px 14px;background:none;border:none;border-bottom:1px solid var(--surface2);font-family:inherit;font-size:13px;color:var(--text);cursor:pointer;}
   .tab-more-menu button:last-child{border-bottom:none;}
@@ -162,6 +162,41 @@
   .period-setting-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
   .teacher-chip{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:20px;padding:4px 6px 4px 12px;background:var(--surface);}
   @media(max-width:600px){.tab{padding:7px 9px;font-size:12px;}}
+  /* ── 器材卡片（改用 class，電腦版可以整體放大）── */
+  .eq-thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;}
+  img.eq-thumb{cursor:zoom-in;}
+  .eq-name{font-size:15px;font-weight:700;}
+  .eq-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+  .eq-meta{font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .eq-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+
+  /* ── 電腦版：畫面比較寬，字和圖片一起放大 ── */
+  @media(min-width:901px){
+    body{font-size:16px;}
+    header{height:62px;}
+    header h1{font-size:18px;}
+    main{max-width:1180px;padding:24px 28px;}
+    .card{padding:22px 26px;}
+    .card-title{font-size:17px;}
+    .tab{font-size:15px;padding:10px 16px;}
+    .tab-more-menu button{font-size:15px;padding:12px 18px;}
+    .btn{font-size:14.5px;padding:9px 18px;}
+    .btn-sm{font-size:13.5px;padding:7px 13px;}
+    input,select,textarea{font-size:15.5px;padding:9px 12px;}
+    .purpose-tab{font-size:13.5px;padding:5px 13px;}
+    .record-card{padding:16px 20px;}
+    .record-id{font-size:12.5px;}
+    .record-meta{font-size:14px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));}
+    .record-meta-label{font-size:12px;}
+    .item-row{font-size:14.5px;padding:6px 0;}
+    .item-num{font-size:12.5px;}
+    .eq-thumb{width:104px;height:104px;border-radius:10px;font-size:36px;}
+    .eq-name{font-size:19px;}
+    .eq-sub{font-size:14.5px;margin-top:4px;}
+    .eq-meta{font-size:15px;gap:16px;margin-top:8px;}
+    .eq-meta input{font-size:15.5px!important;width:84px!important;padding:5px 8px!important;}
+    .eq-actions{flex-direction:row;flex-wrap:wrap;justify-content:flex-end;max-width:260px;align-content:flex-start;}
+  }
 </style>
 </head>
 <body>
@@ -888,6 +923,25 @@ function showTab(tab){
   if(tab==='equipment')loadAdminEquipment();
   if(tab==='highlights')loadHighlights();
 }
+// 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
+// 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
+function positionTabMoreMenu(){
+  const menu=document.getElementById('tabMoreMenu'),btn=document.getElementById('tabMoreBtn');
+  if(!menu||!btn||!menu.classList.contains('show'))return;
+  const r=btn.getBoundingClientRect();
+  const tabs=btn.closest('.tabs');
+  if(tabs){
+    const tr=tabs.getBoundingClientRect();
+    // 按鈕被左右滑出分頁列的可見範圍 → 收起
+    if(r.right<tr.left+10||r.left>tr.right-10){closeTabMoreMenu();return;}
+  }
+  const menuW=menu.offsetWidth||180;
+  let left=r.left+window.scrollX;
+  const maxLeft=window.scrollX+document.documentElement.clientWidth-menuW-8;
+  if(left>maxLeft)left=Math.max(window.scrollX+8,maxLeft);
+  menu.style.top=(r.bottom+window.scrollY+4)+'px';
+  menu.style.left=left+'px';
+}
 function toggleTabMoreMenu(e){
   if(e)e.stopPropagation();
   const menu=document.getElementById('tabMoreMenu');
@@ -898,16 +952,20 @@ function toggleTabMoreMenu(e){
   const willShow=!menu.classList.contains('show');
   closeTabMoreMenu();
   if(willShow){
-    const rect=btn.getBoundingClientRect();
-    menu.style.top=(rect.bottom+4)+'px';
-    menu.style.left=rect.left+'px';
     menu.classList.add('show');
+    positionTabMoreMenu();
+    const tabs=btn.closest('.tabs');
+    if(tabs)tabs.addEventListener('scroll',positionTabMoreMenu,{passive:true});
+    window.addEventListener('resize',positionTabMoreMenu);
     setTimeout(()=>document.addEventListener('click',closeTabMoreMenuOnOutsideClick,{once:true}),0);
   }
 }
 function closeTabMoreMenu(){
   const menu=document.getElementById('tabMoreMenu');
   if(menu)menu.classList.remove('show');
+  const tabs=document.getElementById('tabMoreBtn')?.closest('.tabs');
+  if(tabs)tabs.removeEventListener('scroll',positionTabMoreMenu);
+  window.removeEventListener('resize',positionTabMoreMenu);
 }
 function closeTabMoreMenuOnOutsideClick(){
   closeTabMoreMenu();
@@ -3463,24 +3521,25 @@ function filterAdminEquip(){
   list.innerHTML=pager+'<div class="record-list">'+pageItems.map(e=>{
     if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
-    const imgHtml=e.image_url?`<img src="${e.image_url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔬</div>`;
+    const imgUrl=safeUrl(e.image_url);
+    const imgHtml=imgUrl?`<a href="${escH(imgUrl)}" target="_blank" rel="noopener noreferrer" title="點我看大圖"><img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt=""></a>`:`<div class="eq-thumb">🔬</div>`;
     const mismatches=equipLocationMismatches(e);
     return `<div class="record-card" id="eqcard-${e.id}">
       <div style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:700">${e.name} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}</div>
-          <div style="font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div class="eq-name">${escH(e.name)} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
+          <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
+          <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px">實點數量：<input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake('${e.id}',this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stocktakePending[e.id]!==undefined?'border-color:var(--accent2);background:#fff7ed':''}"> ${e.unit||'個'}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
-            ${e.location?`<span>📍 ${e.location}</span>`:''}
-            ${e.alias?`<span>別名：${e.alias}</span>`:''}
+            ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
+            ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
           ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <div class="eq-actions">
           <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">✏️ 編輯</button>
           <button class="btn btn-secondary btn-sm" onclick="toggleFeatured('${e.id}',${e.featured===true?'false':'true'})">${e.featured===true?'★ 取消精選':'☆ 設精選'}</button>
           <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload('${e.id}')">🖼️ 換照片</button>
