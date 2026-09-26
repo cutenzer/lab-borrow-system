@@ -482,6 +482,23 @@
   .result-box ul{margin:4px 0 0 18px;}
 
   .btn-warn{background:var(--accent2);color:#fff;border:none;}
+  /* ── 首頁藥品快查（電腦版左欄） ── */
+  .desk-only{display:none;}
+  @media(min-width:901px){.desk-only{display:block;}}
+  .home-col{min-width:0;}
+  .home-chem-cats{display:flex;flex-wrap:wrap;gap:6px;}
+  .home-chem-cats .chem-cat-tag{cursor:pointer;font-size:12.5px;padding:5px 11px;border:1.5px solid transparent;transition:transform .1s;}
+  .home-chem-cats .chem-cat-tag:hover{transform:translateY(-1px);}
+  .home-chem-cats .chem-cat-tag.active{border-color:currentColor;font-weight:700;}
+  .home-chem-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+  .home-chem-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;}
+  .home-chem-row .hc-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+  .home-chem-row .hc-info{flex:1;min-width:0;}
+  .home-chem-row .hc-name{font-weight:700;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .home-chem-row .hc-sub{font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .home-chem-row .hc-low{color:#b8650f;font-weight:700;}
+  .home-chem-head{font-size:12.5px;color:var(--text2);margin-top:12px;}
+
   /* ── 表單錯誤提示 ── */
   .field-error{border-color:var(--danger)!important;box-shadow:0 0 0 3px rgba(192,69,63,.15)!important;}
   .hint-error{color:var(--danger)!important;font-weight:600;}
@@ -508,7 +525,37 @@
   @media(min-width:901px) and (max-width:1180px){.desk-nav button{padding:8px 9px;font-size:13.5px;}}
 
   /* ── 電腦版首頁：歡迎橫幅＋快捷＋數字 ── */
+  /* ── 手機／平板：精簡版歡迎卡＋6 格捷徑（取代漢堡選單），數字卡一排四格 ── */
+  .hero-grid{display:none;}
+  .nav-home-btn{display:none;}
+  @media(max-width:900px){
+    .home-hero{display:block;margin:0 0 6px;}
+    .hero-main{position:relative;overflow:hidden;border-radius:18px;padding:14px 14px 12px;color:#fff;
+      background:linear-gradient(125deg,var(--accent-dim) 0%,var(--accent) 60%,#2a8a7f 100%);box-shadow:0 6px 18px rgba(29,107,100,.2);}
+    .hero-main::after{content:'⚗️';position:absolute;right:-8px;top:-14px;font-size:84px;opacity:.10;transform:rotate(-12deg);pointer-events:none;}
+    .hero-date{font-size:12px;opacity:.85;}
+    .hero-title{font-size:18px;font-weight:700;margin:2px 0 10px;}
+    .hero-sub,.hero-actions{display:none;}
+    .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;z-index:1;}
+    .hero-grid button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:12px;padding:9px 4px 8px;
+      font-family:inherit;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+    .hero-grid button span{font-size:22px;line-height:1;}
+    .hero-grid button:active{transform:scale(.96);background:rgba(255,255,255,.24);}
+    .hero-grid button.main{background:#fff;color:var(--accent-dim);border-color:#fff;}
+    .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
+    .hero-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;}
+    .hero-stat .num{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--accent);line-height:1.2;}
+    .hero-stat.warn .num{color:#b8650f;}
+    .hero-stat .lbl{font-size:10.5px;color:var(--text2);line-height:1.3;margin-top:2px;}
+    .hero-stat .lbl .long{display:none;}
+    /* 導覽：拿掉漢堡選單，不在首頁時右上角改成「🏠 首頁」 */
+    .nav-wrap{display:none;}
+    body:not(.on-home) .nav-home-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.14);border:none;color:#fff;height:36px;padding:0 12px;border-radius:9px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+  }
   .home-hero{display:none;}
+  @media(max-width:900px){.home-hero{display:block;}}
+  .hero-stat .lbl .short{display:none;}
+  @media(max-width:900px){.hero-stat .lbl .short{display:inline;}}
   @media(min-width:901px){
     .home-hero{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:stretch;margin:6px 0 10px;}
     .hero-main{position:relative;overflow:hidden;border-radius:20px;padding:26px 28px;color:#fff;
@@ -554,7 +601,7 @@
   .chem-unavail{opacity:0.45;}
 </style>
 </head>
-<body>
+<body class="on-home">
 <header>
   <div class="header-left" onclick="showPage('home')" style="cursor:pointer" title="回首頁"><span style="font-size:20px">🧬</span><h1>實驗室器材借用系統</h1>
     <span class="sys-online" style="display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10.5px;color:#fff;letter-spacing:1px;padding:2px 8px;border:1px solid rgba(255,255,255,0.35);border-radius:20px;background:rgba(255,255,255,0.12)">
@@ -570,6 +617,7 @@
     <button data-page="chemicals" onclick="showPage('chemicals')">🧪 藥品查詢</button>
     <button data-page="myrecords" onclick="showPage('myrecords')">📋 我的記錄</button>
   </nav>
+  <button class="nav-home-btn" onclick="showPage('home')" aria-label="回首頁">🏠 首頁</button>
   <div class="nav-wrap">
     <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單">☰</button>
     <div class="nav-menu" id="navMenu">
@@ -593,6 +641,14 @@
       <div class="hero-date" id="heroDate"></div>
       <div class="hero-title" id="heroGreeting">歡迎使用實驗室借用系統</div>
       <div class="hero-sub">借器材、預約實驗室、查櫃位，一個地方搞定。</div>
+      <div class="hero-grid">
+        <button class="main" onclick="showPage('borrow')"><span>🔬</span>借器材</button>
+        <button class="main" onclick="showPage('venue')"><span>🏛️</span>預約場地</button>
+        <button onclick="showPage('equipment')"><span>📦</span>查器材</button>
+        <button onclick="showPage('floorplan')"><span>🏫</span>平面圖</button>
+        <button onclick="showPage('chemicals')"><span>🧪</span>查藥品</button>
+        <button onclick="showPage('myrecords')"><span>📋</span>我的申請</button>
+      </div>
       <div class="hero-actions">
         <button class="hero-btn primary" onclick="showPage('borrow')">🔬 借器材</button>
         <button class="hero-btn primary" onclick="showPage('venue')">🏛️ 預約場地</button>
@@ -601,10 +657,10 @@
       </div>
     </div>
     <div class="hero-stats">
-      <div class="hero-stat" onclick="showPage('venue')"><div class="num" id="heroStatToday">–</div><div class="lbl">今天實驗室使用節數</div></div>
-      <div class="hero-stat warn" onclick="showPage('venue')"><div class="num" id="heroStatPending">–</div><div class="lbl">本週待審核場地（虛線框）</div></div>
-      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatEquip">–</div><div class="lbl">目前可借器材品項</div></div>
-      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatOut">–</div><div class="lbl">借出中的申請</div></div>
+      <div class="hero-stat" onclick="showPage('venue')"><div class="num" id="heroStatToday">–</div><div class="lbl"><span class="long">今天實驗室使用節數</span><span class="short">今天使用</span></div></div>
+      <div class="hero-stat warn" onclick="showPage('venue')"><div class="num" id="heroStatPending">–</div><div class="lbl"><span class="long">本週待審核場地（虛線框）</span><span class="short">待審核</span></div></div>
+      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatEquip">–</div><div class="lbl"><span class="long">目前可借器材品項</span><span class="short">可借器材</span></div></div>
+      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatOut">–</div><div class="lbl"><span class="long">借出中的申請</span><span class="short">借出中</span></div></div>
     </div>
   </div>
   <div class="home-section">
@@ -613,10 +669,24 @@
     <div id="homeVenuePreview"></div>
   </div>
   <div class="home-duo">
+  <div class="home-col">
   <div class="home-section">
     <div class="card-title">🏫 選擇實驗室</div>
     <div class="hint" style="margin-bottom:10px">點實驗室進去看平面圖、找器材在哪個櫃子</div>
     <div id="homeRoomPhotos"></div>
+  </div>
+  <!-- 電腦版左欄：藥品快查（跟右邊「器材借用」對稱） -->
+  <div class="home-section desk-only" id="homeChemSection">
+    <div class="card-title">🧪 藥品快查</div>
+    <div class="hint" style="margin-bottom:10px">查藥品在哪、還剩幾瓶，可直接申請</div>
+    <div class="home-chem-cats" id="homeChemCats"></div>
+    <div class="search-wrap home-eq-search" style="margin-top:10px">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" id="homeChemSearch" placeholder="搜尋藥品中文或英文名稱…" oninput="renderHomeChem()" autocomplete="off">
+    </div>
+    <div class="home-chem-list" id="homeChemList"></div>
+    <span class="home-eq-more" onclick="showPage('chemicals')">查看全部藥品 ›</span>
+  </div>
   </div>
   <div class="home-section">
     <div class="card-title">🔬 器材借用</div>
@@ -1365,6 +1435,51 @@ async function renderHomeVenuePreview(){
     updateHeroStats({venueList:list});
   }catch(e){box.innerHTML='<div class="hint">本週課表載入失敗，請點右上角選單進入「場地預約」查看</div>';}
 }
+// ── 首頁藥品快查（電腦版左欄）──
+// 沒打字時：顯示「存量偏少」的藥品（提醒老師要用請提早申請）；打字或點分類時：顯示搜尋結果
+let homeChemCat='',homeChemLoading=false;
+async function renderHomeChem(){
+  const list=document.getElementById('homeChemList');if(!list)return;
+  if(getComputedStyle(document.getElementById('homeChemSection')).display==='none')return; // 手機不載入
+  if(!allChemicals.length){
+    if(homeChemLoading)return;
+    homeChemLoading=true;
+    list.innerHTML='<div class="home-eq-skel"></div>'.repeat(2);
+    try{const rows=await sb('GET','chemicals',{order:'category,name_zh'});allChemicals=Array.isArray(rows)?rows:[];filteredChemicals=allChemicals;}
+    catch(e){list.innerHTML='<div class="hint">藥品資料載入失敗</div>';homeChemLoading=false;return;}
+    homeChemLoading=false;
+  }
+  const cats=Object.keys(CHEM_CAT_CLASS_MAP).filter(c=>allChemicals.some(x=>(x.category||'其他')===c));
+  document.getElementById('homeChemCats').innerHTML=cats.map(c=>{
+    const n=allChemicals.filter(x=>(x.category||'其他')===c).length;
+    return `<span class="chem-cat-tag ${chemCatClass(c)} ${homeChemCat===c?'active':''}" data-cat="${escH(c)}" onclick="setHomeChemCat(this.dataset.cat)">${escH(c)} ${n}</span>`;
+  }).join('');
+  const q=(document.getElementById('homeChemSearch').value||'').trim().toLowerCase();
+  let items,head='';
+  if(q||homeChemCat){
+    items=allChemicals.filter(c=>(!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q))&&(!homeChemCat||(c.category||'其他')===homeChemCat));
+    head=`找到 ${items.length} 項${items.length>6?'（顯示前 6 項）':''}`;
+  }else{
+    items=allChemicals.filter(c=>c.is_available!==false&&c.bottles_left!=null&&Number(c.bottles_left)<=2).sort((a,b)=>Number(a.bottles_left)-Number(b.bottles_left));
+    head=items.length?'⚠️ 存量偏少，要用請提早申請':'常用藥品';
+    if(!items.length)items=allChemicals.filter(c=>c.is_available!==false);
+  }
+  window._homeChemItems=items.slice(0,6);
+  const ICON={'酸':'🧪','鹼':'⚗️','鹽':'🧂','有機溶劑':'🛢️','指示劑':'🌈','培養基／生化':'🧫','溶液成品':'💧','其他':'📦'};
+  const BG={'酸':'#fde8e8','鹼':'#e0f2fe','鹽':'#f0fdf4','有機溶劑':'#fef9c3','指示劑':'#ede9fe','培養基／生化':'#fff7ed','溶液成品':'#e0e7ff'};
+  list.innerHTML=`<div class="home-chem-head">${escH(head)}</div>`+(window._homeChemItems.length?window._homeChemItems.map((c,i)=>{
+    const cat=c.category||'其他',avail=c.is_available!==false,left=c.bottles_left;
+    const low=left!=null&&Number(left)<=2;
+    return `<div class="home-chem-row ${avail?'':'chem-unavail'}">
+      <div class="hc-icon" style="background:${BG[cat]||'var(--surface2)'}">${ICON[cat]||'📦'}</div>
+      <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
+        <div class="hc-sub">${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
+        <div class="hc-sub"><span class="chem-cat-tag ${chemCatClass(cat)}">${escH(cat)}</span>　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
+      ${avail?`<button type="button" class="home-eq-add" onclick="openChemRequestModal(window._homeChemItems[${i}].id)">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}
+    </div>`;
+  }).join(''):'<div class="hint" style="text-align:center;padding:12px 0">找不到符合的藥品</div>');
+}
+function setHomeChemCat(c){homeChemCat=(homeChemCat===c)?'':c;renderHomeChem();}
 // 電腦版首頁數字卡：資料來自已經載入的課表與器材，不額外打 API
 function updateHeroStats(opt){
   const $=id=>document.getElementById(id);
@@ -1779,7 +1894,7 @@ let userHomeLab='';
 // [修改3] 同步場地預約的時段列表
 let inlinePeriodRows=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();setRole('老師');});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();setRole('老師');});
 
 let autoReturnDate='';
 function nextSchoolDay(dateStr){
@@ -3446,13 +3561,14 @@ function showPage(page){
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   const moreBtn=document.getElementById('bnMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',page==='floorplan'||page==='chemicals'||page==='borrow');
+  document.body.classList.toggle('on-home',page==='home');
   updateBorrowDraftBar();
   const showCart=(page==='borrow'||page==='equipment'||page==='floorplan');
   if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
-  if(page==='home'){renderHomeVenuePreview();renderHomeRoomPhotos();renderHomeEquipFeatured();}
+  if(page==='home'){renderHomeVenuePreview();renderHomeRoomPhotos();renderHomeEquipFeatured();renderHomeChem();}
   if(page==='floorplan'){
     floorplanHotspotsLoaded=false;
     if(!floorplanInitialized)showFloorplan(currentFloorplan,null);
@@ -3726,17 +3842,17 @@ function renderChemList(items){
     return `<div class="chem-row ${avail?'':'chem-unavail'}">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:700">${c.name_zh}</span>
-          <span class="chem-cat-tag ${catCls}">${c.category||'其他'}</span>
-          ${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${c.recycle_type}</span>`:''}
+          <span style="font-size:14px;font-weight:700">${escH(c.name_zh)}</span>
+          <span class="chem-cat-tag ${catCls}">${escH(c.category||'其他')}</span>
+          ${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${escH(c.recycle_type)}</span>`:''}
         </div>
-        ${c.name_en?`<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${c.name_en}</div>`:''}
-        ${c.location?`<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${c.location}</div>`:''}
+        ${c.name_en?`<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${escH(c.name_en)}</div>`:''}
+        ${c.location?`<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${escH(c.location)}</div>`:''}
         ${c.note&&c.note!=='附註'?`<div style="font-size:11px;color:var(--accent);margin-top:1px">📝 ${escH(c.note)}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
-        <span class="chem-bottles">${c.bottles_left??'?'} 瓶</span>
-        ${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${c.id})">申請借用</button>`:`<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
+        <span class="chem-bottles">${escH(c.bottles_left??'?')} 瓶</span>
+        ${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${parseInt(c.id)||0})">申請借用</button>`:`<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
       </div>
     </div>`;
   }).join('')+'</div>';
