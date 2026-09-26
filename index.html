@@ -1871,6 +1871,36 @@ function showFloorplanBubbles(spots,code,itemName){
   setTimeout(()=>{const bb=layer.querySelector('.fp-bubble');if(bb)bb.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});},150);
 }
   
+// ── GET 自動分頁 ──
+// Supabase（PostgREST）預設一次最多只回 1000 筆，超過的會「無聲無息」被截掉。
+// 這裡改成每次拿 1000 筆、一頁一頁接著拿，直到拿完為止。
+// 排序最後補上 id，確保分頁時順序固定（不會有資料重複或漏掉）。
+const SB_PAGE=1000;
+async function sbGetAll(baseUrl,headers,order){
+  const withOrder=ord=>baseUrl+(baseUrl.includes('?')?'&':'?')+(ord?'order='+ord+'&':'');
+  let ord=order?(/(^|,)id(\.|,|$)/.test(order)?order:order+',id.asc'):'id.asc';
+  let all=[],from=0,triedFallback=false;
+  while(true){
+    // count=exact：讓伺服器在 Content-Range 回報總筆數（例如 0-999/1234），就知道還有沒有下一頁
+    const res=await fetch(withOrder(ord)+`limit=${SB_PAGE}&offset=${from}`,{method:'GET',cache:'no-store',headers:{...headers,'Prefer':'count=exact'}});
+    const text=await res.text();
+    const data=text?JSON.parse(text):null;
+    if(!res.ok){
+      const msg=(data&&data.message)||'';
+      // 少數資料表如果沒有 id 欄位，就退回原本的排序
+      if(!triedFallback&&/\bid\b[^]*does not exist/i.test(msg)){triedFallback=true;ord=order||'';all=[];from=0;continue;}
+      throw new Error(msg||res.statusText);
+    }
+    const rows=Array.isArray(data)?data:[];
+    all=all.concat(rows);
+    const total=parseInt((res.headers.get('Content-Range')||'').split('/')[1]);
+    if(!isNaN(total)){if(all.length>=total||!rows.length)break;}
+    else if(rows.length<SB_PAGE)break; // 讀不到總數時的備案
+    from+=rows.length;
+    if(from>=200000)break; // 保險：避免無限迴圈
+  }
+  return all;
+}
 async function sb(method,table,opts={}){
   let url=SUPABASE_URL+'/rest/v1/'+table;
   const p=[];
@@ -1878,6 +1908,10 @@ async function sb(method,table,opts={}){
   if(opts.filter)p.push(opts.filter);
   if(opts.order)p.push('order='+opts.order);
   if(p.length)url+='?'+p.join('&');
+  if(method==='GET'&&!opts.noPaging){
+    const base=SUPABASE_URL+'/rest/v1/'+table+(opts.select||opts.filter?'?'+[opts.select?'select='+opts.select:'',opts.filter||''].filter(Boolean).join('&'):'');
+    return sbGetAll(base,{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'},opts.order);
+  }
   const res=await fetch(url,{method,cache:'no-store',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
   if(res.status===204)return[];
   const data=await res.json();
