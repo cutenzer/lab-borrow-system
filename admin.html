@@ -726,9 +726,9 @@ async function loadAll(){
       sb('GET','venue_bookings',{order:'created_at.desc'})
     ]);
     allEquipment=Array.isArray(equip)?equip:[];
-    allVenueBookings=Array.isArray(venueRows)?venueRows:[];
+    allVenueBookings=(Array.isArray(venueRows)?venueRows:[]).map(b=>({...b,id:safeId(b.id)}));
     allRecords=(Array.isArray(rows)?rows:[]).map(r=>({
-      id:r.id,time:r.created_at,name:r.borrower_name,studentId:r.student_id,
+      id:safeId(r.id),time:r.created_at,name:r.borrower_name,studentId:r.student_id,
       role:r.role,purpose:r.purpose,items:r.items||[],
       borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,
       status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
@@ -736,7 +736,7 @@ async function loadAll(){
       photos:Array.isArray(r.photos)?r.photos:[]
     }));
     // ── 自動標記逾期 ──
-const today = new Date().toISOString().split('T')[0];
+const today = fmtDate(new Date()); // 用台灣本地日期，toISOString 是 UTC，早上 8 點前會差一天
 const toMarkOverdue = allRecords.filter(r =>
   r.status === '已核准' && r.returnDate && r.returnDate < today
 );
@@ -858,10 +858,11 @@ function renderRecord(r,mode){
   const items=Array.isArray(r.items)?r.items:[];
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
-  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${i.name}</span><span class="item-room">${rn(i.room)}</span><span class="item-qty">× ${i.quantity} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}</span></div>`).join('')}</div>`:'';
+  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}</span></div>`).join('')}</div>`:'';
   const photos=Array.isArray(r.photos)?r.photos:[];
-  const photosHtml=photos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${photos.map(u=>`<img src="${u}" loading="lazy" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer" onclick="window.open('${u}','_blank')">`).join('')}</div></div>`:'';
-  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${r.damageNote}${r.finalRefund!=null?' | 退還：NT$'+r.finalRefund:''}</div>`:'';
+  const safePhotos=photos.map(safeUrl).filter(Boolean);
+  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<a href="${escH(u)}" target="_blank" rel="noopener noreferrer"><img src="${escH(u)}" loading="lazy" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"></a>`).join('')}</div></div>`:'';
+  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   let actions='';
   if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord('${r.id}')">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord('${r.id}')">❌ 拒絕</button>`;
   if(mode==='return'&&(r.status==='已核准'||r.status==='逾期'))actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn('${r.id}')">📬 完整歸還</button><button class="btn btn-danger btn-sm" onclick="openDamageModal('${r.id}')">⚠️ 損壞歸還</button>`;
@@ -874,19 +875,19 @@ function renderRecord(r,mode){
   actions+=`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteBorrowRecord('${r.id}')">🗑️ 刪除</button>`;
   return `<div class="record-card ${r.status==='逾期'?'overdue':''}">
     <div class="record-header">
-      <div><span class="record-id">${r.id}</span>
+      <div><span class="record-id">${escH(r.id)}</span>
         <div style="font-size:14px;font-weight:700;margin-top:2px">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
-        <div style="font-size:12px;color:var(--text2)">${r.role||'學生'}${r.studentId?' ・ '+r.studentId:''}</div></div>
+        <div style="font-size:12px;color:var(--text2)">${escH(r.role||'學生')}${r.studentId?' ・ '+escH(r.studentId):''}</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-        <span class="badge ${sc}">${r.status}</span>
+        <span class="badge ${sc}">${escH(r.status)}</span>
         ${overdueDays>0?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
       </div>
     </div>
     <div class="record-meta">
-      <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${r.borrowDate||'─'}</span></div>
-      <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${r.returnDate||'─'}</span></div>
-      ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${r.actualReturn}</span></div>`:''}
-      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${r.depositAmount} / ${r.depositStatus}</span></div>`:''}
+      <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${escH(r.borrowDate||'─')}</span></div>
+      <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${escH(r.returnDate||'─')}</span></div>
+      ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${escH(r.actualReturn)}</span></div>`:''}
+      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.depositAmount)||0} / ${escH(r.depositStatus)}</span></div>`:''}
     </div>
     ${itemListHtml}${photosHtml}${damageHtml}
     ${(()=>{
@@ -908,13 +909,13 @@ function renderRecord(r,mode){
         }
       });
       let html='';
-      if(plainNote)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${plainNote}</div>`;
+      if(plainNote)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(plainNote)}</div>`;
       if(shared.length||chemicals.length||recycling.length){
         html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
         html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用模板）</div>`;
-        if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
-        if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">🧪 藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
-        if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">♻️ 回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${s}</div>`).join('')}</div>`;
+        if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
+        if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">🧪 藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
+        if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">♻️ 回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         html+=`</div>`;
       }
       return html;
@@ -1019,6 +1020,9 @@ function resolveCategory(b){
   }
   return '';
 }
+// 申請編號是前台產生的，理論上只會是 REQ-數字 / VEN-數字；其他字元一律去掉，避免被塞進 onclick 造成注入
+function safeId(s){return String(s??'').replace(/[^A-Za-z0-9_-]/g,'');}
+function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
 function escH(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function venueLabel(b){return escH(_venueLabelRaw(b));}
 function _venueLabelRaw(b){
@@ -1040,9 +1044,9 @@ function renderVenuePending(){
     return `<div class="venue-request-card has-pending">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div>
-          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${b.id}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)">${escH(b.id)}</span>
           <div style="font-size:14px;font-weight:700;margin-top:2px">${escH(b.borrower_name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${b.grade?escH(b.grade)+'・':''}${escH(b.purpose)}】</span></div>
-          <div style="font-size:12px;color:var(--text2)">${b.role||'學生'}${b.student_id?' ・ '+b.student_id:''}</div>
+          <div style="font-size:12px;color:var(--text2)">${escH(b.role||'學生')}${b.student_id?' ・ '+escH(b.student_id):''}</div>
         </div>
         <span class="badge badge-pending">待審核 ${pendingCount} 筆</span>
       </div>
@@ -1050,10 +1054,10 @@ function renderVenuePending(){
         ${periods.map((p,i)=>`
           <div class="period-manage-row ${p.status==='已核准'?'approved':p.status==='已拒絕'?'rejected':'pending'}">
             <input type="checkbox" id="pck-${b.id}-${i}" ${p.status==='待審核'?'checked':''} ${p.status!=='待審核'?'disabled':''} style="width:auto;flex-shrink:0">
-            <span style="flex:1;font-weight:600">${p.date}</span>
-            <span style="color:var(--text2)">${p.period}</span>
-            <span style="color:var(--accent)">${p.venue}</span>
-            <span class="period-status-badge ${p.status==='已核准'?'ps-approved':p.status==='已拒絕'?'ps-rejected':'ps-pending'}">${p.status}</span>
+            <span style="flex:1;font-weight:600">${escH(p.date)}</span>
+            <span style="color:var(--text2)">${escH(p.period)}</span>
+            <span style="color:var(--accent)">${escH(p.venue)}</span>
+            <span class="period-status-badge ${p.status==='已核准'?'ps-approved':p.status==='已拒絕'?'ps-rejected':'ps-pending'}">${escH(p.status)}</span>
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -1242,7 +1246,7 @@ async function loadAdminVenue(){
   try{
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     const expanded=[];
-    (Array.isArray(all)?all:[]).forEach(b=>{(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
+    (Array.isArray(all)?all:[]).forEach(b=>{b={...b,id:safeId(b.id)};(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
     renderAdminVenueTable(dates,expanded);
   }catch(e){}
 }
@@ -1617,7 +1621,7 @@ function clickAdminBooking(bookingId,date,period,venue){
   const rec=booking.recurrence;
   showModal(`場地預約 — ${date} ${period}`,`
     <div style="font-size:14px;margin-bottom:6px"><strong>${escH(booking.borrower_name)}</strong> 【${booking.grade?escH(booking.grade)+'・':''}${escH(booking.purpose)}】</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${booking.role||''}${booking.student_id?' ・ '+booking.student_id:''}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${escH(booking.role||'')}${booking.student_id?' ・ '+escH(booking.student_id):''}</div>
     <div style="font-size:13px;margin-bottom:10px">${venue}　${period}　狀態：<strong>${target?.status||booking.status}</strong></div>
     ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${escH(booking.note)}</div>`:''}
     ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${rec.week_start}～${rec.week_end}週・每週${DAYS[rec.day_of_week-1]}（共 ${periods.length} 個時段）</div>`:''}
