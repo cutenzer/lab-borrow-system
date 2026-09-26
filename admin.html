@@ -22,7 +22,14 @@
   .btn-danger{background:var(--danger);color:#fff;}.btn-warn{background:var(--warn);color:#fff;}
   .btn-sm{padding:5px 11px;font-size:12.5px;}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
-  .tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;}
+  .tabs{display:flex;flex-wrap:nowrap;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{flex-shrink:0;}
+  .eq-pager{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0;font-size:13.5px;color:var(--text2);}
+  .featured-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 4px;border:1px solid var(--border);border-radius:20px;background:var(--surface2);font-size:13px;margin:0 6px 6px 0;}
+  .featured-chip img,.featured-chip .ph{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--surface);display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
+  .featured-chip button{border:none;background:none;cursor:pointer;font-size:14px;color:var(--danger);padding:0 4px;}
+  #backTopBtn{position:fixed;right:18px;bottom:24px;z-index:120;width:44px;height:44px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer;display:none;}
   .tab{padding:8px 14px;border:none;background:none;font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.15s;white-space:nowrap;position:relative;}
   .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
   .tab-badge{display:none;position:absolute;top:2px;right:2px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:1;min-width:16px;height:16px;border-radius:8px;padding:0 4px;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--surface);}
@@ -592,14 +599,19 @@
     <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><div class="empty-icon">📜</div><p>點重新整理載入</p></div></div>
   </div>
 
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">⭐ 目前的首頁精選<span id="featuredCount" style="font-weight:400;font-size:12.5px;color:var(--text2);margin-left:6px"></span></div>
+    <div class="hint" style="margin-bottom:8px">點 ✕ 直接取消；要新增精選，在下方清單按器材旁的「☆ 設精選」。</div>
+    <div id="featuredList"></div>
+  </div>
   <div class="card">
     <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
       <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
     </div>
-    <div class="info-box">「實點數量」可以直接改，改完按下面「💾 儲存目前顯示的盤點數量」一次寫入（會自動記錄盤點時間），適合現場點貨；其他欄位（規格、櫃位、別名、照片）要改就用「✏️ 編輯」。用上面搜尋/房間篩選縮小範圍，就等於是在對那個房間盤點。</div>
+    <div class="info-box">「實點數量」可以直接改，改完按最下面「💾 儲存盤點」一次寫入（換頁不會遺失已改的數字，改過的格子會變橘色）（會自動記錄盤點時間），適合現場點貨；其他欄位（規格、櫃位、別名、照片）要改就用「✏️ 編輯」。用上面搜尋/房間篩選縮小範圍，就等於是在對那個房間盤點。</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="filterAdminEquip()" style="flex:1">
-      <select id="adminEquipRoomFilter" onchange="filterAdminEquip()">
+      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1">
+      <select id="adminEquipRoomFilter" onchange="adminEquipPage=1;filterAdminEquip()">
         <option value="">全部房間</option>
         <option value="Physics">物理</option>
         <option value="Chemistry">化學</option>
@@ -611,17 +623,17 @@
     </div>
     <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
-        <input type="checkbox" id="adminEquipLowStock" onchange="filterAdminEquip()" style="width:auto">
+        <input type="checkbox" id="adminEquipLowStock" onchange="adminEquipPage=1;filterAdminEquip()" style="width:auto">
         只看耗材庫存不足
       </label>
       <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
-        <input type="checkbox" id="adminEquipNotCounted" onchange="filterAdminEquip()" style="width:auto">
+        <input type="checkbox" id="adminEquipNotCounted" onchange="adminEquipPage=1;filterAdminEquip()" style="width:auto">
         只看超過90天未盤點
       </label>
     </div>
     <div id="adminEquipList"><div class="empty"><div class="empty-icon">📦</div><p>點重新整理載入</p></div></div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存目前顯示的盤點數量</button>
+      <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存盤點（已修改 <span id="stkPendingCount">0</span> 筆）</button>
     </div>
   </div>
 </div>
@@ -631,6 +643,7 @@
   <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
 </main>
+<button id="backTopBtn" title="回到頂端" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆</button>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
@@ -3372,7 +3385,11 @@ function filterAdminEquip(){
   });
   const list=document.getElementById('adminEquipList');
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合器材</p></div>';return;}
-  list.innerHTML='<div class="record-list">'+items.map(e=>{
+  const totalPages=Math.max(1,Math.ceil(items.length/ADMIN_EQ_PAGE));
+  if(adminEquipPage>totalPages)adminEquipPage=totalPages;
+  const pageItems=items.slice((adminEquipPage-1)*ADMIN_EQ_PAGE,adminEquipPage*ADMIN_EQ_PAGE);
+  const pager=renderAdminEquipPager(items.length,totalPages);
+  list.innerHTML=pager+'<div class="record-list">'+pageItems.map(e=>{
     if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgHtml=e.image_url?`<img src="${e.image_url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:56px;height:56px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🔬</div>`;
@@ -3384,7 +3401,7 @@ function filterAdminEquip(){
           <div style="font-size:15px;font-weight:700">${e.name} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <span style="display:flex;align-items:center;gap:4px">實點數量：<input type="number" min="0" id="stk-${e.id}" value="${e.total??0}" data-orig="${e.total??0}" style="width:64px;padding:3px 6px;font-size:13px"> ${e.unit||'個'}</span>
+            <span style="display:flex;align-items:center;gap:4px">實點數量：<input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake('${e.id}',this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stocktakePending[e.id]!==undefined?'border-color:var(--accent2);background:#fff7ed':''}"> ${e.unit||'個'}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
             ${e.location?`<span>📍 ${e.location}</span>`:''}
             ${e.alias?`<span>別名：${e.alias}</span>`:''}
@@ -3394,6 +3411,7 @@ function filterAdminEquip(){
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
           <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">✏️ 編輯</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleFeatured('${e.id}',${e.featured===true?'false':'true'})">${e.featured===true?'★ 取消精選':'☆ 設精選'}</button>
           <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload('${e.id}')">🖼️ 換照片</button>
           <button class="btn btn-warn btn-sm" onclick="openWriteoffModal('${e.id}')">♻️ 報廢</button>
           <button class="btn btn-danger btn-sm" onclick="deleteEquip('${e.id}')">🗑️</button>
@@ -3401,7 +3419,8 @@ function filterAdminEquip(){
       </div>
       <input type="file" id="eq-photo-input-${e.id}" accept="image/*" style="display:none" onchange="uploadEquipPhoto('${e.id}',this)">
     </div>`;
-  }).join('')+'</div>';
+  }).join('')+'</div>'+pager;
+  renderFeaturedList();
 }
 function openEquipPhotoUpload(id){
   const el=document.getElementById('eq-photo-input-'+id);if(el)el.click();
@@ -3429,24 +3448,55 @@ async function uploadEquipPhoto(id,input){
 }
 
 // ── 盤點（已併入器材清單，直接改「實點數量」）─────────────
+let adminEquipPage=1,stocktakePending={};
+const ADMIN_EQ_PAGE=20;
+function renderAdminEquipPager(total,pages){
+  if(pages<=1)return `<div class="eq-pager">共 ${total} 項</div>`;
+  return `<div class="eq-pager">
+    <button class="btn btn-secondary btn-sm" ${adminEquipPage<=1?'disabled':''} onclick="goAdminEquipPage(${adminEquipPage-1})">← 上一頁</button>
+    <span>第 ${adminEquipPage} / ${pages} 頁（共 ${total} 項）</span>
+    <button class="btn btn-secondary btn-sm" ${adminEquipPage>=pages?'disabled':''} onclick="goAdminEquipPage(${adminEquipPage+1})">下一頁 →</button>
+  </div>`;
+}
+function goAdminEquipPage(p){adminEquipPage=p;filterAdminEquip();document.getElementById('adminEquipList').scrollIntoView({behavior:'smooth',block:'start'});}
+function markStocktake(id,v,orig){
+  const n=parseInt(v);
+  if(isNaN(n)||n===orig)delete stocktakePending[id];else stocktakePending[id]=Math.max(0,n);
+  const el=document.getElementById('stk-'+id);
+  if(el){const on=stocktakePending[id]!==undefined;el.style.borderColor=on?'var(--accent2)':'';el.style.background=on?'#fff7ed':'';}
+  const c=document.getElementById('stkPendingCount');if(c)c.textContent=Object.keys(stocktakePending).length;
+}
 async function saveVisibleStocktake(){
-  const inputs=document.querySelectorAll('#adminEquipList input[id^="stk-"]');
-  if(!inputs.length){showToast('目前沒有顯示任何器材','error');return;}
+  const entries=Object.entries(stocktakePending);
+  if(!entries.length){showToast('沒有數量變動','success');return;}
   let changed=0,failed=0;
   const now=new Date().toISOString();
-  for(const input of inputs){
-    const id=input.id.replace('stk-','');
-    const orig=parseInt(input.dataset.orig)||0;
-    const newTotal=parseInt(input.value)||0;
-    if(newTotal===orig)continue;
+  for(const [id,newTotal] of entries){
     try{
       await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{total:newTotal,last_counted_at:now},prefer:'return=minimal'});
-      changed++;
+      changed++;delete stocktakePending[id];
     }catch(err){failed++;}
   }
-  showToast(changed?`已更新 ${changed} 筆盤點結果${failed?'，'+failed+' 筆失敗':''}`:'沒有數量變動','success');
+  showToast(`已更新 ${changed} 筆盤點結果${failed?'，'+failed+' 筆失敗（保留在畫面上可再按一次）':''}`,failed?'error':'success');
+  const c=document.getElementById('stkPendingCount');if(c)c.textContent=Object.keys(stocktakePending).length;
   loadAdminEquipment();
 }
+function renderFeaturedList(){
+  const box=document.getElementById('featuredList');if(!box)return;
+  const items=allAdminEquipment.filter(e=>e.featured===true);
+  const cnt=document.getElementById('featuredCount');if(cnt)cnt.textContent=`（${items.length} 項）`;
+  if(!items.length){box.innerHTML='<div class="hint">目前沒有設定精選</div>';return;}
+  box.innerHTML=items.map(e=>`<span class="featured-chip">${e.image_url?`<img src="${escH(e.image_url)}" alt="">`:'<span class="ph">🔬</span>'}${escH(e.name)}<button title="取消精選" onclick="toggleFeatured('${e.id}',false)">✕</button></span>`).join('');
+}
+async function toggleFeatured(id,val){
+  try{
+    await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{featured:val},prefer:'return=minimal'});
+    const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(e)e.featured=val;
+    showToast(val?'已設為精選':'已取消精選','success');
+    filterAdminEquip();
+  }catch(err){showToast('更新失敗：'+err.message,'error');}
+}
+window.addEventListener('scroll',()=>{const b=document.getElementById('backTopBtn');if(b)b.style.display=window.scrollY>600?'block':'none';});
 
 // ── 匯出／匯入 Excel（同一套比對邏輯：以「房間＋名稱」或器材ID當鍵）──
 async function exportEquipmentXlsx(){
