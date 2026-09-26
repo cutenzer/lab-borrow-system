@@ -330,6 +330,18 @@
   .floorplan-hotspot{fill:rgba(53,103,201,0.08);stroke:rgba(53,103,201,0.35);stroke-width:2;transition:all .15s;cursor:pointer;}
   .floorplan-hotspot:hover{fill:rgba(53,103,201,0.22);stroke:var(--accent);}
   .floorplan-hotspot.empty{stroke:rgba(148,163,184,0.35);fill:rgba(148,163,184,0.06);}
+  .floorplan-hotspot.target{fill:rgba(198,124,58,.35);stroke:var(--accent2);stroke-width:4;animation:hsPulse 1.2s ease-in-out infinite;}
+  @keyframes hsPulse{50%{stroke-width:9;fill:rgba(198,124,58,.12);}}
+  #floorplanBubbleLayer{position:absolute;inset:0;pointer-events:none;z-index:3;}
+  .fp-bubble{position:absolute;transform:translate(calc(-1 * var(--shift)),calc(-100% - 14px));background:#fff;border:2px solid var(--accent2);border-radius:12px;padding:8px 28px 8px 12px;box-shadow:0 6px 18px rgba(0,0,0,.18);pointer-events:auto;min-width:130px;max-width:220px;text-align:left;animation:bubbleIn .35s ease-out;}
+  .fp-bubble::after{content:'';position:absolute;left:var(--shift);bottom:-11px;transform:translateX(-50%);border-left:10px solid transparent;border-right:10px solid transparent;border-top:11px solid var(--accent2);}
+  .fp-bubble.below{transform:translate(calc(-1 * var(--shift)),14px);}
+  .fp-bubble.below::after{bottom:auto;top:-11px;border-top:0;border-bottom:11px solid var(--accent2);}
+  .fp-bubble-title{font-weight:700;font-size:14.5px;color:var(--text);line-height:1.35;}
+  .fp-bubble-sub{font-size:12.5px;color:var(--text2);margin-top:2px;}
+  .fp-bubble-link{font-size:13px;color:var(--accent);font-weight:700;margin-top:5px;cursor:pointer;}
+  .fp-bubble-x{position:absolute;top:4px;right:6px;border:none;background:none;font-size:14px;color:var(--text2);cursor:pointer;padding:2px;}
+  @keyframes bubbleIn{from{opacity:0;margin-top:-8px;}to{opacity:1;margin-top:0;}}
   .venue-add-btn{width:100%;background:none;border:1px dashed var(--border);border-radius:4px;padding:3px;font-size:11px;color:var(--text2);cursor:pointer;margin-top:2px;}
   .venue-add-btn:hover{border-color:var(--accent);color:var(--accent);}
   /* 場地全螢幕檢視 */
@@ -765,6 +777,7 @@
                style="display:block;width:100%;border:1px solid var(--border);border-radius:8px;cursor:zoom-in"
                onclick="openLightbox(this.src, floorplanNames[currentFloorplan] + ' 平面圖')">
           <svg id="floorplanSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
+          <div id="floorplanBubbleLayer"></div>
         </div>
       </div>
     </div>
@@ -1304,7 +1317,7 @@ function renderEquipDetail(){
   const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
   const photo=e.image_url?`<img src="${escH(e.image_url)}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:var(--surface2);cursor:zoom-in" onclick="openLightbox(window._detailEq.image_url,window._detailEq.name)">`:'';
   const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
-  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location)">📍${escH(e.location)}　看平面圖位置 ›</span>`:'';
+  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">📍${escH(e.location)}　看平面圖位置 ›</span>`:'';
   const action=avail<=0?`<button type="button" class="home-eq-add" disabled style="width:100%">目前無法借用</button>`
     :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button><span style="min-width:44px;text-align:center;font-weight:700;font-size:18px">${qty}</span><button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
     :`<button type="button" class="home-eq-add" style="width:100%" onclick="detailQty(1)">加入借用清單</button>`;
@@ -1345,6 +1358,7 @@ function renderRoomCoverCards(containerId,onClickFnName,activeKey){
     </div>`).join('')}</div>`;
 }
 async function showFloorplan(key, el){
+  clearFloorplanBubbles();
   currentFloorplan = key;
   floorplanOpenLoc = '';
   floorplanExpandedGroups = new Set();
@@ -1515,12 +1529,48 @@ function toggleFloorplanEquipRow(rowId){
   floorplanExpandedRowId=(floorplanExpandedRowId===rowId)?null:rowId;
   renderFloorplanLocModalBody();
 }
-async function jumpToFloorplanLocation(room,code){
+async function jumpToFloorplanLocation(room,code,itemName){
   const key=ROOM_TO_FLOORPLAN_KEY[room];
   if(!key)return;
   showPage('floorplan');
   await showFloorplan(key,null);
-  openFloorplanLocModal((code||'').split('&')[0].trim());
+  const spots=(FLOORPLAN_HOTSPOTS[key]||[]).filter(s=>locCodeMatches(code,s.code));
+  if(!spots.length){
+    showToast('平面圖上還沒標出這個櫃位，先列出內容','error');
+    openFloorplanLocModal(expandLocationField(code)[0]||code);
+    return;
+  }
+  // 手機上櫃子太小的話先放大兩倍，泡泡比較看得清楚
+  if(window.innerWidth<700&&spots.some(s=>s.width<8)&&floorplanZoomScale<2){floorplanZoomScale=2;applyFloorplanZoom();}
+  showFloorplanBubbles(spots,code,itemName);
+}
+function clearFloorplanBubbles(){
+  const layer=document.getElementById('floorplanBubbleLayer');if(layer)layer.innerHTML='';
+  document.querySelectorAll('#floorplanSvgLayer .floorplan-hotspot.target').forEach(r=>r.classList.remove('target'));
+}
+function showFloorplanBubbles(spots,code,itemName){
+  const layer=document.getElementById('floorplanBubbleLayer'),wrap=document.getElementById('floorplanImgWrap');
+  if(!layer||!wrap)return;
+  const W=wrap.offsetWidth,H=wrap.offsetHeight;
+  window._bubbleSpots=spots;
+  const all=expandLocationField(code);
+  layer.innerHTML=spots.map((s,i)=>{
+    const cx=s.left+s.width/2,cxPx=cx/100*W;
+    const below=s.top/100*H<95; // 太靠上面就把泡泡放到櫃子下方，避免被切掉
+    const shift=cxPx<115?12:(W-cxPx<115?88:50);
+    const top=below?(s.top+s.height):s.top;
+    const layers=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));
+    return `<div class="fp-bubble ${below?'below':''}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
+      <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
+      <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
+      <div class="fp-bubble-sub">${escH(s.code)}${layers.length?` ・ 第${layers.map(escH).join('、')}層`:''}</div>
+      <div class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${i}].code)">看這櫃還有什麼 ›</div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#floorplanSvgLayer .floorplan-hotspot').forEach(r=>{
+    const t=r.querySelector('title');r.classList.toggle('target',!!t&&spots.some(s=>s.code===t.textContent));
+  });
+  setTimeout(()=>{const bb=layer.querySelector('.fp-bubble');if(bb)bb.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});},150);
 }
   
 async function sb(method,table,opts={}){
@@ -2829,7 +2879,7 @@ function renderEquipBrowse(items){
 }
 function browseQty(i,d){const e=(window._browseItems||[])[i];if(e)changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);}
 function browseZoom(i){const e=(window._browseItems||[])[i];if(e&&e.image_url)openLightbox(e.image_url,e.name);}
-function browseLoc(i){const e=(window._browseItems||[])[i];if(e)jumpToFloorplanLocation(e.room,e.location);}
+function browseLoc(i){const e=(window._browseItems||[])[i];if(e)jumpToFloorplanLocation(e.room,e.location,e.name);}
 function goEquipPage(p){
   equipBrowsePage=p;
   applyEquipBrowseFilter();
