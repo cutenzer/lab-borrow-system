@@ -919,11 +919,11 @@
   <div class="card">
     <div class="card-title">📋 我的借用記錄</div>
     <div class="form-grid" style="margin-bottom:14px">
-      <div class="form-group"><label>姓名</label><input type="text" id="queryName" placeholder="輸入姓名"></div>
-      <div class="form-group"><label>學號（學生填寫）</label><input type="text" id="queryStudentId" placeholder="輸入學號"></div>
+      <div class="form-group"><label>姓名 *</label><input type="text" id="queryName" maxlength="30" placeholder="輸入完整姓名" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
+      <div class="form-group"><label>學號（學生必填）</label><input type="text" id="queryStudentId" maxlength="20" placeholder="學生請輸入學號" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
     </div>
     <button class="btn btn-primary" onclick="loadMyRecords()" style="margin-bottom:14px">🔍 查詢</button>
-    <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>填寫姓名或學號後查詢</p></div></div>
+    <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div></div>
   </div>
 </div>
 
@@ -1914,9 +1914,11 @@ async function sb(method,table,opts={}){
   }
   const res=await fetch(url,{method,cache:'no-store',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation'},body:opts.body?JSON.stringify(opts.body):undefined});
   if(res.status===204)return[];
-  const data=await res.json();
-  if(!res.ok)throw new Error(data.message||res.statusText);
-  return data;
+  // return=minimal 時伺服器回空內容，不能直接 res.json()
+  const text=await res.text();
+  let data=null;try{data=text?JSON.parse(text):null;}catch(e){data=null;}
+  if(!res.ok){const err=new Error((data&&data.message)||res.statusText);err.status=res.status;err.code=data&&data.code;throw err;}
+  return data??[];
 }
 
 let allEquipment=[],selectedItems={},allRooms=[],currentRoom='';
@@ -2272,7 +2274,7 @@ async function submitVenueRequest(){
   try{
     const id='VEN-'+Date.now();
     const noteWithSupervisor=supervisor?`[陪同老師：${supervisor}]${note?' '+note:''}`:note;
-    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note:noteWithSupervisor,grade:grade||null}});
+    await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note:noteWithSupervisor,grade:grade||null},prefer:'return=minimal'});
     showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。審核前課表上會以<strong>虛線框</strong>顯示「待審核」，其他人也看得到，不會被重複預約。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     periodRows=[];
     submittingVenue=false;
@@ -2964,11 +2966,20 @@ function cartItemLoc(idx){
 }
 
 // ── 器材載入 ──────────────────────────────────────────────
+// 前台只需要「誰借了什麼」：讀資料庫的公開檢視 borrow_active_public（沒有學號、照片、保證金等欄位）
+// 若 SQL 還沒執行（view 不存在），暫時退回舊的查法，避免網頁壞掉
+async function loadActiveBorrowsPublic(){
+  try{return await sb('GET','borrow_active_public',{});}
+  catch(e){
+    try{return await sb('GET','borrow_records',{select:'id,borrower_name,role,items,status,borrow_date,return_date',filter:'status=in.(已核准,逾期)'});}
+    catch(e2){return [];}
+  }
+}
 async function loadEquipmentData(){
   try{
     const [rows,borrows]=await Promise.all([
       sb('GET','equipment',{order:'room,name'}),
-      sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'})
+      loadActiveBorrowsPublic()
     ]);
     activeBorrowRecords=Array.isArray(borrows)?borrows:[];
     const borrowedMap={};
@@ -3298,12 +3309,12 @@ if(courseNoteBody){
     if(appliedTemplate&&appliedTemplate.rawName)recBody.course_name=appliedTemplate.rawName;
     if(photoUrls.length)recBody.photos=photoUrls;
     try{
-      await sb('POST','borrow_records',{body:recBody});
+      await sb('POST','borrow_records',{body:recBody,prefer:'return=minimal'});
     }catch(err){
       const msg=err.message||'';
       if((recBody.course_name||recBody.photos)&&/column|schema cache|PGRST/i.test(msg)){
         delete recBody.course_name;delete recBody.photos;
-        await sb('POST','borrow_records',{body:recBody});
+        await sb('POST','borrow_records',{body:recBody,prefer:'return=minimal'});
       }else throw err;
     }
 
@@ -3317,7 +3328,7 @@ if(courseNoteBody){
           purpose,periods:inlinePeriods,status:'待審核',
           note:`[關聯借用申請 ${id}]${note?' '+note:''}`,
           grade:inlineGrade||null,
-        }});
+        },prefer:'return=minimal'});
       }catch(ve){console.warn('場地預約同步失敗（器材借用仍成功）：',ve.message);venueFail=ve.message||'未知錯誤';venueId='';}
       // 送出後立刻刷新課表，讓自己和別人都看得到這筆「待審核」
       renderHomeVenuePreview();if(document.getElementById('page-venue').classList.contains('active'))loadVenue();
@@ -3369,14 +3380,28 @@ function resetForm(){
 async function loadMyRecords(){
   const name=document.getElementById('queryName').value.trim();
   const studentId=document.getElementById('queryStudentId').value.trim();
-  if(!name&&!studentId){showToast('請填寫姓名或學號','error');return;}
+  // 防偷看：姓名要完整（不再支援打一個字模糊搜尋），學生要姓名＋學號都對得上
+  if(!name){showToast('請填寫完整姓名','error');return;}
+  if(name.length<2){showToast('請填寫完整姓名','error');return;}
+  if(studentId&&!/^[A-Za-z0-9-]{3,20}$/.test(studentId)){showToast('學號格式不正確','error');return;}
   const list=document.getElementById('myRecordsList');
   list.innerHTML='<div class="loading"><div class="spinner"></div>查詢中…</div>';
   try{
-    let borrowFilter='',venueFilter='';
-    if(studentId){borrowFilter=`student_id=eq.${encodeURIComponent(studentId)}`;venueFilter=borrowFilter;}
-    else{borrowFilter=`borrower_name=ilike.*${encodeURIComponent(name)}*`;venueFilter=borrowFilter;}
-    const[rows,venueRows]=await Promise.all([sb('GET','borrow_records',{filter:borrowFilter,order:'created_at.desc'}),sb('GET','venue_bookings',{filter:venueFilter,order:'created_at.desc'})]);
+    let rows;
+    try{
+      // 資料庫函式：只回傳「姓名完全相同＋學號相同」的紀錄；沒填學號時只回傳老師身分的紀錄
+      rows=await sb('POST','rpc/get_my_records',{body:{p_name:name,p_student_id:studentId||null}});
+    }catch(e){
+      if(e.status!==404)throw e;
+      // SQL 還沒執行時的暫時做法（完整姓名比對）
+      let f=`borrower_name=eq.${encodeURIComponent(name)}`;
+      f+=studentId?`&student_id=eq.${encodeURIComponent(studentId)}`:'&role=neq.學生';
+      rows=await sb('GET','borrow_records',{filter:f,order:'created_at.desc'});
+    }
+    let vf=`borrower_name=eq.${encodeURIComponent(name)}`;
+    if(studentId)vf+=`&student_id=eq.${encodeURIComponent(studentId)}`;
+    const venueRows=await sb('GET','venue_bookings',{filter:vf,order:'created_at.desc'});
+    rows=Array.isArray(rows)?rows:[];
     let html='';
     if(rows.length){html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(rows);}
     if(venueRows.length){
@@ -3390,7 +3415,7 @@ async function loadMyRecords(){
         </div>`;
       }).join('')+'</div>';
     }
-    if(!html)html='<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p></div>';
+    if(!html)html=`<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;
     list.innerHTML=html;
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
 }
