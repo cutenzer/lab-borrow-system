@@ -1,0 +1,16 @@
+# 每 3 天自動戳一下 Supabase，避免免費方案「7 天沒人用就自動暫停」
+name: Supabase keep-alive
+on:
+  schedule:
+    - cron: '0 1 */3 * *'   # 每 3 天（台灣時間早上 9 點）
+  workflow_dispatch:         # 也可以在 GitHub 的 Actions 頁面手動按一次測試
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl -sf "https://bgifddtcklpqbmljlvcg.supabase.co/rest/v1/equipment?select=id&limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64" \
+            -o /dev/null && echo "Supabase OK"
