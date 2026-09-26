@@ -1583,6 +1583,10 @@ async function jumpToFloorplanLocation(room,code,itemName){
   if(window.innerWidth<700&&spots.some(s=>s.width<8)&&floorplanZoomScale<2){floorplanZoomScale=2;applyFloorplanZoom();}
   showFloorplanBubbles(spots,code,itemName);
 }
+function scrollToFloorplanBubble(ci){
+  const bb=document.querySelector(`#floorplanBubbleLayer .fp-bubble[data-ci="${ci}"]`);
+  if(bb){bb.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});bb.style.animation='none';void bb.offsetWidth;bb.style.animation='';}
+}
 function clearFloorplanBubbles(){
   const layer=document.getElementById('floorplanBubbleLayer');if(layer)layer.innerHTML='';
   document.querySelectorAll('#floorplanSvgLayer .floorplan-hotspot.target').forEach(r=>r.classList.remove('target'));
@@ -1593,24 +1597,37 @@ function showFloorplanBubbles(spots,code,itemName){
   const W=wrap.offsetWidth,H=wrap.offsetHeight;
   window._bubbleSpots=spots;
   const all=expandLocationField(code);
-  // 多個櫃位只放「一個」泡泡，指向這些櫃子的中間；櫃子本身全部閃爍
-  const minL=Math.min(...spots.map(s=>s.left)),maxR=Math.max(...spots.map(s=>s.left+s.width));
-  const minT=Math.min(...spots.map(s=>s.top)),maxB=Math.max(...spots.map(s=>s.top+s.height));
-  const cx=(minL+maxR)/2,cxPx=cx/100*W;
-  const below=minT/100*H<95;
-  const shift=cxPx<115?12:(W-cxPx<115?88:50);
-  const top=below?maxB:minT;
+  // 把「彼此相鄰」的櫃子分成一群（例如 BC03、BC04、BC05 連在一起），分開的位置（例如另一頭的 BC11）自成一群
+  const GAP=2.5; // 百分比；兩個框距離小於這個就算相鄰
+  const near=(a,c)=>Math.max(0,Math.max(a.left,c.left)-Math.min(a.left+a.width,c.left+c.width))<=GAP&&Math.max(0,Math.max(a.top,c.top)-Math.min(a.top+a.height,c.top+c.height))<=GAP;
+  const group=spots.map((_,k)=>k);
+  const find=k=>group[k]===k?k:(group[k]=find(group[k]));
+  spots.forEach((s,x)=>spots.forEach((t,y)=>{if(x<y&&near(s,t))group[find(x)]=find(y);}));
+  const clusters={};spots.forEach((s,k)=>{(clusters[find(k)]=clusters[find(k)]||[]).push(k);});
+  const clusterList=Object.values(clusters);
   const codeLabel=s=>{const ly=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));return escH(s.code)+(ly.length?`（第${ly.map(escH).join('、')}層）`:'');};
-  const sub=spots.length===1?codeLabel(spots[0]):`共 ${spots.length} 個櫃位：${spots.map(codeLabel).join('、')}`;
-  const links=spots.length===1
-    ?`<div class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[0].code)">看這櫃還有什麼 ›</div>`
-    :`<div class="fp-bubble-links">${spots.map((s,i)=>`<span class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${i}].code)">${escH(s.code)} ›</span>`).join('')}</div>`;
-  layer.innerHTML=`<div class="fp-bubble ${below?'below':''}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
-    <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
-    <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
-    <div class="fp-bubble-sub">${sub}</div>
-    ${links}
-  </div>`;
+  layer.innerHTML=clusterList.map((idxs,ci)=>{
+    const cs=idxs.map(k=>spots[k]);
+    const minL=Math.min(...cs.map(s=>s.left)),maxR=Math.max(...cs.map(s=>s.left+s.width));
+    const minT=Math.min(...cs.map(s=>s.top)),maxB=Math.max(...cs.map(s=>s.top+s.height));
+    const cx=(minL+maxR)/2,cxPx=cx/100*W;
+    const spaceAbove=minT/100*H,spaceBelow=H-maxB/100*H;
+    const below=spaceAbove<95&&spaceBelow>spaceAbove; // 上面放不下、而且下面空間比較大，才放到櫃子下方
+    const shift=cxPx<115?12:(W-cxPx<115?88:50);
+    const top=below?maxB:minT;
+    const where=clusterList.length>1?`第 ${ci+1}／${clusterList.length} 處：`:'';
+    const sub=where+cs.map(codeLabel).join('、');
+    const links=cs.length===1
+      ?`<div class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${idxs[0]}].code)">看這櫃還有什麼 ›</div>`
+      :`<div class="fp-bubble-links">${idxs.map(k=>`<span class="fp-bubble-link" onclick="openFloorplanLocModal(window._bubbleSpots[${k}].code)">${escH(spots[k].code)} ›</span>`).join('')}</div>`;
+    const others=clusterList.length>1?`<div class="fp-bubble-sub" style="margin-top:4px">其他位置：${clusterList.map((o,oj)=>oj===ci?'':`<span class="fp-bubble-link" onclick="scrollToFloorplanBubble(${oj})">${o.map(k=>escH(spots[k].code)).join('、')} ⇢</span>`).filter(Boolean).join('　')}</div>`:'';
+    return `<div class="fp-bubble ${below?'below':''}" data-ci="${ci}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
+      <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
+      <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
+      <div class="fp-bubble-sub">${sub}</div>
+      ${links}${others}
+    </div>`;
+  }).join('');
   document.querySelectorAll('#floorplanSvgLayer .floorplan-hotspot').forEach(r=>{
     const t=r.querySelector('title');r.classList.toggle('target',!!t&&spots.some(s=>s.code===t.textContent));
   });
