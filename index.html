@@ -73,6 +73,10 @@
   .venue-zoom-body .mini-venue{font-size:15px;min-width:640px;}
   .venue-zoom-body .mini-venue td.pcol{width:64px;}
   .venue-zoom-body .mini-venue .venue-booking{font-size:14px;padding:3px 4px;}
+  .mini-dots{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;}
+  .mini-venue .venue-booking.mini-dot{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;padding:0;margin:0;font-size:11px;font-weight:700;border-radius:5px;}
+  @media(min-width:900px){.mini-venue .venue-booking.mini-dot{width:26px;height:26px;font-size:13px;}}
+  .mini-legend{font-size:12px;color:var(--text2);margin-top:6px;text-align:right;}
   .mini-venue{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;}
   .mini-venue th,.mini-venue td{border:1px solid var(--border);padding:3px 2px;text-align:center;vertical-align:middle;overflow:hidden;}
   .mini-venue th{background:var(--accent);color:#fff;font-weight:600;}
@@ -148,14 +152,14 @@
   .home-section{background:transparent;border:none;box-shadow:none;padding:22px 4px;margin-bottom:0;border-bottom:1px solid var(--border);}
   .home-section:last-child{border-bottom:none;}
   .home-section .card-title{border-bottom:none;padding-bottom:4px;margin-bottom:6px;}
-  .auto-carousel{position:relative;overflow:hidden;border-radius:16px;}
+  .auto-carousel{position:relative;overflow:hidden;border-radius:16px;isolation:isolate;transform:translateZ(0);}
   .auto-carousel-track{display:flex;align-items:flex-start;transition:transform .5s cubic-bezier(.4,0,.2,1),height .35s ease;touch-action:pan-y;cursor:grab;}
   .home-section .auto-carousel{max-width:1100px;margin:0 auto;}
   .equip-slide-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px) brightness(.55);transform:scale(1.15);}
   .equip-slide-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
   .slide-shade{position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(transparent,rgba(0,0,0,.55));z-index:1;}
   .auto-carousel-track:active{cursor:grabbing;}
-  .auto-carousel-slide{flex:0 0 100%;width:100%;cursor:pointer;height:clamp(230px,56vw,460px);position:relative;display:flex;align-items:flex-end;padding:18px;color:#fff;}
+  .auto-carousel-slide{flex:0 0 100%;width:100%;overflow:hidden;cursor:pointer;height:clamp(230px,56vw,460px);position:relative;display:flex;align-items:flex-end;padding:18px;color:#fff;}
   .auto-carousel-slide .cover-emoji-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;opacity:0.28;}
   .auto-carousel-slide .cover-label{position:relative;z-index:1;font-weight:700;font-size:19px;text-shadow:0 2px 8px rgba(0,0,0,0.4);}
   .auto-carousel-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
@@ -1089,7 +1093,14 @@ function setAutoCarouselIndex(containerId,idx){
   box._acIndex=idx;
   const track=document.getElementById(containerId+'-track');
   if(track)track.style.transform=`translateX(-${idx*100}%)`;
-  if(track&&track.children[idx])track.style.height=track.children[idx].offsetHeight+'px'; // 高度跟著目前這張，避免被最長那張撐出一大片空白
+  // 高度跟著目前這張；其他張也直接限制在同樣高度，不靠外框裁切（iPhone Safari 圓角+位移時裁切會失效，高的那張會漏出去把整頁撐長）
+  if(track&&track.children[idx]){
+    const kids=[...track.children];
+    kids.forEach(k=>k.style.maxHeight='none');
+    const h=track.children[idx].scrollHeight;
+    if(h>0){track.style.height=h+'px';kids.forEach(k=>k.style.maxHeight=h+'px');}
+    else{track.style.height='';kids.forEach(k=>k.style.maxHeight='');}
+  }
   document.querySelectorAll('#'+containerId+'-dots .ac-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
 }
 // 只有「耗材類」才需要注意庫存；大型儀器只有一台、以盒/包/袋計的都不算庫存不足
@@ -1137,23 +1148,26 @@ async function renderHomeVenuePreview(){
     const slides=HOME_VENUE_FILTERS.map(r=>{
       const labs=r.key?[r.key]:['生物','化學','理化','物理','地科'];
       const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?'hol':''}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
-      const rows=PERIODS.map(period=>`<tr><td class="pcol">${period}</td>${dates.map(d=>{
+      // compact=true：「全部」那張只放科別色塊，高度跟單科課表差不多；詳細內容在放大檢視看
+      const buildRows=compact=>PERIODS.map(period=>`<tr><td class="pcol">${period}</td>${dates.map(d=>{
         const ds=fmtDate(d);
         const cells=[];
         labs.forEach(lab=>{
           list.filter(x=>x.displayDate===ds&&x.displayPeriod===period&&x.displayVenue===labFull[lab]&&x.periodStatus!=='已拒絕').forEach(x=>{
             const st=x.periodStatus==='待審核'?'st-pending':'st-approved';
-            cells.push(`<span class="venue-booking ${categoryClass(resolveCategory(x))} ${st}">${r.key?'':lab+' '}${venueLabel(x)}</span>`);
+            const cls=`${categoryClass(resolveCategory(x))} ${st}`;
+            cells.push(compact?`<span class="venue-booking mini-dot ${cls}">${lab.slice(0,1)}</span>`:`<span class="venue-booking ${cls}">${r.key?'':lab+' '}${venueLabel(x)}</span>`);
           });
         });
-        return `<td>${cells.join('')}</td>`;
+        return `<td>${compact?`<div class="mini-dots">${cells.join('')}</div>`:cells.join('')}</td>`;
       }).join('')}</tr>`).join('');
-      const table=`<table class="mini-venue"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
+      const table=`<table class="mini-venue"><thead>${head}</thead><tbody>${buildRows(false)}</tbody></table>`;
+      const slideTable=r.key?table:`<table class="mini-venue"><thead>${head}</thead><tbody>${buildRows(true)}</tbody></table><div class="mini-legend">色塊＝該節有課（生／化／理／物／地），點課表看誰在用</div>`;
       window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}`,table};
       return `<div class="auto-carousel-slide venue-slide" onclick="openHomeVenueZoom('${r.key}')">
         <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[4])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">📅 我要預約</button></div>
         <div class="venue-slide-hint">🔍 點課表可放大檢視・左右滑動換科別</div>
-        ${table}
+        ${slideTable}
       </div>`;
     });
     buildAutoCarousel('homeVenuePreview',slides,8000);
