@@ -720,6 +720,15 @@
   .hero2-results .search-dropdown{margin:0;}
   @media(min-width:901px){.hero2-results{margin:12px 28px 0;}}
 
+
+  /* 課綱實驗：組數 */
+  .tpl-groups{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;margin-bottom:8px;border-radius:8px;background:#fdf6d6;border:1px solid #efd98a;font-size:12.5px;color:#5a4a1e;}
+  .tpl-groups label{display:flex;align-items:center;gap:6px;font-weight:700;font-size:13.5px;color:var(--text);}
+  .tpl-groups input{width:72px;font-family:'DM Mono',monospace;}
+  .tpl-groups span{flex:1;min-width:200px;}
+  .tpl-tag{border:1px solid var(--border);background:var(--surface);color:var(--text2);border-radius:10px;padding:2px 8px;font-size:11.5px;font-family:inherit;cursor:pointer;white-space:nowrap;}
+  .tpl-tag.per{background:#dcebe4;border-color:#b7d6c8;color:var(--accent);font-weight:700;}
+
   /* 藥品列表 */
   .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
   .chem-row:last-child{border-bottom:none;}
@@ -926,7 +935,7 @@
 
   <div class="card" id="courseTemplateCard" style="display:none">
     <div class="card-title">② 要借什麼：📚 套用課綱實驗（老師專用）</div>
-    <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
+    <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始的課綱實驗。</div>
    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
   <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
     <option value="">全部科別</option>
@@ -4116,12 +4125,15 @@ function renderTemplatePicker(){
   if(q)items=items.filter(t=>formatTemplateName(t).includes(q)||(t.name||'').includes(q)||(t.grade||'').includes(q));
   if(!items.length){sel.innerHTML='<option value="">（找不到符合的課程）</option>';return;}
   items=[...items].sort((a,b)=>formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant'));
-  sel.innerHTML='<option value="">— 選擇課程 —</option>'+items.map(t=>`<option value="${t.id}">${formatTemplateName(t)}</option>`).join('');
+  sel.innerHTML='<option value="">— 選擇課程 —</option>'+items.map(t=>`<option value="${escH(t.id)}">${escH(formatTemplateName(t))}</option>`).join('');
 }
 function applySelectedTemplate(){const id=document.getElementById('tplPickerSelect').value;if(!id){showToast('請先選擇課程','error');return;}applyTemplate(id);}
 function applyTemplate(id){
   const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
   const av=e=>parseInt(e.available)||0;const added=[];const unmatched=[];
+  // 組數判斷：數量是「課綱設定組數」的整數倍 → 視為每組都要（例如 12 組、數量 12 或 24）；其他（例如 1）視為全班共用
+  const gc=parseInt(t.group_count)||0;
+  const perOf=q=>(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
   (t.equipment_items||[]).forEach(it=>{
     const want=parseInt(it.quantity)||0;if(want<=0)return;
     const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
@@ -4141,12 +4153,12 @@ function applyTemplate(id){
       let info='';
       if(av(pick)<want){if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別合計尚有`;else info=`全校目前可借約 ${totalAvail}（原需 ${want}），請向辦公室確認`;}
       selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
-      added.push({room,name,unit,qty:want,info});
+      added.push({room,name,unit,spec,qty:want,info,base:want,per:perOf(want)});
     }else{
-      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,note:'課綱實驗器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
+      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,base:want,per:perOf(want),note:'課綱實驗器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
     }
   });
-  appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added,unmatched};
+  appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added,unmatched,groupCount:gc,groups:gc};
   updateCartBadge();renderEquipList();calcDeposit();applyEquipBrowseFilter();
   renderAppliedTemplate();
   document.getElementById('appliedTemplateName').textContent=appliedTemplate.name;
@@ -4159,28 +4171,34 @@ function renderAppliedTemplate(){
   const added=appliedTemplate.added||[],unmatched=appliedTemplate.unmatched||[];
   if(added.length||unmatched.length){
     html+=`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">已帶入的器材（可直接調整數量）</div>`;
+    const gcT=appliedTemplate.groupCount||0;
+    if(gcT>1){
+      html+=`<div class="tpl-groups"><label>本次組數<input type="number" min="1" max="60" value="${parseInt(appliedTemplate.groups)||gcT}" onchange="setTemplateGroups(this.value)" inputmode="numeric"></label>
+        <span>課綱設定 ${gcT} 組。數量是組數倍數的器材（標「每組」）會跟著組數自動調整，其他視為全班共用不變；點標籤可以切換。</span></div>`;
+    }
+    window._tplAdded=added;
     html+=added.map((a,i)=>{
       const key=a.room+'__'+a.name;
       const qty=selectedItems[key]?selectedItems[key].quantity:0;
-      const equip=allEquipment.find(e=>e.room===a.room&&e.name===a.name);
-      const avail=parseInt(equip?.available)||0;
-      const safeN=a.name.replace(/'/g,"\\'"),safeS=(equip?.spec||'').replace(/'/g,"\\'");
+      const tag=gcT>1?`<button type="button" class="tpl-tag ${a.per?'per':''}" onclick="toggleTplPerGroup(${i})" title="點一下切換「每組／共用」">${a.per?'每組 '+a.per:'共用'}</button>`:'';
       return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);min-width:18px">${i+1}.</span>
-        <span style="font-weight:600;flex:1;min-width:90px">${a.name}</span>
-        <span style="font-size:11px;color:var(--accent)">${rn(a.room)}</span>
+        <span style="font-weight:600;flex:1;min-width:90px">${escH(a.name)}</span>
+        <span style="font-size:11px;color:var(--accent)">${escH(rn(a.room))}</span>
+        ${tag}
         <div class="equip-row-qty" style="flex-shrink:0">
-          <button class="qty-btn" onclick="changeQty('${a.room}','${safeN}','${safeS}','${a.unit}',${avail},-1);renderAppliedTemplate()">−</button>
-          <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty('${a.room}','${safeN}','${safeS}','${a.unit}',${avail},this.value);renderAppliedTemplate()">
-          <button class="qty-btn" onclick="changeQty('${a.room}','${safeN}','${safeS}','${a.unit}',${avail},1);renderAppliedTemplate()">+</button>
+          <button class="qty-btn" onclick="tplQty(${i},-1)" aria-label="減少">−</button>
+          <input class="qty-input" type="number" min="0" value="${qty}" onchange="tplSet(${i},this.value)">
+          <button class="qty-btn" onclick="tplQty(${i},1)" aria-label="增加">+</button>
         </div>
-        ${a.info?`<span style="flex-basis:100%;font-size:11px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;margin-top:2px">ℹ️ ${a.info}</span>`:''}
+        ${a.info?`<span style="flex-basis:100%;font-size:11px;color:#b45309;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;margin-top:2px">ℹ️ ${escH(a.info)}</span>`:''}
       </div>`;
     }).join('');
     html+=unmatched.map(u=>{
       const safeKey=u.key;
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #fed7aa;background:#fff7ed;border-radius:6px;margin-top:6px;flex-wrap:wrap">
-        <span style="font-weight:600;flex:1;min-width:90px">⚠️ ${u.name}${u.spec?'（'+u.spec+'）':''}</span>
+        <span style="font-weight:600;flex:1;min-width:90px">⚠️ ${escH(u.name)}${u.spec?'（'+escH(u.spec)+'）':''}</span>
+        ${(appliedTemplate.groupCount||0)>1&&u.per?`<span class="tpl-tag per">每組 ${u.per}</span>`:''}
         <div class="equip-row-qty" style="flex-shrink:0">
           <button class="qty-btn" onclick="changeUnmatchedQty('${safeKey}',-1)">−</button>
           <input class="qty-input" type="number" min="0" value="${u.quantity}" onchange="setUnmatchedQty('${safeKey}',this.value)">
@@ -4266,6 +4284,34 @@ function setUnmatchedQty(key,val){
 function removeUnmatchedItem(key){
   if(!appliedTemplate||!appliedTemplate.unmatched)return;
   appliedTemplate.unmatched=appliedTemplate.unmatched.filter(x=>x.key!==key);
+  renderAppliedTemplate();
+}
+function tplAvail(a){const eq=allEquipment.find(e=>e.room===a.room&&e.name===a.name);return parseInt(eq?.available)||0;}
+function tplQty(i,d){const a=(window._tplAdded||[])[i];if(!a)return;changeQty(a.room,a.name,a.spec||'',a.unit,tplAvail(a),d);renderAppliedTemplate();}
+function tplSet(i,v){const a=(window._tplAdded||[])[i];if(!a)return;setQty(a.room,a.name,a.spec||'',a.unit,tplAvail(a),v);renderAppliedTemplate();}
+// 改組數：只重算標「每組」的器材；超過可借數量時自動以可借上限帶入並提示
+function setTemplateGroups(v){
+  if(!appliedTemplate)return;
+  const n=Math.max(1,Math.min(60,parseInt(v)||1));
+  appliedTemplate.groups=n;
+  let capped=0;
+  (appliedTemplate.added||[]).forEach(a=>{
+    if(!a.per)return;
+    const want=a.per*n,avail=tplAvail(a);
+    if(want>avail)capped++;
+    setQty(a.room,a.name,a.spec||'',a.unit,avail,Math.min(want,avail));
+  });
+  (appliedTemplate.unmatched||[]).forEach(u=>{if(u.per)u.quantity=u.per*n;});
+  renderAppliedTemplate();
+  showToast(capped?`已改成 ${n} 組；有 ${capped} 項超過可借數量，已先帶入上限`:`已改成 ${n} 組`,capped?'error':'success');
+}
+function toggleTplPerGroup(i){
+  const a=(appliedTemplate?.added||[])[i];if(!a)return;
+  const gc=appliedTemplate.groupCount||0;if(gc<=1)return;
+  const key=a.room+'__'+a.name,cur=selectedItems[key]?.quantity||a.base;
+  const n=parseInt(appliedTemplate.groups)||gc;
+  if(a.per){a.per=0;}
+  else{a.per=Math.max(1,Math.round(cur/n));setQty(a.room,a.name,a.spec||'',a.unit,tplAvail(a),Math.min(a.per*n,tplAvail(a)));}
   renderAppliedTemplate();
 }
 function clearAppliedTemplate(removeItems){
