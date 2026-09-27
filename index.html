@@ -705,6 +705,21 @@
   .venue-pick-bar .vp-txt span{font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw;}
   @media(min-width:1100px){.venue-pick-bar{margin-left:120px;}}
 
+
+  /* 首頁搜尋結果 */
+  .hero2-results:empty{display:none;}
+  .hero2-results{position:relative;z-index:3;margin:10px 0 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:12px 14px;box-shadow:0 10px 26px rgba(31,35,38,.12);}
+  body.hero-searching .entry-cards{margin-top:14px;}
+  .hr-sec{font-size:13px;font-weight:700;color:var(--text2);margin:6px 2px 6px;}
+  .hr-sec small{font-weight:400;}
+  .hr-locs{display:flex;flex-wrap:wrap;gap:8px;}
+  .hr-locs button{display:flex;flex-direction:column;align-items:flex-start;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-family:inherit;cursor:pointer;}
+  .hr-locs b{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent);}
+  .hr-locs span{font-size:12px;color:var(--text2);}
+  .hr-more{display:block;margin:10px auto 2px;background:none;border:none;color:var(--accent);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+  .hero2-results .search-dropdown{margin:0;}
+  @media(min-width:901px){.hero2-results{margin:12px 28px 0;}}
+
   /* 藥品列表 */
   .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
   .chem-row:last-child{border-bottom:none;}
@@ -770,11 +785,12 @@
     <div class="hero2-line" aria-hidden="true"></div>
     <label class="hero2-search">
       <svg class="ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-      <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位…" autocomplete="off" enterkeyhint="search" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}">
+      <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位…" autocomplete="off" enterkeyhint="search" oninput="heroSearchLive(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}else if(event.key==='Escape'){this.value='';heroSearchLive('');}">
       <button type="button" onclick="heroSearchGo()">搜尋</button>
     </label>
     <div class="hero2-slogan" aria-hidden="true">整理的不是器材，<br>而是讓實驗順利的日常。</div>
   </section>
+  <div class="hero2-results" id="heroResults" aria-live="polite"></div>
   <div class="entry-cards">
     <button type="button" class="entry-card" onclick="showPage('borrow')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材</b><span>選器材、填借用單</span></button>
     <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><b>找東西</b><span>器材、藥品在哪一櫃</span></button>
@@ -1638,7 +1654,42 @@ function updateHeroStats(opt){
     </button>`;
   }).join('');
 }
-// 首頁大搜尋框：先帶到器材查詢頁搜尋（器材＋藥品都會找）
+// 首頁大搜尋框：打字就在下方列出「器材／藥品／櫃位」三類結果；按 Enter 到器材查詢頁看全部
+let heroSearchTimer=null;
+async function ensureChemicalsLoaded(){
+  if(allChemicals.length)return;
+  try{const rows=await sb('GET','chemicals',{order:'category,name_zh'});allChemicals=Array.isArray(rows)?rows:[];filteredChemicals=allChemicals;}catch(e){}
+}
+function heroSearchLive(q){
+  clearTimeout(heroSearchTimer);
+  const box=document.getElementById('heroResults');if(!box)return;
+  q=(q||'').trim();
+  document.body.classList.toggle('hero-searching',!!q);
+  if(!q){box.innerHTML='';return;}
+  heroSearchTimer=setTimeout(async()=>{
+    await ensureChemicalsLoaded();
+    const cur=(document.getElementById('heroSearch').value||'').trim();if(cur!==q)return;
+    const ql=q.toLowerCase();
+    const eq=allEquipment.filter(e=>matchesEquip(e,q));
+    window._srLists.hero=eq.slice(0,5);
+    const ch=allChemicals.filter(c=>(c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)).slice(0,4);
+    window._heroChems=ch;
+    // 櫃位：代碼開頭符合（例如打 BB02 會找到 BB02、BB02-4）
+    const locMap=new Map();
+    allEquipment.forEach(e=>{if(!e.location)return;expandLocationField(e.location).forEach(code=>{if(String(code).toLowerCase().startsWith(ql)){const k=e.room+'|'+code;if(!locMap.has(k))locMap.set(k,{room:e.room,code,n:0});locMap.get(k).n++;}});});
+    const locs=[...locMap.values()].slice(0,6);
+    window._heroLocs=locs;
+    let html='';
+    if(locs.length)html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" onclick="heroLoc(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項</span></button>`).join('')}</div>`;
+    if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
+    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item"><div class="sr-thumb-ph">🧪</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
+    if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
+    else if(eq.length>5)html+=`<button type="button" class="hr-more" onclick="heroSearchGo()">看全部 ${eq.length} 項器材 ›</button>`;
+    box.innerHTML=html;
+  },200);
+}
+function heroLoc(i){const l=(window._heroLocs||[])[i];if(l)jumpToFloorplanLocation(l.room,l.code,'');}
+// 按 Enter：帶到器材查詢頁搜尋（器材＋藥品都會找）
 function heroSearchGo(){
   const q=(document.getElementById('heroSearch').value||'').trim();
   showPage('equipment');
@@ -1982,6 +2033,7 @@ async function jumpToFloorplanLocation(room,code,itemName){
   // 手機上櫃子太小的話先放大兩倍，泡泡比較看得清楚
   if(window.innerWidth<700&&spots.some(s=>s.width<8)&&floorplanZoomScale<2){floorplanZoomScale=2;applyFloorplanZoom();}
   showFloorplanBubbles(spots,code,itemName);
+  if(typeof fpSideMode==='function'&&fpSideMode())openFloorplanLocModal(spots[0].code);
 }
 function scrollToFloorplanBubble(ci){
   const bb=document.querySelector(`#floorplanBubbleLayer .fp-bubble[data-ci="${ci}"]`);
@@ -3213,6 +3265,7 @@ function srRefresh(l){
   if(l==='cart'){doCartSearch(document.getElementById('cartSearchInput').value,true);renderCart();}
   else if(l==='bp'){doBorrowPageSearch(document.getElementById('borrowPageSearchInput').value,true);}
   else if(l==='side'){renderBorrowSidePanel();}
+  else if(l==='hero'){heroSearchLive(document.getElementById('heroSearch').value);}
 }
 function srQty(l,i,d){const e=srItem(l,i);if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);srRefresh(l);}
 function srSet(l,i,v){const e=srItem(l,i);if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);srRefresh(l);}
@@ -3965,6 +4018,7 @@ function showPage(page){
   const moreBtn=document.getElementById('bnMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',page==='floorplan'||page==='chemicals'||page==='borrow');
   document.body.classList.toggle('on-home',page==='home');
+  if(page!=='home'){const hs=document.getElementById('heroSearch');if(hs&&hs.value){hs.value='';heroSearchLive('');}}
   document.body.classList.toggle('on-borrow',page==='borrow');
   if(page==='borrow')setTimeout(renderBorrowSidePanel,0);
   updateBorrowDraftBar();
