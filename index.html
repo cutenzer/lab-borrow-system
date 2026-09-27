@@ -422,6 +422,16 @@
   .modal-title{font-size:15px;font-weight:700;margin-bottom:14px;flex-shrink:0;padding:0 22px;}
   #modalBody{overflow-y:auto;flex:1;min-height:0;padding:0 22px;}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;padding:14px 22px;border-top:1px solid var(--border);margin-top:0;}
+  /* 平面圖櫃位內容（手機/平板）：固定在畫面底部的抽屜，不擋平面圖，器材多可在抽屜內滑動 */
+  .fp-sheet{position:fixed;left:0;right:0;bottom:0;z-index:150;max-width:720px;margin:0 auto;background:var(--surface);border-radius:16px 16px 0 0;box-shadow:0 -8px 28px rgba(15,23,42,.22);max-height:42vh;max-height:42dvh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s linear .22s;}
+  .fp-sheet.show{transform:none;visibility:visible;transition:transform .22s ease,visibility 0s;}
+  .fp-sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--border);margin:8px auto 0;flex-shrink:0;}
+  .fp-sheet-head{display:flex;align-items:center;gap:8px;padding:6px 10px 8px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .fp-sheet-title{flex:1;min-width:0;font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fp-sheet-close{flex-shrink:0;width:36px;height:36px;border:none;border-radius:50%;background:var(--surface2);color:var(--text);font-size:16px;cursor:pointer;font-family:inherit;}
+  .fp-sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;flex:1;min-height:0;padding:0 18px 10px;}
+  body.fp-sheet-open #page-floorplan{padding-bottom:var(--fpSheetH,42vh);}
+  body.fp-sheet-open .cart-fab{bottom:calc(var(--fpSheetH,42vh) + 14px);}
   .toast{position:fixed;bottom:80px;right:20px;background:#2a3950;color:#fff;padding:10px 16px;border-radius:8px;font-size:13.5px;font-weight:500;box-shadow:0 8px 24px rgba(15,23,42,0.25);transform:translateY(80px);opacity:0;transition:all 0.25s;z-index:400;}
   .toast.show{transform:none;opacity:1;}
   .toast.success{background:var(--success);}
@@ -1194,6 +1204,11 @@
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
   <div class="modal"><div class="modal-title" id="modalTitle"></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></div>
 </div>
+<section class="fp-sheet" id="fpSheet" role="region" aria-labelledby="fpSheetTitle">
+  <div class="fp-sheet-grip" aria-hidden="true"></div>
+  <div class="fp-sheet-head"><div class="fp-sheet-title" id="fpSheetTitle"></div><button type="button" class="fp-sheet-close" onclick="closeFpSheet()" aria-label="關閉">✕</button></div>
+  <div class="fp-sheet-body" id="fpSheetBody"></div>
+</section>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1795,6 +1810,7 @@ function renderFloorplanRoomButtons(activeKey){
   box.innerHTML=`<div class="fp-room-grid">${ROOM_COVERS.map(r=>`<button type="button" class="fp-room-btn ${r.key===activeKey?'active':''}" onclick="showFloorplan('${r.key}',null)">${r.label.replace('實驗室','')}</button>`).join('')}</div>`;
 }
 async function showFloorplan(key, el){
+  closeFpSheet(true);
   clearFloorplanBubbles();
   currentFloorplan = key;
   floorplanOpenLoc = '';
@@ -1917,11 +1933,52 @@ function openFloorplanLocModal(code){
   floorplanOpenLoc=code;
   floorplanExpandedRowId=null;
   renderFloorplanHotspots();
-  // 電腦版：右側面板；手機：跳出視窗
-  if(fpSideMode()){renderFloorplanLocModalBody();return;}
-  showModal(`📦 ${escH(code)} 裡面有什麼`,'',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+  // 電腦版：右側面板；手機/平板：畫面底部抽屜（不蓋住平面圖）
+  if(fpSideMode()){closeFpSheet(true);renderFloorplanLocModalBody();return;}
+  const sb=document.getElementById('fpSheetBody');if(sb)sb.scrollTop=0;
   renderFloorplanLocModalBody();
+  openFpSheet();
+  fpRevealSelectedSpot();
 }
+function openFpSheet(){
+  const sh=document.getElementById('fpSheet');if(!sh)return;
+  sh.classList.add('show');
+  document.body.classList.add('fp-sheet-open');
+  syncFpSheetH();
+}
+// silent=true：只收起抽屜，不動目前選取（換頁、換教室時用）
+function closeFpSheet(silent){
+  const sh=document.getElementById('fpSheet');
+  if(!sh||!sh.classList.contains('show'))return;
+  sh.classList.remove('show');
+  document.body.classList.remove('fp-sheet-open');
+  if(!silent){floorplanOpenLoc='';floorplanExpandedRowId=null;renderFloorplanHotspots();}
+}
+function syncFpSheetH(){
+  const sh=document.getElementById('fpSheet');
+  if(sh&&sh.classList.contains('show'))document.documentElement.style.setProperty('--fpSheetH',sh.offsetHeight+'px');
+}
+// 被點的櫃子如果剛好被抽屜蓋住，就把頁面往上捲一點讓它露出來
+function fpRevealSelectedSpot(){
+  const sh=document.getElementById('fpSheet');
+  const el=document.querySelector('#page-floorplan .floorplan-hotspot.selected');
+  if(!sh||!el)return;
+  const r=el.getBoundingClientRect(),sheetTop=window.innerHeight-sh.offsetHeight;
+  if(r.bottom>sheetTop-12)window.scrollBy({top:r.bottom-sheetTop+48,behavior:'smooth'});
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  const lb=document.querySelector('.lightbox.show');
+  if(lb)return;
+  closeFpSheet();
+});
+window.addEventListener('resize',()=>{
+  const sh=document.getElementById('fpSheet');
+  if(sh&&sh.classList.contains('show')){
+    if(fpSideMode()){closeFpSheet(true);if(floorplanOpenLoc)renderFloorplanLocModalBody();}
+    else syncFpSheetH();
+  }
+});
 let floorplanExpandedRowId=null;
 function renderFloorplanLocModalBody(){
   const code=floorplanOpenLoc;
@@ -1972,10 +2029,11 @@ function renderFloorplanLocModalBody(){
       </div>
     </div>`;
   }).join(''):'<div style="font-size:13px;color:var(--text2);padding:8px 0">（沒有找到對應器材資料）</div>';
-  const box=document.getElementById('modalBody');
+  const box=document.getElementById('fpSheetBody');
   if(box)box.innerHTML=body;
-  const title=document.getElementById('modalTitle');
-  if(title)title.textContent=`📦 ${code} 裡面有什麼`;
+  const title=document.getElementById('fpSheetTitle');
+  if(title)title.textContent=`📦 ${code} 裡面有什麼（${items.length} 項）`;
+  syncFpSheetH();
 }
 function fpQty(i,d){const e=(window._fpItems||[])[i];if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);renderFloorplanLocModalBody();}
 function fpZoom(i){const e=(window._fpItems||[])[i];if(e&&safeUrl(e.image_url))openLightbox(safeUrl(e.image_url),e.name);}
@@ -3982,13 +4040,17 @@ function closeNavMenu(){
   const menu=document.getElementById('navMenu');
   if(menu)menu.classList.remove('show');
 }
-function showPage(page){
+function showPage(page,opts){
+  const fromHist=!!(opts&&opts.fromHistory);
+  if(!document.getElementById('page-'+page))return;
+  if(page!=='floorplan'&&typeof closeFpSheet==='function')closeFpSheet(true);
   const currentPage=document.querySelector('.page.active')?.id?.replace('page-','');
   closeBnMore();
-  if(currentPage===page){window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(currentPage===page){if(!fromHist)window.scrollTo({top:0,behavior:'smooth'});return;}
+  if(!fromHist)navSaveScroll();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(!fromHist){window.scrollTo({top:0,behavior:'smooth'});navPush('');}
   document.querySelectorAll('.nav-menu button,.desk-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
   closeNavMenu();
   document.querySelectorAll('.bn-item').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
@@ -4012,6 +4074,69 @@ function showPage(page){
     else loadFloorplanHotspotsFromDB().then(renderFloorplanHotspots);
   }
 }
+/* ── 手機「返回鍵」支援 ──────────────────────────────
+   這個網站其實只有一頁，切換「頁面」、打開視窗都不會產生瀏覽紀錄，
+   所以按手機返回鍵會直接離開網站。這裡在每次換頁／開視窗時自己記一筆紀錄：
+   按返回 → 先關掉最上層的視窗；沒有視窗 → 回到上一個頁面；都回到底了才離開網站。 */
+const NAV={idx:0,busy:false};
+// 由上到下的疊放順序：返回鍵一次只關最上面那一層
+const NAV_OVERLAYS=[
+  ['lightbox','show',()=>closeLightbox()],
+  ['modalOverlay','show',()=>closeModal()],
+  ['venueZoomOverlay','show',()=>closeHomeVenueZoom()],
+  ['venueFsOverlay','show',()=>closeVenueFullscreen()],
+  ['cartDrawer','open',()=>closeCart()],
+  ['fpSheet','show',()=>closeFpSheet()],
+  ['navMenu','show',()=>closeNavMenu()],
+  ['bnMoreMenu','show',()=>closeBnMore()],
+];
+function navCurPage(){return document.querySelector('.page.active')?.id?.replace('page-','')||'home';}
+function navIsOpen(o){const el=document.getElementById(o[0]);return !!(el&&el.classList.contains(o[1]));}
+function navSaveScroll(){
+  try{const st=history.state;if(st&&st.lab)history.replaceState(Object.assign({},st,{y:Math.round(window.scrollY)}),'');}catch(_){}
+}
+function navPush(ov){
+  if(NAV.busy)return;
+  NAV.idx++;
+  try{history.pushState({lab:1,page:navCurPage(),idx:NAV.idx,ov:ov||''},'');}catch(_){}
+}
+function initBackButton(){
+  if(!('pushState' in history))return;
+  try{history.scrollRestoration='manual';}catch(_){}
+  try{history.replaceState({lab:1,page:navCurPage(),idx:0,ov:''},'');}catch(_){return;}
+  // 視窗「從關到開」時記一筆紀錄；不必去改每一個開視窗的函式
+  NAV_OVERLAYS.forEach(o=>{
+    const el=document.getElementById(o[0]);if(!el)return;
+    let was=navIsOpen(o);
+    new MutationObserver(()=>{const now=navIsOpen(o);if(now&&!was)navPush(o[0]);was=now;})
+      .observe(el,{attributes:true,attributeFilter:['class']});
+  });
+  window.addEventListener('popstate',e=>{
+    const st=e.state;
+    if(!st||!st.lab)return;
+    const forward=st.idx>NAV.idx;
+    NAV.idx=st.idx;
+    NAV.busy=true;
+    let changed=false;
+    if(!forward){
+      const top=NAV_OVERLAYS.find(navIsOpen);
+      if(top){top[2]();changed=true;}
+    }
+    const target=(typeof st.page==='string'&&document.getElementById('page-'+st.page))?st.page:null;
+    if(!changed&&target&&target!==navCurPage()){
+      NAV_OVERLAYS.forEach(o=>{if(navIsOpen(o))o[2]();});
+      showPage(target,{fromHistory:true});
+      const y=+st.y||0;
+      requestAnimationFrame(()=>window.scrollTo(0,y));
+      changed=true;
+    }
+    setTimeout(()=>{NAV.busy=false;},0);
+    // 這筆紀錄對應的視窗早就用「關閉」鈕關掉了（畫面沒變化）→ 自動再退一格，免得要按兩次
+    if(!changed&&!forward)history.back();
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initBackButton);
+else initBackButton();
 function toggleBnMore(e){
   if(e)e.stopPropagation();
   const menu=document.getElementById('bnMoreMenu'),overlay=document.getElementById('bnMoreOverlay');
