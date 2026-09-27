@@ -342,6 +342,15 @@
         <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">📊 下載 Excel 備份</button>
         <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">🗂️ 下載完整備份（JSON）</button>
       </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">📷 照片備份</div>
+        <div id="photoBackupInfo" style="font-size:12.5px;color:var(--text2);margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary btn-sm" id="photoNewBtn" onclick="runPhotoBackup(true)">📥 下載新增的照片</button>
+          <button class="btn btn-secondary btn-sm" id="photoAllBtn" onclick="runPhotoBackup(false)">📦 下載全部照片</button>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6">包含借用人上傳的照片、後台換過的器材照片與實驗室封面，打包成一個 ZIP。第一次請按「下載全部照片」，之後按「下載新增的照片」只抓上次之後新增的，比較快。</div>
+      </div>
       <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">Excel 方便打開查看；JSON 保留全部欄位原樣，萬一要還原資料時用這份。建議每月一次，學期末再多備份一次。照片檔案不包含在內。</div>
     </div>
     </div>
@@ -1092,7 +1101,15 @@ function openSettingsSheet(){
 }
 // ── 資料備份：把所有資料表下載成一個檔案（用登入後的權限讀取，每張表都完整分頁讀完）──
 const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','room_covers','equipment_writeoffs','borrow_purposes','deposit_settings'];
+function renderPhotoBackupInfo(){
+  const el=document.getElementById('photoBackupInfo');if(!el)return;
+  const t=parseInt(localStorage.getItem('lab_last_photo_backup')||'0');
+  if(!t){el.textContent='這台電腦還沒有備份過照片。';return;}
+  const d=new Date(t),days=Math.floor((Date.now()-t)/86400000);
+  el.textContent=`上次照片備份：${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}（${days===0?'今天':days+' 天前'}）`;
+}
 function renderBackupInfo(){
+  renderPhotoBackupInfo();
   const el=document.getElementById('backupInfo');if(!el)return;
   const t=parseInt(localStorage.getItem('lab_last_backup')||'0');
   if(!t){el.innerHTML='這台電腦還沒有備份過。';return;}
@@ -1133,6 +1150,79 @@ async function runBackup(kind){
   }catch(e){showToast('備份失敗：'+e.message,'error');}
   backupRunning=false;
   if(btn){btn.disabled=false;btn.textContent=orig;}
+}
+// ── 照片備份：把 Storage（borrow-photos）裡的照片打包成 ZIP 下載 ──
+const PHOTO_BUCKET='borrow-photos';
+function loadScriptOnce(src){
+  return new Promise((ok,fail)=>{
+    if(document.querySelector(`script[data-src="${src}"]`))return ok();
+    const s=document.createElement('script');s.src=src;s.dataset.src=src;s.onload=()=>ok();s.onerror=()=>fail(new Error('無法載入壓縮工具，請檢查網路'));document.head.appendChild(s);
+  });
+}
+// 一層一層列出資料夾裡的所有檔案（Storage 的列表一次最多 1000 筆，要分頁、也要往子資料夾找）
+async function listStorageAll(prefix){
+  await ensureToken();
+  const out=[];
+  let offset=0;
+  while(true){
+    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/list/${PHOTO_BUCKET}`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+ACCESS_TOKEN,'Content-Type':'application/json'},body:JSON.stringify({prefix,limit:1000,offset,sortBy:{column:'name',order:'asc'}})});
+    const rows=await res.json().catch(()=>[]);
+    if(!res.ok)throw new Error((rows&&rows.message)||'讀取照片清單失敗');
+    for(const r of rows){
+      const full=(prefix?prefix+'/':'')+r.name;
+      if(r.id===null||r.id===undefined){ // 資料夾
+        if(r.name&&r.name!=='.emptyFolderPlaceholder')out.push(...await listStorageAll(full));
+      }else if(r.name!=='.emptyFolderPlaceholder'){
+        out.push({path:full,size:(r.metadata&&r.metadata.size)||0,created:r.created_at||r.updated_at||''});
+      }
+    }
+    if(rows.length<1000)break;
+    offset+=rows.length;
+  }
+  return out;
+}
+// 壓縮檔裡的路徑只留安全字元，避免「../」這類路徑在解壓時跑到別的資料夾
+function safeZipPath(p){return String(p).split('/').filter(x=>x&&x!=='.'&&x!=='..').map(x=>x.replace(/[^\w.\-]/g,'_')).join('/');}
+let photoBackupRunning=false;
+async function runPhotoBackup(onlyNew){
+  if(photoBackupRunning)return;
+  photoBackupRunning=true;
+  const btn=document.getElementById(onlyNew?'photoNewBtn':'photoAllBtn');const orig=btn?btn.textContent:'';
+  const setBtn=t=>{if(btn)btn.textContent=t;};
+  if(btn)btn.disabled=true;
+  try{
+    setBtn('讀取清單中…');
+    await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    let files=await listStorageAll('');
+    const since=parseInt(localStorage.getItem('lab_last_photo_backup')||'0');
+    if(onlyNew&&since)files=files.filter(f=>f.created&&new Date(f.created).getTime()>since);
+    if(!files.length){showToast(onlyNew&&since?'上次備份之後沒有新照片':'沒有找到任何照片','success');return;}
+    const totalMB=files.reduce((a,f)=>a+(f.size||0),0)/1048576;
+    if(totalMB>400&&!confirm(`共有 ${files.length} 張、約 ${Math.round(totalMB)} MB，檔案很大，下載會比較久（手機可能記憶體不足）。要繼續嗎？`))return;
+    const zip=new JSZip();
+    let done=0,failed=0,idx=0;
+    const worker=async()=>{
+      while(idx<files.length){
+        const f=files[idx++];
+        try{
+          const res=await fetch(`${SUPABASE_URL}/storage/v1/object/public/${PHOTO_BUCKET}/${f.path.split('/').map(encodeURIComponent).join('/')}`,{cache:'no-store'});
+          if(!res.ok)throw new Error(res.status);
+          zip.file(safeZipPath(f.path),await res.blob());
+        }catch(e){failed++;}
+        done++;setBtn(`下載中 ${done}/${files.length}`);
+      }
+    };
+    await Promise.all([worker(),worker(),worker(),worker()]); // 同時抓 4 張，不會太慢也不會塞爆
+    setBtn('壓縮中…');
+    const blob=await zip.generateAsync({type:'blob'});
+    const now=new Date(),stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`實驗室照片備份-${onlyNew&&since?'新增-':''}${stamp}.zip`;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+    if(!failed)localStorage.setItem('lab_last_photo_backup',String(Date.now()));
+    renderPhotoBackupInfo();
+    showToast(failed?`已下載 ${files.length-failed} 張，有 ${failed} 張失敗（下次按「下載新增的照片」會再試）`:`✅ 已下載 ${files.length} 張照片`,failed?'error':'success');
+  }catch(e){showToast('照片備份失敗：'+e.message,'error');}
+  finally{photoBackupRunning=false;if(btn){btn.disabled=false;btn.textContent=orig;}}
 }
 function setTabBadge(id,count){
   const el=document.getElementById(id);if(!el)return;
