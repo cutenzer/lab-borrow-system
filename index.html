@@ -446,6 +446,7 @@
 
   /* 導覽全部收進左上角漢堡選單，底部導覽列停用 */
   .bottom-nav{display:none;}
+  .bn-more-menu:not(.show),.bn-more-overlay:not(.show){display:none;}
   @media(max-width:600px){
     .form-grid{grid-template-columns:minmax(0,1fr);}
     header h1{font-size:16px;}
@@ -624,6 +625,86 @@
     #page-home .home-section .auto-carousel{max-width:none;}
   }
   .home-col{min-width:0;}
+
+  /* ═════════ 第三批：各頁面電腦版排版 ═════════ */
+  /* 器材查詢：電腦版改成照片格狀 */
+  @media(min-width:1100px){
+    #equipBrowseGrid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}
+    #equipBrowseGrid .home-eq-row{flex-direction:column;align-items:stretch;padding:0;overflow:hidden;gap:0;}
+    #equipBrowseGrid .home-eq-thumb{width:100%;height:150px;border-radius:0;font-size:40px;}
+    #equipBrowseGrid .home-eq-info{padding:12px 14px 4px;display:flex;flex-direction:column;gap:5px;}
+    #equipBrowseGrid .home-eq-name{font-size:16.5px;}
+    #equipBrowseGrid .home-eq-add,#equipBrowseGrid .equip-row-qty{margin:6px 14px 14px;}
+    #equipBrowseGrid .home-eq-add{width:calc(100% - 28px);}
+    #equipBrowseGrid .equip-row-qty{justify-content:center;}
+    #equipBrowseGrid .empty{grid-column:1/-1;}
+  }
+  /* 藥品查詢：電腦版表格 */
+  .chem-table-head{display:none;}
+  .chem-tr{display:flex;align-items:center;gap:10px;padding:12px 8px;border-bottom:1px solid var(--surface2);flex-wrap:wrap;}
+  .chem-tr .c-name{flex:1 1 60%;min-width:0;}
+  .chem-tr .c-name b{font-size:15px;}
+  .chem-tr .c-en{font-size:12px;color:var(--text2);}
+  .chem-tr .c-cat,.chem-tr .c-loc,.chem-tr .c-rec{font-size:12.5px;}
+  .chem-tr .c-loc{font-family:'DM Mono',monospace;color:var(--text2);}
+  .chem-tr .c-left{font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--accent);white-space:nowrap;}
+  .chem-tr .c-left.low{color:#9a3c12;}
+  .chem-tr .c-act{margin-left:auto;}
+  .chem-tr.chem-unavail{opacity:.6;}
+  @media(min-width:1100px){
+    .chem-table-head,.chem-tr{display:grid;grid-template-columns:2.2fr 1.1fr .9fr 1fr 1.1fr 110px;gap:12px;align-items:center;}
+    .chem-table-head{padding:10px 8px;background:var(--surface2);border-radius:10px 10px 0 0;font-size:12.5px;font-weight:700;color:var(--text2);}
+    .chem-tr .c-act{margin-left:0;justify-self:end;}
+  }
+  /* 我的記錄：分類按鈕 */
+  .rec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px;}
+  .rec-tabs button{height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+  .rec-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .rec-tabs button small{font-family:'DM Mono',monospace;font-size:12px;opacity:.75;margin-left:4px;}
+  /* 借用頁：電腦版右側固定借用清單 */
+  #borrowSidePanel{display:none;}
+  @media(min-width:1100px){
+    #page-borrow.active{display:grid;grid-template-columns:minmax(0,1fr) 360px;column-gap:22px;align-items:start;}
+    #page-borrow>*:not(#borrowSidePanel){grid-column:1;}
+    #borrowSidePanel{display:flex;flex-direction:column;gap:12px;grid-column:2;grid-row:1/span 40;position:sticky;top:24px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;max-height:calc(100vh - 48px);overflow:auto;}
+    body.on-borrow .cart-fab{display:none!important;}
+  }
+  .bsp-head{display:flex;align-items:baseline;gap:8px;}
+  .bsp-head h3{font-size:17px;margin:0;}
+  .bsp-head span{font-size:13px;color:var(--text2);}
+  .bsp-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2);}
+  .bsp-item img,.bsp-item .ph{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .bsp-item .nm{flex:1;min-width:0;}
+  .bsp-item .nm b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bsp-item .nm span{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);}
+  .bsp-sum{display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:10px;background:var(--surface2);font-size:13.5px;}
+  .bsp-sum div{display:flex;justify-content:space-between;gap:10px;}
+  .bsp-sum div span:first-child{color:var(--text2);flex-shrink:0;}
+  .bsp-sum div span:last-child{text-align:right;font-weight:600;}
+  .bsp-empty{font-size:13.5px;color:var(--text2);text-align:center;padding:16px 0;}
+  /* 平面圖：電腦版右側櫃位面板 */
+  .fp-side{display:none;}
+  @media(min-width:1100px){
+    .fp-layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start;margin-top:10px;}
+    .fp-side{display:flex;flex-direction:column;gap:10px;position:sticky;top:24px;background:var(--surface2);border-radius:14px;padding:16px;max-height:calc(100vh - 48px);overflow:auto;text-align:left;}
+  }
+  .fp-side .fp-code{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;}
+  .fp-side .fp-bar{height:4px;width:70px;background:var(--caution);border-radius:2px;}
+  .fp-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .fp-item img,.fp-item .ph{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--surface);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .fp-item .nm{flex:1;min-width:0;}
+  .fp-item .nm b{display:block;font-size:14.5px;}
+  .fp-item .nm span{font-size:12px;color:var(--text2);}
+  .floorplan-hotspot.selected{fill:rgba(232,207,58,.55)!important;stroke:#7a5a06!important;stroke-width:3!important;}
+  /* 場地預約：可以一次勾選多個時段 */
+  .venue-add-btn.picked{background:var(--caution)!important;color:#22262a!important;border-color:#7a5a06!important;font-weight:700;}
+  .venue-pick-bar{display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:140;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 10px 30px rgba(31,35,38,.22);padding:10px 12px 10px 18px;align-items:center;gap:12px;max-width:calc(100vw - 24px);}
+  .venue-pick-bar.show{display:flex;}
+  .venue-pick-bar .vp-txt{display:flex;flex-direction:column;min-width:0;}
+  .venue-pick-bar .vp-txt b{font-size:14.5px;}
+  .venue-pick-bar .vp-txt span{font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46vw;}
+  @media(min-width:1100px){.venue-pick-bar{margin-left:120px;}}
+
   /* 藥品列表 */
   .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
   .chem-row:last-child{border-bottom:none;}
@@ -749,6 +830,7 @@
 </div>
 
 <div id="page-borrow" class="page">
+  <aside id="borrowSidePanel" aria-label="借用清單"></aside>
   <div class="deposit-banner" id="depositBanner">
     <h3>⚠️ 此借用目的需繳納保證金</h3>
     <ul>
@@ -1008,7 +1090,8 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoomReset()">↺</button>
     </div>
     <div class="hint" style="margin-top:6px">格子太小點不準的話，先按「🔍＋」放大，再用手指或滑鼠滾軸/拖曳捲軸左右上下移動查看，放大後點擊會準很多。</div>
-    <div style="text-align:center;margin-top:10px">
+    <div class="fp-layout">
+    <div style="text-align:center;margin-top:10px;min-width:0">
       <div id="floorplanScrollWrap" style="overflow:auto;max-width:100%;border-radius:8px">
         <div id="floorplanImgWrap" style="position:relative;width:100%">
           <img id="floorplanImg" src="" alt="實驗室平面圖"
@@ -1018,6 +1101,8 @@
           <div id="floorplanBubbleLayer"></div>
         </div>
       </div>
+    </div>
+    <aside class="fp-side" id="floorplanSide" aria-label="櫃位內容"><div class="hint" style="padding:30px 6px;text-align:center">點圖上的櫃子，<br>這裡會列出裡面有什麼</div></aside>
     </div>
     <div id="floorplanLocList" style="margin-top:14px"></div>
     <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「器材查詢」頁的「❓ 找物說明」</div>
@@ -1737,11 +1822,11 @@ function renderFloorplanHotspots(){
   const VW=1080,VH=607,PAD=8; // PAD：讓實際可點擊範圍比看得到的框稍微大一點，手機比較好點準
   svg.innerHTML=spots.map(s=>{
     const hasAny=items.some(e=>locCodeMatches(e.location,s.code));
-    const safeC=s.code.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const safeC=String(s.code).replace(/\\/g,'').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;');
     const x=s.left/100*VW,y=s.top/100*VH,w=s.width/100*VW,h=s.height/100*VH;
     return `<g>
       <rect x="${x-PAD}" y="${y-PAD}" width="${w+PAD*2}" height="${h+PAD*2}" style="fill:transparent;pointer-events:auto;cursor:pointer" onclick="openFloorplanLocModal('${safeC}')"></rect>
-      <rect class="floorplan-hotspot ${hasAny?'':'empty'}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="pointer-events:none"><title>${s.code}</title></rect>
+      <rect class="floorplan-hotspot ${hasAny?'':'empty'} ${s.code===floorplanOpenLoc?'selected':''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="pointer-events:none"><title>${escH(s.code)}</title></rect>
     </g>`;
   }).join('');
 }
@@ -1812,10 +1897,14 @@ function toggleFloorplanGroup(key){
   else floorplanExpandedGroups.add(key);
   renderFloorplanLocations();
 }
+function fpSideMode(){return window.matchMedia('(min-width:1100px)').matches&&document.getElementById('page-floorplan').classList.contains('active');}
 function openFloorplanLocModal(code){
   floorplanOpenLoc=code;
   floorplanExpandedRowId=null;
-  showModal(`📦 ${code} 裡面有什麼`,'',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+  renderFloorplanHotspots();
+  // 電腦版：右側面板；手機：跳出視窗
+  if(fpSideMode()){renderFloorplanLocModalBody();return;}
+  showModal(`📦 ${escH(code)} 裡面有什麼`,'',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
   renderFloorplanLocModalBody();
 }
 let floorplanExpandedRowId=null;
@@ -1823,35 +1912,46 @@ function renderFloorplanLocModalBody(){
   const code=floorplanOpenLoc;
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
   const items=(allEquipment||[]).filter(e=>e.room===room&&locCodeMatches(e.location,code));
-  const body=items.length?items.map(e=>{
+  window._fpItems=items;
+  const side=fpSideMode();
+  if(side){
+    const box=document.getElementById('floorplanSide');if(!box)return;
+    box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px"><span class="fp-code">${escH(code)}</span><span style="font-size:13px;color:var(--text2)">${escH(rn(room))}・${items.length} 項</span></div><div class="fp-bar"></div>`+
+      (items.length?items.map((e,i)=>{
+        const avail=parseInt(e.available)||0,img=safeUrl(e.image_url),qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
+        return `<div class="fp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="fpZoom(${i})">`:'<div class="ph">🔬</div>'}
+          <div class="nm"><b>${escH(e.name)}</b><span>${e.spec?escH(e.spec)+'・':''}${escH(e.location||'')}</span><div class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借 '+avail+' '+escH(e.unit||''):'目前沒有可借'}</div></div>
+          ${avail>0?(qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="fpQty(${i},-1)" aria-label="減少">−</button><span style="min-width:22px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="fpQty(${i},1)" aria-label="增加">+</button></div>`:`<button type="button" class="btn btn-primary btn-sm" onclick="fpQty(${i},1)">加入</button>`):''}
+        </div>`;
+      }).join(''):'<div class="hint">（沒有找到對應器材資料）</div>');
+    return;
+  }
+  const body=items.length?items.map((e,i)=>{
     const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
-    const safeN=e.name.replace(/'/g,"\\'").replace(/"/g,'&quot;');
-    const rowId='fploc-'+e.name.replace(/[^a-zA-Z0-9]/g,'_');
+    const rowId='fploc-'+i;
     const isOpen=floorplanExpandedRowId===rowId;
-    const thumb=e.image_url?`<img src="${e.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔬</div>`;
-    const photoHtml=e.image_url?`<img src="${e.image_url}" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:8px;cursor:zoom-in" onclick="event.stopPropagation();openLightbox('${e.image_url.replace(/'/g,"\\'")}','${safeN}')">`:'';
+    const img=safeUrl(e.image_url);
+    const thumb=img?`<img src="${escH(img)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">🔬</div>`;
+    const photoHtml=img?`<img src="${escH(img)}" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:8px;cursor:zoom-in" onclick="event.stopPropagation();fpZoom(${i})">`:'';
+    const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
     return `<div style="border-bottom:1px solid var(--surface2)">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;cursor:pointer" onclick="toggleFloorplanEquipRow('${rowId}')">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0">
-          ${thumb}
-          <div style="min-width:0">
-            <div style="font-weight:600">${e.name}</div>
-            ${e.spec?`<div style="font-size:12px;color:var(--text2)">${e.spec}</div>`:''}
-          </div>
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">${thumb}
+          <div style="min-width:0"><div style="font-weight:600">${escH(e.name)}</div>${e.spec?`<div style="font-size:12px;color:var(--text2)">${escH(e.spec)}</div>`:''}</div>
         </div>
-        <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12.5px;white-space:nowrap;flex-shrink:0">${avail>0?'可借 '+avail+e.unit:'無庫存'} ▾</span>
+        <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12.5px;white-space:nowrap;flex-shrink:0">${avail>0?'可借 '+avail+escH(e.unit||''):'無庫存'} ▾</span>
       </div>
       <div id="${rowId}" style="display:${isOpen?'block':'none'};padding:0 0 12px 54px">
         ${photoHtml}
         <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--text2)">
-          <div>總數：${total} ${e.unit||'個'}</div>
-          ${e.location?`<div>位置代碼：${e.location}</div>`:''}
-          ${e.alias?`<div>別名：${e.alias}</div>`:''}
+          <div>總數：${total} ${escH(e.unit||'個')}</div>
+          ${e.location?`<div>位置代碼：${escH(e.location)}</div>`:''}
+          ${e.alias?`<div>別名：${escH(e.alias)}</div>`:''}
         </div>
         ${avail>0?`<div class="equip-row-qty" style="margin-top:8px">
-          <button class="qty-btn" onclick="event.stopPropagation();changeQty('${e.room}','${safeN}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},-1);renderFloorplanLocModalBody()">−</button>
-          <input class="qty-input" type="number" min="0" max="${avail}" value="${selectedItems[e.room+'__'+e.name]?.quantity||0}" onclick="event.stopPropagation()" onchange="setQty('${e.room}','${safeN}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},this.value);renderFloorplanLocModalBody()">
-          <button class="qty-btn" onclick="event.stopPropagation();changeQty('${e.room}','${safeN}','${(e.spec||'').replace(/'/g,"\\'")}','${e.unit}',${avail},1);renderFloorplanLocModalBody()">+</button>
+          <button class="qty-btn" onclick="event.stopPropagation();fpQty(${i},-1)">−</button>
+          <span style="min-width:28px;text-align:center;font-weight:700">${qty}</span>
+          <button class="qty-btn" onclick="event.stopPropagation();fpQty(${i},1)">+</button>
           <span style="font-size:12px;color:var(--text2);margin-left:4px">加入借用清單</span>
         </div>`:''}
       </div>
@@ -1862,6 +1962,8 @@ function renderFloorplanLocModalBody(){
   const title=document.getElementById('modalTitle');
   if(title)title.textContent=`📦 ${code} 裡面有什麼`;
 }
+function fpQty(i,d){const e=(window._fpItems||[])[i];if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);renderFloorplanLocModalBody();}
+function fpZoom(i){const e=(window._fpItems||[])[i];if(e&&safeUrl(e.image_url))openLightbox(safeUrl(e.image_url),e.name);}
 function toggleFloorplanEquipRow(rowId){
   floorplanExpandedRowId=(floorplanExpandedRowId===rowId)?null:rowId;
   renderFloorplanLocModalBody();
@@ -1991,7 +2093,11 @@ let userHomeLab='';
 // [修改3] 同步場地預約的時段列表
 let inlinePeriodRows=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();rebuildPurposeLists();setRole('老師');loadPurposeSettings().then(()=>{setPurposeOptions(currentRole);if(document.getElementById('vroleTabStudent'))setVenueRole(currentVenueRole);});});
+window.addEventListener('DOMContentLoaded',()=>{
+  const pb=document.getElementById('page-borrow');
+  if(pb){const sync=ev=>{if(ev.target&&ev.target.closest&&ev.target.closest('#borrowSidePanel'))return;clearTimeout(window._bspT);window._bspT=setTimeout(renderBorrowSidePanel,120);};pb.addEventListener('change',sync);pb.addEventListener('input',sync);pb.addEventListener('click',sync);}
+  window.addEventListener('resize',()=>{clearTimeout(window._bspR);window._bspR=setTimeout(renderBorrowSidePanel,200);});
+  setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();rebuildPurposeLists();setRole('老師');loadPurposeSettings().then(()=>{setPurposeOptions(currentRole);if(document.getElementById('vroleTabStudent'))setVenueRole(currentVenueRole);});});
 
 let autoReturnDate='';
 function nextSchoolDay(dateStr){
@@ -2387,6 +2493,7 @@ async function submitVenueRequest(){
     showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。審核前課表上會以<strong>虛線框</strong>顯示「待審核」，其他人也看得到，不會被重複預約。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     periodRows=[];
     submittingVenue=false;
+    venuePicks=[];renderVenuePickBar();
     loadVenue();renderHomeVenuePreview();
   }catch(e){unlock();showToast('申請失敗：'+e.message,'error');}
 }
@@ -2586,6 +2693,45 @@ function showVenueSlotInfo(dateStr,period,venue){
   }).join('');
   showModal(`${dateStr} ${period} ${venue}`,rows,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
+// 課表上可以連續點好幾格「＋」選時段，選好後一次填表
+let venuePicks=[];
+function isVenuePicked(d,p,v){return venuePicks.some(x=>x.date===d&&x.period===p&&x.venue===v);}
+function toggleVenuePick(d,p,v){
+  if(isVenuePicked(d,p,v)){venuePicks=venuePicks.filter(x=>!(x.date===d&&x.period===p&&x.venue===v));}
+  else{
+    if(d<todayStr()){showToast('不能預約今天以前的時段','error');return;}
+    const c=findVenueConflict(d,p,v);
+    if(c){showToast(`這個時段已被 ${c.borrower_name} 預約`,'error');return;}
+    if(venuePicks.length>=30){showToast('一次最多選 30 個時段','error');return;}
+    venuePicks.push({date:d,period:p,venue:v});
+    venuePicks.sort((a,b)=>(a.date+PERIODS.indexOf(a.period)).localeCompare(b.date+PERIODS.indexOf(b.period)));
+  }
+  renderVenueTable(getWeekDates(venueWeekOffset));
+  renderVenuePickBar();
+}
+function renderVenuePickBar(){
+  let bar=document.getElementById('venuePickBar');
+  if(!bar){bar=document.createElement('div');bar.id='venuePickBar';bar.className='venue-pick-bar';document.body.appendChild(bar);}
+  const onVenue=document.getElementById('page-venue').classList.contains('active');
+  if(!venuePicks.length||!onVenue){bar.classList.remove('show');return;}
+  const txt=venuePicks.map(x=>{const dt=new Date(x.date+'T00:00:00');return `${dt.getMonth()+1}/${dt.getDate()} ${x.period} ${x.venue.replace('實驗室','')}`;}).join('、');
+  bar.innerHTML=`<div class="vp-txt"><b>已選 ${venuePicks.length} 個時段</b><span>${escH(txt)}</span></div>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="clearVenuePicks()">清除</button>
+    <button type="button" class="btn btn-primary" onclick="bookVenuePicks()">📅 填寫預約</button>`;
+  bar.classList.add('show');
+}
+function clearVenuePicks(){venuePicks=[];renderVenueTable(getWeekDates(venueWeekOffset));renderVenuePickBar();}
+function bookVenuePicks(){
+  if(!venuePicks.length)return;
+  const [first,...rest]=venuePicks;
+  openVenueBookingModal(first.date,first.period,first.venue);
+  rest.forEach(x=>{
+    const id=Date.now()+Math.floor(Math.random()*100000);
+    periodRows.push(id);appendPeriodRow(id,x.date);
+    const ps=document.getElementById('pr-period-'+id);if(ps)ps.value=x.period;
+    const vs=document.getElementById('pr-venue-'+id);if(vs)vs.value=x.venue;
+  });
+}
 function openVenueBookingModal(dateStr,period,venue){
   if(dateStr&&period&&venue){
     const conflict=findVenueConflict(dateStr,period,venue);
@@ -2716,7 +2862,8 @@ function renderVenueTable(dates){
           html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="showVenueSlotInfo('${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         if(!blocking){
-          html+=`<button class="venue-add-btn" onclick="event.stopPropagation();openVenueBookingModal('${dateStr}','${period}','${venueFull}')">＋</button>`;
+          const picked=isVenuePicked(dateStr,period,venueFull);
+          html+=`<button class="venue-add-btn ${picked?'picked':''}" title="${picked?'取消選取':'選這個時段'}" onclick="event.stopPropagation();toggleVenuePick('${dateStr}','${period}','${venueFull}')">${picked?'✓':'＋'}</button>`;
         }
         html+=`</td>`;
       });
@@ -2958,12 +3105,71 @@ function goMyRecordsFor(name){
   closeModal();showPage('myrecords');
   const q=document.getElementById('queryName');if(q){q.value=name||'';if(name)loadMyRecords();}
 }
+// 借用頁右側的借用清單（電腦版）：跟表單即時同步，隨時看得到借了什麼、日期、場地、保證金
+function renderBorrowSidePanel(){
+  const box=document.getElementById('borrowSidePanel');if(!box)return;
+  if(getComputedStyle(box).display==='none')return;
+  const items=Object.values(selectedItems);
+  window._sideItems=items;
+  const total=items.reduce((a,i)=>a+(parseInt(i.quantity)||0),0);
+  const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
+  const pSel=document.getElementById('f-purpose').value;
+  const venue=getInlineVenueDraft();
+  const needs=purposeNeedsDeposit(pSel,currentRole);
+  const dep=depositFor(needs,!!document.getElementById('f-venue').value,items.length>0);
+  const warn=venueNotBookedWarning();
+  const list=items.length?items.map((i,idx)=>{
+    const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
+    const img=safeUrl(eq?.image_url);
+    return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph">🔬</div>'}
+      <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
+      <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button><span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span><button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
+    </div>`;
+  }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「器材查詢」挑</div>';
+  box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
+    <div class="search-wrap" style="margin:0"><span class="search-icon">🔎</span><input class="search-input" type="text" id="sidePanelSearch" placeholder="搜尋器材，直接加入…" oninput="sidePanelSearch(this.value)" autocomplete="off"></div>
+    <div id="sidePanelResults"></div>
+    <div>${list}</div>
+    <div class="bsp-sum">
+      <div><span>借用</span><span style="font-family:'DM Mono',monospace">${escH(bd?bd.slice(5):'未選')} → ${escH(rd?rd.slice(5):'未選')}</span></div>
+      <div><span>場地</span><span style="color:${venue&&venue.length?'var(--accent)':'var(--text2)'}">${venue&&venue.length?venueDraftText(venue):(warn?'<span style="color:var(--danger)">未預約</span>':'不借場地')}</span></div>
+      <div><span>保證金</span><span>${dep.amount>0?'NT$'+Number(dep.amount).toLocaleString():'免'}</span></div>
+    </div>
+    ${warn?`<div style="font-size:12.5px;color:var(--danger)">${warn}</div>`:''}
+    <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;height:48px;font-size:15.5px" onclick="submitRequest()">${venue&&venue.length?'📋 送出器材＋場地申請':'📋 送出借用申請'}</button>`;
+  const q=window._sidePanelQ||'';
+  if(q){const inp=document.getElementById('sidePanelSearch');inp.value=q;sidePanelSearch(q,true);}
+}
+function sideItemQty(idx,d){
+  const i=(window._sideItems||[])[idx];if(!i)return;
+  const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(eq?.available)||0;
+  changeQty(i.room,i.name,i.spec||'',i.unit,avail,d);
+}
+function sideItemLoc(idx){
+  const i=(window._sideItems||[])[idx];if(!i)return;
+  const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
+  if(eq?.location)jumpToFloorplanLocation(eq.room,eq.location,eq.name);
+}
+let sidePanelTimer=null;
+function sidePanelSearch(q,now){
+  window._sidePanelQ=q;
+  const box=document.getElementById('sidePanelResults');if(!box)return;
+  clearTimeout(sidePanelTimer);
+  if(!q.trim()){box.innerHTML='';return;}
+  const run=()=>{
+    const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,6);
+    window._srLists.side=filtered;
+    box.innerHTML=filtered.length?'<div class="search-dropdown">'+filtered.map((e,i)=>searchResultRowHTML('side',e,i,false)).join('')+'</div>':'<div class="search-empty">找不到「'+escH(q)+'」</div>';
+  };
+  if(now)run();else sidePanelTimer=setTimeout(run,200);
+}
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();renderCartFormSummary();}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');document.getElementById('cartOverlay').classList.remove('show');const si=document.getElementById('cartSearchInput');if(si)si.value='';const sr=document.getElementById('cartSearchResults');if(sr)sr.innerHTML='';}
 function clearCart(){selectedItems={};updateCartBadge();renderEquipList();renderCart();calcDeposit();}
 function updateCartBadge(){
   const items=Object.values(selectedItems);
   setTimeout(updateBorrowDraftBar,0);
+  setTimeout(renderBorrowSidePanel,0);
   const total=items.reduce((s,i)=>s+i.quantity,0);
   document.getElementById('cartBadge').textContent=total;
   const summaryEl=document.getElementById('cartSummaryText');
@@ -3006,6 +3212,7 @@ function srItem(l,i){return (window._srLists[l]||[])[i];}
 function srRefresh(l){
   if(l==='cart'){doCartSearch(document.getElementById('cartSearchInput').value,true);renderCart();}
   else if(l==='bp'){doBorrowPageSearch(document.getElementById('borrowPageSearchInput').value,true);}
+  else if(l==='side'){renderBorrowSidePanel();}
 }
 function srQty(l,i,d){const e=srItem(l,i);if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);srRefresh(l);}
 function srSet(l,i,v){const e=srItem(l,i);if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);srRefresh(l);}
@@ -3515,22 +3722,46 @@ async function loadMyRecords(){
     if(studentId)vf+=`&student_id=eq.${encodeURIComponent(studentId)}`;
     const venueRows=await sb('GET','venue_bookings',{filter:vf,order:'created_at.desc'});
     rows=Array.isArray(rows)?rows:[];
-    let html='';
-    if(rows.length){html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(rows);}
-    if(venueRows.length){
-      html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin:14px 0 8px">場地預約記錄</div><div class="record-list">'+venueRows.map(r=>{
-        const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected'}[r.status]||'badge-pending';
-        const periods=Array.isArray(r.periods)?r.periods:[];
-        return `<div class="record-card">
-          <div class="record-header"><div><span class="record-id">${escH(r.id)}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.grade?escH(r.grade)+'・':''}${escH(r.purpose)}</div></div><span class="badge ${sc}">${escH(r.status)}</span></div>
-          <div style="font-size:13px;margin-top:8px">${periods.map((p,i)=>`<div style="padding:2px 0">${i+1}. ${escH(p.date)} ${escH(p.period)} ${escH(p.venue)} <span class="badge ${p.status==='已核准'?'badge-approved':p.status==='已拒絕'?'badge-rejected':'badge-pending'}">${escH(p.status)}</span></div>`).join('')}</div>
-          ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${escH(r.note)}</div>`:''}
-        </div>`;
-      }).join('')+'</div>';
-    }
-    if(!html)html=`<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;
-    list.innerHTML=html;
+    window._myRec={rows,venueRows:Array.isArray(venueRows)?venueRows:[],studentId,filter:'all'};
+    renderMyRecords();
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
+}
+// 我的記錄：依狀態分類（全部／審核中／已核准＝借出中／已歸還／已拒絕）
+const REC_TABS=[['all','全部'],['pending','審核中'],['ok','已核准'],['returned','已歸還'],['rejected','已拒絕']];
+function recBucket(st){
+  if(st==='待審核')return 'pending';
+  if(st==='已核准'||st==='逾期')return 'ok';
+  if(st==='已歸還')return 'returned';
+  if(st==='已拒絕')return 'rejected';
+  return 'pending';
+}
+function setRecFilter(f){if(window._myRec){window._myRec.filter=f;renderMyRecords();}}
+function renderMyRecords(){
+  const d=window._myRec;if(!d)return;
+  const list=document.getElementById('myRecordsList');
+  const f=d.filter||'all';
+  const all=[...d.rows.map(r=>({k:'b',r,b:recBucket(r.status)})),...d.venueRows.map(r=>({k:'v',r,b:recBucket(r.status)}))];
+  if(!all.length){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${d.studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;return;
+  }
+  const count=k=>k==='all'?all.length:all.filter(x=>x.b===k).length;
+  let html=`<div class="rec-tabs">${REC_TABS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>`<button type="button" class="${f===k?'active':''}" onclick="setRecFilter('${k}')">${l}<small>${count(k)}</small></button>`).join('')}</div>`;
+  const pick=all.filter(x=>f==='all'||x.b===f);
+  const br=pick.filter(x=>x.k==='b').map(x=>x.r),vr=pick.filter(x=>x.k==='v').map(x=>x.r);
+  if(br.length)html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(br);
+  if(vr.length){
+    html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin:14px 0 8px">場地預約記錄</div><div class="record-list">'+vr.map(r=>{
+      const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected'}[r.status]||'badge-pending';
+      const periods=Array.isArray(r.periods)?r.periods:[];
+      return `<div class="record-card">
+        <div class="record-header"><div><span class="record-id">${escH(r.id)}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.grade?escH(r.grade)+'・':''}${escH(r.purpose)}</div></div><span class="badge ${sc}">${escH(r.status)}</span></div>
+        <div style="font-size:13px;margin-top:8px">${periods.map((p,i)=>`<div style="padding:2px 0">${i+1}. ${escH(p.date)} ${escH(p.period)} ${escH(p.venue)} <span class="badge ${p.status==='已核准'?'badge-approved':p.status==='已拒絕'?'badge-rejected':'badge-pending'}">${escH(p.status)}</span></div>`).join('')}</div>
+        ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${escH(r.note)}</div>`:''}
+      </div>`;
+    }).join('')+'</div>';
+  }
+  if(!br.length&&!vr.length)html+='<div class="empty"><p>這個分類沒有記錄</p></div>';
+  list.innerHTML=html;
 }
 function renderRecordListHTML(rows){
   return '<div class="record-list">'+rows.map(r=>{
@@ -3734,7 +3965,10 @@ function showPage(page){
   const moreBtn=document.getElementById('bnMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',page==='floorplan'||page==='chemicals'||page==='borrow');
   document.body.classList.toggle('on-home',page==='home');
+  document.body.classList.toggle('on-borrow',page==='borrow');
+  if(page==='borrow')setTimeout(renderBorrowSidePanel,0);
   updateBorrowDraftBar();
+  if(typeof renderVenuePickBar==='function')renderVenuePickBar();
   const showCart=(page==='borrow'||page==='equipment'||page==='floorplan');
   if(page==='chemicals')loadChemicals();
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
@@ -4009,30 +4243,23 @@ function filterChemicals(){
 function renderChemList(items){
   const box=document.getElementById('chemList');
   if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>';return;}
-  box.innerHTML='<div class="equip-list">'+items.map(c=>{
+  box.innerHTML='<div class="chem-table-head"><span>名稱</span><span>分類</span><span>存量</span><span>位置</span><span>回收類別</span><span></span></div>'+items.map(c=>{
     const avail=c.is_available!==false;const catCls=chemCatClass(c.category);
-    return `<div class="chem-row ${avail?'':'chem-unavail'}">
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:700">${escH(c.name_zh)}</span>
-          <span class="chem-cat-tag ${catCls}">${escH(c.category||'其他')}</span>
-          ${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${escH(c.recycle_type)}</span>`:''}
-        </div>
-        ${c.name_en?`<div style="font-size:11.5px;color:var(--text2);margin-top:1px">${escH(c.name_en)}</div>`:''}
-        ${c.location?`<div style="font-size:11px;color:var(--text2);margin-top:1px">📍 ${escH(c.location)}</div>`:''}
-        ${c.note&&c.note!=='附註'?`<div style="font-size:11px;color:var(--accent);margin-top:1px">📝 ${escH(c.note)}</div>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
-        <span class="chem-bottles">${escH(c.bottles_left??'?')} 瓶</span>
-        ${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${parseInt(c.id)||0})">申請借用</button>`:`<span style="font-size:11px;color:var(--danger)">暫不開放</span>`}
-      </div>
+    const left=c.bottles_left;const low=left!=null&&Number(left)<=2;
+    return `<div class="chem-tr ${avail?'':'chem-unavail'}">
+      <div class="c-name"><b>${escH(c.name_zh)}</b>${c.name_en?`<div class="c-en">${escH(c.name_en)}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">📝 ${escH(c.note)}</div>`:''}</div>
+      <div class="c-cat"><span class="chem-cat-tag ${catCls}">${escH(c.category||'其他')}</span></div>
+      <div class="c-left ${low?'low':''}">${escH(left??'?')} 瓶</div>
+      <div class="c-loc">${c.location?'📍 '+escH(c.location):''}</div>
+      <div class="c-rec">${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${escH(c.recycle_type)}</span>`:''}</div>
+      <div class="c-act">${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${parseInt(c.id)||0})">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}</div>
     </div>`;
-  }).join('')+'</div>';
+  }).join('');
 }
 function openChemRequestModal(id){
   const c=allChemicals.find(x=>x.id===id);if(!c)return;
-  showModal(`🧪 申請藥品 — ${c.name_zh}`,`
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${c.name_en||''}</div>
+  showModal(`🧪 申請藥品 — ${escH(c.name_zh)}`,`
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${escH(c.name_en||'')}</div>
     <div class="form-group"><label>借用方式 *</label>
       <div style="display:flex;gap:8px;margin-top:4px">
         <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)"><input type="radio" name="chemMode" value="原液" id="chemModeBottle" onchange="toggleChemMode()" checked style="width:auto"> 原液（整瓶）</label>
