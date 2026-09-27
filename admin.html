@@ -293,6 +293,8 @@
     .eq-thumb{width:84px!important;height:84px!important;}
     .eq-actions .eq-btn-txt{display:none;}
   }
+
+  html,body{overscroll-behavior-y:none;}
 </style>
 </head>
 <body>
@@ -848,10 +850,35 @@ const ADMIN_EMAIL='sam60194@mail.smgsh.tc.edu.tw';
 let ACCESS_TOKEN=null,REFRESH_TOKEN=null,TOKEN_EXP=0,refreshingPromise=null;
 // 登入憑證約 1 小時會過期。以前資料表全開所以過期也沒感覺；權限收緊後，過期就會操作失敗。
 // 這裡在每次呼叫資料庫前檢查：快過期（剩不到 2 分鐘）就自動換一張新的，管理員不用重新登入。
+const SESSION_KEY='lab_admin_rt';
 function saveSession(data){
   ACCESS_TOKEN=data.access_token;
   REFRESH_TOKEN=data.refresh_token||REFRESH_TOKEN;
   TOKEN_EXP=Date.now()+((parseInt(data.expires_in)||3600)*1000);
+  // 只存「換證用的憑證」在這個分頁的暫存區：重新整理不用重登；關掉分頁就自動清除
+  try{if(REFRESH_TOKEN)sessionStorage.setItem(SESSION_KEY,REFRESH_TOKEN);}catch(e){}
+}
+function enterAdmin(){
+  document.getElementById('loginWrap').style.display='none';
+  document.getElementById('adminWrap').style.display='block';
+  document.getElementById('pwInput').value='';
+  if(document.activeElement)document.activeElement.blur(); // 收起手機鍵盤
+  window.scrollTo(0,0);
+  setTimeout(()=>window.scrollTo(0,0),300); // iPhone 鍵盤收起後會再捲一次，補一次回到最上面
+  loadAll();
+}
+// 重新整理頁面後：用暫存的憑證自動恢復登入
+async function restoreSession(){
+  let rt=null;try{rt=sessionStorage.getItem(SESSION_KEY);}catch(e){}
+  if(!rt)return false;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{'apikey':SUPABASE_KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:rt})});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.access_token)throw new Error('expired');
+    REFRESH_TOKEN=null;saveSession(data);
+    enterAdmin();
+    return true;
+  }catch(e){try{sessionStorage.removeItem(SESSION_KEY);}catch(_){}return false;}
 }
 async function refreshSession(){
   if(!REFRESH_TOKEN)throw new Error('尚未登入');
@@ -902,17 +929,14 @@ async function checkPw(){
     const data=await res.json();
     if(!res.ok||!data.access_token)throw new Error(data.error_description||data.msg||data.error||'帳號或密碼錯誤');
     saveSession(data);
-    document.getElementById('loginWrap').style.display='none';
-    document.getElementById('adminWrap').style.display='block';
-    document.getElementById('pwInput').value='';
-    loadAll();
+    enterAdmin();
   }catch(e){
     err.textContent='登入失敗：'+e.message;
     err.style.display='block';
     document.getElementById('pwInput').value='';
   }
 }
-function logout(){ACCESS_TOKEN=null;REFRESH_TOKEN=null;TOKEN_EXP=0;document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
+function logout(){ACCESS_TOKEN=null;REFRESH_TOKEN=null;TOKEN_EXP=0;try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
 
 // ── 修正：讀 text() 再 parse，避免 204 / 201 空 body 爆炸 ──
 // ── GET 自動分頁 ──
@@ -4499,6 +4523,7 @@ async function doDeleteCalibHotspot(id){
 // 這樣不管螢幕多寬多窄、圖片顯示多大，換算都是瀏覽器內建、精確的 ──
 (function initCalibDrag(){
   document.addEventListener('DOMContentLoaded',()=>{
+    restoreSession();
     const wrap=document.getElementById('calibImgWrap');
     if(!wrap)return;
     wrap.addEventListener('mousedown',calibMouseDown);
