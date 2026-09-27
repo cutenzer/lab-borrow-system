@@ -202,12 +202,6 @@
   .auto-carousel-dots{display:flex;justify-content:center;gap:6px;margin-top:12px;}
   .ac-dot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:all .2s;cursor:pointer;}
   .ac-dot.active{background:var(--accent);width:20px;border-radius:4px;}
-  .room-cover-scroll{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;}
-  .room-cover-card{flex:0 0 auto;width:148px;height:104px;border-radius:14px;position:relative;overflow:hidden;cursor:pointer;scroll-snap-align:start;display:flex;align-items:flex-end;padding:10px;color:#fff;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(15,23,42,0.12);}
-  .room-cover-card:active{transform:scale(0.96);}
-  .room-cover-card.active{box-shadow:0 0 0 3px var(--accent2),0 4px 14px rgba(15,23,42,0.2);}
-  .room-cover-card .cover-emoji-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:54px;opacity:0.3;}
-  .room-cover-card .cover-label{position:relative;z-index:1;font-weight:700;font-size:13.5px;text-shadow:0 1px 4px rgba(0,0,0,0.35);}
   .highlight-card{flex:0 0 auto;width:190px;border-radius:12px;overflow:hidden;cursor:pointer;background:var(--surface2);box-shadow:0 2px 8px rgba(15,23,42,0.1);scroll-snap-align:start;transition:transform .15s;}
   .highlight-card:active{transform:scale(0.97);}
   .highlight-card img{width:100%;height:120px;object-fit:cover;display:block;}
@@ -1403,7 +1397,7 @@ function renderHighlightsFront(){
     const safeEvent=h.event_name.replace(/'/g,"\\'"),safeUrl=h.image_url.replace(/'/g,"\\'");
     return `<div class="auto-carousel-slide" style="background:#1e293b" onclick="openLightbox('${safeUrl}','${safeEvent}')">
       <img src="${h.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-      <span class="cover-label" style="position:relative;z-index:2">${h.event_name}${h.note?`<br><span style="font-weight:400;font-size:13px;opacity:.9">${escH(h.note)}</span>`:''}</span>
+      <span class="cover-label" style="position:relative;z-index:2">${escH(h.event_name)}${h.note?`<br><span style="font-weight:400;font-size:13px;opacity:.9">${escH(h.note)}</span>`:''}</span>
     </div>`;
   });
   buildAutoCarousel('highlightsScroll',slides,5000);
@@ -1715,29 +1709,6 @@ function goHomeVenue(labKey){
     document.querySelectorAll('#venueLabTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===labKey));
   },50);
 }
-let roomCoverPhotosMap={};
-async function loadRoomCoverPhotos(){
-  try{
-    const rows=await sb('GET','room_covers',{});
-    roomCoverPhotosMap={};
-    (Array.isArray(rows)?rows:[]).forEach(r=>{roomCoverPhotosMap[r.room]=r.image_url;});
-  }catch(e){roomCoverPhotosMap={};}
-  renderHomeRoomPhotos();
-}
-function renderHomeRoomPhotos(){
-  const slides=ROOM_COVERS.map(r=>{
-    const photo=roomCoverPhotosMap[FLOORPLAN_KEY_TO_ROOM[r.key]];
-    return `<div class="auto-carousel-slide" style="background:${photo?`url('${photo}') center/cover`:`linear-gradient(135deg,${r.c1},${r.c2})`}" onclick="goHomeRoom('${r.key}')">
-      ${photo?'':`<div class="cover-emoji-bg">${r.emoji}</div>`}
-      <span class="cover-label">${r.emoji} ${r.label}</span>
-    </div>`;
-  });
-  buildAutoCarousel('homeRoomPhotos',slides,4500);
-}
-function goHomeRoom(key){
-  showPage('floorplan');
-  setTimeout(()=>showFloorplan(key,null),50);
-}
 function renderHomeEquipFeatured(){
   const box=document.getElementById('homeEquipFeatured');if(!box)return;
   const items=(allEquipment||[]).filter(e=>e.featured);
@@ -1821,14 +1792,6 @@ function goHomeEquip(){
 function renderFloorplanRoomButtons(activeKey){
   const box=document.getElementById('floorplanRoomCovers');if(!box)return;
   box.innerHTML=`<div class="fp-room-grid">${ROOM_COVERS.map(r=>`<button type="button" class="fp-room-btn ${r.key===activeKey?'active':''}" onclick="showFloorplan('${r.key}',null)">${r.label.replace('實驗室','')}</button>`).join('')}</div>`;
-}
-function renderRoomCoverCards(containerId,onClickFnName,activeKey){
-  const box=document.getElementById(containerId);if(!box)return;
-  box.innerHTML=`<div class="room-cover-scroll">${ROOM_COVERS.map(r=>`
-    <div class="room-cover-card ${r.key===activeKey?'active':''}" data-room-key="${r.key}" style="background:${r.image?`url('${r.image}') center/cover`:`linear-gradient(135deg,${r.c1},${r.c2})`}" onclick="${onClickFnName}('${r.key}')">
-      ${r.image?'':`<div class="cover-emoji-bg">${r.emoji}</div>`}
-      <span class="cover-label">${r.emoji} ${r.label}</span>
-    </div>`).join('')}</div>`;
 }
 async function showFloorplan(key, el){
   clearFloorplanBubbles();
@@ -2149,7 +2112,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const pb=document.getElementById('page-borrow');
   if(pb){const sync=ev=>{if(ev.target&&ev.target.closest&&ev.target.closest('#borrowSidePanel'))return;clearTimeout(window._bspT);window._bspT=setTimeout(renderBorrowSidePanel,120);};pb.addEventListener('change',sync);pb.addEventListener('input',sync);pb.addEventListener('click',sync);}
   window.addEventListener('resize',()=>{clearTimeout(window._bspR);window._bspR=setTimeout(renderBorrowSidePanel,200);});
-  setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();rebuildPurposeLists();setRole('老師');loadPurposeSettings().then(()=>{setPurposeOptions(currentRole);if(document.getElementById('vroleTabStudent'))setVenueRole(currentVenueRole);});});
+  setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();renderHomeVenuePreview();renderHomeChem();rebuildPurposeLists();setRole('老師');loadPurposeSettings().then(()=>{setPurposeOptions(currentRole);if(document.getElementById('vroleTabStudent'))setVenueRole(currentVenueRole);});});
 
 let autoReturnDate='';
 function nextSchoolDay(dateStr){
@@ -4041,7 +4004,7 @@ function showPage(page){
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
-  if(page==='home'){renderHomeVenuePreview();renderHomeRoomPhotos();renderHomeEquipFeatured();renderHomeChem();}
+  if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
   if(page==='floorplan'){
     floorplanHotspotsLoaded=false;
     if(!floorplanInitialized)showFloorplan(currentFloorplan,null);
