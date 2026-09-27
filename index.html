@@ -6,7 +6,7 @@
 <title>實驗室器材借用系統</title>
 
 <link rel="manifest" href="./manifest.json">
-<meta name="theme-color" content="#1d6b64">
+<meta name="theme-color" content="#1f2326">
 <link rel="apple-touch-icon" href="./icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
@@ -14,12 +14,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="實驗室借用">
   
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#f6f3ee;--surface:#fffcf8;--surface2:#efe9df;--border:#e6dccb;
-    --text:#2b2620;--text2:#7a7266;
-    --accent:#1d6b64;--accent-dim:#154f4a;--accent2:#c67c3a;
+    --bg:#ece7dc;--surface:#fbf9f4;--surface2:#efe9dd;--border:#ddd6c7;
+    --text:#22262a;--text2:#5f5b54;
+    --accent:#1f5b4c;--accent-dim:#15443a;--accent2:#b8651f;
+    --ink:#1f2326;--ink2:#343a3d;--caution:#e8cf3a;
     --violet:#8b6fb0;--success:#2f8f5b;--danger:#c0453f;--radius:14px;
     --shadow:0 1px 4px rgba(43,38,32,0.05);
   }
@@ -38,8 +39,8 @@
   header{
     position:sticky;top:0;z-index:100;height:56px;
     display:flex;align-items:center;justify-content:space-between;padding:0 16px;
-    background:linear-gradient(120deg,var(--accent-dim),var(--accent));
-    color:#fff;box-shadow:0 2px 10px rgba(42,83,158,0.25);
+    background:var(--ink);
+    color:#fff;box-shadow:0 2px 10px rgba(31,35,38,0.25);
   }
   .header-left{display:flex;align-items:center;gap:10px;}
   header h1{font-size:16px;font-weight:700;letter-spacing:.2px;}
@@ -507,82 +508,122 @@
   .sr-link{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;}
   .sr-link:hover{color:var(--accent);}
 
-  /* ── 電腦版：頂部導覽列（手機維持漢堡選單） ── */
+  /* ═════════ 新版外觀：實驗室 × 工具 × 檔案 ═════════ */
+  /* 背景：淡淡的方格紙 */
+  body{background-color:var(--bg);background-image:linear-gradient(rgba(34,38,42,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(34,38,42,.035) 1px,transparent 1px);background-size:24px 24px;}
+  .card{border-radius:16px;}
+  .card-title{letter-spacing:.3px;}
+  .btn-primary{background:var(--accent);}
+  /* 品牌 */
+  .brand{gap:10px;}
+  .brand-ico{flex-shrink:0;}
+  .brand-text{display:flex;align-items:baseline;gap:8px;}
+  .brand-text h1{font-size:18px;letter-spacing:2px;}
+  .brand-sub{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1.2px;color:#a8a398;}
+  .side-foot{display:none;}
+  .ico{flex-shrink:0;}
   .desk-nav{display:none;}
-  @media(min-width:901px){
-    header{height:62px;padding:0 28px;}
-    .desk-nav{display:flex;gap:4px;align-items:center;margin-left:auto;margin-right:6px;}
-    .desk-nav button{background:none;border:none;color:rgba(255,255,255,.82);font-family:inherit;font-size:14.5px;font-weight:500;padding:8px 13px;border-radius:9px;cursor:pointer;transition:all .15s;white-space:nowrap;position:relative;}
-    .desk-nav button:hover{background:rgba(255,255,255,.12);color:#fff;}
-    .desk-nav button.active{background:rgba(255,255,255,.18);color:#fff;font-weight:700;}
-    .desk-nav button.active::after{content:'';position:absolute;left:14px;right:14px;bottom:3px;height:2px;border-radius:2px;background:#f3c38f;}
-    .nav-wrap{display:none;}
-    body{background:
-      radial-gradient(circle at 12% 8%,rgba(29,107,100,.07),transparent 38%),
-      radial-gradient(circle at 92% 30%,rgba(198,124,58,.07),transparent 35%),
-      var(--bg);background-attachment:fixed;}
-  }
-  @media(min-width:901px) and (max-width:1180px){.desk-nav button{padding:8px 9px;font-size:13.5px;}}
-
-  /* ── 電腦版首頁：歡迎橫幅＋快捷＋數字 ── */
-  /* ── 手機／平板：精簡版歡迎卡＋6 格捷徑（取代漢堡選單），數字卡一排四格 ── */
-  .hero-grid{display:none;}
   .nav-home-btn{display:none;}
+
+  /* 手機／平板（900px 以下）：沒有選單，首頁用捷徑卡；其他頁右上角「首頁」 */
   @media(max-width:900px){
-    .home-hero{display:block;margin:0 0 6px;}
-    .hero-main{position:relative;overflow:hidden;border-radius:18px;padding:14px 14px 12px;color:#fff;
-      background:linear-gradient(125deg,var(--accent-dim) 0%,var(--accent) 60%,#2a8a7f 100%);box-shadow:0 6px 18px rgba(29,107,100,.2);}
-    .hero-main::after{content:'⚗️';position:absolute;right:-8px;top:-14px;font-size:84px;opacity:.10;transform:rotate(-12deg);pointer-events:none;}
-    .hero-date{font-size:12px;opacity:.85;}
-    .hero-title{font-size:18px;font-weight:700;margin:2px 0 10px;}
-    .hero-sub,.hero-actions{display:none;}
-    .hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;position:relative;z-index:1;}
-    .hero-grid button{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:12px;padding:9px 4px 8px;
-      font-family:inherit;font-size:13px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-    .hero-grid button span{font-size:22px;line-height:1;}
-    .hero-grid button:active{transform:scale(.96);background:rgba(255,255,255,.24);}
-    .hero-grid button.main{background:#fff;color:var(--accent-dim);border-color:#fff;}
-    .hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px;}
-    .hero-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;}
-    .hero-stat .num{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--accent);line-height:1.2;}
-    .hero-stat.warn .num{color:#b8650f;}
-    .hero-stat .lbl{font-size:10.5px;color:var(--text2);line-height:1.3;margin-top:2px;}
-    .hero-stat .lbl .long{display:none;}
-    /* 導覽：拿掉漢堡選單，不在首頁時右上角改成「🏠 首頁」 */
     .nav-wrap{display:none;}
-    body:not(.on-home) .nav-home-btn{display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,0.14);border:none;color:#fff;height:36px;padding:0 12px;border-radius:9px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+    body:not(.on-home) .nav-home-btn{display:inline-flex;align-items:center;gap:6px;background:var(--ink2);border:none;color:#fff;height:40px;padding:0 12px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
   }
-  .home-hero{display:none;}
-  @media(max-width:900px){.home-hero{display:block;}}
-  .hero-stat .lbl .short{display:none;}
-  @media(max-width:900px){.hero-stat .lbl .short{display:inline;}}
+  @media(max-width:420px){.brand-sub{display:none;}}
+
+  /* 平板橫放（901～1099）：頂部橫向選單 */
+  @media(min-width:901px) and (max-width:1099px){
+    header{height:60px;padding:0 20px;}
+    .nav-wrap{display:none;}
+    .desk-nav{display:flex;gap:2px;margin-left:auto;}
+    .desk-nav button{display:flex;align-items:center;gap:6px;background:none;border:none;color:#d6d1c6;font-family:inherit;font-size:13.5px;padding:8px 10px;border-radius:9px;cursor:pointer;}
+    .desk-nav button .ico{width:17px;height:17px;}
+    .desk-nav button:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .desk-nav button.active{background:var(--ink2);color:#fff;font-weight:700;}
+  }
+
+  /* 電腦（1100 以上）：左側固定側邊欄，內容正常大小置中、不撐滿 */
+  @media(min-width:1100px){
+    header{position:fixed;left:0;top:0;bottom:0;width:240px;height:auto;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:28px 18px;gap:28px;box-shadow:none;z-index:120;}
+    .brand{padding:0 8px;align-items:center;}
+    .brand-ico{width:34px;height:34px;}
+    .brand-text{flex-direction:column;align-items:flex-start;gap:2px;}
+    .brand-text h1{font-size:19px;}
+    .brand-sub{font-size:10px;letter-spacing:1.5px;}
+    .nav-wrap{display:none;}
+    .desk-nav{display:flex;flex-direction:column;gap:4px;flex-grow:1;}
+    .desk-nav button{display:flex;align-items:center;gap:12px;background:none;border:none;color:#d6d1c6;font-family:inherit;font-size:15px;padding:12px 14px;border-radius:10px;cursor:pointer;text-align:left;transition:background .15s;}
+    .desk-nav button:hover{background:rgba(255,255,255,.06);color:#fff;}
+    .desk-nav button.active{background:var(--ink2);color:#fff;font-weight:700;}
+    .side-foot{display:block;margin-top:auto;padding:16px 8px 0;border-top:1px solid #3a4043;font-size:12.5px;line-height:1.7;color:#a8a398;}
+    body{padding-left:240px;}
+    main{max-width:1180px;padding:32px 40px;}
+    .draft-bar{top:12px!important;}
+  }
+
+  /* ── 首頁主視覺 ── */
+  .hero2{position:relative;overflow:hidden;background:#262b2e;color:#f4f0e6;border-radius:20px;padding:22px 18px 62px;display:flex;flex-direction:column;gap:12px;}
+  .hero2-art{position:absolute;right:-60px;top:6px;width:360px;height:auto;color:#f4f0e6;opacity:.16;pointer-events:none;}
+  .hero2-date{position:relative;font-family:'DM Mono',monospace;font-size:12.5px;color:#c9c4b8;}
+  .hero2-title{position:relative;margin:0;font-family:'LXGW WenKai TC','Noto Sans TC',serif;font-weight:700;font-size:32px;line-height:1.3;letter-spacing:1px;color:#f4f0e6;}
+  .hero2-line{position:relative;width:150px;height:5px;margin-top:-8px;background:var(--caution);border-radius:3px;transform:rotate(-1.5deg);}
+  .hero2-search{position:relative;display:flex;align-items:center;gap:10px;height:50px;background:#f4f0e6;border-radius:25px;padding:0 6px 0 16px;color:var(--text2);max-width:560px;}
+  .hero2-search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:var(--text);}
+  .hero2-search button{height:38px;padding:0 16px;border:none;border-radius:19px;background:var(--accent);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+  .hero2-slogan{display:none;}
+  .entry-cards{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-44px 12px 0;}
+  .entry-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 8px 20px rgba(31,35,38,.10);transition:transform .12s,box-shadow .12s;-webkit-tap-highlight-color:transparent;}
+  .entry-card .ico{color:var(--accent);}
+  .entry-card b{font-size:17px;}
+  .entry-card span{font-size:12.5px;color:var(--text2);}
+  .entry-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(31,35,38,.14);}
+  .entry-card:active{transform:scale(.98);}
+  .entry-minor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 12px 0;}
+  .entry-minor button{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:12px;background:#e4ded2;color:var(--text);font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;}
+  .today-labs{margin:22px 0 6px;display:flex;flex-direction:column;gap:10px;}
+  .tl-head{display:flex;align-items:baseline;gap:10px;}
+  .tl-head h2{font-size:17px;font-weight:700;margin:0;}
+  .tl-note{font-size:12.5px;color:var(--text2);}
+  .tl-more{margin-left:auto;background:none;border:none;color:var(--accent);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
+  .tl-grid{display:flex;flex-direction:column;gap:8px;}
+  .tl-card{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-family:inherit;color:var(--text);cursor:pointer;text-align:left;}
+  .tl-card.has-pending{outline:2px dashed #b38a1a;outline-offset:-2px;}
+  .tl-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .tl-txt{display:flex;flex:1;align-items:center;justify-content:space-between;gap:8px;}
+  .tl-name{font-size:15px;}
+  .tl-num{font-family:'DM Mono',monospace;font-size:21px;font-weight:500;white-space:nowrap;}
+  .tl-num small{font-family:'Noto Sans TC',sans-serif;font-size:12px;margin-left:3px;color:#5a4a1e;}
   @media(min-width:901px){
-    .home-hero{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:stretch;margin:6px 0 10px;}
-    .hero-main{position:relative;overflow:hidden;border-radius:20px;padding:26px 28px;color:#fff;
-      background:linear-gradient(125deg,var(--accent-dim) 0%,var(--accent) 55%,#2a8a7f 100%);box-shadow:0 10px 30px rgba(29,107,100,.22);}
-    .hero-main::after{content:'⚗️';position:absolute;right:-6px;bottom:-26px;font-size:140px;opacity:.12;transform:rotate(-12deg);pointer-events:none;}
-    .hero-date{font-size:13.5px;opacity:.85;letter-spacing:.5px;}
-    .hero-title{font-size:26px;font-weight:700;margin:6px 0 4px;}
-    .hero-sub{font-size:14px;opacity:.88;}
-    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;position:relative;z-index:1;}
-    .hero-btn{border:none;border-radius:12px;padding:10px 16px;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;transition:transform .12s,box-shadow .12s;}
-    .hero-btn:hover{transform:translateY(-2px);}
-    .hero-btn.primary{background:#fff;color:var(--accent-dim);box-shadow:0 4px 12px rgba(0,0,0,.12);}
-    .hero-btn.ghost{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3);}
-    .hero-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .hero-stat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:transform .12s,box-shadow .12s;}
-    .hero-stat:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(43,38,32,.08);}
-    .hero-stat .num{font-family:'DM Mono',monospace;font-size:28px;font-weight:600;color:var(--accent);line-height:1.1;}
-    .hero-stat .lbl{font-size:13px;color:var(--text2);margin-top:4px;}
-    .hero-stat.warn .num{color:#b8650f;}
-    /* 首頁下半部兩欄：左「選擇實驗室」、右「器材借用」 */
+    .hero2{padding:40px 44px 84px;gap:20px;}
+    .hero2-art{width:560px;right:-30px;top:30px;}
+    .hero2-title{font-size:46px;letter-spacing:2px;}
+    .hero2-line{width:240px;height:6px;margin-top:-12px;}
+    .hero2-search{height:54px;border-radius:27px;}
+    .hero2-slogan{display:block;position:absolute;right:44px;top:40px;width:220px;font-family:'LXGW WenKai TC','Noto Sans TC',serif;font-size:18px;line-height:1.6;color:#d8d3c7;transform:rotate(-3deg);}
+    .entry-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin:-60px 28px 0;}
+    .entry-card{padding:22px;gap:8px;}
+    .entry-card b{font-size:20px;}
+    .entry-card span{font-size:13.5px;}
+    .entry-minor{display:none;}
+    .today-labs{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 24px;margin:26px 0 10px;}
+    .tl-head h2{font-size:18px;}
+    .tl-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;}
+    .tl-card{border:none;flex-direction:row;padding:14px 16px;}
+    .tl-txt{flex-direction:column;align-items:flex-start;gap:0;}
+    .tl-name{font-size:13.5px;color:#3d3a35;}
+    .tl-num{font-size:22px;}
+  }
+  /* 首頁下半部兩欄 */
+  .desk-only{display:none;}
+  @media(min-width:901px){
+    .desk-only{display:block;}
     .home-duo{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start;}
     .home-duo>.home-section{border-bottom:none;}
-    .home-section .card-title{font-size:19px;}
-    #page-home{max-width:1200px;margin:0 auto;}
+    .home-section .card-title{font-size:18px;}
     #page-home .home-section .auto-carousel{max-width:none;}
   }
-
+  .home-col{min-width:0;}
   /* 藥品列表 */
   .chem-row{display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--surface2);}
   .chem-row:last-child{border-bottom:none;}
@@ -603,21 +644,21 @@
 </head>
 <body class="on-home">
 <header>
-  <div class="header-left" onclick="showPage('home')" style="cursor:pointer" title="回首頁"><span style="font-size:20px">🧬</span><h1>實驗室器材借用系統</h1>
-    <span class="sys-online" style="display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:10.5px;color:#fff;letter-spacing:1px;padding:2px 8px;border:1px solid rgba(255,255,255,0.35);border-radius:20px;background:rgba(255,255,255,0.12)">
-      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulseDot 2.6s ease-in-out infinite"></span>ONLINE
-    </span>
+  <div class="header-left brand" onclick="showPage('home')" style="cursor:pointer" title="回首頁">
+    <svg class="brand-ico" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg>
+    <div class="brand-text"><h1>實驗室</h1><span class="brand-sub">LAB BORROW SYSTEM</span></div>
   </div>
   <nav class="desk-nav" aria-label="主選單">
-    <button class="active" data-page="home" onclick="showPage('home')">🏠 首頁</button>
-    <button data-page="borrow" onclick="showPage('borrow')">🔬 器材借用</button>
-    <button data-page="venue" onclick="showPage('venue')">🏛️ 場地預約</button>
-    <button data-page="equipment" onclick="showPage('equipment')">📦 器材查詢</button>
-    <button data-page="floorplan" onclick="showPage('floorplan')">🏫 平面圖</button>
-    <button data-page="chemicals" onclick="showPage('chemicals')">🧪 藥品查詢</button>
-    <button data-page="myrecords" onclick="showPage('myrecords')">📋 我的記錄</button>
+    <button class="active" data-page="home" onclick="showPage('home')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>首頁</span></button>
+    <button data-page="borrow" onclick="showPage('borrow')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材借用</span></button>
+    <button data-page="venue" onclick="showPage('venue')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>場地預約</span></button>
+    <button data-page="equipment" onclick="showPage('equipment')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>器材查詢</span></button>
+    <button data-page="floorplan" onclick="showPage('floorplan')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖</span></button>
+    <button data-page="chemicals" onclick="showPage('chemicals')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg><span>藥品查詢</span></button>
+    <button data-page="myrecords" onclick="showPage('myrecords')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>我的記錄</span></button>
+    <div class="side-foot">台中市私立曉明女中<br>設備組</div>
   </nav>
-  <button class="nav-home-btn" onclick="showPage('home')" aria-label="回首頁">🏠 首頁</button>
+  <button class="nav-home-btn" onclick="showPage('home')" aria-label="回首頁"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>首頁</button>
   <div class="nav-wrap">
     <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單">☰</button>
     <div class="nav-menu" id="navMenu">
@@ -636,36 +677,40 @@
 
 <!-- 器材借用 -->
 <div id="page-home" class="page active">
-  <div class="home-hero">
-    <div class="hero-main">
-      <div class="hero-date" id="heroDate"></div>
-      <div class="hero-title" id="heroGreeting">歡迎使用實驗室借用系統</div>
-      <div class="hero-sub">借器材、預約實驗室、查櫃位，一個地方搞定。</div>
-      <div class="hero-grid">
-        <button class="main" onclick="showPage('borrow')"><span>🔬</span>借器材</button>
-        <button class="main" onclick="showPage('venue')"><span>🏛️</span>預約場地</button>
-        <button onclick="showPage('equipment')"><span>📦</span>查器材</button>
-        <button onclick="showPage('floorplan')"><span>🏫</span>平面圖</button>
-        <button onclick="showPage('chemicals')"><span>🧪</span>查藥品</button>
-        <button onclick="showPage('myrecords')"><span>📋</span>我的申請</button>
-      </div>
-      <div class="hero-actions">
-        <button class="hero-btn primary" onclick="showPage('borrow')">🔬 借器材</button>
-        <button class="hero-btn primary" onclick="showPage('venue')">🏛️ 預約場地</button>
-        <button class="hero-btn ghost" onclick="showPage('floorplan')">🏫 找櫃位</button>
-        <button class="hero-btn ghost" onclick="showPage('myrecords')">📋 查我的申請</button>
-      </div>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat" onclick="showPage('venue')"><div class="num" id="heroStatToday">–</div><div class="lbl"><span class="long">今天實驗室使用節數</span><span class="short">今天使用</span></div></div>
-      <div class="hero-stat warn" onclick="showPage('venue')"><div class="num" id="heroStatPending">–</div><div class="lbl"><span class="long">本週待審核場地（虛線框）</span><span class="short">待審核</span></div></div>
-      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatEquip">–</div><div class="lbl"><span class="long">目前可借器材品項</span><span class="short">可借器材</span></div></div>
-      <div class="hero-stat" onclick="showPage('equipment')"><div class="num" id="heroStatOut">–</div><div class="lbl"><span class="long">借出中的申請</span><span class="short">借出中</span></div></div>
-    </div>
+  <section class="hero2" aria-label="歡迎">
+    <svg class="hero2-art" viewBox="0 0 520 300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M120 40h40M126 40v70l-44 110a14 14 0 0 0 13 19h90a14 14 0 0 0 13-19l-44-110v-70"/><path d="M92 182h96"/>
+      <path d="M230 90h80v140a12 12 0 0 1-12 12h-56a12 12 0 0 1-12-12z"/><path d="M230 130h24M230 160h16M230 190h24"/>
+      <circle cx="390" cy="190" r="52"/><path d="M375 80h30M380 80v62M400 80v62"/><path d="M342 200h96"/>
+      <path d="M450 50v170a14 14 0 0 0 28 0v-170M486 50v170a14 14 0 0 0 28 0v-170"/><path d="M40 260h480"/>
+    </svg>
+    <div class="hero2-date" id="heroDate"></div>
+    <h2 class="hero2-title">今天，<br>要做什麼實驗？</h2>
+    <div class="hero2-line" aria-hidden="true"></div>
+    <label class="hero2-search">
+      <svg class="ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位…" autocomplete="off" enterkeyhint="search" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}">
+      <button type="button" onclick="heroSearchGo()">搜尋</button>
+    </label>
+    <div class="hero2-slogan" aria-hidden="true">整理的不是器材，<br>而是讓實驗順利的日常。</div>
+  </section>
+  <div class="entry-cards">
+    <button type="button" class="entry-card" onclick="showPage('borrow')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材</b><span>選器材、填借用單</span></button>
+    <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><b>找東西</b><span>器材、藥品在哪一櫃</span></button>
+    <button type="button" class="entry-card" onclick="showPage('venue')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>預約場地</b><span>看課表、預約節次</span></button>
+    <button type="button" class="entry-card" onclick="showPage('floorplan')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><b>平面圖</b><span>看櫃子在哪裡</span></button>
   </div>
+  <div class="entry-minor">
+    <button type="button" onclick="showPage('chemicals')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg>藥品查詢</button>
+    <button type="button" onclick="showPage('myrecords')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>我的記錄</button>
+  </div>
+  <section class="today-labs" aria-label="今日實驗室使用">
+    <div class="tl-head"><h2>今日實驗室使用</h2><span class="tl-note">虛線框＝有待審核</span><button type="button" class="tl-more" onclick="showPage('venue')">看本週課表 ›</button></div>
+    <div class="tl-grid" id="todayLabs"></div>
+  </section>
   <div class="home-section">
-    <div class="card-title">🏛️ 場地借用</div>
-    <div class="hint" style="margin-bottom:10px">點進去看本週課表、直接預約時段</div>
+    <div class="card-title">本週課表</div>
+    <div class="hint" style="margin-bottom:10px">點課表可以放大，左右滑動換實驗室</div>
     <div id="homeVenuePreview"></div>
   </div>
   <div class="home-duo">
@@ -1480,23 +1525,40 @@ async function renderHomeChem(){
 }
 function setHomeChemCat(c){homeChemCat=(homeChemCat===c)?'':c;renderHomeChem();}
 // 電腦版首頁數字卡：資料來自已經載入的課表與器材，不額外打 API
+// 首頁「今日實驗室使用」：5 間分開算節數；有待審核的用虛線框提醒
+const TODAY_LABS=[
+  {v:'化學實驗室',c:'#1f5b4c',bg:'#eef3ef',ico:'<path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/>'},
+  {v:'理化實驗室',c:'#34506b',bg:'#eef1f5',ico:'<path d="M6 3h12v15a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3z"/><path d="M6 12h12"/>'},
+  {v:'物理實驗室',c:'#7a5a1f',bg:'#f4efe3',ico:'<circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'},
+  {v:'生物實驗室',c:'#3f6b2f',bg:'#eef3ec',ico:'<path d="M12 21c-4-3-7-7-7-11a7 7 0 0 1 14 0c0 4-3 8-7 11z"/><path d="M12 21V9"/>'},
+  {v:'地科實驗室',c:'#2f5f6b',bg:'#eef2f3',ico:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>'}
+];
 function updateHeroStats(opt){
   const $=id=>document.getElementById(id);
   if(!$('heroDate'))return;
   const now=new Date(),today=fmtDate(now);
-  const h=now.getHours();
-  $('heroGreeting').textContent=(h<11?'早安':h<18?'午安':'晚安')+'，今天要做什麼實驗呢？';
   let wk='';
-  try{const info=activeSemester?getWeekInfo(now,activeSemester):null;if(info)wk='　'+weekBadgeText(info);}catch(e){}
+  try{const info=activeSemester?getWeekInfo(now,activeSemester):null;if(info)wk='・'+weekBadgeText(info);}catch(e){}
   const hol=holidayForDate(today);
-  $('heroDate').textContent=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}（週${DAYS[(now.getDay()+6)%7]}）${wk}${hol?'　🎉'+hol.label:''}`;
-  if(opt.venueList){
-    const live=opt.venueList.filter(x=>x.periodStatus!=='已拒絕');
-    $('heroStatToday').textContent=live.filter(x=>x.displayDate===today).length;
-    $('heroStatPending').textContent=live.filter(x=>x.periodStatus==='待審核'&&!x.is_fixed).length;
-  }
-  if(allEquipment.length)$('heroStatEquip').textContent=allEquipment.filter(e=>(parseInt(e.available)||0)>0).length;
-  $('heroStatOut').textContent=activeBorrowRecords.length;
+  $('heroDate').textContent=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}（週${DAYS[(now.getDay()+6)%7]}）${wk}${hol?'・'+hol.label:''}`;
+  const box=$('todayLabs');
+  if(!box||!opt.venueList)return;
+  const live=opt.venueList.filter(x=>x.periodStatus!=='已拒絕'&&x.displayDate===today);
+  box.innerHTML=TODAY_LABS.map(l=>{
+    const mine=live.filter(x=>x.displayVenue===l.v);
+    const n=mine.length,pend=mine.filter(x=>x.periodStatus==='待審核'&&!x.is_fixed).length;
+    return `<button type="button" class="tl-card${pend?' has-pending':''}" style="background:${l.bg}" onclick="showPage('venue')">
+      <span class="tl-ico" style="background:${l.c}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${l.ico}</svg></span>
+      <span class="tl-txt"><span class="tl-name">${l.v}</span><span class="tl-num">${n}<small>節${pend?`・${pend} 待審`:''}</small></span></span>
+    </button>`;
+  }).join('');
+}
+// 首頁大搜尋框：先帶到器材查詢頁搜尋（器材＋藥品都會找）
+function heroSearchGo(){
+  const q=(document.getElementById('heroSearch').value||'').trim();
+  showPage('equipment');
+  const inp=document.getElementById('equipSearch');
+  if(inp){inp.value=q;filterEquipBrowse();setTimeout(()=>inp.focus({preventScroll:true}),200);}
 }
 function openHomeVenueZoom(key){
   const t=(window._homeVenueTables||{})[key];if(!t)return;
