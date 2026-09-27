@@ -525,7 +525,7 @@
     .nav-wrap{display:none;}
     body:not(.on-home) .nav-home-btn{display:inline-flex;align-items:center;gap:6px;background:var(--ink2);border:none;color:#fff;height:40px;padding:0 12px;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
   }
-  @media(max-width:420px){.brand-sub{display:none;}}
+  @media(max-width:900px){.brand-text{flex-direction:column;align-items:flex-start;gap:1px;}.brand-text h1{line-height:1.15;}.brand-sub{font-size:9px;letter-spacing:1.4px;}}
 
   /* 平板橫放（901～1099）：頂部橫向選單 */
   @media(min-width:901px) and (max-width:1099px){
@@ -566,7 +566,8 @@
   .hero2-search{position:relative;display:flex;align-items:center;gap:10px;height:50px;background:#f4f0e6;border-radius:25px;padding:0 6px 0 16px;color:var(--text2);max-width:560px;}
   .hero2-search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:inherit;font-size:16px;color:var(--text);}
   .hero2-search button{height:38px;padding:0 16px;border:none;border-radius:19px;background:var(--accent);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
-  .hero2-slogan{display:none;}
+  .hero2-slogan{position:relative;order:1;font-family:'LXGW WenKai TC','Noto Sans TC',serif;font-size:15.5px;line-height:1.6;color:#d8d3c7;margin-top:-2px;}
+  .hero2-search{order:2;}
   .entry-cards{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-44px 12px 0;}
   .entry-card{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 8px 20px rgba(31,35,38,.10);transition:transform .12s,box-shadow .12s;-webkit-tap-highlight-color:transparent;}
   .entry-card .ico{color:var(--accent);}
@@ -791,7 +792,7 @@
       <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位…" autocomplete="off" enterkeyhint="search" oninput="heroSearchLive(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}else if(event.key==='Escape'){this.value='';heroSearchLive('');}">
       <button type="button" onclick="heroSearchGo()">搜尋</button>
     </label>
-    <div class="hero2-slogan" aria-hidden="true">整理的不是器材，<br>而是讓實驗順利的日常。</div>
+    <div class="hero2-slogan">整理的不是器材，<br>而是讓實驗順利的日常。</div>
   </section>
   <div class="hero2-results" id="heroResults" aria-live="polite"></div>
   <div class="entry-cards">
