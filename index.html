@@ -821,11 +821,6 @@
   </div>
   <div class="home-duo">
   <div class="home-col">
-  <div class="home-section">
-    <div class="card-title">🏫 選擇實驗室</div>
-    <div class="hint" style="margin-bottom:10px">點實驗室進去看平面圖、找器材在哪個櫃子</div>
-    <div id="homeRoomPhotos"></div>
-  </div>
   <!-- 電腦版左欄：藥品快查（跟右邊「器材借用」對稱） -->
   <div class="home-section desk-only" id="homeChemSection">
     <div class="card-title">🧪 藥品快查</div>
@@ -841,13 +836,9 @@
   </div>
   <div class="home-section">
     <div class="card-title">🔬 器材借用</div>
-    <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以搜尋、直接加入借用清單</div>
+    <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以直接加入借用清單；要找其他器材請用上方搜尋框</div>
     <div id="homeEquipFeatured"></div>
-    <div class="search-wrap home-eq-search">
-      <span class="search-icon">🔎</span>
-      <input class="search-input" type="text" id="homeEquipSearch" placeholder="搜尋器材名稱，直接加入借用清單…" oninput="renderHomeEquipList()" autocomplete="off">
-    </div>
-    <div class="home-eq-list" id="homeEquipList"></div>
+
     <span class="home-eq-more" onclick="showPage('equipment')">查看全部器材 ›</span>
 
   </div>
