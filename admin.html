@@ -268,6 +268,17 @@
     .tabs::before{content:'管理後台';position:absolute;top:22px;left:58px;color:#fff;font-size:18px;font-weight:700;letter-spacing:2px;}
     .tabs::after{content:'';position:absolute;top:18px;left:22px;width:28px;height:30px;background:no-repeat center/28px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e9e5dc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3'/%3E%3Cpath d='M7 15h10'/%3E%3C/svg%3E");}
   }
+
+  .settings-btn{display:inline-flex;align-items:center;gap:5px;}
+  .settings-sheet{display:flex;flex-direction:column;}
+  .settings-sheet button{display:flex;align-items:center;gap:12px;width:100%;padding:14px 6px;border:none;border-bottom:1px solid var(--surface2);background:none;font-family:inherit;font-size:15.5px;font-weight:600;color:var(--text);text-align:left;cursor:pointer;}
+  .settings-sheet button:last-child{border-bottom:none;}
+  .settings-sheet button.active{color:var(--accent);}
+  .settings-sheet .ss-arrow{margin-left:auto;color:var(--text2);font-size:20px;}
+  @media(min-width:1100px){.settings-btn{display:none!important;}}
+  @media(max-width:480px){header .rf-label{display:none;}header .btn-sm{padding:7px 10px;}.admin-brand h1{font-size:16px;letter-spacing:1px;}}
+  /* 分頁列右邊淡出，提示還可以往右滑 */
+  @media(max-width:1099px){.tabs{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);}}
 </style>
 </head>
 <body>
@@ -287,7 +298,8 @@
 <header>
   <div class="admin-brand"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg><h1>管理後台</h1><span class="brand-sub">LAB ADMIN</span></div>
   <div style="display:flex;gap:8px">
-    <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button>
+    <button class="btn btn-secondary btn-sm settings-btn" onclick="openSettingsSheet()" aria-label="設定與資料"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="sb-label">設定</span></button>
+    <button class="btn btn-secondary btn-sm" onclick="loadAll()" aria-label="重新整理">🔄<span class="rf-label">重新整理</span></button>
     <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
   </div>
 </header>
@@ -322,7 +334,17 @@
   <div class="stats-grid" id="statsGrid"></div>
   <div class="ov-grid">
     <div class="card"><div class="card-title">📌 今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
+    <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card"><div class="card-title" id="ovWeekTitle">🏛️ 本週實驗室使用</div><div id="ovWeek"></div><div class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去</div></div>
+    <div class="card" id="backupCard"><div class="card-title">💾 資料備份</div>
+      <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">📊 下載 Excel 備份</button>
+        <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">🗂️ 下載完整備份（JSON）</button>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">Excel 方便打開查看；JSON 保留全部欄位原樣，萬一要還原資料時用這份。建議每月一次，學期末再多備份一次。照片檔案不包含在內。</div>
+    </div>
+    </div>
   </div>
 </div>
 <div id="panel-pending" class="panel">
@@ -1029,7 +1051,12 @@ function renderOverview(){
   if(venuePend.length)rows.push({lv:'warn',t:`${venuePend.length} 筆場地待審核`,s:'待審核的時段在課表上是虛線框',tab:'venue',b:'場地管理'});
   if(depIn.length)rows.push({lv:'mute',t:`${depIn.length} 筆保證金待收`,s:'NT$'+depIn.reduce((a,r)=>a+(parseInt(r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
   if(depOut.length)rows.push({lv:'mute',t:`${depOut.length} 筆保證金待退`,s:'NT$'+depOut.reduce((a,r)=>a+(parseInt(r.finalRefund??r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
-  todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="showTab('${x.tab}')">${x.b}</button></div>`).join('')
+  // 備份提醒：超過 30 天沒備份（這台電腦記錄的）就提醒
+  const lastB=parseInt(localStorage.getItem('lab_last_backup')||'0');
+  const bDays=lastB?Math.floor((Date.now()-lastB)/86400000):null;
+  if(bDays===null||bDays>=30)rows.push({lv:'mute',t:bDays===null?'還沒有備份紀錄':`已經 ${bDays} 天沒備份`,s:'下載一份備份，萬一資料被誤刪還能救回來',tab:'__backup',b:'立即備份'});
+  renderBackupInfo();
+  todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
     :'<div class="empty" style="padding:24px 0"><div class="empty-icon">✅</div><p>今天沒有待處理的事項</p></div>';
   // 本週各實驗室使用節數
   // 週末就改看下週
@@ -1058,6 +1085,55 @@ function renderDepositSummary(){
 // 側欄最下方：登入信箱＋登出
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}</span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
+// 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
+function openSettingsSheet(){
+  const items=[...document.querySelectorAll('#tabMoreMenu button[data-tab]')].map(b=>({tab:b.dataset.tab,html:b.innerHTML,active:b.classList.contains('active')}));
+  showModal('⚙️ 設定與資料',`<div class="settings-sheet">${items.map(it=>`<button type="button" class="${it.active?'active':''}" onclick="closeModal();showTab('${safeId(it.tab)}')">${it.html}<span class="ss-arrow">›</span></button>`).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+}
+// ── 資料備份：把所有資料表下載成一個檔案（用登入後的權限讀取，每張表都完整分頁讀完）──
+const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','room_covers','equipment_writeoffs','borrow_purposes','deposit_settings'];
+function renderBackupInfo(){
+  const el=document.getElementById('backupInfo');if(!el)return;
+  const t=parseInt(localStorage.getItem('lab_last_backup')||'0');
+  if(!t){el.innerHTML='這台電腦還沒有備份過。';return;}
+  const d=new Date(t),days=Math.floor((Date.now()-t)/86400000);
+  el.innerHTML=`上次備份：${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}（${days===0?'今天':days+' 天前'}）`;
+}
+let backupRunning=false;
+async function runBackup(kind){
+  if(backupRunning)return;
+  backupRunning=true;
+  const btn=document.getElementById(kind==='json'?'backupJsonBtn':'backupXlsxBtn');
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='備份中…';}
+  try{
+    const data={},counts=[],skipped=[];
+    for(const t of BACKUP_TABLES){
+      try{const rows=await sb('GET',t,{});data[t]=Array.isArray(rows)?rows:[];counts.push(`${t}：${data[t].length} 筆`);}
+      catch(e){skipped.push(t);} // 不存在的表（例如還沒建立的功能）就略過
+    }
+    const now=new Date(),stamp=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+    if(kind==='json'){
+      const blob=new Blob([JSON.stringify({exported_at:now.toISOString(),tables:data},null,1)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`實驗室借用系統備份-${stamp}.json`;document.body.appendChild(a);a.click();
+      setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    }else{
+      const wb=XLSX.utils.book_new();
+      for(const [t,rows] of Object.entries(data)){
+        // 清單、物件欄位轉成文字；Excel 一格最多約 3.2 萬字，超過就截斷（完整內容請用 JSON 備份）
+        const flat=rows.map(r=>{const o={};for(const k in r){let v=r[k];if(v!==null&&typeof v==='object')v=JSON.stringify(v);if(typeof v==='string'&&v.length>32000)v=v.slice(0,32000)+'…(已截斷)';o[k]=v;}return o;});
+        const ws=flat.length?XLSX.utils.json_to_sheet(flat):XLSX.utils.aoa_to_sheet([['（沒有資料）']]);
+        XLSX.utils.book_append_sheet(wb,ws,t.slice(0,31));
+      }
+      XLSX.writeFile(wb,`實驗室借用系統備份-${stamp}.xlsx`);
+    }
+    localStorage.setItem('lab_last_backup',String(Date.now()));
+    renderBackupInfo();renderOverview();
+    showToast(`✅ 已下載備份（${Object.keys(data).length} 張表${skipped.length?'，略過 '+skipped.length+' 張不存在的表':''}）`,'success');
+  }catch(e){showToast('備份失敗：'+e.message,'error');}
+  backupRunning=false;
+  if(btn){btn.disabled=false;btn.textContent=orig;}
+}
 function setTabBadge(id,count){
   const el=document.getElementById(id);if(!el)return;
   if(count>0){el.textContent=count>99?'99+':count;el.classList.add('show');}
