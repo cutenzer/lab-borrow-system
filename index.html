@@ -707,8 +707,8 @@
   <div class="deposit-banner" id="depositBanner">
     <h3>⚠️ 此借用目的需繳納保證金</h3>
     <ul>
-      <li>🏛️ 僅借用場地：NT$500</li><li>🔬 僅借用器材：NT$1,000</li>
-      <li>📦 場地＋器材皆借：NT$1,500</li><li>✅ 完整歸還後全額退還；如有損壞，照價賠償</li>
+      <li>🏛️ 僅借用場地：NT$<span class="dep-venue">500</span></li><li>🔬 僅借用器材：NT$<span class="dep-equip">1,000</span></li>
+      <li>📦 場地＋器材皆借：NT$<span class="dep-both">1,500</span></li><li>✅ 完整歸還後全額退還；如有損壞，照價賠償</li>
     </ul>
     <div class="deposit-amount" id="depositCalc">NT$ 0</div>
     <div style="font-size:12px;color:#b8650f">預估保證金（請於借用前至辦公室繳納）</div>
@@ -731,7 +731,6 @@
           <option value="">-- 請選擇 --</option>
         </select>
         <input type="text" id="f-purpose-other" maxlength="30" placeholder="請輸入借用目的" style="display:none;margin-top:6px">
-        <div class="hint">課程、探究、選修、菁英免保證金；其他目的需繳保證金</div>
       </div>
       <div class="form-group" id="homeLabGroup" style="display:none">
   <label>您的教學科目</label>
@@ -783,7 +782,7 @@
   </div>
 
   <div class="card" id="courseTemplateCard" style="display:none">
-    <div class="card-title">② 要借什麼：📚 套用課程模板（老師專用）</div>
+    <div class="card-title">② 要借什麼：📚 套用課綱實驗（老師專用）</div>
     <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始模板。</div>
    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
   <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
@@ -812,7 +811,7 @@
 
   <div class="card">
     <div class="card-title">② 要借什麼：🛒 已選器材</div>
-    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：直接在下面搜尋加入，或到「器材查詢」頁面挑，或上面套用課程模板，都會加進這裡。</div>
+    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：直接在下面搜尋加入，或到「器材查詢」頁面挑，或上面套用課綱實驗，都會加進這裡。</div>
     <div class="search-wrap" style="margin-bottom:8px">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
@@ -1930,7 +1929,7 @@ let userHomeLab='';
 // [修改3] 同步場地預約的時段列表
 let inlinePeriodRows=[];
 
-window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();setRole('老師');});
+window.addEventListener('DOMContentLoaded',()=>{setMinDates();loadEquipmentData();loadActiveSemester();loadCourseTemplates();renderPhotoPreviews();loadTeachersFront();loadFloorplanHotspotsFromDB();loadRoomCoverPhotos();renderHomeVenuePreview();renderHomeChem();rebuildPurposeLists();setRole('老師');loadPurposeSettings().then(()=>{setPurposeOptions(currentRole);if(document.getElementById('vroleTabStudent'))setVenueRole(currentVenueRole);});});
 
 let autoReturnDate='';
 function nextSchoolDay(dateStr){
@@ -2015,22 +2014,70 @@ async function setMinDates(){
 }
 
 // ── 身份切換 ──────────────────────────────────────────────
-const STUDENT_PURPOSES=[
-  {value:'自主學習',label:'自主學習'},{value:'科展',label:'科展'},
-  {value:'社團',label:'社團'},{value:'其他',label:'其他（自填）'},
+// ── 借用目的與保證金：從後台設定（borrow_purposes / deposit_settings）讀取 ──
+// 資料表還沒建立或讀取失敗時，用下面的預設值，網頁照常可用
+const DEFAULT_PURPOSES=[
+  {name:'課程',for_teacher:true,for_student:false,needs_deposit:false},
+  {name:'探究',for_teacher:true,for_student:false,needs_deposit:false},
+  {name:'選修',for_teacher:true,for_student:false,needs_deposit:false},
+  {name:'菁英',for_teacher:true,for_student:false,needs_deposit:false},
+  {name:'能力競賽',for_teacher:true,for_student:false,needs_deposit:false},
+  {name:'科展',for_teacher:true,for_student:true,needs_deposit:true},
+  {name:'社團',for_teacher:true,for_student:true,needs_deposit:true},
+  {name:'自主學習',for_teacher:true,for_student:true,needs_deposit:true},
+  {name:'其他',for_teacher:true,for_student:true,needs_deposit:true},
 ];
-const TEACHER_PURPOSES=[
-  {value:'課程',label:'課程'},{value:'探究',label:'探究'},{value:'選修',label:'選修'},{value:'菁英',label:'菁英'},
-  {value:'自主學習',label:'自主學習'},{value:'科展',label:'科展'},
-  {value:'社團',label:'社團'},{value:'其他',label:'其他（自填）'},
-];
+let PURPOSES=DEFAULT_PURPOSES.slice();
+let DEPOSIT_AMT={equip:1000,venue:500,both:1500};
+let TEACHER_PURPOSES=[],STUDENT_PURPOSES=[];
+function purposeLabel(n){return n==='其他'?'其他（自填）':n;}
+function rebuildPurposeLists(){
+  const toOpt=r=>({value:r.name,label:purposeLabel(r.name)});
+  TEACHER_PURPOSES=PURPOSES.filter(r=>r.for_teacher).map(toOpt);
+  STUDENT_PURPOSES=PURPOSES.filter(r=>r.for_student).map(toOpt);
+  if(!TEACHER_PURPOSES.length)TEACHER_PURPOSES=[{value:'其他',label:'其他（自填）'}];
+  if(!STUDENT_PURPOSES.length)STUDENT_PURPOSES=[{value:'其他',label:'其他（自填）'}];
+  NO_DEPOSIT_PURPOSES=PURPOSES.filter(r=>!r.needs_deposit).map(r=>r.name);
+  const fmt=n=>Number(n).toLocaleString();
+  document.querySelectorAll('.dep-equip').forEach(e=>e.textContent=fmt(DEPOSIT_AMT.equip));
+  document.querySelectorAll('.dep-venue').forEach(e=>e.textContent=fmt(DEPOSIT_AMT.venue));
+  document.querySelectorAll('.dep-both').forEach(e=>e.textContent=fmt(DEPOSIT_AMT.both));
+}
+// 這個目的（在目前身分下）要不要保證金：清單裡找不到的（例如「其他」自填的內容）一律要
+function purposeNeedsDeposit(p,role){
+  if(!p)return false;
+  const r=PURPOSES.find(x=>x.name===p);
+  if(!r)return true;
+  if(role==='學生'&&!r.for_student)return true;
+  if(role==='老師'&&!r.for_teacher)return true;
+  return !!r.needs_deposit;
+}
+function depositFor(needs,hasVenue,hasEquip){
+  if(!needs)return {type:'無',amount:0};
+  if(hasVenue&&hasEquip)return {type:'場地+器材',amount:DEPOSIT_AMT.both};
+  if(hasVenue)return {type:'場地',amount:DEPOSIT_AMT.venue};
+  if(hasEquip)return {type:'器材',amount:DEPOSIT_AMT.equip};
+  return {type:'無',amount:0};
+}
+async function loadPurposeSettings(){
+  try{
+    const [rows,dep]=await Promise.all([
+      sb('GET','borrow_purposes',{filter:'is_active=eq.true',order:'sort'}),
+      sb('GET','deposit_settings',{})
+    ]);
+    if(Array.isArray(rows)&&rows.length)PURPOSES=rows.map(r=>({name:String(r.name),for_teacher:!!r.for_teacher,for_student:!!r.for_student,needs_deposit:!!r.needs_deposit}));
+    const d=Array.isArray(dep)?dep[0]:null;
+    if(d)DEPOSIT_AMT={equip:parseInt(d.equip_amount)||0,venue:parseInt(d.venue_amount)||0,both:parseInt(d.both_amount)||0};
+  }catch(e){/* 資料表還沒建立：沿用預設值 */}
+  rebuildPurposeLists();
+}
 function setPurposeOptions(role){
   const sel=document.getElementById('f-purpose');
   const cur=sel.value;
   const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
-  sel.innerHTML='<option value="">-- 請選擇 --</option>'+opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.innerHTML='<option value="">-- 請選擇 --</option>'+opts.map(o=>`<option value="${escH(o.value)}">${escH(o.label)}</option>`).join('');
   sel.value=opts.some(o=>o.value===cur)?cur:'';
-  if(!sel.value&&role==='老師')sel.value='課程'; // 老師預設「課程」，減少誤選需保證金的目的
+  if(!sel.value&&role==='老師'){const first=opts.find(o=>!purposeNeedsDeposit(o.value,'老師'));if(first)sel.value=first.value;} // 老師預設第一個免保證金的目的，減少誤選
   onPurposeChange();
 }
 function setRole(role){
@@ -2055,7 +2102,7 @@ function setVenueRole(role){
   const sel=document.getElementById('vf-purpose');
   const cur=sel.value;
   const opts=role==='老師'?TEACHER_PURPOSES:STUDENT_PURPOSES;
-  sel.innerHTML=opts.map(o=>`<option value="${o.value}">${o.label}</option>`).join('');
+  sel.innerHTML=opts.map(o=>`<option value="${escH(o.value)}">${escH(o.label)}</option>`).join('');
   sel.value=opts.some(o=>o.value===cur)?cur:opts[0].value;
   onVenuePurposeChange();
 }
@@ -2187,7 +2234,7 @@ function onVenuePurposeChange(){
   const p=document.getElementById('vf-purpose').value;
   document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';
   const gg=document.getElementById('vGradeGroup');
-  if(gg)gg.style.display=(currentVenueRole==='老師'&&(p==='課程'||p==='探究'||p==='選修'||p==='菁英'))?'flex':'none';
+  if(gg)gg.style.display=(currentVenueRole==='老師'&&!!p&&p!=='其他'&&!purposeNeedsDeposit(p,'老師'))?'flex':'none';
 }
 
 // 時段清單基本檢查：日期不可空白、不可早於今天、同一申請內不可重複
@@ -3066,13 +3113,16 @@ function removeItem(key){delete selectedItems[key];renderEquipList();updateCartB
 let lastPurposeValue='';
 function onPurposeChange(fromUser){
   const p=document.getElementById('f-purpose').value;
-  const noDeposit=['','課程','探究','選修','菁英'];
-  const needs=p!==''&&!noDeposit.includes(p);
+  const needs=purposeNeedsDeposit(p,currentRole);
+  const prevNoDeposit=lastPurposeValue===''||!purposeNeedsDeposit(lastPurposeValue,currentRole);
   // 老師從免保證金目的「換成」需保證金目的時，跳出確認，避免誤觸
-  if(fromUser===true&&needs&&currentRole==='老師'&&noDeposit.includes(lastPurposeValue)){
+  if(fromUser===true&&needs&&currentRole==='老師'&&prevNoDeposit){
     const prev=lastPurposeValue;
-    showModal('⚠️ 這個目的需要繳保證金',`<p>選擇「${escH(p)}」需繳保證金（僅器材 NT$1,000／僅場地 NT$500／兩者 NT$1,500，完整歸還後退還）。</p><p style="margin-top:8px;font-size:14px;color:var(--text2)">一般上課請選「課程」「探究」「選修」「菁英」，不需保證金。</p>`,[
-      {label:'改回原本的目的',cls:'btn-secondary',fn:`revertPurpose('${prev}')`},
+    const free=TEACHER_PURPOSES.filter(o=>!purposeNeedsDeposit(o.value,'老師')).map(o=>'「'+escH(o.label)+'」').join('');
+    const fmt=n=>Number(n).toLocaleString();
+    window._revertPurposeTo=prev;
+    showModal('⚠️ 這個目的需要繳保證金',`<p>選擇「${escH(purposeLabel(p))}」需繳保證金（僅器材 NT$${fmt(DEPOSIT_AMT.equip)}／僅場地 NT$${fmt(DEPOSIT_AMT.venue)}／兩者 NT$${fmt(DEPOSIT_AMT.both)}，完整歸還後退還）。</p>${free?`<p style="margin-top:8px;font-size:14px;color:var(--text2)">一般上課請選${free}，不需保證金。</p>`:''}`,[
+      {label:'改回原本的目的',cls:'btn-secondary',fn:`revertPurpose(window._revertPurposeTo||'')`},
       {label:'確定，就是這個目的',cls:'btn-primary',fn:'closeModal()'}
     ]);
   }
@@ -3084,7 +3134,7 @@ function onPurposeChange(fromUser){
 function revertPurpose(v){document.getElementById('f-purpose').value=v;closeModal();onPurposeChange(false);}
 function onHomeLabChange(){
   userHomeLab=document.getElementById('f-home-lab').value;
-  // 同步課程模板科別篩選
+  // 同步課綱實驗科別篩選
   const tplRoom=document.getElementById('tplFilterRoom');
   if(tplRoom){
     tplRoom.value=userHomeLab||'';
@@ -3094,12 +3144,11 @@ function onHomeLabChange(){
   const eqf=document.getElementById('equipRoomFilter');
   if(eqf){eqf.value=userHomeLab||'';filterEquipBrowse();}
 }
-const NO_DEPOSIT_PURPOSES=['課程','探究','選修','菁英'];
+let NO_DEPOSIT_PURPOSES=['課程','探究','選修','菁英','能力競賽'];
 let submittingBorrow=false,submittingVenue=false,lastSubmittedName='';
 function calcDeposit(){
   const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
-  let a=0;const noDeposit=NO_DEPOSIT_PURPOSES;
-  if(p!==''&&!noDeposit.includes(p)){if(hv&&he)a=1500;else if(hv)a=500;else if(he)a=1000;}
+  const a=depositFor(purposeNeedsDeposit(p,currentRole),hv,he).amount;
   document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();
 }
 
@@ -3149,7 +3198,7 @@ function showQuickFillModal(errs){
     const cur=document.getElementById('f-purpose').value;
     html+=`<div class="form-group"><label>借用目的 *</label>
       <select id="qf-purpose" onchange="document.getElementById('qf-purpose-other').style.display=this.value==='其他'?'block':'none'">
-        <option value="">-- 請選擇 --</option>${opts.map(o=>`<option value="${o.value}" ${o.value===cur?'selected':''}>${o.label}</option>`).join('')}
+        <option value="">-- 請選擇 --</option>${opts.map(o=>`<option value="${escH(o.value)}" ${o.value===cur?'selected':''}>${escH(o.label)}</option>`).join('')}
       </select>
       <input id="qf-purpose-other" maxlength="30" placeholder="請輸入借用目的" value="${val('f-purpose-other')}" style="display:${cur==='其他'?'block':'none'};margin-top:6px">${errOf('purpose')}</div>`;
   }
@@ -3291,7 +3340,9 @@ if(courseNoteBody){
     const id='REQ-'+Date.now();let dt='無',da=0;
     // 保證金規則與畫面上的試算（calcDeposit）一致：用「下拉選單」原始值判斷，避免在「其他」自填「課程」繞過
     const purposeSel=document.getElementById('f-purpose').value;
-    if(!NO_DEPOSIT_PURPOSES.includes(purposeSel)){const hv=!!venue,he=items.length>0;if(hv&&he){dt='場地+器材';da=1500;}else if(hv){dt='場地';da=500;}else if(he){dt='器材';da=1000;}}
+    // 送出前重讀一次設定，避免後台剛改過金額，網頁還拿舊金額（資料庫會核對，不符就會被擋）
+    await loadPurposeSettings();
+    {const d=depositFor(purposeNeedsDeposit(purposeSel,currentRole),!!venue,items.length>0);dt=d.type;da=d.amount;}
     // [修改2] 把 supervisor 寫進 note（相容現有 schema，不需新增欄位）
     const noteWithSupervisor=supervisor?`[指導老師：${supervisor}]${note?' '+note:''}`:note;
 
@@ -3657,7 +3708,7 @@ function closeModal(event){if(!event||event.target===document.getElementById('mo
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000);}
 
-// ── 課程模板（維持原有邏輯）──────────────────────────────
+// ── 課綱實驗（維持原有邏輯）──────────────────────────────
 let allCourseTemplates=[],appliedTemplate=null;
 const SUBJECT_FROM_ROOM={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具'};
 const SUBJECTS=['地球科學','物理','化學','生物','地科','理化','數學','資訊','生活科技','國文','英文','歷史','地理','公民'];
@@ -3742,7 +3793,7 @@ function applyTemplate(id){
       selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
       added.push({room,name,unit,qty:want,info});
     }else{
-      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,note:'課程模板器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
+      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,note:'課綱實驗器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
     }
   });
   appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added,unmatched};
