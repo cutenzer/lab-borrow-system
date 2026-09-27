@@ -235,10 +235,11 @@
     <div class="tab-more-menu" id="tabMoreMenu">
       <button onclick="showTab('teachers')">👩‍🏫 教師管理</button>
       <button onclick="showTab('semester')">📆 學期設定</button>
-      <button onclick="showTab('templates')">📚 課程模板</button>
+      <button onclick="showTab('templates')">📚 課綱實驗</button>
       <button onclick="showTab('floorplan')">🗺️ 平面圖校正</button>
       <button onclick="showTab('chemicals')">🧪 藥品管理</button>
       <button onclick="showTab('equipment')">📦 器材管理</button>
+      <button onclick="showTab('purposes')">💰 借用目的與保證金</button>
     </div>
   </div>
 </div>
@@ -293,6 +294,36 @@
   </div>
 </div>
 
+<div id="panel-purposes" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💰 借用目的與保證金</div>
+    <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
+    <div id="purposeList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
+    <div style="display:grid;grid-template-columns:2fr repeat(3,auto) auto;gap:10px;align-items:end;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+      <div class="form-group" style="margin:0"><label>新增借用目的</label><input type="text" id="pp-new-name" maxlength="20" placeholder="例如：校外比賽"></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-t" checked style="width:18px;height:18px">老師可選</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-s" style="width:18px;height:18px">學生可選</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-d" style="width:18px;height:18px">需保證金</label>
+      <button class="btn btn-secondary" onclick="addPurposeRow()">＋ 加入清單</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💵 保證金金額（新台幣）</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="form-group"><label>只借器材</label><input type="number" id="dep-equip" min="0" max="100000" step="100"></div>
+      <div class="form-group"><label>只借場地</label><input type="number" id="dep-venue" min="0" max="100000" step="100"></div>
+      <div class="form-group"><label>器材＋場地</label><input type="number" id="dep-both" min="0" max="100000" step="100"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">👀 前台會看到</div>
+    <div id="purposePreview" style="font-size:14px;line-height:1.8"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px">
+    <button class="btn btn-secondary" onclick="loadPurposesAdmin()">↺ 放棄修改</button>
+    <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">💾 儲存全部</button>
+  </div>
+</div>
 <div id="panel-teachers" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">👩‍🏫 新增 / 編輯教師科目</div>
@@ -374,18 +405,18 @@
   <div id="panel-templates" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📤 上傳課程實驗紀錄表（Excel）</div>
-    <div class="info-box">上傳老師填寫的「＿＿＿實驗紀錄表」.xlsx，系統會自動解析器材清單，建立成課程模板。解析後請確認/調整下方資料再儲存。</div>
+    <div class="info-box">上傳老師填寫的「＿＿＿實驗紀錄表」.xlsx，系統會自動解析器材清單，建立成課綱實驗。解析後請確認/調整下方資料再儲存。</div>
     <input type="file" id="tpl-file" accept=".xlsx" onchange="handleTemplateFile(this)">
     <div id="tplParseMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">💾 課程模板備份／批次編輯</div>
-    <div class="info-box">「匯出」會把目前所有課程模板整理成一個 Excel 檔（每個器材一列），可以當備份，也可以直接在 Excel 裡改內容（例如批次調整某項器材的數量），改完再用「匯入」整批更新回來。匯入時若該列的「課程ID」跟現有模板一樣就會更新該模板，ID留空則視為新課程。</div>
+    <div class="card-title">💾 課綱實驗備份／批次編輯</div>
+    <div class="info-box">「匯出」會把目前所有課綱實驗整理成一個 Excel 檔（每個器材一列），可以當備份，也可以直接在 Excel 裡改內容（例如批次調整某項器材的數量），改完再用「匯入」整批更新回來。匯入時若該列的「課程ID」跟現有模板一樣就會更新該模板，ID留空則視為新課程。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-secondary" onclick="exportTemplatesXlsx()">📥 匯出全部模板（Excel備份）</button>
+      <button class="btn btn-secondary" onclick="exportTemplatesXlsx()">📥 匯出全部課綱實驗（Excel備份）</button>
       <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
-        📤 匯入模板 Excel
+        📤 匯入課綱實驗 Excel
         <input type="file" id="tpl-import-file" accept=".xlsx" style="display:none" onchange="handleTemplateImport(this)">
       </label>
     </div>
@@ -393,7 +424,7 @@
   </div>
 
   <div class="card" id="tplFormCard" style="margin-bottom:16px;display:none">
-    <div class="card-title">📚 新增 / 編輯課程模板</div>
+    <div class="card-title">📚 新增 / 編輯課綱實驗</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
       <div class="form-group" style="grid-column:1/-1"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
       <div class="form-group"><label>分類</label><input type="text" id="tpl-category"></div>
@@ -427,13 +458,13 @@
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" onclick="clearTemplateForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課程模板</button>
+      <button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課綱實驗</button>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:0">
-    <div class="card-title" style="flex-wrap:wrap">📋 已建立的課程模板<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkTemplateHealth()">🩺 模板健檢</button></div>
-    <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課程模板</p></div></div>
+    <div class="card-title" style="flex-wrap:wrap">📋 已建立的課綱實驗<button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkTemplateHealth()">🩺 課綱實驗健檢</button></div>
+    <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p></div></div>
   </div>
 </div>
 
@@ -906,7 +937,7 @@ function renderWithFilter(panel){
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
-const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment','highlights'];
+const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment','highlights','purposes'];
 function showTab(tab){
   closeTabMoreMenu();
   document.querySelectorAll('.tabs > .tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
@@ -922,6 +953,7 @@ function showTab(tab){
   if(tab==='chemicals')loadAdminChems();
   if(tab==='equipment')loadAdminEquipment();
   if(tab==='highlights')loadHighlights();
+  if(tab==='purposes')loadPurposesAdmin();
 }
 // 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
 // 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
@@ -1035,7 +1067,7 @@ function renderRecord(r,mode){
       if(plainNote)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(plainNote)}</div>`;
       if(shared.length||chemicals.length||recycling.length){
         html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
-        html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用模板）</div>`;
+        html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用課綱實驗）</div>`;
         if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">🧪 藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">♻️ 回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
@@ -2434,7 +2466,7 @@ let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
 renderPeriodSettingList([]);
 renderExamWeekList([]);
-  // ── 課程模板：Excel 解析 ──────────────────────────────────
+  // ── 課綱實驗：Excel 解析 ──────────────────────────────────
 const TPL_LABELS = ['實驗名稱','年級','月份','週次','關鍵字','教師','填表人','班數','組數'];
 const TPL_ROOM_GUESS_RULES = [
   [/理化/, 'Physics Chemistry'],[/物理/, 'Physics'],[/化學/, 'Chemistry'],
@@ -2452,7 +2484,7 @@ function parseCourseTemplateXlsx(workbook, fileName) {
       return parseTplSheet(rows, fileName, sheetName);
     }
   }
-  return { error: '此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課程模板', file: fileName };
+  return { error: '此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗', file: fileName };
 }
 
 function parseTplSheet(rows, fileName, sheetName) {
@@ -2539,7 +2571,7 @@ function buildReferenceNote(otherItems, chemicals, recycling){
   return lines.join('\n').trim();
 }
 
-// ── 課程模板：上傳/表單 ────────────────────────────────────
+// ── 課綱實驗：上傳/表單 ────────────────────────────────────
 let allTemplates=[], editingTemplateId=null, tplEquipRows=[];
 
 async function handleTemplateFile(input){
@@ -2654,11 +2686,11 @@ async function saveTemplate(){
   try{
     if(editingTemplateId){
       await sb('PATCH','course_templates',{filter:'id=eq.'+editingTemplateId,body,prefer:'return=minimal'});
-      showToast('課程模板已更新','success');
+      showToast('課綱實驗已更新','success');
     }else{
       body.id='TPL-'+Date.now();
       await sb('POST','course_templates',{body,prefer:'return=minimal'});
-      showToast('課程模板已建立','success');
+      showToast('課綱實驗已建立','success');
     }
     clearTemplateForm();loadTemplates();
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
@@ -2670,7 +2702,7 @@ async function loadTemplates(){
   try{
     allTemplates=await sb('GET','course_templates',{order:'created_at.desc'});
     allTemplates=Array.isArray(allTemplates)?allTemplates:[];
-    if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課程模板</p></div>';return;}
+    if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p></div>';return;}
     list.innerHTML='<div class="record-list">'+allTemplates.map(t=>{
       const roomLabel=(TPL_ROOM_OPTIONS.find(([v])=>v===t.default_room)||['',''])[1];
       return `<div class="record-card">
@@ -2689,14 +2721,14 @@ async function loadTemplates(){
     }).join('')+'</div>';
   }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
 }
-// ── 課程模板 匯出／匯入（備份、批次編輯用）──────────────────
+// ── 課綱實驗 匯出／匯入（備份、批次編輯用）──────────────────
 async function exportTemplatesXlsx(){
   if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
   try{
     const rows=await sb('GET','course_templates',{order:'created_at.desc'});
     const templates=Array.isArray(rows)?rows:[];
     const wb=new ExcelJS.Workbook();
-    const ws=wb.addWorksheet('課程模板');
+    const ws=wb.addWorksheet('課綱實驗');
     const headers=['課程ID','課程名稱','分類','年級','教師','月份','週次','班數','組數','預設科別','器材名稱','規格','數量','單位','器材科別','器材備註','參考備註'];
     ws.addRow(headers);
     ws.getRow(1).font={bold:true};
@@ -2717,7 +2749,7 @@ async function exportTemplatesXlsx(){
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download='課程模板備份_'+new Date().toISOString().slice(0,10)+'.xlsx';
+    a.download='課綱實驗備份_'+new Date().toISOString().slice(0,10)+'.xlsx';
     document.body.appendChild(a);a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
     showToast('已匯出備份','success');
@@ -2744,7 +2776,7 @@ function handleTemplateImport(input){
         iMonth=idx('月份'),iWeek=idx('週次'),iClassCount=idx('班數'),iGroupCount=idx('組數'),iRoom=idx('預設科別'),
         iItemName=idx('器材名稱'),iSpec=idx('規格'),iQty=idx('數量'),iUnit=idx('單位'),iItemRoom=idx('器材科別'),
         iItemNote=idx('器材備註'),iRefNote=idx('參考備註');
-      if(iName<0){msg.textContent='⚠️ 找不到「課程名稱」欄位，請確認是用「匯出全部模板」產生的檔案格式';return;}
+      if(iName<0){msg.textContent='⚠️ 找不到「課程名稱」欄位，請確認是用「匯出全部課綱實驗」產生的檔案格式';return;}
       const groups=new Map();
       for(let r=1;r<rows.length;r++){
         const row=rows[r];if(!row||row.every(c=>c===null||c===''))continue;
@@ -2836,7 +2868,7 @@ function editTemplate(id){
   document.getElementById('tplFormCard').scrollIntoView({behavior:'smooth'});
 }
 function deleteTemplate(id){
-  showModal('確認刪除',`<p>確定刪除這個課程模板嗎？</p>`,[
+  showModal('確認刪除',`<p>確定刪除這個課綱實驗嗎？</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認刪除',cls:'btn-danger',fn:`doDeleteTemplate('${id}')`}
   ]);
@@ -3316,14 +3348,14 @@ async function checkTemplateHealth(){
     const bad=(Array.isArray(tpls)?tpls:[]).map(t=>({t,miss:(Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>!matches(it))})).filter(x=>x.miss.length);
     const total=(Array.isArray(tpls)?tpls:[]).length;
     if(!bad.length){
-      showModal('🩺 模板健檢',`<div class="empty"><div class="empty-icon">✅</div><p>全部 ${total} 個模板的器材都對得到庫存品名</p></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+      showModal('🩺 課綱實驗健檢',`<div class="empty"><div class="empty-icon">✅</div><p>全部 ${total} 個課綱實驗的器材都對得到庫存品名</p></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
       return;
     }
     const rows=bad.map(({t,miss})=>`<div style="padding:8px 10px;border-radius:6px;background:#fff7ed;margin-bottom:6px;font-size:13.5px">
       <strong>${escH(t.name||'（未命名）')}</strong>${t.grade?` <span style="color:var(--text2);font-size:12px">${escH(t.grade)}</span>`:''}
       <div style="color:#b45309;margin-top:3px">對不到：${miss.map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}</div>
     </div>`).join('');
-    showModal(`🩺 ${bad.length}／${total} 個模板有對不到的器材`,`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">這些品名在器材庫存找不到，老師套用模板時會被列成「查無相符品名」，容易誤以為系統沒有這個東西。處理方式二選一：①到器材管理把庫存品名改成一致、或在「別名」加上模板用的名稱；②修改模板裡的品名。真的沒有的器材則考慮採購或補登。</div>${rows}`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+    showModal(`🩺 ${bad.length}／${total} 個課綱實驗有對不到的器材`,`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">這些品名在器材庫存找不到，老師套用模板時會被列成「查無相符品名」，容易誤以為系統沒有這個東西。處理方式二選一：①到器材管理把庫存品名改成一致、或在「別名」加上模板用的名稱；②修改模板裡的品名。真的沒有的器材則考慮採購或補登。</div>${rows}`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
   }catch(e){showToast('健檢失敗：'+e.message,'error');}
 }
 function toggleInlineEditEquip(id){
@@ -3576,6 +3608,94 @@ async function uploadEquipPhoto(id,input){
     loadAdminEquipment();
   }catch(e){showToast('上傳失敗：'+e.message,'error');}
   input.value='';
+}
+
+
+// ── 借用目的與保證金 ────────────────────────────────────
+// 編輯都先存在畫面上（purposeRows），按「儲存全部」才一次寫回資料庫
+let purposeRows=[],purposeDeleted=[],purposeDepositRow=null;
+async function loadPurposesAdmin(){
+  const list=document.getElementById('purposeList');
+  list.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
+  try{
+    const [rows,dep]=await Promise.all([sb('GET','borrow_purposes',{order:'sort'}),sb('GET','deposit_settings',{})]);
+    purposeRows=(Array.isArray(rows)?rows:[]).map(r=>({id:r.id,name:String(r.name||''),for_teacher:!!r.for_teacher,for_student:!!r.for_student,needs_deposit:!!r.needs_deposit,is_active:r.is_active!==false}));
+    purposeDeleted=[];
+    purposeDepositRow=Array.isArray(dep)&&dep[0]?dep[0]:{equip_amount:1000,venue_amount:500,both_amount:1500};
+    document.getElementById('dep-equip').value=purposeDepositRow.equip_amount;
+    document.getElementById('dep-venue').value=purposeDepositRow.venue_amount;
+    document.getElementById('dep-both').value=purposeDepositRow.both_amount;
+    renderPurposeRows();
+  }catch(e){
+    list.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>讀取失敗：${escH(e.message)}</p><p class="hint" style="margin-top:6px">如果訊息提到 borrow_purposes 不存在，請先在 Supabase 執行「借用目的與保證金.sql」</p></div>`;
+  }
+}
+function renderPurposeRows(){
+  const list=document.getElementById('purposeList');
+  if(!purposeRows.length){list.innerHTML='<div class="empty"><p>目前沒有任何借用目的</p></div>';renderPurposePreview();return;}
+  const ck=(i,f,label)=>`<label style="display:flex;align-items:center;gap:5px;font-size:13px;white-space:nowrap"><input type="checkbox" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)" style="width:18px;height:18px">${label}</label>`;
+  list.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+purposeRows.map((r,i)=>`
+    <div style="display:grid;grid-template-columns:auto 1.6fr repeat(4,auto) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},-1)" ${i===0?'disabled':''} aria-label="往上">▲</button>
+        <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},1)" ${i===purposeRows.length-1?'disabled':''} aria-label="往下">▼</button>
+      </div>
+      <input type="text" maxlength="20" value="${escH(r.name)}" onchange="setPurposeField(${i},'name',this.value)" style="font-weight:700">
+      ${ck(i,'for_teacher','老師可選')}${ck(i,'for_student','學生可選')}${ck(i,'needs_deposit','需保證金')}${ck(i,'is_active','啟用')}
+      <button class="btn btn-danger btn-sm" onclick="deletePurposeRow(${i})" aria-label="刪除">🗑️</button>
+    </div>`).join('')+`</div>`;
+  renderPurposePreview();
+}
+function setPurposeField(i,f,v){if(!purposeRows[i])return;purposeRows[i][f]=f==='name'?String(v).trim():!!v;renderPurposeRows();}
+function movePurpose(i,d){const j=i+d;if(j<0||j>=purposeRows.length)return;[purposeRows[i],purposeRows[j]]=[purposeRows[j],purposeRows[i]];renderPurposeRows();}
+function deletePurposeRow(i){
+  const r=purposeRows[i];if(!r)return;
+  showModal('刪除借用目的',`<p>確定刪除「${escH(r.name)}」？</p><p style="margin-top:8px;font-size:13px;color:var(--text2)">已送出的申請不受影響。只是暫時不用的話，建議取消「啟用」就好，之後還能再打開。</p>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'刪除（按儲存後生效）',cls:'btn-danger',fn:`confirmDeletePurpose(${i})`}
+  ]);
+}
+function confirmDeletePurpose(i){const r=purposeRows[i];if(r&&r.id)purposeDeleted.push(r.id);purposeRows.splice(i,1);closeModal();renderPurposeRows();}
+function addPurposeRow(){
+  const name=document.getElementById('pp-new-name').value.trim();
+  if(!name){showToast('請輸入名稱','error');return;}
+  if(name.length>20){showToast('名稱最多 20 字','error');return;}
+  if(purposeRows.some(r=>r.name===name)){showToast('已經有這個目的了','error');return;}
+  purposeRows.push({id:null,name,for_teacher:document.getElementById('pp-new-t').checked,for_student:document.getElementById('pp-new-s').checked,needs_deposit:document.getElementById('pp-new-d').checked,is_active:true});
+  document.getElementById('pp-new-name').value='';
+  renderPurposeRows();
+  showToast('已加入，記得按「儲存全部」','success');
+}
+function renderPurposePreview(){
+  const on=purposeRows.filter(r=>r.is_active&&r.name);
+  const lab=r=>escH(r.name==='其他'?'其他（自填）':r.name)+(r.needs_deposit?'<span style="color:#b8650f;font-size:12px">＄</span>':'');
+  const t=on.filter(r=>r.for_teacher).map(lab).join('、')||'<span style="color:var(--danger)">（沒有任何選項）</span>';
+  const st=on.filter(r=>r.for_student).map(lab).join('、')||'<span style="color:var(--danger)">（沒有任何選項）</span>';
+  document.getElementById('purposePreview').innerHTML=`<div><b>老師的選單：</b>${t}</div><div><b>學生的選單：</b>${st}</div><div style="font-size:12.5px;color:var(--text2)">＄＝需要保證金</div>`;
+}
+async function savePurposesAdmin(){
+  // 檢查：名稱不可空白、不可重複；老師和學生都至少要有一個可選的目的
+  const names=purposeRows.map(r=>r.name);
+  if(names.some(n=>!n)){showToast('有目的沒有填名稱','error');return;}
+  if(names.some(n=>n.length>20)){showToast('名稱最多 20 字','error');return;}
+  if(new Set(names).size!==names.length){showToast('有重複的名稱','error');return;}
+  const act=purposeRows.filter(r=>r.is_active);
+  if(!act.some(r=>r.for_teacher)||!act.some(r=>r.for_student)){showToast('老師和學生都至少要有一個可選的目的','error');return;}
+  const amt=id=>{const v=parseInt(document.getElementById(id).value);return Number.isFinite(v)&&v>=0&&v<=100000?v:null;};
+  const equip=amt('dep-equip'),venue=amt('dep-venue'),both=amt('dep-both');
+  if(equip===null||venue===null||both===null){showToast('保證金金額要是 0～100000 的整數','error');return;}
+  const btn=document.getElementById('purposeSaveBtn');btn.disabled=true;btn.textContent='儲存中…';
+  try{
+    // 交給資料庫函式「一次」處理：刪除、改名、排序、新增、金額，全部成功才生效，中途出錯會整批還原
+    await sb('POST','rpc/save_borrow_purposes',{body:{
+      p_rows:purposeRows.map(r=>({id:r.id||null,name:r.name,for_teacher:r.for_teacher,for_student:r.for_student,needs_deposit:r.needs_deposit,is_active:r.is_active})),
+      p_deleted:purposeDeleted.map(x=>parseInt(x)).filter(Number.isFinite),
+      p_equip:equip,p_venue:venue,p_both:both
+    }});
+    showToast('✅ 已儲存，前台重新整理後生效','success');
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+  btn.disabled=false;btn.textContent='💾 儲存全部';
+  loadPurposesAdmin();
 }
 
 // ── 盤點（已併入器材清單，直接改「實點數量」）─────────────
