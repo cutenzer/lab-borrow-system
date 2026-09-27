@@ -2547,7 +2547,20 @@ async function submitVenueRequest(){
     submittingVenue=false;
     venuePicks=[];renderVenuePickBar();
     loadVenue();renderHomeVenuePreview();
-  }catch(e){unlock();showToast('申請失敗：'+e.message,'error');}
+  }catch(e){
+    unlock();
+    // 資料庫最後一關發現撞堂（剛好有人同時送出）：提示並重新整理課表
+    if(/時段已被預約/.test(e.message||'')){
+      // 表單在視窗裡，不能蓋掉：把撞到的時段標紅，提示改時段，其他資料都保留
+      const m=(e.message||'').match(/(\d{4}-\d{2}-\d{2}) (\S+) ([^\s（(]+)/);
+      if(m)periodRows.forEach(id=>{
+        const hit=document.getElementById('pr-date-'+id)?.value===m[1]&&document.getElementById('pr-period-'+id)?.value===m[2]&&document.getElementById('pr-venue-'+id)?.value===m[3];
+        if(hit)document.getElementById('pr-'+id)?.classList.add('period-conflict');
+      });
+      showToast('有人比你早幾秒預約了這個時段（紅框），請改時段再送出','error');
+      loadVenue();renderHomeVenuePreview();
+    }else showToast('申請失敗：'+e.message,'error');
+  }
 }
 function resetVenueForm(){
   const el=id=>document.getElementById(id);
