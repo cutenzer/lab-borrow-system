@@ -1361,7 +1361,9 @@ function renderVenuePending(){
             <span style="flex:1;font-weight:600">${escH(p.date)}</span>
             <span style="color:var(--text2)">${escH(p.period)}</span>
             <span style="color:var(--accent)">${escH(p.venue)}</span>
+            ${p.status==='待審核'&&venueSlotConflict(p.date,p.period,p.venue,b.id)?'<span style="font-size:12px;color:var(--danger);font-weight:700">⚠ 已有人核准</span>':''}
             <span class="period-status-badge ${p.status==='已核准'?'ps-approved':p.status==='已拒絕'?'ps-rejected':'ps-pending'}">${escH(p.status)}</span>
+            ${p.status==='待審核'?`<button class="btn btn-danger btn-sm" style="padding:3px 9px" title="只拒絕這個時段" aria-label="拒絕此時段" onclick="venuePeriodOne('${b.id}',${i},false)">✕</button><button class="btn btn-primary btn-sm" style="padding:3px 9px" title="只核准這個時段" aria-label="核准此時段" onclick="venuePeriodOne('${b.id}',${i},true)">✓</button>`:''}
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -1375,6 +1377,12 @@ function renderVenuePending(){
   }).join('');
 }
 
+// 單一時段直接核准／拒絕：只勾這一格，再走原本「勾選時段」的流程（含衝突檢查）
+function venuePeriodOne(bookingId,idx,approve){
+  const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
+  (booking.periods||[]).forEach((p,i)=>{const cb=document.getElementById(`pck-${bookingId}-${i}`);if(cb)cb.checked=(i===idx);});
+  approveVenueSelected(bookingId,approve);
+}
 async function approveVenueSelected(bookingId,approve,force){
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
   // 找出本次勾選且待審核的時段
@@ -1388,7 +1396,7 @@ async function approveVenueSelected(bookingId,approve,force){
   if(approve&&!force){
     const conflicts=selected.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
     if(conflicts.length){
-      showModal('⚠️ 時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+      showModal('⚠️ 時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`approveVenueSelected('${bookingId}',true,true)`}
       ]);
@@ -1414,7 +1422,7 @@ async function approveAllVenue(bookingId,approve,force){
     const pendingPeriods=(booking.periods||[]).filter(p=>p.status==='待審核');
     const conflicts=pendingPeriods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
     if(conflicts.length){
-      showModal('⚠️ 時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
+      showModal('⚠️ 時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`approveAllVenue('${bookingId}',true,true)`}
       ]);
@@ -2098,7 +2106,7 @@ async function adminAddVenue(date,period,dow){
     window._pendingVenueAdd=opts;
     showModal('⚠️ 時段衝突',`
       <p>以下日期已有核准／固定預約：</p>
-      <div style="margin-top:8px;font-size:13px;max-height:200px;overflow:auto">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c.date} ${c.period} ${c.venue}</div>`).join('')}</div>
+      <div style="margin-top:8px;font-size:13px;max-height:200px;overflow:auto">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div>
       <p style="margin-top:6px;font-size:13px">共 ${periods.length} 筆，其中 ${conflicts.length} 筆衝突。仍要新增（造成重複預約）嗎？</p>
     `,[
       {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
