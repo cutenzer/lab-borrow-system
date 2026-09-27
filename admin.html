@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>實驗室管理後台</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
-  :root{--bg:#f4f3ef;--surface:#fff;--surface2:#f0efe9;--border:#ddd9ce;--text:#1a1916;--text2:#6b6760;--accent:#2a6b4f;--danger:#c0392b;--warn:#d4a843;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
+  :root{--bg:#ece7dc;--surface:#fbf9f4;--surface2:#efe9dd;--border:#ddd6c7;--text:#22262a;--text2:#5f5b54;--accent:#1f5b4c;--ink:#1f2326;--ink2:#343a3d;--caution:#e8cf3a;--danger:#c0392b;--warn:#d4a843;--radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.08);}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;}
   header{background:var(--accent);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
@@ -197,6 +197,77 @@
     .eq-meta input{font-size:15.5px!important;width:84px!important;padding:5px 8px!important;}
     .eq-actions{flex-direction:row;flex-wrap:wrap;justify-content:flex-end;max-width:260px;align-content:flex-start;}
   }
+
+  /* ═════════ 新版外觀（與前台一致）═════════ */
+  body{background-color:var(--bg);background-image:linear-gradient(rgba(34,38,42,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(34,38,42,.035) 1px,transparent 1px);background-size:24px 24px;}
+  header{background:var(--ink)!important;}
+  header .btn-secondary{background:var(--ink2);color:#fff;border-color:#3a4043;}
+  .admin-brand{display:flex;align-items:center;gap:10px;color:#fff;}
+  .admin-brand h1{font-size:17px;letter-spacing:2px;}
+  .brand-sub{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:1.2px;color:#a8a398;}
+  .card{border-radius:14px;}
+  .btn-primary{background:var(--accent);}
+  .ico{flex-shrink:0;}
+  .tab{display:inline-flex;align-items:center;gap:6px;position:relative;}
+  .tab-group-label,.side-foot{display:none;}
+  .tab-more-menu button{display:flex;align-items:center;gap:10px;}
+  .tab-more-menu button.active{background:var(--surface2);font-weight:700;color:var(--accent);}
+  /* 總覽 */
+  .ov-head{display:flex;align-items:flex-end;margin-bottom:14px;}
+  .ov-title{font-size:22px;margin:0;}
+  .ov-sub{font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);margin-top:2px;}
+  .ov-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:900px){.ov-grid{grid-template-columns:1.3fr 1fr;align-items:start;}}
+  .ov-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--surface2);}
+  .ov-row:last-child{border-bottom:none;}
+  .ov-dot{width:10px;height:10px;border-radius:5px;flex-shrink:0;background:var(--text2);}
+  .ov-danger .ov-dot{background:var(--danger);}.ov-warn .ov-dot{background:#c98a1a;}.ov-ok .ov-dot{background:var(--accent);}
+  .ov-txt{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .ov-txt b{font-size:14.5px;}
+  .ov-txt span{font-size:12.5px;color:var(--text2);}
+  .ov-bar{display:flex;align-items:center;gap:10px;margin:8px 0;}
+  .ov-bar-name{width:84px;font-size:13.5px;flex-shrink:0;}
+  .ov-bar-track{flex:1;height:14px;border-radius:7px;background:var(--surface2);overflow:hidden;}
+  .ov-bar-track span{display:block;height:100%;}
+  .ov-bar-num{font-family:'DM Mono',monospace;font-size:13px;width:48px;text-align:right;}
+  .stats-grid{background:transparent!important;border:none!important;gap:10px!important;overflow:visible!important;}
+  .stat-card{border:1px solid var(--border);border-radius:12px;}
+  @media(max-width:700px){.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;}.stat-card{padding:10px 8px!important;}.stat-num{font-size:22px!important;}.stat-label{font-size:11px!important;margin-top:4px!important;}.brand-sub{display:none;}.ov-title{font-size:19px;}.dep-num{font-size:16px;}}
+  .dep-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+  .dep-card{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface2);}
+  .dep-num{font-family:'DM Mono',monospace;font-size:20px;font-weight:600;}
+  .dep-lbl{font-size:12.5px;color:var(--text2);}
+  /* 手機／平板：分頁做成可以左右滑的按鈕 */
+  @media(max-width:1099px){
+    .tabs{border-bottom:none;gap:6px;padding:2px 0 8px;}
+    .tab{border:1px solid var(--border)!important;border-radius:19px;background:var(--surface);padding:7px 13px;margin-bottom:0;color:var(--text);font-weight:600;}
+    .tab.active{background:var(--ink);color:#fff;border-color:var(--ink)!important;}
+    .tab .ico{width:16px;height:16px;}
+    .tab-badge{position:static;margin-left:2px;background:var(--caution);color:#22262a;}
+  }
+  /* 電腦：左側深色側邊欄，內容正常寬度置中 */
+  @media(min-width:1100px){
+    #adminWrap{padding-left:240px;}
+    header{position:sticky;top:0;}
+    .tabs{position:fixed;left:0;top:0;bottom:0;width:240px;z-index:110;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:2px;margin:0;border:none;background:var(--ink);padding:74px 14px 16px;overflow-y:auto;overflow-x:hidden;}
+    .tab-group-label{display:block;padding:10px 14px 4px;font-size:12px;letter-spacing:1px;color:#a8a398;}
+    .tab{width:100%;display:flex;gap:12px;padding:10px 14px;border:none!important;border-radius:10px;margin:0;color:#d6d1c6;font-size:14.5px;text-align:left;}
+    .tab:hover{background:rgba(255,255,255,.06);color:#fff;}
+    .tab.active{background:var(--ink2);color:#fff;font-weight:700;border:none!important;}
+    .tab-badge{position:static;margin-left:auto;min-width:22px;height:22px;border-radius:11px;background:var(--caution);color:#22262a;font-family:'DM Mono',monospace;font-size:12px;}
+    #tabMoreBtn{display:none;}
+    .tab-more-wrap{display:block;}
+    .tab-more-menu,.tab-more-menu.show{display:flex!important;flex-direction:column;gap:2px;position:static!important;background:none;border:none;box-shadow:none;min-width:0;padding:0;margin-top:6px;}
+    .tab-more-menu button{border:none!important;border-radius:10px;padding:10px 14px;color:#d6d1c6;background:none;font-size:14.5px;}
+    .tab-more-menu button:hover{background:rgba(255,255,255,.06);color:#fff;}
+    .tab-more-menu button.active{background:var(--ink2);color:#fff;}
+    .side-foot{display:flex;flex-direction:column;gap:8px;margin-top:auto;padding:14px 8px 0;border-top:1px solid #3a4043;font-size:12px;color:#a8a398;word-break:break-all;}
+    .side-foot .btn{align-self:flex-start;background:var(--ink2);color:#d6d1c6;border-color:#3a4043;}
+    header{padding-left:28px;}
+    header .admin-brand{visibility:hidden;}
+    .tabs::before{content:'管理後台';position:absolute;top:22px;left:58px;color:#fff;font-size:18px;font-weight:700;letter-spacing:2px;}
+    .tabs::after{content:'';position:absolute;top:18px;left:22px;width:28px;height:30px;background:no-repeat center/28px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e9e5dc' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3'/%3E%3Cpath d='M7 15h10'/%3E%3C/svg%3E");}
+  }
 </style>
 </head>
 <body>
@@ -214,37 +285,47 @@
 
 <div id="adminWrap" style="display:none">
 <header>
-  <div style="display:flex;align-items:center;gap:12px"><span style="font-size:20px">🧪</span><h1>實驗室管理後台</h1></div>
+  <div class="admin-brand"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg><h1>管理後台</h1><span class="brand-sub">LAB ADMIN</span></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button>
     <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
   </div>
 </header>
 <main>
-<div class="stats-grid" id="statsGrid"></div>
 <div class="tabs">
-  <button class="tab" data-tab="overview" onclick="showTab('overview')">🏠 總覽</button>
-  <button class="tab active" data-tab="pending" onclick="showTab('pending')">⏳ 待審核<span class="tab-badge" id="tb-pending">0</span></button>
-  <button class="tab" data-tab="approved" onclick="showTab('approved')">✅ 已核准</button>
-  <button class="tab" data-tab="return" onclick="showTab('return')">📬 確認歸還<span class="tab-badge" id="tb-return">0</span></button>
-  <button class="tab" data-tab="deposit" onclick="showTab('deposit')">💰 保證金<span class="tab-badge" id="tb-deposit">0</span></button>
-  <button class="tab" data-tab="venue" onclick="showTab('venue')">🏛️ 場地管理<span class="tab-badge" id="tb-venue">0</span></button>
-  <button class="tab" data-tab="all" onclick="showTab('all')">📊 全部記錄</button>
+  <div class="tab-group-label">審核與流程</div>
+  <button class="tab active" data-tab="overview" onclick="showTab('overview')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span class="tab-label">總覽</span></button>
+  <button class="tab" data-tab="pending" onclick="showTab('pending')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg><span class="tab-label">待審核</span><span class="tab-badge" id="tb-pending">0</span></button>
+  <button class="tab" data-tab="approved" onclick="showTab('approved')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg><span class="tab-label">已核准</span></button>
+  <button class="tab" data-tab="return" onclick="showTab('return')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span class="tab-label">確認歸還</span><span class="tab-badge" id="tb-return">0</span></button>
+  <button class="tab" data-tab="deposit" onclick="showTab('deposit')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 10a3 2 0 0 1 6 0c0 3-6 1-6 4a3 2 0 0 0 6 0M12 6v2M12 16v2"/></svg><span class="tab-label">保證金</span><span class="tab-badge" id="tb-deposit">0</span></button>
+  <button class="tab" data-tab="venue" onclick="showTab('venue')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="tab-label">場地管理</span><span class="tab-badge" id="tb-venue">0</span></button>
+  <button class="tab" data-tab="all" onclick="showTab('all')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="tab-label">全部記錄</span></button>
   <div class="tab-more-wrap">
-    <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)">⚙️ 設定與資料 ▾</button>
+    <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="tab-label">設定與資料 ▾</span></button>
     <div class="tab-more-menu" id="tabMoreMenu">
-      <button onclick="showTab('teachers')">👩‍🏫 教師管理</button>
-      <button onclick="showTab('semester')">📆 學期設定</button>
-      <button onclick="showTab('templates')">📚 課綱實驗</button>
-      <button onclick="showTab('floorplan')">🗺️ 平面圖校正</button>
-      <button onclick="showTab('chemicals')">🧪 藥品管理</button>
-      <button onclick="showTab('equipment')">📦 器材管理</button>
-      <button onclick="showTab('purposes')">💰 借用目的與保證金</button>
+      <div class="tab-group-label">設定與資料</div>
+      <button data-tab="equipment" onclick="showTab('equipment')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材管理</span></button>
+      <button data-tab="chemicals" onclick="showTab('chemicals')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg><span>藥品管理</span></button>
+      <button data-tab="templates" onclick="showTab('templates')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h10a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M4 16a4 4 0 0 1 4-4h10"/></svg><span>課綱實驗</span></button>
+      <button data-tab="purposes" onclick="showTab('purposes')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></svg><span>借用目的與保證金</span></button>
+      <button data-tab="floorplan" onclick="showTab('floorplan')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖校正</span></button>
+      <button data-tab="teachers" onclick="showTab('teachers')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>教師管理</span></button>
+      <button data-tab="semester" onclick="showTab('semester')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>學期設定</span></button>
     </div>
   </div>
+  <div class="side-foot" id="sideFoot"></div>
 </div>
 
-<div id="panel-pending" class="panel active">
+<div id="panel-overview" class="panel active">
+  <div class="ov-head"><div><h2 class="ov-title" id="ovGreeting">總覽</h2><div class="ov-sub" id="ovDate"></div></div></div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="ov-grid">
+    <div class="card"><div class="card-title">📌 今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
+    <div class="card"><div class="card-title" id="ovWeekTitle">🏛️ 本週實驗室使用</div><div id="ovWeek"></div><div class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去</div></div>
+  </div>
+</div>
+<div id="panel-pending" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">⏳ 待審核器材申請</div>
   <div class="purpose-tabs" id="pendingPurposeTabs"></div>
   <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
@@ -260,6 +341,7 @@
 </div>
 <div id="panel-deposit" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">💰 保證金管理</div>
+  <div class="dep-sum" id="depositSummary"></div>
   <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
 </div>
 
@@ -878,10 +960,11 @@ if (toMarkOverdue.length) {
   ));
   toMarkOverdue.forEach(r => { r.status = '逾期'; });
 }
-renderStats();
+renderStats();renderOverview();renderSideFoot();
     renderWithFilter('pending');renderWithFilter('approved');renderWithFilter('all');
     renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
     renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
+    renderDepositSummary();
     renderPurposeTabs('pending');renderPurposeTabs('approved');renderPurposeTabs('all');
     if(!allTeachers.length){try{await loadTeachers();}catch(e){}}
     renderVenuePending();loadAdminVenue();
@@ -918,6 +1001,63 @@ function renderStats(){
   setTabBadge('tb-deposit',depPending+depReturn);
   setTabBadge('tb-venue',venuePending);
 }
+
+// ── 總覽：今天要處理＋本週使用率 ─────────────────────────
+function teacherUseCount(name){
+  const n=String(name||'').trim();if(!n)return 0;
+  return allRecords.filter(r=>r.name===n).length+allVenueBookings.filter(b=>b.borrower_name===n).length;
+}
+function renderOverview(){
+  const todo=document.getElementById('ovTodo');if(!todo)return;
+  const now=new Date(),today=fmtDate(now),h=now.getHours();
+  const g=document.getElementById('ovGreeting');if(g)g.textContent=(h<11?'早安':h<18?'午安':'晚安')+'，今天也辛苦了';
+  const d=document.getElementById('ovDate');if(d)d.textContent=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}（週${'日一二三四五六'[now.getDay()]}）`;
+  const overdue=allRecords.filter(r=>r.status==='逾期');
+  const dueToday=allRecords.filter(r=>r.status==='已核准'&&r.returnDate===today);
+  const lendToday=allRecords.filter(r=>r.status==='已核准'&&r.borrowDate===today);
+  const pending=allRecords.filter(r=>r.status==='待審核');
+  const venuePend=allVenueBookings.filter(b=>(b.periods||[]).some(p=>p.status==='待審核'));
+  const depIn=allRecords.filter(r=>r.depositStatus==='待繳納'&&r.depositAmount>0);
+  const depOut=allRecords.filter(r=>(r.depositStatus==='待退還'||r.depositStatus==='損壞-照價賠償')&&r.depositAmount>0);
+  const oldest=pending.map(r=>r.time).filter(Boolean).sort()[0];
+  const waitDays=oldest?Math.floor((Date.now()-new Date(oldest).getTime())/86400000):0;
+  const rows=[];
+  if(overdue.length)rows.push({lv:'danger',t:`${overdue.length} 筆逾期未還`,s:overdue.slice(0,3).map(r=>escH(r.name)).join('、')+(overdue.length>3?'…':''),tab:'approved',b:'去處理'});
+  if(dueToday.length)rows.push({lv:'ok',t:`今天到期歸還 ${dueToday.length} 筆`,s:'記得點收數量、檢查損壞',tab:'return',b:'確認歸還'});
+  if(lendToday.length)rows.push({lv:'ok',t:`今天要借出 ${lendToday.length} 筆`,s:lendToday.slice(0,3).map(r=>escH(r.name)).join('、'),tab:'approved',b:'查看'});
+  if(pending.length)rows.push({lv:'warn',t:`${pending.length} 筆借用待審核`,s:waitDays>=1?`最舊的一筆已等 ${waitDays} 天`:'都是今天送出的',tab:'pending',b:'去審核'});
+  if(venuePend.length)rows.push({lv:'warn',t:`${venuePend.length} 筆場地待審核`,s:'待審核的時段在課表上是虛線框',tab:'venue',b:'場地管理'});
+  if(depIn.length)rows.push({lv:'mute',t:`${depIn.length} 筆保證金待收`,s:'NT$'+depIn.reduce((a,r)=>a+(parseInt(r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
+  if(depOut.length)rows.push({lv:'mute',t:`${depOut.length} 筆保證金待退`,s:'NT$'+depOut.reduce((a,r)=>a+(parseInt(r.finalRefund??r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
+  todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="showTab('${x.tab}')">${x.b}</button></div>`).join('')
+    :'<div class="empty" style="padding:24px 0"><div class="empty-icon">✅</div><p>今天沒有待處理的事項</p></div>';
+  // 本週各實驗室使用節數
+  // 週末就改看下週
+  const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+((now.getDay()===0||now.getDay()===6)?7:0));
+  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+  const ms=fmtDate(mon),fs=fmtDate(fri);
+  const LABS=[['化學實驗室','#1f5b4c'],['理化實驗室','#34506b'],['物理實驗室','#7a5a1f'],['生物實驗室','#3f6b2f'],['地科實驗室','#2f5f6b']];
+  const cnt={};
+  allVenueBookings.forEach(b=>(b.periods||[]).forEach(p=>{if(p.date>=ms&&p.date<=fs&&p.status!=='已拒絕')cnt[p.venue]=(cnt[p.venue]||0)+1;}));
+  const wt=document.getElementById('ovWeekTitle');if(wt)wt.textContent=((now.getDay()===0||now.getDay()===6)?'🏛️ 下週實驗室使用':'🏛️ 本週實驗室使用')+`（${mon.getMonth()+1}/${mon.getDate()}～${fri.getMonth()+1}/${fri.getDate()}）`;
+  const wk=document.getElementById('ovWeek');
+  if(wk)wk.innerHTML=LABS.map(([v,c])=>{const n=cnt[v]||0,pc=Math.min(100,Math.round(n/40*100));return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${n} 節</span></div>`;}).join('');
+}
+// 保證金：上方統計
+function renderDepositSummary(){
+  const box=document.getElementById('depositSummary');if(!box)return;
+  const sum=arr=>arr.reduce((a,r)=>a+(parseInt(r.depositAmount)||0),0);
+  const dep=allRecords.filter(r=>r.depositAmount>0);
+  const waitIn=dep.filter(r=>r.depositStatus==='待繳納');
+  const holding=dep.filter(r=>r.depositStatus==='已繳納');
+  const waitOut=dep.filter(r=>r.depositStatus==='待退還'||r.depositStatus==='損壞-照價賠償');
+  const outSum=waitOut.reduce((a,r)=>a+(parseInt(r.finalRefund??r.depositAmount)||0),0);
+  const card=(t,n,v,c)=>`<div class="dep-card"><span class="dep-num" style="color:${c}">NT$${Number(v).toLocaleString()}</span><span class="dep-lbl">${t}・${n} 筆</span></div>`;
+  box.innerHTML=card('待收款',waitIn.length,sum(waitIn),'#9a6b00')+card('保管中',holding.length,sum(holding),'var(--accent)')+card('待退還',waitOut.length,outSum,'#2a3a8a');
+}
+// 側欄最下方：登入信箱＋登出
+function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}</span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
+
 function setTabBadge(id,count){
   const el=document.getElementById(id);if(!el)return;
   if(count>0){el.textContent=count>99?'99+':count;el.classList.add('show');}
@@ -932,7 +1072,14 @@ function setPurposeFilter(panel,purpose){currentPurposeFilter[panel]=purpose;ren
 function renderWithFilter(panel){
   let records=allRecords;
   if(panel==='pending')records=allRecords.filter(r=>r.status==='待審核');
-  else if(panel==='approved')records=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期');
+  else if(panel==='approved'){
+    // 逾期的排最前面，其次依預計歸還日由近到遠
+    records=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期').slice().sort((a,b)=>{
+      const oa=a.status==='逾期'?0:1,ob=b.status==='逾期'?0:1;
+      if(oa!==ob)return oa-ob;
+      return String(a.returnDate||'9999').localeCompare(String(b.returnDate||'9999'));
+    });
+  }
   const f=currentPurposeFilter[panel];if(f&&f!=='全部')records=records.filter(r=>r.purpose===f);
   renderList(records,document.getElementById(panel+'List'),panel);
 }
@@ -940,7 +1087,8 @@ function renderWithFilter(panel){
 const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment','highlights','purposes'];
 function showTab(tab){
   closeTabMoreMenu();
-  document.querySelectorAll('.tabs > .tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.tabs .tab[data-tab],.tab-more-menu button[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  if(tab==='overview')renderOverview();
   const moreBtn=document.getElementById('tabMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',TAB_MORE_GROUP.includes(tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
@@ -1107,9 +1255,10 @@ function renderTeacherList(){
       <div class="cat-legend-item ${categoryClass(subj)}" style="margin-bottom:6px;font-weight:700">${subj}（${teachers.length}位）</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         ${teachers.map(t=>`<div class="teacher-chip">
-          <span style="font-size:13px;font-weight:600">${t.name}</span>
-          <button class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="editTeacher('${t.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="deleteTeacher('${t.id}')">✕</button>
+          <span style="font-size:13px;font-weight:600">${escH(t.name)}</span>
+          <span style="font-size:11.5px;color:var(--text2);font-family:'DM Mono',monospace" title="借用＋場地申請次數">${teacherUseCount(t.name)} 次</span>
+          <button class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="editTeacher('${safeId(t.id)}')" aria-label="編輯">✏️</button>
+          <button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="deleteTeacher('${safeId(t.id)}')" aria-label="刪除">✕</button>
         </div>`).join('')}
       </div>
     </div>`;
