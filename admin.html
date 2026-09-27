@@ -279,6 +279,20 @@
   @media(max-width:480px){header .rf-label{display:none;}header .btn-sm{padding:7px 10px;}.admin-brand h1{font-size:16px;letter-spacing:1px;}}
   /* 分頁列右邊淡出，提示還可以往右滑 */
   @media(max-width:1099px){.tabs{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);}}
+
+  #panel-chemicals span,#panel-chemicals div,#panel-chemicals strong{overflow-wrap:anywhere;word-break:break-word;min-width:0;}
+
+  /* 熱區校正卡片：只有大螢幕才固定在上方，手機或矮螢幕照一般捲動，避免蓋住下面的代碼欄位 */
+  @media(min-width:1100px) and (min-height:900px){.calib-sticky{position:sticky;top:64px;z-index:20;}}
+  /* 器材管理卡片（手機）：按鈕改成底部一排，左右比較平衡 */
+  @media(max-width:700px){
+    #adminEquipList .record-card>div:first-child,.eq-card-row{flex-wrap:wrap!important;}
+    .eq-actions{flex-direction:row!important;flex-wrap:nowrap!important;width:100%;gap:6px!important;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
+    .eq-actions{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));}
+    .eq-actions .btn{justify-content:center;padding:7px 2px!important;font-size:12px!important;white-space:nowrap;min-width:0;overflow:hidden;}
+    .eq-thumb{width:84px!important;height:84px!important;}
+    .eq-actions .eq-btn-txt{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -582,12 +596,7 @@
 </div>
 
 <div id="panel-floorplan" class="panel">
-  <div class="card">
-    <div class="card-title">🏫 首頁教室照片</div>
-    <div class="info-box">上傳每間實驗室的實際照片，會顯示在前台首頁「選擇實驗室」那排卡片上。沒上傳的房間會維持顯示預設的色塊圖示，不影響功能，可以之後再慢慢補。</div>
-    <div id="roomCoverUploadGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px"></div>
-  </div>
-  <div class="card" id="calibStickyCard" style="position:sticky;top:56px;z-index:20;background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
+  <div class="card calib-sticky" id="calibStickyCard" style="background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
     <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
     <div class="purpose-tabs" id="calibRoomTabs">
@@ -1100,7 +1109,7 @@ function openSettingsSheet(){
   showModal('⚙️ 設定與資料',`<div class="settings-sheet">${items.map(it=>`<button type="button" class="${it.active?'active':''}" onclick="closeModal();showTab('${safeId(it.tab)}')">${it.html}<span class="ss-arrow">›</span></button>`).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // ── 資料備份：把所有資料表下載成一個檔案（用登入後的權限讀取，每張表都完整分頁讀完）──
-const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','room_covers','equipment_writeoffs','borrow_purposes','deposit_settings'];
+const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','equipment_writeoffs','borrow_purposes','deposit_settings'];
 function renderPhotoBackupInfo(){
   const el=document.getElementById('photoBackupInfo');if(!el)return;
   const t=parseInt(localStorage.getItem('lab_last_photo_backup')||'0');
@@ -3224,7 +3233,7 @@ function renderChemQuickSort(){
   box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">共 ${targets.length} 筆</div>`+targets.map(c=>{
     const catOpts=CHEM_CATEGORIES.filter(v=>v).map(v=>`<option value="${v}" ${c.category===v?'selected':''}>${v}</option>`).join('');
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
-      <span style="flex:1;min-width:120px;font-weight:600">${c.name_zh}${c.name_en?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+c.name_en+'</span>':''}</span>
+      <span style="flex:1;min-width:120px;font-weight:600">${escH(c.name_zh)}${c.name_en?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+escH(c.name_en)+'</span>':''}</span>
       <select style="max-width:160px" onchange="quickSetChemCategory(${c.id},this.value)">
         <option value="">未分類</option>
         ${catOpts}
@@ -3256,16 +3265,16 @@ function filterAdminChems() {
     const esc = s => (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/`/g, '&#96;');
     const catOpts = CHEM_CATEGORIES.map(v => `<option value="${v}" ${c.category===v?'selected':''}>${v||'不指定'}</option>`).join('');
     return `
-    <div class="record-card" id="chemcard-${c.id}">
+    <div class="record-card" id="chemcard-${safeId(c.id)}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
-          <div style="font-size:15px;font-weight:700">${c.name_zh} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${c.name_en||''}</div>
+          <div style="font-size:15px;font-weight:700">${escH(c.name_zh)} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-            ${c.category?`<span>${c.category}</span>`:''}
-            ${c.location?`<span>📍 ${c.location}</span>`:''}
-            <span style="font-family:'DM Mono',monospace;font-weight:700">${c.bottles_left??0} 瓶</span>
-            ${c.recycle_type?`<span>♻️ ${c.recycle_type}</span>`:''}
+            ${c.category?`<span>${escH(c.category)}</span>`:''}
+            ${c.location?`<span>📍 ${escH(c.location)}</span>`:''}
+            <span style="font-family:'DM Mono',monospace;font-weight:700">${escH(c.bottles_left??0)} 瓶</span>
+            ${c.recycle_type?`<span>♻️ ${escH(c.recycle_type)}</span>`:''}
           </div>
           ${c.note&&c.note!=='附註'?`<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${escH(c.note)}</div>`:''}
         </div>
@@ -3400,17 +3409,17 @@ async function doDeleteChem(id) {
   const rows = dupGroups.map(group => `
     <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff5f5">
       <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:8px">
-        「${group[0].name_zh}」共 ${group.length} 筆
+        「${escH(group[0].name_zh)}」共 ${group.length} 筆
       </div>
       ${group.map(c => `
         <label style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:6px;font-size:12.5px;cursor:pointer;margin-bottom:3px;background:var(--surface2)">
           <input type="checkbox" class="dup-del" data-id="${c.id}" style="width:auto;flex-shrink:0">
           <span style="flex:1">
-            <strong>${c.name_zh}</strong>
-            ${c.name_en ? `<span style="color:var(--text2)"> ${c.name_en}</span>` : ''}
-            ${c.location ? `　📍 ${c.location}` : ''}
-            　<span style="font-family:'DM Mono',monospace">${c.bottles_left ?? 0} 瓶</span>
-            ${c.category ? `　${c.category}` : ''}
+            <strong>${escH(c.name_zh)}</strong>
+            ${c.name_en ? `<span style="color:var(--text2)"> ${escH(c.name_en)}</span>` : ''}
+            ${c.location ? `　📍 ${escH(c.location)}` : ''}
+            　<span style="font-family:'DM Mono',monospace">${escH(c.bottles_left ?? 0)} 瓶</span>
+            ${c.category ? `　${escH(c.category)}` : ''}
           </span>
           <span style="font-size:11px;color:var(--text2)">#${c.id}</span>
         </label>`).join('')}
@@ -3471,7 +3480,7 @@ function previewChemCsv() {
     '<div style="overflow:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">' +
     '<tr style="background:var(--surface2)">' +
     ['中文名稱','英文名稱','位置','分類','瓶數','回收','附註'].map(h => `<th style="padding:4px 6px;border:1px solid var(--border);text-align:left">${h}</th>`).join('') + '</tr>' +
-    items.slice(0, 5).map(r => `<tr>${[r.name_zh,r.name_en||'',r.location||'',r.category||'',r.bottles_left,r.recycle_type||'',r.note||''].map(v => `<td style="padding:4px 6px;border:1px solid var(--border)">${v}</td>`).join('')}</tr>`).join('') +
+    items.slice(0, 5).map(r => `<tr>${[r.name_zh,r.name_en||'',r.location||'',r.category||'',r.bottles_left,r.recycle_type||'',r.note||''].map(v => `<td style="padding:4px 6px;border:1px solid var(--border)">${escH(v)}</td>`).join('')}</tr>`).join('') +
     '</table></div>';
 }
 
@@ -3526,7 +3535,7 @@ function showChemDiffModal(added, removed, changed) {
   const removedRows = removed.map((c, i) => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="diff-remove" data-idx="${i}" style="width:auto;flex-shrink:0">
-      <span style="flex:1"><strong>${c.name_zh}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+c.name_en+'</span>':''}</span>
+      <span style="flex:1"><strong>${escH(c.name_zh)}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+escH(c.name_en)+'</span>':''}</span>
       <span style="font-size:11px;color:var(--danger)">刪除</span>
     </label>`).join('');
 
@@ -3534,7 +3543,7 @@ function showChemDiffModal(added, removed, changed) {
     <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;background:#fef3c7;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="diff-change" data-idx="${i}" checked style="width:auto;flex-shrink:0;margin-top:2px">
       <div style="flex:1">
-        <div><strong>${item.newData.name_zh}</strong>${item.newData.name_en?' <span style="color:var(--text2);font-size:12px">'+item.newData.name_en+'</span>':''}</div>
+        <div><strong>${escH(item.newData.name_zh)}</strong>${item.newData.name_en?' <span style="color:var(--text2);font-size:12px">'+escH(item.newData.name_en)+'</span>':''}</div>
         <div style="font-size:11px;color:#92400e;margin-top:2px">${item.diffs.join('　')}</div>
       </div>
       <span style="font-size:11px;color:#92400e;white-space:nowrap">更新</span>
@@ -3543,7 +3552,7 @@ function showChemDiffModal(added, removed, changed) {
   const addedRows = added.map((c, i) => `
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#d1fae5;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="diff-add" data-idx="${i}" checked style="width:auto;flex-shrink:0">
-      <span style="flex:1"><strong>${c.name_zh}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+c.name_en+'</span>':''}</span>
+      <span style="flex:1"><strong>${escH(c.name_zh)}</strong>${c.name_en?' <span style="color:var(--text2);font-size:12px">'+escH(c.name_en)+'</span>':''}</span>
       <span style="font-size:11px;color:#065f46">新增</span>
     </label>`).join('');
 
@@ -3880,7 +3889,7 @@ function filterAdminEquip(){
     const imgHtml=imgUrl?`<a href="${escH(imgUrl)}" target="_blank" rel="noopener noreferrer" title="點我看大圖"><img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt=""></a>`:`<div class="eq-thumb">🔬</div>`;
     const mismatches=equipLocationMismatches(e);
     return `<div class="record-card" id="eqcard-${e.id}">
-      <div style="display:flex;gap:12px;align-items:flex-start">
+      <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div style="flex:1;min-width:0">
           <div class="eq-name">${escH(e.name)} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}</div>
@@ -3891,15 +3900,15 @@ function filterAdminEquip(){
             ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
-          ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
+          ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
         <div class="eq-actions">
           <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip('${e.id}')">✏️ 編輯</button>
-          <button class="btn btn-secondary btn-sm" onclick="toggleFeatured('${e.id}',${e.featured===true?'false':'true'})">${e.featured===true?'★ 取消精選':'☆ 設精選'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleFeatured('${e.id}',${e.featured===true?'false':'true'})">${e.featured===true?'★ <span class="eq-btn-txt">取消</span>精選':'☆ <span class="eq-btn-txt">設</span>精選'}</button>
           <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload('${e.id}')">🖼️ 換照片</button>
           <button class="btn btn-warn btn-sm" onclick="openWriteoffModal('${e.id}')">♻️ 報廢</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEquip('${e.id}')">🗑️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEquip('${e.id}')" aria-label="刪除">🗑️<span class="eq-btn-txt"> 刪除</span></button>
         </div>
       </div>
       <input type="file" id="eq-photo-input-${e.id}" accept="image/*" style="display:none" onchange="uploadEquipPhoto('${e.id}',this)">
@@ -4335,7 +4344,6 @@ function loadFloorplanCalibration(){
   setCalibRoom(calibRoom);
   applyCalibZoom();
   window.addEventListener('resize',applyCalibZoom);
-  loadRoomCoverUpload();
 }
 const ROOM_COVER_LIST=[
   {key:'Biology',label:'生物實驗室',emoji:'🧬'},
@@ -4345,55 +4353,6 @@ const ROOM_COVER_LIST=[
   {key:'Physics',label:'物理實驗室',emoji:'⚡'},
   {key:'TeachingMaterialRoom',label:'教具室',emoji:'📦'}
 ];
-let roomCoverAdminMap={};
-async function loadRoomCoverUpload(){
-  try{
-    const rows=await sb('GET','room_covers',{});
-    roomCoverAdminMap={};
-    (Array.isArray(rows)?rows:[]).forEach(r=>{roomCoverAdminMap[r.room]=r;});
-  }catch(e){roomCoverAdminMap={};}
-  renderRoomCoverUpload();
-}
-function renderRoomCoverUpload(){
-  const box=document.getElementById('roomCoverUploadGrid');if(!box)return;
-  box.innerHTML=ROOM_COVER_LIST.map(r=>{
-    const cover=roomCoverAdminMap[r.key];
-    const img=cover?.image_url?`<img src="${cover.image_url}" style="width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">`:`<div style="width:100%;height:90px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:32px">${r.emoji}</div>`;
-    return `<div>
-      ${img}
-      <div style="font-size:12.5px;font-weight:600;margin-top:6px">${r.emoji} ${r.label}</div>
-      <input type="file" id="rc-input-${r.key.replace(/[^a-zA-Z]/g,'')}" accept="image/*" style="display:none" onchange="uploadRoomCover('${r.key}',this)">
-      <button class="btn btn-secondary btn-sm" style="margin-top:6px;width:100%" onclick="document.getElementById('rc-input-${r.key.replace(/[^a-zA-Z]/g,'')}').click()">📷 上傳／更換</button>
-    </div>`;
-  }).join('');
-}
-async function uploadRoomCover(room,input){
-  if(!input.files||!input.files[0])return;
-  const file=input.files[0];
-  showToast('上傳中…','success');
-  try{
-    const extRaw=(file.name||'').split('.').pop()||'jpg';
-    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-    const path=`room-covers/${room.replace(/[^a-zA-Z]/g,'')}/${Date.now()}.${ext}`;
-    await ensureToken();
-    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
-      method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':file.type||'application/octet-stream'},
-      body:file
-    });
-    if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
-    const url=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
-    const existing=roomCoverAdminMap[room];
-    if(existing){
-      await sb('PATCH','room_covers',{filter:'id=eq.'+existing.id,body:{image_url:url},prefer:'return=minimal'});
-    }else{
-      await sb('POST','room_covers',{body:{room,image_url:url}});
-    }
-    showToast('照片已更新','success');
-    loadRoomCoverUpload();
-  }catch(e){showToast('上傳失敗：'+e.message,'error');}
-  input.value='';
-}
 function setCalibRoom(key){
   calibRoom=key;
   document.querySelectorAll('#calibRoomTabs .purpose-tab').forEach(t=>t.classList.toggle('active',t.dataset.room===key));
