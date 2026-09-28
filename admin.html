@@ -3351,8 +3351,6 @@ async function loadAdminChems() {
 }
 
 const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機溶劑','指示劑','培養基／生化','溶液成品','其他'];
-const CHEM_CAT_CLASS_MAP = {'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','有機溶劑':'cat-organic','指示劑':'cat-indicator','培養基／生化':'cat-bio','溶液成品':'cat-solution','其他':'cat-other'};
-function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
 
 function renderChemQuickSort(){
   const box=document.getElementById('chemQuickSortList');if(!box)return;
@@ -3881,21 +3879,6 @@ async function saveInlineEquip(id){
     inlineEditEquipId=null;
     loadAdminEquipment();
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
-}
-function editEquip(id){
-  const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
-  editingEquipId=e.id;
-  document.getElementById('eq-room').value=e.room||'Physics';
-  document.getElementById('eq-name').value=e.name||'';
-  document.getElementById('eq-spec').value=e.spec||'';
-  document.getElementById('eq-unit').value=e.unit||'個';
-  document.getElementById('eq-total').value=e.total??0;
-  document.getElementById('eq-location').value=e.location||'';
-  document.getElementById('eq-alias').value=e.alias||'';
-  document.getElementById('eq-available').checked=e.is_available!==false;
-  document.getElementById('eq-featured').checked=e.featured===true;
-  document.getElementById('eq-consumable').value=e.is_consumable===true?'true':(e.is_consumable===false?'false':'');
-  document.getElementById('eq-name').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function saveEquip(){
   const name=document.getElementById('eq-name').value.trim();
@@ -4624,14 +4607,6 @@ function loadFloorplanCalibration(){
   applyCalibZoom();
   window.addEventListener('resize',applyCalibZoom);
 }
-const ROOM_COVER_LIST=[
-  {key:'Biology',label:'生物實驗室',emoji:'🧬'},
-  {key:'Chemistry',label:'化學實驗室',emoji:'⚗️'},
-  {key:'Geoscience',label:'地科實驗室',emoji:'🌍'},
-  {key:'Physics Chemistry',label:'理化實驗室',emoji:'🔭'},
-  {key:'Physics',label:'物理實驗室',emoji:'⚡'},
-  {key:'TeachingMaterialRoom',label:'教具室',emoji:'📦'}
-];
 function setCalibRoom(key){
   calibRoom=key;
   document.querySelectorAll('#calibRoomTabs .purpose-tab').forEach(t=>t.classList.toggle('active',t.dataset.room===key));
