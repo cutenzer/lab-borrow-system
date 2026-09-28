@@ -342,6 +342,10 @@
   .vlc-row.busy{cursor:default;opacity:.6;background:var(--surface2);}
   .vlc-row.busy .vlc-st{color:var(--text2);font-weight:400;}
   .venue-booking .vb-full{display:none;}
+  @supports (font-size:1cqi){
+    .venue-table .venue-booking{container-type:inline-size;}
+    .venue-table .venue-booking [style*="--w"]{white-space:nowrap;word-break:normal;font-size:min(1em,calc(100cqi / var(--w)));}
+  }
   /* 電腦版格子夠寬：顯示完整「國一丁-林顯豪」 */
   @media(min-width:900px){.venue-table .venue-booking .vb-g,.venue-table .venue-booking .vb-n{display:none;}.venue-table .venue-booking .vb-full{display:inline;}
     .venue-lab-tabs .room-tab{flex:0 0 auto;padding:6px 16px;}}
@@ -2928,21 +2932,32 @@ function shortPersonName(name){
   const clash=allTeachersFront.some(t=>{const n=(t.name||'').trim();return n&&n!==name&&[...n].slice(-1).join('')===last1;});
   return clash?chars.slice(-2).join(''):last1;
 }
+// 手機格子用的縮寫（長的先換）；點格子的資訊卡仍顯示完整名稱，電腦版也顯示全名
+const LABEL_ABBR=[['競賽培訓','競'],['能力競賽','競'],['科學研究','科'],['多元選修','選'],['探究實作','探'],['自主學習','主'],
+  ['競賽','競'],['科學','科'],['多元','選'],['探究','探']];
+function abbrLabel(t){let r=String(t||'');for(const [a,b] of LABEL_ABBR)r=r.split(a).join(b);return r;}
 const PURPOSE_SHORT={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團','選修':'選修','菁英':'菁英'};
+// 字太多時自動把字縮小擠在同一行（例：H2戊探、競賽培訓），而不是斷成兩行
+// 中文字算 1 個寬、英數字算 0.62 個寬；超過 6 個寬就不硬縮，照常換行免得小到看不清
+function fitW(t){
+  let w=0;for(const ch of String(t||''))w+=/[\u0000-\u007f]/.test(ch)?0.62:1;
+  if(w<=2.6||w>6)return '';
+  return ` style="--w:${(w+0.25).toFixed(2)}"`;
+}
 const LAB_CAT_CLASS={'生物':'cat-bio','化學':'cat-chem','理化':'cat-pc','物理':'cat-phys','地科':'cat-geo'};
 function labBadge(lab){return `<span class="vb-lab vbl-${lab}">${lab.slice(0,1)}</span>`;}
 function venueChipHtml(b,lab,dateStr,period,venueFull){
   const grade=(b.grade||'').trim();
   const isStu=b.role==='學生'&&b.student_id;
   const who=isStu?String(b.student_id):shortPersonName(b.borrower_name);
-  const top=grade?shortGrade(grade):(PURPOSE_SHORT[b.purpose]||b.purpose||'');
+  const top=abbrLabel(grade?shortGrade(grade):(b.purpose||''));
   const topFull=grade||(PURPOSE_SHORT[b.purpose]||b.purpose||'');
   const whoFull=isStu?String(b.student_id):(b.borrower_name||'');
   // 合併格子（全部實驗室）用「實驗室顏色」，單一實驗室時照原本用科目／目的顏色
   const catCls=lab?LAB_CAT_CLASS[lab]:categoryClass(resolveCategory(b));
   const st=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
   const vf=venueFull||VENUE_LAB_FULL[lab];
-  return `<div class="venue-booking ${catCls} ${st} ${b.is_fixed?'is-fixed':''}" title="${venueLabel(b)}" onclick="showVenueSlotInfo('${dateStr}','${period}','${vf}')"><span class="vb-g">${escH(top)}</span><span class="vb-n">${escH(who)}</span><span class="vb-full">${escH(topFull)}-${escH(whoFull)}</span></div>`;
+  return `<div class="venue-booking ${catCls} ${st} ${b.is_fixed?'is-fixed':''}" title="${venueLabel(b)}" onclick="showVenueSlotInfo('${dateStr}','${period}','${vf}')"><span class="vb-g"${fitW(top)}>${escH(top)}</span><span class="vb-n"${fitW(who)}>${escH(who)}</span><span class="vb-full">${escH(topFull)}-${escH(whoFull)}</span></div>`;
 }
 // 「全部實驗室」在手機上：每一節只佔一列，各間的預約擠在同一格並標上實驗室色塊（跟舊版一樣清爽）
 function venueMergedMode(){return !venueLabFilter&&window.innerWidth<=600;}
@@ -3035,7 +3050,7 @@ function renderVenueTable(dates){
   // 圖例：說明短標籤怎麼看
   let lg=document.getElementById('venueLegend');
   if(!lg&&tw){lg=document.createElement('div');lg.id='venueLegend';lg.className='venue-legend';tw.insertAdjacentElement('afterend',lg);}
-  if(lg)lg.innerHTML=`${merged?'<span>顏色＝實驗室（同上方圓點）</span>':''}${window.innerWidth<900?'<span>J＝國中、H＝高中（J1丁＝國一丁）</span>':''}<span><i style="box-shadow:inset 3px 0 0 #6d28d9"></i>固定課程</span><span><i style="outline:2px dashed #d97706;outline-offset:-2px"></i>待審核</span><span>點格子看完整姓名</span>`;
+  if(lg)lg.innerHTML=`${merged?'<span>顏色＝實驗室（同上方圓點）</span>':''}${window.innerWidth<900?'<span>J＝國中、H＝高中（J1丁＝國一丁）</span><span>競＝競賽培訓　科＝科學研究　選＝多元選修　探＝探究實作　主＝自主學習</span>':''}<span><i style="box-shadow:inset 3px 0 0 #6d28d9"></i>固定課程</span><span><i style="outline:2px dashed #d97706;outline-offset:-2px"></i>待審核</span><span>點格子看完整姓名</span>`;
   const fsTable=document.getElementById('venueTableFS');if(fsTable){fsTable.innerHTML=html;fsTable.classList.toggle('merged',merged);}
   const fsTitle=document.getElementById('venueFsTitle');
   if(fsTitle){const lbl=document.getElementById('venueWeekLabel').textContent;fsTitle.textContent=lbl?('場地使用狀況　'+lbl):'場地使用狀況';}
