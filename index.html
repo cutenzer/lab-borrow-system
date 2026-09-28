@@ -281,7 +281,11 @@
   .period-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 12px;flex-wrap:wrap;}
   .period-row select{flex:1;min-width:100px;}
   .period-row-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
-  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap;}
+  .venue-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:nowrap;}
+  .venue-nav>.btn{flex-shrink:0;white-space:nowrap;}
+  .venue-nav .venue-nav-week{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;align-items:center;line-height:1.35;}
+  .venue-nav .vnw-sep{display:none;}
+  @media(min-width:700px){.venue-nav .venue-nav-week{flex-direction:row;justify-content:center;flex-wrap:wrap;}.venue-nav .vnw-sep{display:inline;}}
   .venue-actions{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:14px;}
   .venue-actions .btn{justify-content:center;}
   .venue-nav-week{font-size:14px;font-weight:700;color:var(--accent-dim);}
@@ -1160,7 +1164,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 滑動修正版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 週次兩行版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2670,7 +2674,8 @@ async function loadVenue(){
   const weekInfo=getWeekInfo(dates[0],activeSemester);
   const weekSel=document.getElementById('weekJump');
   if(weekInfo){
-    document.getElementById('venueWeekLabel').textContent=`${weekBadgeText(weekInfo)}　${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
+    // 週次（可能帶定期評量等標註）和日期分兩行：字多也不會把「下週」按鈕擠到下一排
+    document.getElementById('venueWeekLabel').innerHTML=`<span class="vnw-a">${escH(weekBadgeText(weekInfo))}</span><span class="vnw-b"><span class="vnw-sep">　</span>${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}</span>`;
     if(weekSel)weekSel.value=weekInfo.week;
   }else{
     document.getElementById('venueWeekLabel').textContent=`${fmtDateTW(dates[0])} ～ ${fmtDateTW(dates[6])}`;
