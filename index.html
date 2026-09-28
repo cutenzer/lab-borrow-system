@@ -190,9 +190,12 @@
   .auto-carousel{position:relative;overflow:hidden;border-radius:16px;isolation:isolate;transform:translateZ(0);contain:paint;}
   main{overflow-x:clip;}
   .home-section{overflow-x:clip;}
-  .auto-carousel-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);touch-action:pan-y;cursor:grab;}
+  .auto-carousel-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1);touch-action:pan-y;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .auto-carousel-track *{touch-action:pan-y;}
   .home-section .auto-carousel{max-width:1100px;margin:0 auto;}
-  .equip-slide-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(18px) brightness(.55);transform:scale(1.15);}
+  .auto-carousel-slide.equip-slide{background:radial-gradient(circle at 50% 40%,#5b6b7f,#1e293b 75%);}
+  .equip-slide-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:64px;opacity:.35;}
+  .equip-slide.img-ok .equip-slide-ph{display:none;}
   .equip-slide-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
   .slide-shade{position:absolute;left:0;right:0;bottom:0;height:40%;background:linear-gradient(transparent,rgba(0,0,0,.55));z-index:1;}
   .auto-carousel-track:active{cursor:grabbing;}
@@ -499,7 +502,16 @@
   @media(max-width:900px){.draft-bar{top:60px;}}
   .cart-form-summary{margin:0 18px 8px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.6;}
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
-  .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:0;}
+  .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
+  .cart-form-summary .cfs-venue.warn{background:#fff1f0;color:var(--danger);}
+  .cart-form-summary .cfs-edit,.cart-form-summary .cfs-venue{display:flex;align-items:center;gap:8px;width:100%;border:none;font:inherit;text-align:left;cursor:pointer;}
+  .cart-form-summary .cfs-edit{background:transparent;padding:0;color:inherit;}
+  .cart-form-summary .cfs-venue{border-top:1px dashed var(--border);border-radius:8px;}
+  .cart-form-summary .cfs-lines{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .cart-form-summary .cfs-venue>span:first-child{flex:1;min-width:0;}
+  .cart-form-summary .cfs-pen{flex-shrink:0;font-size:12px;font-weight:700;color:var(--accent);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:3px 9px;white-space:nowrap;}
+  @keyframes fieldFlash{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 4px rgba(217,119,6,.45)}}
+  .field-flash{animation:fieldFlash 1.6s ease;}
   .result-box{border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.6;}
   .result-box.ok{background:#eaf6ef;border:1px solid #b7dfc6;}
   .result-box.fail{background:#fff1f0;border:1px solid #f3c0bb;color:var(--danger);}
@@ -1148,7 +1160,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 精簡版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 滑動修正版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1428,13 +1440,16 @@ function stepAutoCarousel(containerId,d){
 function attachCarouselSwipe(containerId){
   const track=document.getElementById(containerId+'-track');if(!track)return;
   const box=document.getElementById(containerId);
-  let sx=0,sy=0,dx=0,dy=0,active=false,intent=null,dragged=false;
-  function start(x,y){sx=x;sy=y;dx=0;dy=0;active=true;intent=null;dragged=false;}
+  // 重新產生輪播時，把上一次掛在 window 上的滑鼠監聽拆掉（不然每回首頁一次就多一組）
+  if(box._acAbort)box._acAbort.abort();
+  const ac=new AbortController();box._acAbort=ac;const sig={signal:ac.signal};
+  let sx=0,sy=0,dx=0,dy=0,t0=0,active=false,intent=null,dragged=false;
+  function start(x,y){sx=x;sy=y;dx=0;dy=0;t0=Date.now();active=true;intent=null;dragged=false;}
   function move(x,y,ev){
     if(!active)return;
     dx=x-sx;dy=y-sy;
-    // 先判斷手指是「左右滑」還是「上下捲」，判定是左右滑就接管，不讓瀏覽器把手勢拿去做別的事
-    if(!intent&&(Math.abs(dx)>8||Math.abs(dy)>8))intent=Math.abs(dx)>Math.abs(dy)?'h':'v';
+    // 手指斜斜滑也算「左右滑」：橫向位移只要不明顯小於直向就接管（iPhone 上很少有人滑得很水平）
+    if(!intent&&Math.hypot(dx,dy)>6)intent=Math.abs(dx)*1.4>=Math.abs(dy)?'h':'v';
     if(intent==='h'){
       if(ev&&ev.cancelable)ev.preventDefault();
       dragged=true;
@@ -1443,32 +1458,37 @@ function attachCarouselSwipe(containerId){
       track.style.transform=`translateX(calc(${-(box._acIndex||0)*100}% + ${dx}px))`; // 畫面跟著手指移動
     }
   }
-  function end(){
+  function end(cancel){
     if(!active)return;active=false;
     track.style.transition='';
     if(intent==='h'){
       const w=track.parentElement.offsetWidth||300;
+      const fast=Math.abs(dx)>20&&Math.abs(dx)/Math.max(1,Date.now()-t0)>0.35; // 快速輕撥也算
       let idx=box._acIndex||0;
-      if(Math.abs(dx)>Math.min(60,w*0.15))idx=dx<0?(idx+1)%box._acCount:(idx-1+box._acCount)%box._acCount;
+      if(!cancel&&(Math.abs(dx)>Math.min(60,w*0.15)||fast))idx=dx<0?(idx+1)%box._acCount:(idx-1+box._acCount)%box._acCount;
       setAutoCarouselIndex(containerId,idx);
       startAutoCarouselTimer(containerId);
     }
     intent=null;
   }
-  track.addEventListener('touchstart',e=>{const t=e.touches[0];start(t.clientX,t.clientY);},{passive:true});
+  track.addEventListener('touchstart',e=>{if(e.touches.length>1){active=false;return;}const t=e.touches[0];start(t.clientX,t.clientY);},{passive:true});
   track.addEventListener('touchmove',e=>{const t=e.touches[0];move(t.clientX,t.clientY,e);},{passive:false});
-  track.addEventListener('touchend',end,{passive:true});
-  track.addEventListener('touchcancel',end,{passive:true});
-  track.addEventListener('mousedown',e=>{start(e.clientX,e.clientY);e.preventDefault();});
-  window.addEventListener('mousemove',e=>{if(active)move(e.clientX,e.clientY,null);});
-  window.addEventListener('mouseup',()=>{if(active)end();});
+  track.addEventListener('touchend',()=>end(false),{passive:true});
+  track.addEventListener('touchcancel',()=>end(true),{passive:true});
+  track.addEventListener('mousedown',e=>{if(e.button!==0)return;start(e.clientX,e.clientY);e.preventDefault();});
+  window.addEventListener('mousemove',e=>{if(active)move(e.clientX,e.clientY,null);},sig);
+  window.addEventListener('mouseup',()=>{if(active)end(false);},sig);
   track.addEventListener('click',e=>{if(dragged){e.preventDefault();e.stopPropagation();dragged=false;}},true);
+  // 圖片／文字預設可以被「拖曳」，會搶走滑動手勢
+  track.querySelectorAll('img').forEach(im=>{im.draggable=false;});
 }
 function setAutoCarouselIndex(containerId,idx){
   const box=document.getElementById(containerId);if(!box)return;
   box._acIndex=idx;
   const track=document.getElementById(containerId+'-track');
   if(track)track.style.transform=`translateX(-${idx*100}%)`;
+  // 輪到這張和下一張時才開始載圖（lazy 的圖在橫向輪播裡有時不會自己載）
+  if(track){const sl=track.children,n=sl.length;[idx,(idx+1)%n].forEach(k=>{const im=sl[k]&&sl[k].querySelector('img[loading="lazy"]');if(im)im.loading='eager';});}
   document.querySelectorAll('#'+containerId+'-dots .ac-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
 }
 // 只有「耗材類」才需要注意庫存；大型儀器只有一台、以盒/包/袋計的都不算庫存不足
@@ -1696,8 +1716,12 @@ function renderHomeEquipFeatured(){
   if(!items.length){box.innerHTML='';renderHomeEquipList();return;}
   window._featItems=items;
   const slides=items.map((e,i)=>{
-    const img=e.image_url?`<img class="equip-slide-bg" src="${e.image_url}" alt=""><img class="equip-slide-img" src="${e.image_url}" alt="${escH(e.name)}"><div class="slide-shade"></div>`:'';
-    return `<div class="auto-carousel-slide" style="background:linear-gradient(135deg,#475569,#1e293b)" onclick="openEquipDetail('feat',${i})">
+    // 只放一張圖（原本另外疊一張「模糊背景」：大張手機照片在 iPhone 上加模糊很吃記憶體，常常整張畫不出來）
+    // 第一張馬上載，其他張等輪到附近才載；載入失敗就顯示顯微鏡圖示，不會一直黑一片
+    const u=safeUrl(e.image_url);
+    const img=u?`<img class="equip-slide-img" src="${escH(u)}" alt="${escH(e.name)}" ${i===0?'fetchpriority="high"':'loading="lazy"'} decoding="async" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"><div class="slide-shade"></div>`:'';
+    return `<div class="auto-carousel-slide equip-slide" onclick="openEquipDetail('feat',${i})">
+      <span class="equip-slide-ph" aria-hidden="true">🔬</span>
       ${img}
       <span class="cover-label" style="position:relative;z-index:2">${escH(e.name)}</span>
     </div>`;
@@ -3145,9 +3169,14 @@ function renderCartFormSummary(){
   const purpose=pSel==='其他'?(document.getElementById('f-purpose-other').value.trim()||'其他（未填）'):(pSel||'（未選）');
   const name=document.getElementById('f-name').value.trim();
   const venue=getInlineVenueDraft();
-  box.innerHTML=`<div>👤 ${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　🎯 ${escH(purpose)}</div>
-    <div>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</div>
-    ${venue?`<div class="cfs-venue">📅 場地會一起送出：${venueDraftText(venue)}</div>`:(venueNotBookedWarning()?`<div class="cfs-venue" style="background:#fff1f0;color:var(--danger)">${venueNotBookedWarning()}</div>`:`<div class="cfs-venue none">📅 這張單沒有同步預約場地</div>`)}`;
+  const vWarn=venueNotBookedWarning();
+  box.innerHTML=`<button type="button" class="cfs-edit" onclick="openCartFormEdit()" aria-label="修改姓名、目的、日期">
+      <span class="cfs-lines"><span>👤 ${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　🎯 ${escH(purpose)}</span>
+      <span>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</span></span>
+      <span class="cfs-pen">✏️ 修改</span></button>
+    <button type="button" class="cfs-venue ${venue?'':(vWarn?'warn':'none')}" onclick="openCartVenueEdit()">
+      <span>${venue?`📅 場地會一起送出：${venueDraftText(venue)}`:(vWarn||'📅 這張單沒有同步預約場地')}</span>
+      <span class="cfs-pen">${venue?'改時段 ›':(currentRole==='學生'?'去預約 ›':'＋ 加場地 ›')}</span></button>`;
   const btn=document.getElementById('cartSubmitBtn');
   if(btn)btn.textContent=venue&&venue.length?'📋 送出器材＋場地申請':'📋 直接提交申請';
 }
@@ -3239,6 +3268,8 @@ function updateCartBadge(){
 }
 let cartSearchTimer=null;
 // 只允許 http(s) 圖片網址，避免資料庫被塞 javascript: 之類的東西
+// 把字串安全地放進 onclick="fn(...)" 參數裡：先轉成 JS 字串，再做 HTML 跳脫（名稱有 ' " < > 都不會壞、也不會被注入）
+function ja(v){return escH(JSON.stringify(String(v??'')));}
 function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
 // 搜尋結果共用：用「索引」呼叫函式，不把器材名稱塞進 onclick 字串（名稱有引號也不會壞、也不會被注入）
 function searchResultRowHTML(listName,e,i,withBorrower){
@@ -3392,18 +3423,18 @@ function renderEquipList(){
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📦</div><p>此房間目前無器材</p></div>';return;}
   list.innerHTML=items.map(e=>{
     const avail=parseInt(e.available)||0,qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
-    const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
-    const imgHtml=e.image_url?`<img class="equip-thumb" src="${e.image_url}" loading="lazy" onclick="event.stopPropagation();openLightbox('${e.image_url}','${safeN}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
+    const U=safeUrl(e.image_url),A=`${ja(e.room)},${ja(e.name)},${ja(e.spec||'')},${ja(e.unit)},${avail}`;
+    const imgHtml=U?`<img class="equip-thumb" src="${escH(U)}" loading="lazy" onclick="event.stopPropagation();openLightbox(${ja(U)},${ja(e.name)})" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     const locHtml=e.location?' ・ '+decodeLocation(e.location,e.room):'';
     return `<div class="equip-row ${avail<=0?'unavailable':''}">
       ${imgHtml}
-      <div class="equip-row-info"><div class="equip-row-name">${e.name}</div><div class="equip-row-sub">${e.spec||''}${locHtml}</div>
-      <div class="equip-row-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+e.unit:'目前無庫存'}</div>${borrowerInfo}</div>
+      <div class="equip-row-info"><div class="equip-row-name">${escH(e.name)}</div><div class="equip-row-sub">${escH(e.spec||'')}${locHtml}</div>
+      <div class="equip-row-avail ${avail>0?'avail-ok':'avail-no'}">${avail>0?'可借：'+avail+' '+escH(e.unit):'目前無庫存'}</div>${borrowerInfo}</div>
       ${avail>0?`<div class="equip-row-qty" onclick="event.stopPropagation()">
-        <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},-1)">−</button>
-        <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},this.value)" onclick="event.stopPropagation()">
-        <button class="qty-btn" onclick="changeQty('${e.room}','${safeN}','${safeS}','${e.unit}',${avail},1)">+</button>
+        <button class="qty-btn" onclick="changeQty(${A},-1)">−</button>
+        <input class="qty-input" type="number" min="0" max="${avail}" value="${qty}" onchange="setQty(${A},this.value)" onclick="event.stopPropagation()">
+        <button class="qty-btn" onclick="changeQty(${A},1)">+</button>
       </div>`:''}
     </div>`;
   }).join('');
@@ -3413,12 +3444,10 @@ function changeQty(room,name,spec,unit,avail,delta){
   if(delta>0&&cur===0&&userHomeLab&&room!==userHomeLab){
     const homeEquip=allEquipment.find(e=>e.room===userHomeLab&&e.name===name&&parseInt(e.available)>0);
     if(homeEquip){
-      const safeN=name.replace(/'/g,"\\'"),safeS=(spec||'').replace(/'/g,"\\'");
-      const hSafeS=(homeEquip.spec||'').replace(/'/g,"\\'");
       showModal('💡 本科還有現貨',
         `<p style="font-size:13px">您正在借用 <strong>${rn(room)}</strong> 的「${name}」，但 <strong>${rn(userHomeLab)}</strong> 目前還有 <strong>${homeEquip.available}</strong> ${homeEquip.unit} 可借。</p>`,
-        [{label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',fn:`closeModal();_addQty('${userHomeLab}','${safeN}','${hSafeS}','${homeEquip.unit}',${homeEquip.available},1)`},
-         {label:'仍要借此項',cls:'btn-secondary',fn:`closeModal();_addQty('${room}','${safeN}','${safeS}','${unit}',${avail},1)`}]);
+        [{label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',fn:`closeModal();_addQty(${ja(userHomeLab)},${ja(name)},${ja(homeEquip.spec||'')},${ja(homeEquip.unit)},${parseInt(homeEquip.available)||0},1)`},
+         {label:'仍要借此項',cls:'btn-secondary',fn:`closeModal();_addQty(${ja(room)},${ja(name)},${ja(spec||'')},${ja(unit)},${parseInt(avail)||0},1)`}]);
       return;
     }
   }
@@ -3500,17 +3529,21 @@ function cartSubmit(){
   if(!Object.keys(selectedItems).length){showToast('購物車是空的，請先選擇器材','error');return;}
   const errs=validateBorrowForm();
   if(!errs.length){closeCart();submitRequest();return;}
-  showQuickFillModal(errs);
+  showQuickFillModal(errs,'submit');
 }
 // errs：[{field,msg}]。日期欄位一律顯示（帶入目前的值），讓使用者直接改，不用重填
-function showQuickFillModal(errs){
+// mode='edit'：從購物車摘要點進來修改，只存回表單、不送出
+function showQuickFillModal(errs,mode){
   errs=errs||[];
+  if(mode!==undefined)window._qfMode=mode;
+  const edit=window._qfMode==='edit';
   const fields=new Set(errs.map(e=>e.field));
   fields.add('borrowDate');fields.add('returnDate');
+  if(edit){fields.add('name');fields.add('purpose');if(currentRole==='學生')fields.add('studentId');}
   const errOf=f=>{const e=errs.find(x=>x.field===f);return e?`<div class="hint hint-error" id="qf-err-${f}">${escH(e.msg)}</div>`:`<div class="hint hint-error" id="qf-err-${f}"></div>`;};
   const val=id=>escH(document.getElementById(id)?.value||'');
   const today=todayStr();
-  let html='<p style="font-size:13px;color:var(--text2);margin-bottom:10px">請確認／補齊以下資料即可送出申請：</p>';
+  let html=`<p style="font-size:13px;color:var(--text2);margin-bottom:10px">${edit?'改完按「確定」，會同步回借用單（還不會送出）：':'請確認／補齊以下資料即可送出申請：'}</p>`;
   html+=`<div class="form-group"><label>身份</label>
     <div class="role-tabs" style="margin-bottom:0">
       <div class="role-tab ${currentRole==='學生'?'active':''}" onclick="qfSetRole('學生')">🎓 學生</div>
@@ -3542,7 +3575,10 @@ function showQuickFillModal(errs){
     <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB</div>
     <div id="qf-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
   </div>`;
-  showModal('📋 確認借用資料',html,[
+  showModal(edit?'✏️ 修改借用資料':'📋 確認借用資料',html,edit?[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'✓ 確定',cls:'btn-primary',fn:'saveQuickEdit()'}
+  ]:[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認並送出申請',cls:'btn-primary',fn:'confirmQuickFill()'}
   ]);
@@ -3583,12 +3619,33 @@ function qfCopyBack(){
   if(v('qf-note'))v('f-note').value=v('qf-note').value.trim();
   updateDateDisplays();
 }
+// 購物車摘要的「修改」：存回主表單就好，不送出；有問題的欄位直接在視窗裡標紅
+function saveQuickEdit(){
+  qfCopyBack();
+  const errs=validateBorrowForm().filter(e=>['name','studentId','purpose','borrowDate','returnDate'].includes(e.field));
+  if(errs.length){showQuickFillModal(errs);showToast(errs[0].msg,'error');return;}
+  closeModal();renderCartFormSummary();calcDeposit();updateBorrowDraftBar();
+  showToast('已更新借用資料','success');
+}
+function openCartFormEdit(){showQuickFillModal([],'edit');}
+// 摘要裡的場地那一行：老師 → 帶到借用單的「是否借用場地」；學生 → 到場地預約頁另外申請
+function openCartVenueEdit(){
+  closeCart();
+  if(currentRole==='學生'){showPage('venue');showToast('學生借教室請在這裡另外申請','success');return;}
+  showPage('borrow');
+  setTimeout(()=>{
+    const sel=document.getElementById('f-venue');if(!sel)return;
+    sel.scrollIntoView({behavior:'smooth',block:'center'});
+    sel.classList.add('field-flash');setTimeout(()=>sel.classList.remove('field-flash'),1600);
+    try{sel.focus({preventScroll:true});}catch(_){}
+  },250);
+}
 function confirmQuickFill(){
   qfCopyBack();
   const errs=validateBorrowForm();
   if(errs.length){
     // 不關視窗、不清資料：直接在欄位下方標紅，改完再按一次就好
-    showQuickFillModal(errs);
+    showQuickFillModal(errs,'submit');
     showToast(errs[0].msg,'error');
     return;
   }
@@ -3597,7 +3654,7 @@ function confirmQuickFill(){
 // 主表單送出失敗時：在借用頁就標紅＋捲到欄位；不在借用頁（例如從購物車送出）就開補填視窗
 function showBorrowFormErrors(errs){
   const onBorrowPage=document.getElementById('page-borrow').classList.contains('active');
-  if(!onBorrowPage){showQuickFillModal(errs);return;}
+  if(!onBorrowPage){showQuickFillModal(errs,'submit');return;}
   const map={name:'f-name',studentId:'f-student-id',purpose:'f-purpose',borrowDate:'f-borrow-date',returnDate:'f-return-date'};
   document.querySelectorAll('#page-borrow .field-error').forEach(el=>el.classList.remove('field-error'));
   errs.forEach(e=>{
@@ -4294,20 +4351,18 @@ function doTplExtraSearch(q){
   if(!q.trim()){box.innerHTML='';return;}
   tplExtraTimer=setTimeout(()=>{
     const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,8);
-    const safeQ=q.replace(/'/g,"\\'");
     let html='';
     if(filtered.length){
       html+='<div class="search-dropdown" style="margin-top:6px">'+filtered.map(e=>{
         const avail=parseInt(e.available)||0;
-        const safeN=e.name.replace(/'/g,"\\'"),safeS=(e.spec||'').replace(/'/g,"\\'");
         return `<div class="search-result-item">
-          <div style="flex:1;min-width:0"><div class="sr-name">${e.name}</div><div class="sr-room">${rn(e.room)}</div>${e.spec?`<div class="sr-spec">${e.spec}</div>`:''}</div>
-          <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+e.unit:'無庫存'}</span>
-          ${avail>0?`<button class="btn btn-primary btn-sm" onclick="addTplExtraMatched('${e.room}','${safeN}','${safeS}','${e.unit}',${avail})">加入</button>`:''}
+          <div style="flex:1;min-width:0"><div class="sr-name">${escH(e.name)}</div><div class="sr-room">${escH(rn(e.room))}</div>${e.spec?`<div class="sr-spec">${escH(e.spec)}</div>`:''}</div>
+          <span class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借'+avail+escH(e.unit):'無庫存'}</span>
+          ${avail>0?`<button class="btn btn-primary btn-sm" onclick="addTplExtraMatched(${ja(e.room)},${ja(e.name)},${ja(e.spec||'')},${ja(e.unit)},${avail})">加入</button>`:''}
         </div>`;
       }).join('')+'</div>';
     }
-    html+=`<div style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="addTplExtraUnmatched()">找不到？加為提醒項目「${safeQ}」</button></div>`;
+    html+=`<div style="margin-top:6px"><button class="btn btn-secondary btn-sm" onclick="addTplExtraUnmatched()">找不到？加為提醒項目「${escH(q)}」</button></div>`;
     box.innerHTML=html;
   },200);
 }
