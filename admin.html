@@ -302,6 +302,29 @@
   .settings-sheet button{display:flex;align-items:center;gap:12px;width:100%;padding:14px 6px;border:none;border-bottom:1px solid var(--surface2);background:none;font-family:inherit;font-size:15.5px;font-weight:600;color:var(--text);text-align:left;cursor:pointer;}
   .settings-sheet button:last-child{border-bottom:none;}
   .settings-sheet button.active{color:var(--accent);}
+  .settings-sheet button{padding:11px 6px!important;font-size:15px!important;}
+  .settings-sheet .ss-group{font-size:12px;font-weight:700;color:var(--text2);padding:12px 6px 4px;letter-spacing:1px;}
+  .settings-sheet .ss-group:first-child{padding-top:0;}
+  .settings-sheet .ss-badge{background:var(--danger);color:#fff;font-size:11px;font-weight:700;border-radius:9px;padding:1px 7px;margin-left:4px;}
+  .ss-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12.5px;color:var(--text2);word-break:break-all;}
+  .settings-btn{position:relative;}
+  .settings-btn .tab-badge{top:-5px;right:-5px;}
+  .stat-label .sl-short{display:none;}
+  /* 手機／平板：上面那排分頁拿掉（九宮格＋右上「選單」就夠），登出收進選單最底部 */
+  @media(max-width:1099px){
+    main>.tabs{display:none!important;}
+    header .header-logout{display:none;}
+  }
+  @media(max-width:700px){
+    .ov-head{margin-bottom:8px;}
+    .ov-title{font-size:17px!important;}
+    .ov-sub{font-size:12px;}
+    .stats-grid{margin-bottom:14px!important;gap:6px!important;}
+    .stat-card{padding:8px 8px 7px!important;}
+    .stat-num{font-size:19px!important;}
+    .stat-label{font-size:11.5px!important;margin-top:3px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .stat-label .sl-full{display:none;}.stat-label .sl-short{display:inline;}
+  }
   .settings-sheet .ss-arrow{margin-left:auto;color:var(--text2);font-size:20px;}
   @media(min-width:1100px){.settings-btn{display:none!important;}}
   @media(max-width:480px){header .rf-label{display:none;}header .btn-sm{padding:7px 10px;}.admin-brand h1{font-size:16px;letter-spacing:1px;}}
@@ -340,11 +363,11 @@
 
 <div id="adminWrap" style="display:none">
 <header>
-  <div class="admin-brand"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg><h1>管理後台</h1><span class="brand-sub">LAB ADMIN</span></div>
+  <div class="admin-brand" onclick="showTab('overview')" style="cursor:pointer" title="回總覽"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg><h1>管理後台</h1><span class="brand-sub">LAB ADMIN</span></div>
   <div style="display:flex;gap:8px">
-    <button class="btn btn-secondary btn-sm settings-btn" onclick="openSettingsSheet()" aria-label="設定與資料"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="sb-label">設定</span></button>
+    <button class="btn btn-secondary btn-sm settings-btn" onclick="openSettingsSheet()" aria-label="選單"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span class="sb-label">選單</span><span class="tab-badge" id="menuBadge"></span></button>
     <button class="btn btn-secondary btn-sm" onclick="loadAll()" aria-label="重新整理">🔄<span class="rf-label">重新整理</span></button>
-    <button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>
+    <button class="btn btn-secondary btn-sm header-logout" onclick="logout()">登出</button>
   </div>
 </header>
 <main>
@@ -358,7 +381,7 @@
   <button class="tab" data-tab="venue" onclick="showTab('venue')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="tab-label">場地管理</span><span class="tab-badge" id="tb-venue">0</span></button>
   <button class="tab" data-tab="all" onclick="showTab('all')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg><span class="tab-label">全部記錄</span></button>
   <div class="tab-more-wrap">
-    <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span class="tab-label">設定與資料 ▾</span></button>
+    <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span class="tab-label">設定與資料 ▾</span></button>
     <div class="tab-more-menu" id="tabMoreMenu">
       <div class="tab-group-label">設定與資料</div>
       <button data-tab="equipment" onclick="showTab('equipment')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材管理</span></button>
@@ -367,7 +390,7 @@
       <button data-tab="purposes" onclick="showTab('purposes')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></svg><span>借用目的與保證金</span></button>
       <button data-tab="floorplan" onclick="showTab('floorplan')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖校正</span></button>
       <button data-tab="teachers" onclick="showTab('teachers')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>教師管理</span></button>
-      <button data-tab="semester" onclick="showTab('semester')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>學期設定</span></button>
+      <button data-tab="semester" onclick="showTab('semester')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg><span>學期設定</span></button>
     </div>
   </div>
   <div class="side-foot" id="sideFoot"></div>
@@ -1082,17 +1105,18 @@ function renderStats(){
   const notCounted=allEquipment.filter(e=>e.is_available!==false&&(!e.last_counted_at||new Date(e.last_counted_at).getTime()<cutoff)).length;
   const locMismatch=allEquipment.filter(e=>equipLocationMismatches(e).length>0).length;
   document.getElementById('statsGrid').innerHTML=[
-    {num:pending,label:'器材待審核',color:'#92400e',tab:'pending'},{num:approved,label:'器材借用中',color:'#065f46',tab:'approved'},
-    {num:overdue,label:'逾期未還',color:'var(--danger)',tab:'return'},{num:venuePending,label:'場地待審核',color:'#1e40af',tab:'venue'},
-    {num:depPending,label:'待收保證金',color:'#92400e',tab:'deposit'},{num:depReturn,label:'待退保證金',color:'#1e40af',tab:'deposit'},
-    {num:lowStock,label:'庫存不足器材',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',color:'var(--text2)',tab:'equipment'},
-    {num:locMismatch,label:'位置代碼異常',color:'var(--danger)',tab:'equipment'},
-  ].map(s=>`<div class="stat-card" onclick="showTab('${s.tab}')"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
+    {num:pending,label:'器材待審核',short:'器材待審',color:'#92400e',tab:'pending'},{num:approved,label:'器材借用中',short:'借用中',color:'#065f46',tab:'approved'},
+    {num:overdue,label:'逾期未還',short:'逾期未還',color:'var(--danger)',tab:'return'},{num:venuePending,label:'場地待審核',short:'場地待審',color:'#1e40af',tab:'venue'},
+    {num:depPending,label:'待收保證金',short:'待收保證金',color:'#92400e',tab:'deposit'},{num:depReturn,label:'待退保證金',short:'待退保證金',color:'#1e40af',tab:'deposit'},
+    {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',short:'90天未盤點',color:'var(--text2)',tab:'equipment'},
+    {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',tab:'equipment'},
+  ].map(s=>`<div class="stat-card" onclick="showTab('${s.tab}')"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div></div>`).join('');
   // 分頁紅點：待審核 / 確認歸還(逾期) / 保證金(待收+待退) / 場地待審核
   setTabBadge('tb-pending',pending);
   setTabBadge('tb-return',overdue);
   setTabBadge('tb-deposit',depPending+depReturn);
   setTabBadge('tb-venue',venuePending);
+  setTabBadge('menuBadge',pending+overdue+venuePending);
 }
 
 // ── 總覽：今天要處理＋本週使用率 ─────────────────────────
@@ -1157,9 +1181,19 @@ function renderDepositSummary(){
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}</span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
+// 手機／平板的選單：所有分頁（含數字提醒）都在這裡，最底下是登入帳號＋登出
 function openSettingsSheet(){
-  const items=[...document.querySelectorAll('#tabMoreMenu button[data-tab]')].map(b=>({tab:b.dataset.tab,html:b.innerHTML,active:b.classList.contains('active')}));
-  showModal('⚙️ 設定與資料',`<div class="settings-sheet">${items.map(it=>`<button type="button" class="${it.active?'active':''}" onclick="closeModal();showTab('${safeId(it.tab)}')">${it.html}<span class="ss-arrow">›</span></button>`).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+  const cur=document.querySelector('.panel.active')?.id?.replace('panel-','')||'';
+  const row=b=>{
+    const tab=b.dataset.tab,icon=b.querySelector('svg')?.outerHTML||'';
+    const label=(b.querySelector('.tab-label,span:not(.tab-badge)')?.textContent||'').replace('▾','').trim();
+    const bd=b.querySelector('.tab-badge.show');
+    return `<button type="button" class="${tab===cur?'active':''}" onclick="closeModal();showTab('${safeId(tab)}')">${icon}<span>${escH(label)}</span>${bd?`<span class="ss-badge">${escH(bd.textContent)}</span>`:''}<span class="ss-arrow">›</span></button>`;
+  };
+  const main=[...document.querySelectorAll('.tabs > button.tab[data-tab]')].map(row).join('');
+  const more=[...document.querySelectorAll('#tabMoreMenu button[data-tab]')].map(row).join('');
+  showModal('選單',`<div class="settings-sheet"><div class="ss-group">審核與流程</div>${main}<div class="ss-group">設定與資料</div>${more}</div>
+    <div class="ss-foot"><span>${escH(typeof ADMIN_EMAIL!=='undefined'?ADMIN_EMAIL:'')}</span><button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="closeModal();logout()">登出</button></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // ── 資料備份：把所有資料表下載成一個檔案（用登入後的權限讀取，每張表都完整分頁讀完）──
 const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','equipment_writeoffs','borrow_purposes','deposit_settings'];
