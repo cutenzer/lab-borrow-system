@@ -317,6 +317,34 @@
   .venue-table .vcell{min-width:90px;}
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;text-align:center;}
   /* 類別配色（依科目／目的），與後台一致；狀態改用邊框樣式表示 */
+  /* 場地週課表：實驗室切換常駐一排；格子內「班級／名字」兩行短標籤 */
+  .venue-lab-tabs{margin:8px 0 10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .venue-lab-tabs::-webkit-scrollbar{display:none;}
+  .venue-lab-tabs .room-tab{flex:1 1 0;min-width:0;text-align:center;padding:7px 4px;}
+  .vt-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:1px;}
+  .vt-dot.vbl-生物{background:#1f9d6f;}.vt-dot.vbl-化學{background:#c2780b;}.vt-dot.vbl-理化{background:#7c3aed;}.vt-dot.vbl-物理{background:#3567c9;}.vt-dot.vbl-地科{background:#0e8aa0;}
+  .venue-table .venue-booking{text-align:center;line-height:1.25;}
+  .venue-table .venue-booking .vb-g{display:block;font-weight:700;word-break:break-all;}
+  .venue-table .venue-booking .vb-n{display:block;white-space:nowrap;}
+  .venue-booking.is-fixed{box-shadow:inset 3px 0 0 currentColor;}
+  .vb-lab{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;vertical-align:1px;flex-shrink:0;}
+  .vb-lab.vbl-生物{background:#1f9d6f;}.vb-lab.vbl-化學{background:#c2780b;}.vb-lab.vbl-理化{background:#7c3aed;}.vb-lab.vbl-物理{background:#3567c9;}.vb-lab.vbl-地科{background:#0e8aa0;}
+  .venue-table .venue-booking .vb-g .vb-lab{margin-right:2px;}
+  .venue-table.merged .vcell{padding:2px;}
+  .venue-table.merged .venue-booking{margin:0 0 2px;}
+  .venue-add-btn.has-pick{background:var(--accent);color:#fff;border-style:solid;}
+  .venue-legend{font-size:11.5px;color:var(--text2);margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;}
+  .venue-legend i{display:inline-block;width:14px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px;background:var(--surface2);}
+  .vlc-list{display:flex;flex-direction:column;gap:6px;}
+  .vlc-row{display:flex;align-items:center;gap:8px;width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);font-family:inherit;font-size:14.5px;color:var(--text);text-align:left;cursor:pointer;}
+  .vlc-row .vlc-st{margin-left:auto;font-size:13px;color:var(--accent);font-weight:700;white-space:nowrap;}
+  .vlc-row.picked{border-color:var(--accent);background:#eef6f2;}
+  .vlc-row.busy{cursor:default;opacity:.6;background:var(--surface2);}
+  .vlc-row.busy .vlc-st{color:var(--text2);font-weight:400;}
+  .venue-booking .vb-full{display:none;}
+  /* 電腦版格子夠寬：顯示完整「國一丁-林顯豪」 */
+  @media(min-width:900px){.venue-table .venue-booking .vb-g,.venue-table .venue-booking .vb-n{display:none;}.venue-table .venue-booking .vb-full{display:inline;}
+    .venue-lab-tabs .room-tab{flex:0 0 auto;padding:6px 16px;}}
   .venue-booking.cat-bio{background:#dcfce7;color:#15803d;}
   .venue-booking.cat-chem{background:#fef3c7;color:#b45309;}
   .venue-booking.cat-phys{background:#dbeafe;color:#1d4ed8;}
@@ -1013,7 +1041,6 @@
       <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
     </div>
     <div class="venue-actions venue-actions-compact">
-      <button type="button" class="btn btn-secondary btn-sm" id="venueLabToggle" onclick="toggleVenueLabTabs()">🏫 全部實驗室 ▾</button>
       <button class="btn btn-secondary btn-sm" onclick="goThisWeek()">本週</button>
       <button type="button" class="btn btn-secondary btn-sm" id="venueWeekendBtn" onclick="toggleVenueWeekend()">＋週末</button>
       <button type="button" class="btn btn-secondary btn-sm" id="venueViewToggleBtn" onclick="toggleVenueViewMode()">📋 日檢視</button>
@@ -1021,13 +1048,13 @@
       <button class="btn btn-primary btn-sm" onclick="openVenueBookingModal()">✏️ 新增</button>
       <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()" style="display:none">🔍 放大</button>
     </div>
-    <div class="room-tabs" id="venueLabTabs" style="display:none;margin-top:8px">
+    <div class="room-tabs venue-lab-tabs" id="venueLabTabs">
       <button type="button" class="room-tab active" data-lab="" onclick="setVenueLabFilter('')">全部</button>
-      <button type="button" class="room-tab" data-lab="生物" onclick="setVenueLabFilter('生物')">生物</button>
-      <button type="button" class="room-tab" data-lab="化學" onclick="setVenueLabFilter('化學')">化學</button>
-      <button type="button" class="room-tab" data-lab="理化" onclick="setVenueLabFilter('理化')">理化</button>
-      <button type="button" class="room-tab" data-lab="物理" onclick="setVenueLabFilter('物理')">物理</button>
-      <button type="button" class="room-tab" data-lab="地科" onclick="setVenueLabFilter('地科')">地科</button>
+      <button type="button" class="room-tab" data-lab="生物" onclick="setVenueLabFilter('生物')"><span class="vt-dot vbl-生物"></span>生物</button>
+      <button type="button" class="room-tab" data-lab="化學" onclick="setVenueLabFilter('化學')"><span class="vt-dot vbl-化學"></span>化學</button>
+      <button type="button" class="room-tab" data-lab="理化" onclick="setVenueLabFilter('理化')"><span class="vt-dot vbl-理化"></span>理化</button>
+      <button type="button" class="room-tab" data-lab="物理" onclick="setVenueLabFilter('物理')"><span class="vt-dot vbl-物理"></span>物理</button>
+      <button type="button" class="room-tab" data-lab="地科" onclick="setVenueLabFilter('地科')"><span class="vt-dot vbl-地科"></span>地科</button>
     </div>
     <div id="venueDayView" style="display:none"></div>
     <div class="venue-table-wrap" id="venueTableWrapEl">
@@ -2876,13 +2903,67 @@ function openVenueBookingModal(dateStr,period,venue){
 let venueLabFilter='';
 function setVenueLabFilter(lab){
   venueLabFilter=lab;
-  const tabs=document.getElementById('venueLabTabs');if(tabs)tabs.style.display='none';
-  document.querySelectorAll('#venueLabTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===lab));
+  try{localStorage.setItem('venueLabFilter',lab);}catch(_){}
+  syncVenueLabTabs();
   loadVenue();
 }
+function syncVenueLabTabs(){
+  document.querySelectorAll('#venueLabTabs .room-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===venueLabFilter));
+}
+// 上次選的實驗室記在這台裝置上，下次打開直接是那一間
+(function(){try{const v=localStorage.getItem('venueLabFilter');if(v!==null&&['','生物','化學','理化','物理','地科'].includes(v))venueLabFilter=v;}catch(_){}})();
 let venueShowWeekend=false;
 function toggleVenueWeekend(){venueShowWeekend=!venueShowWeekend;loadVenue();}
-function toggleVenueLabTabs(){const t=document.getElementById('venueLabTabs');if(t)t.style.display=t.style.display==='none'?'flex':'none';}
+function toggleVenueLabTabs(){} // 舊按鈕已移除，保留空函式避免舊連結出錯
+
+// ── 課表格子用的短標籤：國一丁→J1丁、高二戊→H2戊；名字取最後一個字（撞名就取兩個字） ──
+const VENUE_LABS=['生物','化學','理化','物理','地科'];
+const VENUE_LAB_FULL={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
+const GRADE_ABBR={'國一':'J1','國二':'J2','國三':'J3','高一':'H1','高二':'H2','高三':'H3'};
+function shortGrade(g){g=(g||'').trim();const k=g.slice(0,2);return GRADE_ABBR[k]?GRADE_ABBR[k]+g.slice(2):g;}
+function shortPersonName(name){
+  name=(name||'').trim();
+  if([...name].length<=2)return name;
+  const chars=[...name],last1=chars.slice(-1).join('');
+  const clash=allTeachersFront.some(t=>{const n=(t.name||'').trim();return n&&n!==name&&[...n].slice(-1).join('')===last1;});
+  return clash?chars.slice(-2).join(''):last1;
+}
+const PURPOSE_SHORT={'自主學習':'自主','科展':'科展','探究':'探究','課程':'課程','社團':'社團','選修':'選修','菁英':'菁英'};
+const LAB_CAT_CLASS={'生物':'cat-bio','化學':'cat-chem','理化':'cat-pc','物理':'cat-phys','地科':'cat-geo'};
+function labBadge(lab){return `<span class="vb-lab vbl-${lab}">${lab.slice(0,1)}</span>`;}
+function venueChipHtml(b,lab,dateStr,period,venueFull){
+  const grade=(b.grade||'').trim();
+  const isStu=b.role==='學生'&&b.student_id;
+  const who=isStu?String(b.student_id):shortPersonName(b.borrower_name);
+  const top=grade?shortGrade(grade):(PURPOSE_SHORT[b.purpose]||b.purpose||'');
+  const topFull=grade||(PURPOSE_SHORT[b.purpose]||b.purpose||'');
+  const whoFull=isStu?String(b.student_id):(b.borrower_name||'');
+  // 合併格子（全部實驗室）用「實驗室顏色」，單一實驗室時照原本用科目／目的顏色
+  const catCls=lab?LAB_CAT_CLASS[lab]:categoryClass(resolveCategory(b));
+  const st=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
+  const vf=venueFull||VENUE_LAB_FULL[lab];
+  return `<div class="venue-booking ${catCls} ${st} ${b.is_fixed?'is-fixed':''}" title="${venueLabel(b)}" onclick="showVenueSlotInfo('${dateStr}','${period}','${vf}')"><span class="vb-g">${escH(top)}</span><span class="vb-n">${escH(who)}</span><span class="vb-full">${escH(topFull)}-${escH(whoFull)}</span></div>`;
+}
+// 「全部實驗室」在手機上：每一節只佔一列，各間的預約擠在同一格並標上實驗室色塊（跟舊版一樣清爽）
+function venueMergedMode(){return !venueLabFilter&&window.innerWidth<=600;}
+let _venueMergedLast=null;
+window.addEventListener('resize',()=>{
+  const m=venueMergedMode();
+  if(_venueMergedLast!==null&&m!==_venueMergedLast&&document.getElementById('page-venue')?.classList.contains('active'))renderVenueTable(getWeekDates(venueWeekOffset));
+});
+// 合併格子的「＋」：列出這一節五間實驗室誰有空，直接點選
+function openVenueLabChooser(dateStr,period){
+  if(dateStr<todayStr()){showToast('不能預約今天以前的時段','error');return;}
+  const rows=VENUE_LABS.map(lab=>{
+    const vf=VENUE_LAB_FULL[lab];
+    const c=findVenueConflict(dateStr,period,vf);
+    if(c)return `<div class="vlc-row busy">${labBadge(lab)}${lab}實驗室<span class="vlc-st">${escH(c.borrower_name)} 使用中</span></div>`;
+    const picked=isVenuePicked(dateStr,period,vf);
+    return `<button type="button" class="vlc-row ${picked?'picked':''}" onclick="toggleVenuePick('${dateStr}','${period}','${vf}');openVenueLabChooser('${dateStr}','${period}')">${labBadge(lab)}${lab}實驗室<span class="vlc-st">${picked?'✓ 已選':'選這間'}</span></button>`;
+  }).join('');
+  const d=dateStr.slice(5).replace('-','/').replace(/^0/,'').replace('/0','/');
+  showModal(`${d} ${period}　選實驗室`,`<div class="vlc-list">${rows}</div><div class="hint" style="margin-top:8px">可以選好幾間；選好後按畫面下方的「📅 填寫預約」一起填表。</div>`,[{label:'完成',cls:'btn-primary',fn:'closeModal()'}]);
+}
 function renderVenueTable(dates){
   const table=document.getElementById('venueTable');
   // 週末預設收合：只顯示週一～五，課表可以不用左右滑就看完整；週末有排課會在按鈕上提示筆數
@@ -2891,63 +2972,55 @@ function renderVenueTable(dates){
   const wBtn=document.getElementById('venueWeekendBtn');
   if(wBtn){wBtn.textContent=venueShowWeekend?'－收起週末':`＋週末${wkEndCount?'（'+wkEndCount+'）':''}`;wBtn.classList.toggle('btn-warn',!venueShowWeekend&&wkEndCount>0);}
   if(!venueShowWeekend)dates=dates.slice(0,5);
+  syncVenueLabTabs();
+  const merged=venueMergedMode();_venueMergedLast=merged;
+  const LABS=venueLabFilter?[venueLabFilter]:VENUE_LABS;
+  const showLabCol=!venueLabFilter&&!merged;
   table.classList.toggle('fit',!venueShowWeekend);
-  table.classList.toggle('has-lab',!venueLabFilter);
+  table.classList.toggle('has-lab',showLabCol);
+  table.classList.toggle('merged',merged);
   const tw=document.getElementById('venueTableWrapEl');if(tw)tw.classList.toggle('fit-wrap',!venueShowWeekend);
-  const lt=document.getElementById('venueLabToggle');if(lt)lt.textContent='🏫 '+(venueLabFilter||'全部實驗室')+' ▾';
-  const ALL_LABS=['生物','化學','理化','物理','地科'];
-  const LABS=venueLabFilter?[venueLabFilter]:ALL_LABS;
-  const showLabCol=!venueLabFilter;
-  const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
   const COMPACT_PERIODS=['早休','午休'];
   let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
-    return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
+    return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${escH(holiday.label)}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
+  // 一格裡放「所有實驗室」的預約（合併模式，或早休/午休這種短時段）
+  const mergedRow=(period,shade)=>{
+    let r=`<tr class="period-group-start ${COMPACT_PERIODS.includes(period)?'compact-period':''} ${shade?'band-shade':''} ${OFF_PERIODS.includes(period)?'off-period':''}">`;
+    r+=`<td class="period-cell">${period}</td>`;
+    if(showLabCol)r+=`<td class="lab-cell">－</td>`;
+    dates.forEach(date=>{
+      const dateStr=fmtDate(date);
+      const isHoliday=!!holidayForDate(dateStr);
+      let chips='',freeLabs=0,picks=0;
+      VENUE_LABS.forEach(lab=>{
+        const vf=VENUE_LAB_FULL[lab];
+        const bks=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===vf);
+        bks.forEach(b=>{chips+=venueChipHtml(b,lab,dateStr,period);});
+        if(!bks.some(b=>!isShareablePurpose(b.purpose)))freeLabs++;
+        if(isVenuePicked(dateStr,period,vf))picks++;
+      });
+      r+=`<td class="vcell ${COMPACT_PERIODS.includes(period)?'compact-vcell':''} ${isHoliday?'holiday-col':''}">${chips}`;
+      if(freeLabs||picks)r+=`<button class="venue-add-btn ${picks?'has-pick':''}" title="選實驗室" onclick="event.stopPropagation();openVenueLabChooser('${dateStr}','${period}')">${picks?'✓'+picks:'＋'}</button>`;
+      r+=`</td>`;
+    });
+    return r+`</tr>`;
+  };
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
-    if(!venueLabFilter&&COMPACT_PERIODS.includes(period)){
-      html+=`<tr class="period-group-start compact-period ${shade?'band-shade':''} ${OFF_PERIODS.includes(period)?'off-period':''}">`;
-      html+=`<td class="period-cell">${period}</td>`;
-      html+=`<td class="lab-cell">－</td>`;
-      dates.forEach(date=>{
-        const dateStr=fmtDate(date);
-        const isHoliday=!!holidayForDate(dateStr);
-        const cellBookings=[];
-        LABS.forEach(lab=>{
-          const venueFull=labFull[lab];
-          venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull)
-            .forEach(b=>cellBookings.push({...b,_lab:lab,_venueFull:venueFull}));
-        });
-        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''}">`;
-        cellBookings.forEach(b=>{
-          const cat=resolveCategory(b);
-          const catCls=categoryClass(cat);
-          const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
-          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="showVenueSlotInfo('${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'📌':''}[${b._lab}] ${venueLabel(b)}</div>`;
-        });
-        html+=`<button class="venue-add-btn" onclick="event.stopPropagation();openVenueBookingModal('${dateStr}','${period}','${labFull['生物']}')">＋</button>`;
-        html+=`</td>`;
-      });
-      html+=`</tr>`;
-      return;
-    }
+    if(merged||(!venueLabFilter&&COMPACT_PERIODS.includes(period))){html+=mergedRow(period,shade);return;}
     LABS.forEach((lab,li)=>{
       html+=`<tr class="${li===0?'period-group-start':''} ${shade?'band-shade':''} ${OFF_PERIODS.includes(period)?'off-period':''}">`;
       if(li===0)html+=`<td rowspan="${LABS.length}" class="period-cell">${period}</td>`;
       if(showLabCol)html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
-        const dateStr=fmtDate(date),venueFull=labFull[lab];
+        const dateStr=fmtDate(date),venueFull=VENUE_LAB_FULL[lab];
         const isHoliday=!!holidayForDate(dateStr);
         const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
         const blocking=cellBookings.some(b=>!isShareablePurpose(b.purpose));
         html+=`<td class="vcell ${isHoliday?'holiday-col':''}">`;
-        cellBookings.forEach(b=>{
-          const cat=resolveCategory(b);
-          const catCls=categoryClass(cat);
-          const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
-          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="showVenueSlotInfo('${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
-        });
+        cellBookings.forEach(b=>{html+=venueChipHtml(b,'',dateStr,period,venueFull);});
         if(!blocking){
           const picked=isVenuePicked(dateStr,period,venueFull);
           html+=`<button class="venue-add-btn ${picked?'picked':''}" title="${picked?'取消選取':'選這個時段'}" onclick="event.stopPropagation();toggleVenuePick('${dateStr}','${period}','${venueFull}')">${picked?'✓':'＋'}</button>`;
@@ -2959,7 +3032,11 @@ function renderVenueTable(dates){
   });
   html+=`</tbody>`;
   table.innerHTML=html;
-  const fsTable=document.getElementById('venueTableFS');if(fsTable)fsTable.innerHTML=html;
+  // 圖例：說明短標籤怎麼看
+  let lg=document.getElementById('venueLegend');
+  if(!lg&&tw){lg=document.createElement('div');lg.id='venueLegend';lg.className='venue-legend';tw.insertAdjacentElement('afterend',lg);}
+  if(lg)lg.innerHTML=`${merged?'<span>顏色＝實驗室（同上方圓點）</span>':''}${window.innerWidth<900?'<span>J＝國中、H＝高中（J1丁＝國一丁）</span>':''}<span><i style="box-shadow:inset 3px 0 0 #6d28d9"></i>固定課程</span><span><i style="outline:2px dashed #d97706;outline-offset:-2px"></i>待審核</span><span>點格子看完整姓名</span>`;
+  const fsTable=document.getElementById('venueTableFS');if(fsTable){fsTable.innerHTML=html;fsTable.classList.toggle('merged',merged);}
   const fsTitle=document.getElementById('venueFsTitle');
   if(fsTitle){const lbl=document.getElementById('venueWeekLabel').textContent;fsTitle.textContent=lbl?('場地使用狀況　'+lbl):'場地使用狀況';}
   if(document.getElementById('venueFsOverlay').classList.contains('show')){requestAnimationFrame(fitVenueFs);}
@@ -4100,6 +4177,23 @@ function navPush(ov){
   NAV.idx++;
   try{history.pushState({lab:1,page:navCurPage(),idx:NAV.idx,ov:ov||''},'');}catch(_){}
 }
+// 視窗裡有「改過但還沒送出」的欄位嗎？（按返回時用來決定要不要先問一聲）
+function navModalDirty(){
+  const box=document.getElementById('modalOverlay');if(!box)return false;
+  return [...box.querySelectorAll('input,textarea,select')].some(el=>{
+    if(el.disabled||el.readOnly)return false;
+    const t=(el.type||'').toLowerCase();
+    if(['hidden','button','submit','reset','search','range','color'].includes(t))return false;
+    if(t==='checkbox'||t==='radio')return el.checked!==el.defaultChecked;
+    if(t==='file')return !!(el.files&&el.files.length);
+    if(el.tagName==='SELECT'){
+      if(el.multiple)return [...el.options].some(o=>o.selected!==o.defaultSelected);
+      let d=[...el.options].findIndex(o=>o.defaultSelected);if(d<0)d=0;
+      return el.selectedIndex!==d;
+    }
+    return el.value!==el.defaultValue;
+  });
+}
 function initBackButton(){
   if(!('pushState' in history))return;
   try{history.scrollRestoration='manual';}catch(_){}
@@ -4120,7 +4214,14 @@ function initBackButton(){
     let changed=false;
     if(!forward){
       const top=NAV_OVERLAYS.find(navIsOpen);
-      if(top){top[2]();changed=true;}
+      if(top){
+        // 表單填到一半按返回：先問，按「取消」就把剛剛退掉的紀錄補回去，視窗維持原樣
+        if(top[0]==='modalOverlay'&&navModalDirty()&&!confirm('視窗裡填的內容還沒送出，確定要關閉嗎？')){
+          setTimeout(()=>{NAV.busy=false;navPush('modalOverlay');},0);
+          return;
+        }
+        top[2]();changed=true;
+      }
     }
     const target=(typeof st.page==='string'&&document.getElementById('page-'+st.page))?st.page:null;
     if(!changed&&target&&target!==navCurPage()){
