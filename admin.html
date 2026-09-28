@@ -4731,16 +4731,16 @@ async function openCalibLocEditor(hotspotId){
     const avail=equipAvailable(e);
     return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--surface2)">
       <div>
-        <div style="font-weight:600">${e.name}</div>
-        <div style="font-size:12px;color:var(--text2)">${e.spec||''}　總數 ${e.total??0}　可借 ${avail}</div>
+        <div style="font-weight:600">${escH(e.name)}</div>
+        <div style="font-size:12px;color:var(--text2)">${escH(e.spec||'')}　總數 ${escH(String(e.total??0))}　可借 ${avail}</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal();jumpEditEquipFromCalib('${e.id}')">✏️ 編輯</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal();jumpEditEquipFromCalib(${escH(JSON.stringify(String(e.id)))})">✏️ 編輯</button>
     </div>`;
   }).join('')||'<div style="font-size:13px;color:var(--text2)">目前這個位置還沒有登記任何器材</div>';
-  const safeRoom=room.replace(/'/g,"\\'"),safeCode=h.code.replace(/'/g,"\\'");
+  const ja=v=>escH(JSON.stringify(String(v??'')));
   showModal(`📦 ${h.code}（${rn(room)}）`,
     `<div style="margin-bottom:10px">${rows}</div>
-     <button class="btn btn-primary btn-sm" onclick="closeModal();openQuickAddToLocation('${safeRoom}','${safeCode}')">➕ 新增器材到這裡</button>`,
+     <button class="btn btn-primary btn-sm" onclick="closeModal();openQuickAddToLocation(${ja(room)},${ja(h.code)})">➕ 新增器材到這裡</button>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
   );
 }
