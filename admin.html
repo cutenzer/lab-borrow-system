@@ -797,7 +797,9 @@
         📤 匯入器材 Excel
         <input type="file" id="eq-import-file" accept=".xlsx" style="display:none" onchange="handleEquipmentImport(this)">
       </label>
+      <button class="btn btn-secondary" onclick="compressExistingEquipPhotos()" title="把之前上傳、檔案太大的器材照片縮成手機好載的大小">🗜️ 壓縮過大的器材照片</button>
     </div>
+    <div class="hint" id="photoCompressMsg" style="margin-top:6px"></div>
     <div id="eqImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
   </div>
 
@@ -4043,22 +4045,78 @@ function renderAdminEquipCard(e){
 function openEquipPhotoUpload(id){
   const el=document.getElementById('eq-photo-input-'+id);if(el)el.click();
 }
+// ── 照片壓縮：手機拍的原圖動輒 3～6MB、4000px 寬，前台輪播要載很久，iPhone 也常畫不出來 ──
+// 上傳前先在瀏覽器裡縮到長邊 1600px、JPEG 品質 0.82（通常 150～400KB，看起來幾乎沒差）
+function loadImageEl(src){
+  return new Promise((ok,fail)=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>ok(im);im.onerror=()=>fail(new Error('圖片讀不出來'));im.src=src;});
+}
+async function compressImageBlob(blob,maxDim=1600,quality=0.82){
+  const url=URL.createObjectURL(blob);
+  try{
+    const im=await loadImageEl(url);
+    const w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)throw new Error('圖片尺寸錯誤');
+    const k=Math.min(1,maxDim/Math.max(w,h));
+    const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+    const out=await new Promise(r=>c.toBlob(r,'image/jpeg',quality));
+    if(!out)throw new Error('壓縮失敗');
+    return out;
+  }finally{URL.revokeObjectURL(url);}
+}
+async function uploadEquipImageBlob(id,blob,ext,type){
+  if(!/^[A-Za-z0-9_-]+$/.test(String(id)))throw new Error('器材 ID 格式不對');
+  ext=String(ext||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+  const path=`equipment/${id}/${Date.now()}.${ext}`;
+  await ensureToken();
+  const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+    method:'POST',
+    headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':type||'image/jpeg'},
+    body:blob
+  });
+  if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
+  return `${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
+}
+// 一次把舊的大照片縮小：只處理放在自己 Supabase 照片區、超過 400KB 的；舊檔不刪（萬一要找回原圖）
+async function compressExistingEquipPhotos(){
+  const prefix=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/`;
+  const items=(allAdminEquipment||[]).filter(e=>typeof e.image_url==='string'&&e.image_url.startsWith(prefix));
+  const msg=document.getElementById('photoCompressMsg');
+  if(!items.length){showToast('目前沒有可以處理的器材照片（先到下方清單載入器材）','error');return;}
+  if(!confirm(`要檢查 ${items.length} 張器材照片，超過 400KB 的會縮小後重新上傳並換上新網址。\n原檔不會刪除。過程中請不要關閉這個頁面，要繼續嗎？`))return;
+  let done=0,shrunk=0,skipped=0,failed=0,saved=0;
+  for(const e of items){
+    done++;
+    if(msg)msg.textContent=`處理中… ${done} / ${items.length}（已縮小 ${shrunk} 張）`;
+    try{
+      const r=await fetch(e.image_url,{cache:'no-store'});
+      if(!r.ok)throw new Error('下載失敗');
+      const blob=await r.blob();
+      if(blob.size<=400*1024){skipped++;continue;}
+      const small=await compressImageBlob(blob);
+      if(small.size>blob.size*0.7){skipped++;continue;} // 縮不太下去就不換
+      const url=await uploadEquipImageBlob(e.id,small);
+      await sb('PATCH','equipment',{filter:'id=eq.'+e.id,body:{image_url:url},prefer:'return=minimal'});
+      e.image_url=url;shrunk++;saved+=blob.size-small.size;
+    }catch(err){failed++;}
+  }
+  const mb=(saved/1048576).toFixed(1);
+  if(msg)msg.textContent=`完成：縮小 ${shrunk} 張（共省下約 ${mb}MB）、本來就夠小 ${skipped} 張${failed?`、失敗 ${failed} 張（可以再按一次重試）`:''}`;
+  showToast(`照片壓縮完成：縮小 ${shrunk} 張`,failed?'error':'success');
+  loadAdminEquipment();
+}
 async function uploadEquipPhoto(id,input){
   if(!input.files||!input.files[0])return;
   const file=input.files[0];
-  showToast('照片上傳中…','success');
+  if(!/^image\//.test(file.type||'')&&!/\.(jpe?g|png|webp|heic|heif|gif)$/i.test(file.name||'')){showToast('請選擇圖片檔','error');input.value='';return;}
+  if(file.size>25*1024*1024){showToast('照片超過 25MB，請換一張','error');input.value='';return;}
+  showToast('照片壓縮上傳中…','success');
   try{
-    const extRaw=(file.name||'').split('.').pop()||'jpg';
-    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
-    const path=`equipment/${id}/${Date.now()}.${ext}`;
-    await ensureToken();
-    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
-      method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(ACCESS_TOKEN||SUPABASE_KEY),'Content-Type':file.type||'application/octet-stream'},
-      body:file
-    });
-    if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
-    const url=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
+    // 壓縮成功就傳縮好的 JPEG；瀏覽器讀不了這種格式（少數 HEIC）就照原檔上傳
+    let small=null;
+    try{small=await compressImageBlob(file);}catch(_){small=null;}
+    const useSmall=small&&small.size<file.size;
+    const url=useSmall?await uploadEquipImageBlob(id,small,'jpg','image/jpeg')
+                      :await uploadEquipImageBlob(id,file,(file.name||'').split('.').pop(),file.type||'application/octet-stream');
     await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{image_url:url},prefer:'return=minimal'});
     showToast('照片已更新','success');
     loadAdminEquipment();
