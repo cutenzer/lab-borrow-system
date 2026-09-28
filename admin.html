@@ -1284,7 +1284,11 @@ function renderWithFilter(panel){
 }
 
 const TAB_MORE_GROUP=['teachers','semester','templates','floorplan','chemicals','equipment','highlights','purposes'];
-function showTab(tab){
+function showTab(tab,opts){
+  const fromHist=!!(opts&&opts.fromHistory);
+  if(!document.getElementById('panel-'+tab))return;
+  const prevTab=navCurPage();
+  if(!fromHist&&prevTab!==tab)navSaveScroll();
   closeTabMoreMenu();
   document.querySelectorAll('.tabs .tab[data-tab],.tab-more-menu button[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   if(tab==='overview')renderOverview();
@@ -1292,6 +1296,7 @@ function showTab(tab){
   if(moreBtn)moreBtn.classList.toggle('active',TAB_MORE_GROUP.includes(tab));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+tab).classList.add('active');
+  if(!fromHist&&prevTab!==tab)navPush('');
   if(tab==='venue')loadAdminVenue();
   if(tab==='teachers')loadTeachers();
   if(tab==='semester'){loadSemesters();loadHolidays();}
@@ -2818,6 +2823,88 @@ async function doSettle(id,depositAmount){const comp=parseInt(document.getElemen
 
 function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
+
+/* ── 手機「返回鍵」支援 ──────────────────────────────
+   後台只有一頁，切分頁、開視窗都不會產生瀏覽紀錄，按返回鍵會直接離開後台。
+   這裡在每次切分頁／開視窗時自己記一筆：按返回 → 先關最上層視窗；沒有視窗 → 回上一個分頁；
+   退到底才離開。尚未登入（或已登出）時不攔截，返回鍵照常。 */
+const NAV={idx:0,busy:false};
+const NAV_OVERLAYS=[
+  ['modalOverlay','show',()=>closeModal()],
+  ['tabMoreMenu','show',()=>closeTabMoreMenu()],
+];
+function navCurPage(){return document.querySelector('.panel.active')?.id?.replace('panel-','')||'';}
+function navIsOpen(o){const el=document.getElementById(o[0]);return !!(el&&el.classList.contains(o[1]));}
+function navAdminVisible(){const w=document.getElementById('adminWrap');return !!(w&&w.style.display!=='none'&&getComputedStyle(w).display!=='none');}
+function navSaveScroll(){
+  try{const st=history.state;if(st&&st.lab)history.replaceState(Object.assign({},st,{y:Math.round(window.scrollY)}),'');}catch(_){}
+}
+function navPush(ov){
+  if(NAV.busy||!navAdminVisible())return;
+  NAV.idx++;
+  try{history.pushState({lab:1,page:navCurPage(),idx:NAV.idx,ov:ov||''},'');}catch(_){}
+}
+// 視窗裡有「改過但還沒送出」的欄位嗎？（按返回時用來決定要不要先問一聲）
+function navModalDirty(){
+  const box=document.getElementById('modalOverlay');if(!box)return false;
+  return [...box.querySelectorAll('input,textarea,select')].some(el=>{
+    if(el.disabled||el.readOnly)return false;
+    const t=(el.type||'').toLowerCase();
+    if(['hidden','button','submit','reset','search','range','color'].includes(t))return false;
+    if(t==='checkbox'||t==='radio')return el.checked!==el.defaultChecked;
+    if(t==='file')return !!(el.files&&el.files.length);
+    if(el.tagName==='SELECT'){
+      if(el.multiple)return [...el.options].some(o=>o.selected!==o.defaultSelected);
+      let d=[...el.options].findIndex(o=>o.defaultSelected);if(d<0)d=0;
+      return el.selectedIndex!==d;
+    }
+    return el.value!==el.defaultValue;
+  });
+}
+function initBackButton(){
+  if(!('pushState' in history))return;
+  try{history.scrollRestoration='manual';}catch(_){}
+  try{history.replaceState({lab:1,page:navCurPage(),idx:0,ov:''},'');}catch(_){return;}
+  NAV_OVERLAYS.forEach(o=>{
+    const el=document.getElementById(o[0]);if(!el)return;
+    let was=navIsOpen(o);
+    new MutationObserver(()=>{const now=navIsOpen(o);if(now&&!was)navPush(o[0]);was=now;})
+      .observe(el,{attributes:true,attributeFilter:['class']});
+  });
+  window.addEventListener('popstate',e=>{
+    const st=e.state;
+    if(!st||!st.lab)return;
+    const forward=st.idx>NAV.idx;
+    NAV.idx=st.idx;
+    NAV.busy=true;
+    let changed=false;
+    if(navAdminVisible()){
+      if(!forward){
+        const top=NAV_OVERLAYS.find(navIsOpen);
+        if(top){
+          // 表單填到一半按返回：先問，按「取消」就把剛剛退掉的紀錄補回去，視窗維持原樣
+          if(top[0]==='modalOverlay'&&navModalDirty()&&!confirm('視窗裡填的內容還沒送出，確定要關閉嗎？')){
+            setTimeout(()=>{NAV.busy=false;navPush('modalOverlay');},0);
+            return;
+          }
+          top[2]();changed=true;
+        }
+      }
+      const target=(typeof st.page==='string'&&st.page&&document.getElementById('panel-'+st.page))?st.page:null;
+      if(!changed&&target&&target!==navCurPage()){
+        NAV_OVERLAYS.forEach(o=>{if(navIsOpen(o))o[2]();});
+        showTab(target,{fromHistory:true});
+        const y=+st.y||0;
+        requestAnimationFrame(()=>window.scrollTo(0,y));
+        changed=true;
+      }
+    }
+    setTimeout(()=>{NAV.busy=false;},0);
+    if(!changed&&!forward)history.back();
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initBackButton);
+else initBackButton();
 let toastTimer;
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),4000);}
 renderPeriodSettingList([]);
