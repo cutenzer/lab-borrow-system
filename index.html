@@ -507,6 +507,8 @@
   .cart-form-summary{margin:0 18px 8px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.6;}
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
   .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
+  .proxy-notice{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#eef4ff;border:1px solid #c7d7f5;color:#27406b;font-size:14px;line-height:1.6;}
+  .cart-form-summary .cfs-proxy{font-size:12.5px;color:#27406b;margin-top:2px;}
   .cart-form-summary .cfs-venue.warn{background:#fff1f0;color:var(--danger);}
   .cart-form-summary .cfs-edit,.cart-form-summary .cfs-venue{display:flex;align-items:center;gap:8px;width:100%;border:none;font:inherit;text-align:left;cursor:pointer;}
   .cart-form-summary .cfs-edit{background:transparent;padding:0;color:inherit;}
@@ -896,6 +898,7 @@
     <div class="deposit-amount" id="depositCalc">NT$ 0</div>
     <div style="font-size:12px;color:#b8650f">預估保證金（請於借用前至辦公室繳納）</div>
   </div>
+  <div class="proxy-notice" id="proxyNotice" style="display:none"></div>
 
   <div class="card">
     <div class="card-title">👤 身份</div>
@@ -1164,7 +1167,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 週次兩行版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 保證金規則版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1235,7 +1238,7 @@
 const SUPABASE_URL='https://bgifddtcklpqbmljlvcg.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJnaWZkZHRja2xwcWJtbGpsdmNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5OTU0NzQsImV4cCI6MjA5NjU3MTQ3NH0.fHdIRQU2mD9IwX3XHKize1aewAnc9ZpGF0W7Z0wgx64';
 const ROOM_NAMES={'Chemistry':'化學實驗室','Biology':'生物實驗室','Geoscience':'地球科學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','TeachingMaterialRoom':'教具室'};
-const rn=r=>ROOM_NAMES[r]||r;
+const rn=r=>ROOM_NAMES[r]||(r==='chemicals'?'藥品':r);
 const VENUES=['化學實驗室','理化實驗室','物理實驗室','生物實驗室','地科實驗室'];
 const PERIODS=['早休','第1節','第2節','第3節','第4節','午休','第5節','第6節','第7節','第8節','晚上'];
 const DAYS=['一','二','三','四','五','六','日'];
@@ -2275,13 +2278,29 @@ function rebuildPurposeLists(){
   document.querySelectorAll('.dep-both').forEach(e=>e.textContent=fmt(DEPOSIT_AMT.both));
 }
 // 這個目的（在目前身分下）要不要保證金：清單裡找不到的（例如「其他」自填的內容）一律要
+// 保證金只收學生：老師借用一律不收（老師代學生借「自主學習」等，改成提醒學生另外填表＋繳保證金）
 function purposeNeedsDeposit(p,role){
   if(!p)return false;
+  if(role==='老師')return false;
   const r=PURPOSES.find(x=>x.name===p);
   if(!r)return true;
   if(role==='學生'&&!r.for_student)return true;
   if(role==='老師'&&!r.for_teacher)return true;
   return !!r.needs_deposit;
+}
+// 老師選了「學生才要繳保證金」的目的（例如自主學習）＝多半是幫學生代借
+function isTeacherProxyPurpose(p,role){
+  if(role!=='老師'||!p)return false;
+  const r=PURPOSES.find(x=>x.name===p);
+  return !!(r&&r.for_student&&r.needs_deposit);
+}
+const PROXY_NOTICE_TEXT='老師借用不收保證金。如果是幫學生代借，請提醒學生另外填寫借用表單，並到辦公室繳交保證金。';
+function updateProxyNotice(){
+  const el=document.getElementById('proxyNotice');if(!el)return;
+  const p=document.getElementById('f-purpose')?.value||'';
+  const on=isTeacherProxyPurpose(p,currentRole);
+  el.style.display=on?'block':'none';
+  if(on)el.innerHTML=`<b>👩‍🏫 老師代借「${escH(p)}」</b><br>${PROXY_NOTICE_TEXT}`;
 }
 function depositFor(needs,hasVenue,hasEquip){
   if(!needs)return {type:'無',amount:0};
@@ -2323,6 +2342,7 @@ function setRole(role){
   if(tplCard)tplCard.style.display=role==='老師'?'block':'none';
   if(role!=='老師'&&appliedTemplate)clearAppliedTemplate(true);
   onVenueSelectChange();
+  updateProxyNotice();
 }
 function setVenueRole(role){
   currentVenueRole=role;
@@ -3175,9 +3195,11 @@ function renderCartFormSummary(){
   const name=document.getElementById('f-name').value.trim();
   const venue=getInlineVenueDraft();
   const vWarn=venueNotBookedWarning();
+  const proxy=isTeacherProxyPurpose(document.getElementById('f-purpose')?.value||'',currentRole);
   box.innerHTML=`<button type="button" class="cfs-edit" onclick="openCartFormEdit()" aria-label="修改姓名、目的、日期">
       <span class="cfs-lines"><span>👤 ${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　🎯 ${escH(purpose)}</span>
-      <span>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</span></span>
+      <span>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</span>
+      ${proxy?'<span class="cfs-proxy">👩‍🏫 代學生借用：請學生另填表單並繳保證金</span>':''}</span>
       <span class="cfs-pen">✏️ 修改</span></button>
     <button type="button" class="cfs-venue ${venue?'':(vWarn?'warn':'none')}" onclick="openCartVenueEdit()">
       <span>${venue?`📅 場地會一起送出：${venueDraftText(venue)}`:(vWarn||'📅 這張單沒有同步預約場地')}</span>
@@ -3510,6 +3532,7 @@ function calcDeposit(){
   const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
   const a=depositFor(purposeNeedsDeposit(p,currentRole),hv,he).amount;
   document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();
+  updateProxyNotice();
 }
 
 // ── 購物車送出前補填資料 ──────────────────────────────────
@@ -3776,7 +3799,8 @@ if(courseNoteBody){
     const mono=`style="font-family:'DM Mono',monospace"`;
     let resultHtml=`<div class="result-box ok"><div class="rb-title">✅ 器材借用申請已送出</div>
       編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(borrowDate)} 借 → ${escH(returnDate)} 還
-      ${da>0?`<br>💰 保證金 NT$${da}（${escH(dt)}），請至辦公室繳納`:''}</div>`;
+      ${da>0?`<br>💰 保證金 NT$${da}（${escH(dt)}），請至辦公室繳納`:''}
+      ${isTeacherProxyPurpose(purpose,currentRole)?`<br>👩‍🏫 ${PROXY_NOTICE_TEXT}`:''}</div>`;
     if(venueId){
       resultHtml+=`<div class="result-box ok"><div class="rb-title">✅ 場地預約也已送出（待審核）</div>
         編號 <strong ${mono}>${escH(venueId)}</strong>
