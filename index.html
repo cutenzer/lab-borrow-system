@@ -1028,7 +1028,7 @@
   </div>
   <input type="file" id="f-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
   <input type="file" id="f-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
-  <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB；用購物車快速送出時也會帶著走</div>
+  <div class="hint">可拍攝器材現況、損壞處等，每張會自動壓縮；用購物車快速送出時也會帶著走</div>
   <div id="f-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
 </div>
     </div>
@@ -1167,7 +1167,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-28 · 保證金規則版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-30 · 照片壓縮版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -3086,10 +3086,10 @@ function addPhotos(fileList){
   for(const f of arr){
     if(pendingPhotos.length>=MAX_PHOTOS){overLimit=true;break;}
     if(!f.type||!f.type.startsWith('image/')){skipped++;continue;}
-    if(f.size>5*1024*1024){skipped++;continue;}
+    if(f.size>25*1024*1024){skipped++;continue;} // 上傳前會自動壓縮，所以原圖可以放寬到 25MB
     pendingPhotos.push({file:f,url:URL.createObjectURL(f)});
   }
-  if(skipped)showToast(`有 ${skipped} 張照片格式或大小不符（限圖片、單張5MB內），已略過`,'error');
+  if(skipped)showToast(`有 ${skipped} 張照片格式或大小不符（限圖片、單張 25MB 內），已略過`,'error');
   if(overLimit)showToast(`最多只能上傳 ${MAX_PHOTOS} 張照片`,'error');
   renderPhotoPreviews();
 }
@@ -3117,18 +3117,43 @@ function renderPhotoPreviews(){
   const countText=pendingPhotos.length?`已選 ${pendingPhotos.length}/${MAX_PHOTOS} 張`:'';
   ['f-photos-count','qf-photos-count'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=countText;});
 }
+// ── 照片先在手機上轉成 JPEG 再上傳 ──
+// iPhone 相簿常是 HEIC 格式，電腦瀏覽器看不懂就只會顯示「？」；原圖又動輒 3～6MB。
+// 這裡統一縮到長邊 1600px、轉成 JPEG（約 150～400KB），後台任何瀏覽器都看得到。
+function compressPhotoBlob(file,maxDim=1600,quality=0.82){
+  return new Promise((ok,fail)=>{
+    const url=URL.createObjectURL(file),im=new Image();
+    im.onload=()=>{
+      try{
+        const w=im.naturalWidth,h=im.naturalHeight;if(!w||!h)throw new Error('尺寸錯誤');
+        const k=Math.min(1,maxDim/Math.max(w,h));
+        const c=document.createElement('canvas');c.width=Math.round(w*k);c.height=Math.round(h*k);
+        const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);
+        c.toBlob(b=>{URL.revokeObjectURL(url);b?ok(b):fail(new Error('壓縮失敗'));},'image/jpeg',quality);
+      }catch(e){URL.revokeObjectURL(url);fail(e);}
+    };
+    im.onerror=()=>{URL.revokeObjectURL(url);fail(new Error('這張照片讀不出來'));};
+    im.src=url;
+  });
+}
 async function uploadPendingPhotos(reqId){
   if(!pendingPhotos.length)return [];
   const urls=[];
   for(let i=0;i<pendingPhotos.length;i++){
     const file=pendingPhotos[i].file;
-    const extRaw=(file.name||'').split('.').pop()||'jpg';
-    const ext=extRaw.toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+    let body=file,ext,type;
+    try{body=await compressPhotoBlob(file);ext='jpg';type='image/jpeg';}
+    catch(_){
+      // 讀不出來（少數格式）就傳原檔，但原檔要在 5MB 內
+      if(file.size>5*1024*1024)throw new Error('有一張照片無法處理且超過 5MB，請換一張');
+      ext=((file.name||'').split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';
+      type=file.type||'application/octet-stream';
+    }
     const path=`${reqId}/${Date.now()}_${i}.${ext}`;
     const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
       method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':file.type||'application/octet-stream'},
-      body:file
+      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':type},
+      body
     });
     if(!res.ok){
       const t=await res.text().catch(()=>'');
@@ -3600,7 +3625,7 @@ function showQuickFillModal(errs,mode){
     </div>
     <input type="file" id="qf-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
     <input type="file" id="qf-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
-    <div class="hint">可拍攝器材現況、損壞處等，每張上限5MB</div>
+    <div class="hint">可拍攝器材現況、損壞處等，每張會自動壓縮</div>
     <div id="qf-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
   </div>`;
   showModal(edit?'✏️ 修改借用資料':'📋 確認借用資料',html,edit?[
