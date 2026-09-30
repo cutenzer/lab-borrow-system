@@ -262,6 +262,10 @@
   /* 整頁不准左右晃：任何元素超出螢幕寬度都不會讓畫面被推歪 */
   html,body{max-width:100%;overflow-x:hidden;}
   @supports (overflow:clip){html,body{overflow-x:clip;}}
+  /* 借用人照片：瀏覽器看不懂的格式（例如舊的 HEIC）不要只顯示「？」，改成可以點開原檔的方塊 */
+  .bp-thumb .bp-fallback{display:none;}
+  .bp-thumb.bp-bad .bp-fallback{display:flex;width:60px;height:60px;align-items:center;justify-content:center;text-align:center;font-size:10.5px;line-height:1.25;color:var(--text2);background:var(--surface2);border:1px dashed var(--border);border-radius:6px;}
+  .qa-photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
   .admin-note{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fffbea;border:1px solid #f1dc8a;font-size:12.5px;white-space:pre-wrap;word-break:break-word;}
   .proxy-badge{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600;color:#27406b;background:#eef4ff;border:1px solid #c7d7f5;border-radius:10px;padding:2px 8px;}
   .dep-lbl{font-size:12.5px;color:var(--text2);}
@@ -821,33 +825,6 @@
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">💾 器材清單備份／批次編輯</div>
-    <div class="info-box">「匯出」把目前所有器材整理成 Excel（一列一項），可以直接在 Excel 裡改總數、規格、櫃位、別名，改完再「匯入」整批更新回來。比對用「房間＋名稱」或「器材ID」自動判斷是更新還是新增；匯入後清單裡消失的列預設「保留不刪」，避免貼錯整批清空。「可借數」欄只供參考，匯入時不會被寫入（可借數永遠由系統即時計算：總數－已核准未還）。</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-secondary" onclick="exportEquipmentXlsx()">📥 匯出器材清單（Excel備份）</button>
-      <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
-        📤 匯入器材 Excel
-        <input type="file" id="eq-import-file" accept=".xlsx" style="display:none" onchange="handleEquipmentImport(this)">
-      </label>
-      <button class="btn btn-secondary" onclick="compressExistingEquipPhotos()" title="把之前上傳、檔案太大的器材照片縮成手機好載的大小">🗜️ 壓縮過大的器材照片</button>
-    </div>
-    <div class="hint" id="photoCompressMsg" style="margin-top:6px"></div>
-    <div id="eqImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📜 報廢紀錄</div>
-    <div class="info-box">「♻️ 報廢」會從總數扣除指定數量並留下紀錄（數量、原因、時間），跟直接刪除不一樣——刪除是整筆資料消失，報廢是留痕跡的減量，方便對照校內財產報廢流程。</div>
-    <button class="btn btn-secondary btn-sm" onclick="exportWriteoffLog()">📥 匯出報廢紀錄（Excel）</button>
-    <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><div class="empty-icon">📜</div><p>點重新整理載入</p></div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">⭐ 目前的首頁精選<span id="featuredCount" style="font-weight:400;font-size:12.5px;color:var(--text2);margin-left:6px"></span></div>
-    <div class="hint" style="margin-bottom:8px">點 ✕ 直接取消；要新增精選，在下方清單按器材旁的「☆ 設精選」。</div>
-    <div id="featuredList"></div>
-  </div>
-  <div class="card">
     <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
       <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
     </div>
@@ -877,6 +854,54 @@
       <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存盤點（<span id="stkPendingCount">0</span> 筆）</button>
     </div>
   </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">⭐ 目前的首頁精選<span id="featuredCount" style="font-weight:400;font-size:12.5px;color:var(--text2);margin-left:6px"></span></div>
+    <div class="hint" style="margin-bottom:8px">點 ✕ 直接取消；要新增精選，在下方清單按器材旁的「☆ 設精選」。</div>
+    <div id="featuredList"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">📜 報廢紀錄</div>
+    <div class="info-box">「♻️ 報廢」會從總數扣除指定數量並留下紀錄（數量、原因、時間），跟直接刪除不一樣——刪除是整筆資料消失，報廢是留痕跡的減量，方便對照校內財產報廢流程。</div>
+    <button class="btn btn-secondary btn-sm" onclick="exportWriteoffLog()">📥 匯出報廢紀錄（Excel）</button>
+    <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><div class="empty-icon">📜</div><p>點重新整理載入</p></div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">💾 器材清單備份／批次編輯</div>
+    <div class="info-box">「匯出」把目前所有器材整理成 Excel（一列一項），可以直接在 Excel 裡改總數、規格、櫃位、別名，改完再「匯入」整批更新回來。比對用「房間＋名稱」或「器材ID」自動判斷是更新還是新增；匯入後清單裡消失的列預設「保留不刪」，避免貼錯整批清空。「可借數」欄只供參考，匯入時不會被寫入（可借數永遠由系統即時計算：總數－已核准未還）。</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary" onclick="exportEquipmentXlsx()">📥 匯出器材清單（Excel備份）</button>
+      <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
+        📤 匯入器材 Excel
+        <input type="file" id="eq-import-file" accept=".xlsx" style="display:none" onchange="handleEquipmentImport(this)">
+      </label>
+      <button class="btn btn-secondary" onclick="compressExistingEquipPhotos()" title="把之前上傳、檔案太大的器材照片縮成手機好載的大小">🗜️ 壓縮過大的器材照片</button>
+    </div>
+    <div class="hint" id="photoCompressMsg" style="margin-top:6px"></div>
+    <div id="eqImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
+  </div>
+
+    <details class="card stk-helper" id="stkHelperCard" style="margin-bottom:16px" ontoggle="if(this.open)loadStkHelper()">
+    <summary class="card-title" style="cursor:pointer;margin-bottom:0">🔗 盤點幫手連結（不用給密碼，請別人幫忙盤點）</summary>
+    <div style="margin-top:12px">
+      <div class="info-box">產生一個臨時連結傳給幫忙的人，對方用手機打開就能盤點、新增還沒建檔的器材，<b>看不到後台其他東西</b>。連結到期自動失效，也可以隨時作廢；對方改過的每一筆都記在下方「盤點紀錄」，可以還原。</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px">
+        <div class="form-group"><label>幫忙的人 *</label><input id="sl-name" maxlength="30" placeholder="例如：王小明（小老師）"></div>
+        <div class="form-group"><label>有效期限</label><select id="sl-exp">
+          <option value="today">今天結束（23:59）</option><option value="3h">3 小時</option><option value="24h">24 小時</option><option value="3d">3 天</option><option value="7d">7 天</option></select></div>
+      </div>
+      <div class="form-group"><label>可以盤點的房間 *</label><div id="sl-rooms" style="display:flex;flex-wrap:wrap;gap:6px 14px"></div></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;margin:4px 0 10px;cursor:pointer"><input type="checkbox" id="sl-add" checked style="width:auto"> 允許新增器材（還沒建檔的）</label>
+      <button class="btn btn-primary" onclick="createStkLink()">🔗 產生連結</button>
+      <div id="sl-result"></div>
+      <div style="font-weight:700;margin:16px 0 6px">目前的連結</div>
+      <div id="sl-list"><div class="hint">載入中…</div></div>
+      <div style="display:flex;align-items:center;gap:8px;margin:16px 0 6px"><b>盤點紀錄</b><span class="hint">（最近 60 天，幫手改的數量都在這裡）</span></div>
+      <div id="sl-log"><div class="hint">載入中…</div></div>
+    </div>
+  </details>
 </div>
 <div id="panel-all" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
@@ -1470,7 +1495,7 @@ function renderRecord(r,mode){
   const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}</span></div>`).join('')}</div>`:'';
   const photos=Array.isArray(r.photos)?r.photos:[];
   const safePhotos=photos.map(safeUrl).filter(Boolean);
-  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<a href="${escH(u)}" target="_blank" rel="noopener noreferrer"><img src="${escH(u)}" loading="lazy" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"></a>`).join('')}</div></div>`:'';
+  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<a href="${escH(u)}" target="_blank" rel="noopener noreferrer" class="bp-thumb"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽<br>點開原檔</span></a>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   let actions='';
   if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord(${ja(r.id)})">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord(${ja(r.id)})">❌ 拒絕</button>`;
@@ -4315,6 +4340,102 @@ function stkIsDone(e){return !!(e.last_counted_at&&new Date(e.last_counted_at).g
 let stkSort=(()=>{try{return localStorage.getItem('stkSort')==='name'?'name':'loc';}catch(_){return 'loc';}})();
 function setStkSort(v){stkSort=v==='name'?'name':'loc';try{localStorage.setItem('stkSort',stkSort);}catch(_){}adminEquipPage=1;filterAdminEquip();}
 // 櫃位＝位置代碼的第一段（例如「BA01&BB02」取 BA01）
+// ── 盤點幫手連結 ─────────────────────────────────────────
+// 連結密碼只在產生當下顯示一次；資料庫只存它的 SHA-256 指紋（資料庫外流也還原不出連結）
+let stkLinks=[],stkLogs=[];
+function loadStkHelper(){
+  const box=document.getElementById('sl-rooms');
+  if(box&&!box.children.length)box.innerHTML=Object.entries(ROOM_NAMES).map(([k,v])=>`<label style="display:flex;align-items:center;gap:5px;font-size:13.5px;cursor:pointer"><input type="checkbox" value="${escH(k)}" style="width:auto"> ${escH(v)}</label>`).join('');
+  loadStkLinks();loadStkLog();
+}
+function stkTableMissing(e){return /stocktake_(links|log)|does not exist|relation/i.test(e.message||'');}
+async function loadStkLinks(){
+  const el=document.getElementById('sl-list');if(!el)return;
+  try{
+    stkLinks=(await sb('GET','stocktake_links',{order:'created_at.desc'})).slice(0,30);
+    const now=Date.now();
+    el.innerHTML=stkLinks.length?'<div class="record-list">'+stkLinks.map(l=>{
+      const exp=new Date(l.expires_at),live=!l.revoked&&exp.getTime()>now;
+      const st=l.revoked?'已作廢':(live?'使用中':'已過期');
+      return `<div class="record-card" style="padding:10px 14px;${live?'':'opacity:.6'}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+        <div><b>${escH(l.helper_name)}</b> <span class="badge ${live?'badge-approved':'badge-rejected'}">${st}</span>
+          <div style="font-size:12.5px;color:var(--text2);margin-top:3px">${(l.rooms||[]).map(r=>escH(rn(r))).join('、')}${l.can_add?'・可新增':''}・到 ${exp.toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}${l.add_count?`・已新增 ${l.add_count} 項`:''}${l.last_used_at?`・最後使用 ${new Date(l.last_used_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
+        ${live?`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="revokeStkLink(${ja(l.id)})">⛔ 作廢</button>`:''}</div></div>`;
+    }).join('')+'</div>':'<div class="hint">還沒有產生過連結</div>';
+  }catch(e){el.innerHTML=`<div class="hint" style="color:var(--danger)">${stkTableMissing(e)?'資料庫還沒有盤點連結的資料表，請先在 Supabase 執行「盤點幫手連結.sql」':'讀取失敗：'+escH(e.message)}</div>`;}
+}
+async function sha256Hex(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function randomToken(){
+  const b=new Uint8Array(32);crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+async function createStkLink(){
+  const name=(document.getElementById('sl-name').value||'').trim().slice(0,30);
+  const rooms=[...document.querySelectorAll('#sl-rooms input:checked')].map(i=>i.value).filter(r=>ROOM_NAMES[r]);
+  if(!name){showToast('請填幫忙的人的名字','error');return;}
+  if(!rooms.length){showToast('請至少勾一個房間','error');return;}
+  if(!window.crypto||!crypto.subtle){showToast('這個瀏覽器不支援安全產生連結，請用 https 網址打開後台','error');return;}
+  const k=document.getElementById('sl-exp').value,now=new Date();let exp;
+  if(k==='today'){exp=new Date(now);exp.setHours(23,59,59,0);}
+  else exp=new Date(now.getTime()+({'3h':3,'24h':24,'3d':72,'7d':168}[k]||3)*3600e3);
+  const token=randomToken();
+  try{
+    await sb('POST','stocktake_links',{body:{token_hash:await sha256Hex(token),helper_name:name,rooms,can_add:document.getElementById('sl-add').checked,expires_at:exp.toISOString()},prefer:'return=minimal'});
+  }catch(e){showToast(stkTableMissing(e)?'請先在 Supabase 執行「盤點幫手連結.sql」':'產生失敗：'+e.message,'error');return;}
+  const url=new URL('stocktake.html',location.href).href.split('#')[0]+'#t='+token;
+  window._lastStkUrl=url;
+  document.getElementById('sl-result').innerHTML=`<div class="info-box" style="margin-top:10px;word-break:break-all">
+    <b>✅ 連結已產生（只會顯示這一次，請現在傳給 ${escH(name)}）</b><div style="font-family:'DM Mono',monospace;font-size:12.5px;margin:6px 0;background:var(--surface);padding:8px;border-radius:6px">${escH(url)}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="copyStkUrl()">📋 複製連結</button>${navigator.share?'<button class="btn btn-secondary btn-sm" onclick="shareStkUrl()">📤 分享（LINE 等）</button>':''}</div>
+    <div class="hint" style="margin-top:6px">拿到連結的人都能用，請只傳給本人；不需要時按「作廢」。</div></div>`;
+  document.getElementById('sl-name').value='';
+  loadStkLinks();
+}
+function copyStkUrl(){const u=window._lastStkUrl;if(!u)return;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>showToast('已複製','success')).catch(()=>{prompt('請長按複製：',u);});}
+function shareStkUrl(){const u=window._lastStkUrl;if(u&&navigator.share)navigator.share({title:'器材盤點連結',url:u}).catch(()=>{});}
+async function revokeStkLink(id){
+  if(!confirm('作廢這個連結？對方之後就不能再用了（已經存好的盤點結果不會被刪掉）。'))return;
+  try{await sb('PATCH','stocktake_links',{filter:'id=eq.'+encodeURIComponent(id),body:{revoked:true},prefer:'return=minimal'});showToast('已作廢','success');loadStkLinks();}
+  catch(e){showToast('作廢失敗：'+e.message,'error');}
+}
+async function loadStkLog(){
+  const el=document.getElementById('sl-log');if(!el)return;
+  try{
+    stkLogs=(await sb('GET','stocktake_log',{order:'created_at.desc',filter:'created_at=gte.'+encodeURIComponent(new Date(Date.now()-60*864e5).toISOString())})).slice(0,150);
+    const A={count:'改數量',same:'無變動',add:'新增器材'};
+    el.innerHTML=stkLogs.length?'<div class="record-list">'+stkLogs.map(g=>{
+      const t=new Date(g.created_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const detail=g.action==='count'?`${escH(g.old_total)} → <b>${escH(g.new_total)}</b>`:(g.action==='add'?`數量 ${escH(g.new_total)}`:'');
+      const canUndo=!g.undone&&(g.action==='count'||g.action==='add');
+      return `<div class="record-card" style="padding:8px 12px;${g.undone?'opacity:.55':''}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="font-size:13.5px"><b>${escH(g.name||'')}</b> <span style="color:var(--text2)">${escH(rn(g.room||''))}</span><br>
+        <span style="font-size:12.5px;color:var(--text2)">${t}・${escH(g.helper_name||'')}・${A[g.action]||escH(g.action)} ${detail}${g.undone?'・<b>已還原</b>':''}</span></div>
+        ${canUndo?`<button class="btn btn-secondary btn-sm" onclick="undoStkLog(${ja(g.id)})">↩️ 還原</button>`:''}</div></div>`;
+    }).join('')+'</div>':'<div class="hint">還沒有盤點紀錄</div>';
+  }catch(e){el.innerHTML=`<div class="hint" style="color:var(--danger)">${stkTableMissing(e)?'請先在 Supabase 執行「盤點幫手連結.sql」':'讀取失敗：'+escH(e.message)}</div>`;}
+}
+async function undoStkLog(id){
+  const g=stkLogs.find(x=>String(x.id)===String(id));if(!g||g.undone)return;
+  if(!/^[A-Za-z0-9_-]+$/.test(String(g.equipment_id))){showToast('器材編號格式不對','error');return;}
+  try{
+    const cur=await sb('GET','equipment',{filter:'id=eq.'+g.equipment_id});
+    const e=Array.isArray(cur)&&cur[0];
+    if(g.action==='count'){
+      if(!e){showToast('這項器材已經不存在了','error');return;}
+      const warn=(parseInt(e.total)!==parseInt(g.new_total))?`\n注意：目前數量是 ${e.total}，之後又被改過了。`:'';
+      if(!confirm(`把「${g.name}」的數量改回 ${g.old_total}？${warn}`))return;
+      await sb('PATCH','equipment',{filter:'id=eq.'+g.equipment_id,body:{total:g.old_total},prefer:'return=minimal'});
+    }else if(g.action==='add'){
+      if(e&&!confirm(`刪除幫手新增的「${g.name}」？`))return;
+      if(e)await sb('DELETE','equipment',{filter:'id=eq.'+g.equipment_id,prefer:'return=minimal'});
+    }else return;
+    await sb('PATCH','stocktake_log',{filter:'id=eq.'+encodeURIComponent(g.id),body:{undone:true},prefer:'return=minimal'});
+    showToast('已還原','success');loadStkLog();loadAdminEquipment();
+  }catch(err){showToast('還原失敗：'+err.message,'error');}
+}
 function stkCabinet(e){return String(e.location||'').split(/[&\/+、,，]/)[0].trim();}
 function stkLocCompare(a,b){
   const ka=stkCabinet(a),kb=stkCabinet(b);
@@ -4828,7 +4949,7 @@ async function openCalibLocEditor(hotspotId){
   const ja=v=>escH(JSON.stringify(String(v??'')));
   showModal(`📦 ${h.code}（${rn(room)}）`,
     `<div style="margin-bottom:10px">${rows}</div>
-     <button class="btn btn-primary btn-sm" onclick="closeModal();openQuickAddToLocation(${ja(room)},${ja(h.code)})">➕ 新增器材到這裡</button>`,
+     <button class="btn btn-primary btn-sm" onclick="openQuickAddToLocation(${ja(room)},${ja(h.code)},${ja(h.id)})">➕ 新增器材到這裡</button>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
   );
 }
@@ -4836,15 +4957,85 @@ function jumpEditEquipFromCalib(id){
   showTab('equipment');
   setTimeout(()=>toggleInlineEditEquip(id),350); // 等器材清單重新載入完成再展開編輯，避免被覆蓋掉
 }
-function openQuickAddToLocation(room,code){
-  showTab('equipment');
-  setTimeout(()=>{
-    clearEquipForm();
-    document.getElementById('eq-room').value=room;
-    document.getElementById('eq-location').value=code;
-    document.getElementById('eq-name').focus();
-    document.getElementById('eq-name').scrollIntoView({behavior:'smooth',block:'center'});
-  },350);
+// 平面圖校正 → 在這個櫃位直接新增器材（不跳頁，可以拍照）
+// 常見用法：站在櫃子前，一項一項「儲存並繼續新增」
+let quickAddCtx=null,quickAddPhoto=null;
+function openQuickAddToLocation(room,code,hotspotId){
+  quickAddCtx={room,code,hotspotId};
+  if(quickAddPhoto){URL.revokeObjectURL(quickAddPhoto.url);quickAddPhoto=null;}
+  showModal(`➕ 新增器材到 ${code}（${rn(room)}）`,`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group" style="grid-column:span 2"><label>名稱 *</label><input type="text" id="qa-name" maxlength="60" placeholder="例如：錐形瓶" oninput="qaDupHint()"><div class="hint" id="qa-dup" style="color:var(--danger)"></div></div>
+      <div class="form-group"><label>規格</label><input type="text" id="qa-spec" maxlength="60" placeholder="例如：250mL"></div>
+      <div class="form-group"><label>單位</label><input type="text" id="qa-unit" maxlength="8" value="個"></div>
+      <div class="form-group"><label>數量 *</label><input type="number" id="qa-total" min="0" max="100000" value="1" inputmode="numeric"></div>
+      <div class="form-group"><label>櫃位</label><input type="text" id="qa-loc" maxlength="40" value="${escH(code)}"></div>
+      <div class="form-group" style="grid-column:span 2"><label>照片（選填，會自動壓縮）</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📷 拍照／選照片<input type="file" id="qa-photo" accept="image/*" style="display:none" onchange="qaPickPhoto(this)"></label>
+          <div class="qa-photo-prev" id="qa-photo-prev"></div>
+        </div></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;grid-column:span 2;cursor:pointer"><input type="checkbox" id="qa-avail" checked style="width:auto"> 開放借用</label>
+    </div>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'儲存並繼續新增',cls:'btn-secondary',fn:'saveQuickAdd(true)'},
+    {label:'💾 儲存',cls:'btn-primary',fn:'saveQuickAdd(false)'}
+  ]);
+  setTimeout(()=>document.getElementById('qa-name')?.focus(),60);
+}
+function qaDupHint(){
+  const n=(document.getElementById('qa-name')?.value||'').trim(),el=document.getElementById('qa-dup');if(!el||!quickAddCtx)return;
+  const dup=n&&allAdminEquipment.find(e=>e.room===quickAddCtx.room&&e.name===n);
+  el.textContent=dup?`這個房間已經有「${n}」（櫃位 ${dup.location||'未填'}），要改數量請直接盤點`:'';
+}
+function qaPickPhoto(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  if(!/^image\//.test(f.type||'')){showToast('請選擇圖片檔','error');input.value='';return;}
+  if(f.size>25*1024*1024){showToast('照片超過 25MB，請換一張','error');input.value='';return;}
+  if(quickAddPhoto)URL.revokeObjectURL(quickAddPhoto.url);
+  quickAddPhoto={file:f,url:URL.createObjectURL(f)};
+  const box=document.getElementById('qa-photo-prev');if(box)box.innerHTML=`<img src="${quickAddPhoto.url}" alt="預覽">`;
+}
+let quickAddBusy=false;
+async function saveQuickAdd(again){
+  if(quickAddBusy||!quickAddCtx)return;
+  const name=(document.getElementById('qa-name')?.value||'').trim();
+  const total=parseInt(document.getElementById('qa-total')?.value,10);
+  if(!name){showToast('請填寫名稱','error');document.getElementById('qa-name')?.focus();return;}
+  if(!Number.isFinite(total)||total<0||total>100000){showToast('數量請填 0～100000','error');return;}
+  if(allAdminEquipment.find(e=>e.room===quickAddCtx.room&&e.name===name)){showToast('這個房間已經有相同名稱的器材','error');return;}
+  const body={room:quickAddCtx.room,name,spec:(document.getElementById('qa-spec')?.value||'').trim(),
+    unit:(document.getElementById('qa-unit')?.value||'').trim()||'個',total,
+    location:(document.getElementById('qa-loc')?.value||'').trim(),
+    is_available:!!document.getElementById('qa-avail')?.checked,last_counted_at:new Date().toISOString()};
+  quickAddBusy=true;
+  try{
+    const rows=await sb('POST','equipment',{body,prefer:'return=representation'});
+    const created=Array.isArray(rows)?rows[0]:rows;
+    let photoMsg='';
+    if(quickAddPhoto&&created&&created.id!=null){
+      try{
+        let small=null;try{small=await compressImageBlob(quickAddPhoto.file);}catch(_){small=null;}
+        const f=quickAddPhoto.file,useSmall=small&&small.size<f.size;
+        const url=useSmall?await uploadEquipImageBlob(created.id,small,'jpg','image/jpeg')
+                          :await uploadEquipImageBlob(created.id,f,(f.name||'').split('.').pop(),f.type||'application/octet-stream');
+        await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(created.id),body:{image_url:url},prefer:'return=minimal'});
+      }catch(e){photoMsg='，但照片上傳失敗：'+e.message;}
+    }
+    if(created)allAdminEquipment.push(created);
+    showToast(`已新增「${name}」${photoMsg}`,photoMsg?'error':'success');
+    if(quickAddPhoto){URL.revokeObjectURL(quickAddPhoto.url);quickAddPhoto=null;}
+    if(again){
+      const {room,code,hotspotId}=quickAddCtx;
+      openQuickAddToLocation(room,code,hotspotId);
+    }else{
+      closeModal();
+      await loadAdminEquipment();
+      if(quickAddCtx.hotspotId!=null)openCalibLocEditor(quickAddCtx.hotspotId);
+    }
+    if(typeof renderCalibList==='function')renderCalibList();
+  }catch(e){showToast('新增失敗：'+e.message,'error');}
+  finally{quickAddBusy=false;}
 }
 function renderCalibList(){
   const box=document.getElementById('calibList');if(!box)return;
