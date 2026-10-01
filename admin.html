@@ -263,7 +263,16 @@
   html,body{max-width:100%;overflow-x:hidden;}
   @supports (overflow:clip){html,body{overflow-x:clip;}}
   /* 借用人照片：瀏覽器看不懂的格式（例如舊的 HEIC）不要只顯示「？」，改成可以點開原檔的方塊 */
+  .bp-thumb{border:none;background:none;padding:0;cursor:zoom-in;}
   .bp-thumb .bp-fallback{display:none;}
+  .loose-note{display:block;font-size:10.5px;color:var(--text2);font-weight:400;font-family:inherit;}
+  /* 照片放大檢視：在原頁面上蓋一層，點一下或按返回就關 */
+  .photo-viewer{position:fixed;inset:0;z-index:300;background:rgba(10,12,14,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:16px;cursor:zoom-out;}
+  .photo-viewer.show{display:flex;}
+  .photo-viewer img{max-width:100%;max-height:calc(100% - 50px);object-fit:contain;border-radius:6px;}
+  .photo-viewer .pv-msg{color:#eee;font-size:14px;text-align:center;line-height:1.7;}
+  .photo-viewer .pv-msg a{color:#9fd3c0;}
+  .photo-viewer .pv-close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;}
   .bp-thumb.bp-bad .bp-fallback{display:flex;width:60px;height:60px;align-items:center;justify-content:center;text-align:center;font-size:10.5px;line-height:1.25;color:var(--text2);background:var(--surface2);border:1px dashed var(--border);border-radius:6px;}
   .qa-photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
   .admin-note{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fffbea;border:1px solid #f1dc8a;font-size:12.5px;white-space:pre-wrap;word-break:break-word;}
@@ -1122,7 +1131,7 @@ function renderStats(){
   // 器材健康度：用目前已有的 allEquipment + allRecords 自己算，不用特地先點過器材分頁
   const borrowedMap={};
   allRecords.filter(r=>r.status==='已核准'||r.status==='逾期').forEach(r=>{
-    (r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+    (r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});
   });
   const availOf=e=>Math.max(0,(parseInt(e.total)||0)-(borrowedMap[e.room+'__'+e.name]||0));
   const cutoff=Date.now()-90*24*60*60*1000;
@@ -1482,6 +1491,19 @@ async function waiveDeposit(id){
     showToast('已改成免收保證金','success');loadAll();
   }catch(e){showToast('更新失敗：'+e.message,'error');}
 }
+function openPhotoViewer(url){
+  url=safeUrl(url);if(!url)return;
+  let v=document.getElementById('photoViewer');
+  if(!v){v=document.createElement('div');v.id='photoViewer';v.className='photo-viewer';v.onclick=closePhotoViewer;document.body.appendChild(v);}
+  v.innerHTML=`<button type="button" class="pv-close" aria-label="關閉">✕</button><img alt="借用人上傳照片">`;
+  const im=v.querySelector('img');
+  im.onerror=()=>{im.remove();const m=document.createElement('div');m.className='pv-msg';m.innerHTML='這張照片的格式瀏覽器無法顯示<br>（多半是舊版上傳的 iPhone HEIC 照片）<br>';const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='下載原檔';a.onclick=e=>e.stopPropagation();m.appendChild(a);v.appendChild(m);};
+  im.src=url;
+  v.classList.add('show');
+  if(typeof navPush==='function')navPush('photoViewer');
+}
+function closePhotoViewer(){const v=document.getElementById('photoViewer');if(v)v.classList.remove('show');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePhotoViewer();});
 function renderList(records,container,mode){
   if(!records||!records.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';return;}
   container.innerHTML='<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
@@ -1492,10 +1514,12 @@ function renderRecord(r,mode){
   const items=Array.isArray(r.items)?r.items:[];
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
-  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}</span></div>`).join('')}</div>`:'';
+  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}</span></div>`).join('')}</div>`:'';
   const photos=Array.isArray(r.photos)?r.photos:[];
   const safePhotos=photos.map(safeUrl).filter(Boolean);
-  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<a href="${escH(u)}" target="_blank" rel="noopener noreferrer" class="bp-thumb"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽<br>點開原檔</span></a>`).join('')}</div></div>`:'';
+  // 只附照片、沒選器材的申請（借用人找不到品名，拍照代替）
+  const photoOnlyHtml=!items.length&&safePhotos.length?'<div class="admin-note" style="background:#eef4ff;border-color:#c7d7f5">📷 這張申請沒有選器材，只附了照片，請看照片確認要借什麼</div>':'';
+  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽</span></button>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   let actions='';
   if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord(${ja(r.id)})">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord(${ja(r.id)})">❌ 拒絕</button>`;
@@ -1525,7 +1549,7 @@ function renderRecord(r,mode){
       ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${escH(r.actualReturn)}</span></div>`:''}
       ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.depositAmount)||0} / ${escH(r.depositStatus)}</span></div>`:''}
     </div>
-    ${itemListHtml}${photosHtml}${damageHtml}
+    ${itemListHtml}${photoOnlyHtml}${photosHtml}${damageHtml}
     ${r.adminNote?`<div class="admin-note">🗒️ 管理員備註：${escH(r.adminNote)}</div>`:''}
     ${(()=>{
       if(!r.note)return '';
@@ -2554,9 +2578,10 @@ async function doApprove(id,force){
   try{
     const approved=await sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'});
     const borrowedMap={};
-    (Array.isArray(approved)?approved:[]).forEach(r=>{(r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});});
+    (Array.isArray(approved)?approved:[]).forEach(r=>{(r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});});
     const shortage=[];
     (rec.items||[]).forEach(it=>{
+      if(it.loose)return; // 散裝只拿幾個，不檢查整盒庫存
       const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name);
       const total=eq?parseInt(eq.total)||0:0;
       const already=borrowedMap[it.room+'__'+it.name]||0;
@@ -2962,6 +2987,7 @@ function closeModal(event){if(!event||event.target===document.getElementById('mo
    退到底才離開。尚未登入（或已登出）時不攔截，返回鍵照常。 */
 const NAV={idx:0,busy:false};
 const NAV_OVERLAYS=[
+  ['photoViewer','show',()=>closePhotoViewer()],
   ['modalOverlay','show',()=>closeModal()],
   ['tabMoreMenu','show',()=>closeTabMoreMenu()],
 ];
@@ -3859,7 +3885,7 @@ async function loadAdminEquipment(){
     allAdminEquipment=Array.isArray(rows)?rows:[];
     equipBorrowedMap={};
     (Array.isArray(borrows)?borrows:[]).forEach(r=>{
-      (r.items||[]).forEach(it=>{const k=it.room+'__'+it.name;equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+      (r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+(parseInt(it.quantity)||0);});
     });
     filterAdminEquip();
     loadWriteoffLog();
