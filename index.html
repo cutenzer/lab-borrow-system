@@ -507,6 +507,12 @@
   .cart-form-summary{margin:0 18px 8px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13px;line-height:1.6;}
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
   .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
+  .loose-toggle{display:inline-flex;margin-top:5px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .loose-toggle button{border:none;background:var(--surface);font:inherit;font-size:12px;padding:3px 9px;color:var(--text2);cursor:pointer;}
+  .loose-toggle button.on{background:var(--accent);color:#fff;font-weight:700;}
+  .loose-qty{gap:4px;}
+  .loose-qty input{width:58px;padding:5px 6px;font-size:14px;text-align:center;}
+  .loose-qty input[type=text]{width:40px;}
   .proxy-notice{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#eef4ff;border:1px solid #c7d7f5;color:#27406b;font-size:14px;line-height:1.6;}
   .cart-form-summary .cfs-proxy{font-size:12.5px;color:#27406b;margin-top:2px;}
   .cart-form-summary .cfs-venue.warn{background:#fff1f0;color:var(--danger);}
@@ -1021,7 +1027,7 @@
       </div>
 <div class="form-group full"><label>備註說明</label><textarea id="f-note" maxlength="500" placeholder="其他說明、特殊需求…"></textarea></div>
 <div class="form-group full">
-  <label>📷 上傳照片（選填，最多3張） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+  <label>📷 上傳照片（最多3張；<b>找不到器材時，只傳照片也可以送出</b>） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()">📷 拍照</button>
     <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()">🖼️ 從相簿選</button>
@@ -1167,7 +1173,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-09-30 · 照片壓縮版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-01 · 散裝借用版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1668,7 +1674,7 @@ function heroSearchLive(q){
     await ensureChemicalsLoaded();
     const cur=(document.getElementById('heroSearch').value||'').trim();if(cur!==q)return;
     const ql=q.toLowerCase();
-    const eq=allEquipment.filter(e=>matchesEquip(e,q));
+    const eq=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q);
     window._srLists.hero=eq.slice(0,5);
     const ch=allChemicals.filter(c=>(c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)).slice(0,4);
     window._heroChems=ch;
@@ -1741,7 +1747,7 @@ function renderHomeEquipList(){
   if(!allEquipment||!allEquipment.length){box.innerHTML='<div class="home-eq-skel"></div>'.repeat(3);return;}
   const q=(document.getElementById('homeEquipSearch')?.value||'').trim();
   let items;
-  if(q)items=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,12);
+  if(q)items=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q).slice(0,12);
   else{items=allEquipment.filter(e=>e.featured);if(!items.length)items=allEquipment.filter(e=>e.image_url).slice(0,6);}
   window._homeEqItems=items;
   if(!items.length){box.innerHTML=`<div class="hint" style="text-align:center;padding:12px 0">找不到「${escH(q)}」相關器材</div>`;return;}
@@ -3260,7 +3266,7 @@ function renderBorrowSidePanel(){
     const img=safeUrl(eq?.image_url);
     return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph">🔬</div>'}
       <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
-      <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button><span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span><button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
+      <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button><span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}${i.loose?`<small style="font-weight:400">${escH(itemUnitLabel(i))}</small>`:''}</span><button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
   }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「器材查詢」挑</div>';
   box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
@@ -3294,7 +3300,7 @@ function sidePanelSearch(q,now){
   clearTimeout(sidePanelTimer);
   if(!q.trim()){box.innerHTML='';return;}
   const run=()=>{
-    const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,6);
+    const filtered=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q).slice(0,6);
     window._srLists.side=filtered;
     box.innerHTML=filtered.length?'<div class="search-dropdown">'+filtered.map((e,i)=>searchResultRowHTML('side',e,i,false)).join('')+'</div>':'<div class="search-empty">找不到「'+escH(q)+'」</div>';
   };
@@ -3368,7 +3374,7 @@ function doCartSearch(q,now){
   clearTimeout(cartSearchTimer);
   if(!q.trim()){box.innerHTML='';return;}
   const run=()=>{
-    const filtered=allEquipment.filter(e=>matchesEquip(e,q));
+    const filtered=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q);
     window._srLists.cart=filtered;
     if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+escH(q)+'」相關器材</div>';return;}
     box.innerHTML='<div class="search-dropdown" style="margin:0 18px 10px">'+filtered.map((e,i)=>searchResultRowHTML('cart',e,i,true)).join('')+'</div>';
@@ -3381,7 +3387,7 @@ function doBorrowPageSearch(q,now){
   clearTimeout(borrowPageSearchTimer);
   if(!q.trim()){box.innerHTML='';return;}
   const run=()=>{
-    const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,8);
+    const filtered=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q).slice(0,8);
     window._srLists.bp=filtered;
     if(!filtered.length){box.innerHTML='<div class="search-empty">找不到「'+escH(q)+'」相關器材</div>';return;}
     box.innerHTML='<div class="search-dropdown" style="margin-bottom:10px">'+filtered.map((e,i)=>searchResultRowHTML('bp',e,i,false)).join('')+'</div>';
@@ -3398,12 +3404,18 @@ function renderCart(){
     const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
     const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">📍${escH(equip.location)}</span>`:'';
     return `<div class="cart-item">${imgHtml}
-      <div class="cart-item-info"><div class="cart-item-name ${equip?.location?'sr-link':''}" ${equip?.location?`onclick="cartItemLoc(${idx})" title="點我看平面圖位置"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc}</div></div>
-      <div class="cart-item-qty">
+      <div class="cart-item-info"><div class="cart-item-name ${equip?.location?'sr-link':''}" ${equip?.location?`onclick="cartItemLoc(${idx})" title="點我看平面圖位置"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc}</div>
+        ${isPackUnit(i.unit)?`<div class="loose-toggle" role="group" aria-label="借用方式">
+          <button type="button" class="${i.loose?'':'on'}" onclick="cartSetLoose(${idx},false)">整${escH(i.unit)}借</button>
+          <button type="button" class="${i.loose?'on':''}" onclick="cartSetLoose(${idx},true)">只拿幾個</button></div>`:''}</div>
+      ${i.loose?`<div class="cart-item-qty loose-qty">
+        <input type="number" inputmode="numeric" min="1" max="${LOOSE_MAX}" value="${parseInt(i.quantity)||1}" onchange="cartLooseQty(${idx},this)" aria-label="數量">
+        <input type="text" maxlength="4" value="${escH(i.looseUnit||'個')}" onchange="cartLooseUnit(${idx},this)" aria-label="單位">
+      </div>`:`<div class="cart-item-qty">
         <button class="qty-btn" onclick="cartItemQty(${idx},-1)">−</button>
         <span style="font-family:'DM Mono',monospace;font-size:13px;min-width:20px;text-align:center">${parseInt(i.quantity)||0}</span>
         <button class="qty-btn" onclick="cartItemQty(${idx},1)">+</button>
-      </div>
+      </div>`}
       <button class="cart-item-remove" onclick="cartItemRemove(${idx})">✕</button>
     </div>`;
   }).join('');
@@ -3411,7 +3423,30 @@ function renderCart(){
 function cartItemQty(idx,d){
   const i=(window._cartItems||[])[idx];if(!i)return;
   const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(equip?.available)||0;
-  changeQty(i.room,i.name,i.spec||'',i.unit,avail,d);renderCart();
+  changeQty(i.room,i.name,i.spec||'',i.unit,i.loose?LOOSE_MAX:avail,d);renderCart();
+}
+function cartSetLoose(idx,on){
+  const i=(window._cartItems||[])[idx];if(!i)return;
+  const key=i.room+'__'+i.name,it=selectedItems[key];if(!it)return;
+  if(on){it.loose=true;it.looseUnit=it.looseUnit||'個';it.quantity=Math.max(1,parseInt(it.quantity)||1);}
+  else{
+    const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(eq?.available)||0;
+    if(avail<1){showToast(`目前沒有整${i.unit}可以借，請用「只拿幾個」`,'error');return;}
+    delete it.loose;delete it.looseUnit;it.quantity=1;
+  }
+  renderCart();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
+}
+// 改數字／單位時不重畫整個清單（重畫會把正在打字的格子換掉），只修正這一格的值
+function cartLooseQty(idx,el){
+  const i=(window._cartItems||[])[idx];if(!i)return;
+  const it=selectedItems[i.room+'__'+i.name];if(!it)return;
+  it.quantity=Math.max(1,Math.min(LOOSE_MAX,parseInt(el.value)||1));el.value=it.quantity;updateCartBadge();
+}
+function cartLooseUnit(idx,el){
+  const i=(window._cartItems||[])[idx];if(!i)return;
+  const it=selectedItems[i.room+'__'+i.name];if(!it)return;
+  const u=String(el.value||'').trim().replace(/[^\u4e00-\u9fa5A-Za-z]/g,'').slice(0,4);
+  it.looseUnit=u||'個';el.value=it.looseUnit;
 }
 function cartItemRemove(idx){const i=(window._cartItems||[])[idx];if(!i)return;removeItem(i.room+'__'+i.name);renderCart();}
 function cartItemLoc(idx){
@@ -3441,6 +3476,7 @@ async function loadEquipmentData(){
     const borrowedMap={};
     activeBorrowRecords.forEach(r=>{
       (Array.isArray(r.items)?r.items:[]).forEach(it=>{
+        if(it.loose)return; // 散裝只拿幾個，不佔整盒的數量
         const k=it.room+'__'+it.name;
         borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);
       });
@@ -3505,14 +3541,24 @@ function changeQty(room,name,spec,unit,avail,delta){
   }
   _addQty(room,name,spec,unit,avail,delta);
 }
+// ── 散裝借用：單位是「盒、包、袋…」的器材，沒有細點裡面幾個，可以改成「只拿幾個」──
+// 例如登記 1 盒迴紋針，老師只要 20 個：改成按個數借，不會把整盒卡住，也不會被「只有 1 盒」擋住
+const PACK_UNITS=['盒','包','袋','箱','罐','桶','捆','批','卷'];
+const LOOSE_MAX=999;
+function isPackUnit(u){return PACK_UNITS.includes(String(u||'').trim());}
+function itemUnitLabel(i){return i&&i.loose?(i.looseUnit||'個'):(i?.unit||'');}
 function _addQty(room,name,spec,unit,avail,delta){
-  const key=room+'__'+name,cur=selectedItems[key]?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));
-  if(next===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:next};
+  const key=room+'__'+name,old=selectedItems[key];
+  if(old&&old.loose)avail=LOOSE_MAX;
+  const cur=old?.quantity||0,next=Math.max(0,Math.min(avail,cur+delta));
+  if(next===0)delete selectedItems[key];else selectedItems[key]=Object.assign({},old||{},{room,name,spec,unit,quantity:next});
   renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
 }
 function setQty(room,name,spec,unit,avail,val){
-  const qty=Math.max(0,Math.min(avail,parseInt(val)||0)),key=room+'__'+name;
-  if(qty===0)delete selectedItems[key];else selectedItems[key]={room,name,spec,unit,quantity:qty};
+  const key=room+'__'+name,old=selectedItems[key];
+  if(old&&old.loose)avail=LOOSE_MAX;
+  const qty=Math.max(0,Math.min(avail,parseInt(val)||0));
+  if(qty===0)delete selectedItems[key];else selectedItems[key]=Object.assign({},old||{},{room,name,spec,unit,quantity:qty});
   renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
 }
 function removeItem(key){delete selectedItems[key];renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();}
@@ -3554,7 +3600,7 @@ function onHomeLabChange(){
 let NO_DEPOSIT_PURPOSES=['課程','探究','選修','菁英','能力競賽'];
 let submittingBorrow=false,submittingVenue=false,lastSubmittedName='';
 function calcDeposit(){
-  const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0;
+  const p=document.getElementById('f-purpose').value,hv=!!document.getElementById('f-venue').value,he=Object.keys(selectedItems).length>0||pendingPhotos.length>0;
   const a=depositFor(purposeNeedsDeposit(p,currentRole),hv,he).amount;
   document.getElementById('depositCalc').textContent='NT$ '+a.toLocaleString();
   updateProxyNotice();
@@ -3579,7 +3625,7 @@ function validateBorrowForm(){
   return errs;
 }
 function cartSubmit(){
-  if(!Object.keys(selectedItems).length){showToast('購物車是空的，請先選擇器材','error');return;}
+  if(!Object.keys(selectedItems).length&&!pendingPhotos.length){showToast('請選擇器材，或上傳器材照片（二選一）','error');return;}
   const errs=validateBorrowForm();
   if(!errs.length){closeCart();submitRequest();return;}
   showQuickFillModal(errs,'submit');
@@ -3618,7 +3664,7 @@ function showQuickFillModal(errs,mode){
   // 備註與照片：固定顯示，不論其他欄位是否缺漏
   html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" maxlength="500" placeholder="其他說明、特殊需求…">${escH(document.getElementById('f-note').value)}</textarea></div>`;
   html+=`<div class="form-group">
-    <label>📷 上傳照片（選填，最多${MAX_PHOTOS}張） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+    <label>📷 上傳照片（最多${MAX_PHOTOS}張；找不到器材時只傳照片也可以） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn btn-primary" onclick="document.getElementById('qf-photos-camera').click()">📷 拍照</button>
       <button type="button" class="btn btn-secondary" onclick="document.getElementById('qf-photos-gallery').click()">🖼️ 從相簿選</button>
@@ -3739,11 +3785,17 @@ if(appliedTemplate&&Array.isArray(appliedTemplate.unmatched)&&appliedTemplate.un
 if(courseNoteBody){
   note=(note?note+'\n':'')+'[COURSE_NOTE]'+courseNoteBody+'[/COURSE_NOTE]';
 }
-  const items=Object.values(selectedItems);
+  // 散裝的器材：記成「5 個（從盒裡拿）」
+  const items=Object.values(selectedItems).map(i=>{
+    if(!i.loose)return i;
+    const {looseUnit,...rest}=i;
+    return Object.assign(rest,{unit:looseUnit||'個',pack_unit:i.unit,loose:true});
+  });
   if(submittingBorrow)return;
   const formErrs=validateBorrowForm();
   if(formErrs.length){showBorrowFormErrors(formErrs);return;}
-  if(!items.length&&!document.getElementById('f-venue').value){showToast('尚未選擇任何器材','error');return;}
+  // 器材、照片二選一就能送出（找不到品名時，拍照給管理員看也可以）
+  if(!items.length&&!pendingPhotos.length&&!document.getElementById('f-venue').value){showToast('請選擇器材，或上傳器材照片（二選一）','error');return;}
   if(note.length>2000){showToast('備註太長','error');return;}
 
   // [修改3] 確認同步場地時段是否填寫
@@ -3945,7 +3997,7 @@ function renderRecordListHTML(rows){
         <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${escH(r.return_date||'─')}</span></div>
         ${r.deposit_amount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.deposit_amount)||0}</span></div>`:''}
       </div>
-      <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${escH(rn(i.room))} ${escH(i.name)} × ${parseInt(i.quantity)||0}${escH(i.unit||'')}`).join('<br>')}</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${escH(rn(i.room))} ${escH(i.name)} × ${parseInt(i.quantity)||0}${escH(i.unit||'')}${i.loose?`（從${escH(i.pack_unit||'盒')}裡拿）`:''}`).join('<br>')}</div>
       ${r.note?`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${escH(r.note)}</div>`:''}
       ${photosHtml}
     </div>`;
@@ -3975,22 +4027,35 @@ const EQUIP_ALIASES=[
   [['magnifying glass'],'放大鏡'],
   [['goggles'],'護目鏡'],
 ];
+// 只有「打的字是某個別名的一部分」才擴充（打 beak → beaker／燒杯）。
+// 舊寫法連「打的字裡面包含別名」也擴充，所以打「試管夾」會被拆成「試管」，把所有試管都找出來。
 function expandSearchTerms(q){
   const ql=(q||'').trim().toLowerCase();
   const terms=new Set();
   if(ql)terms.add(ql);
   EQUIP_ALIASES.forEach(([aliases,canon])=>{
     const all=[...aliases,canon].map(a=>a.toLowerCase());
-    if(ql&&all.some(a=>a===ql||a.includes(ql)||ql.includes(a))){
+    if(ql&&all.some(a=>a===ql||a.startsWith(ql)||(ql.length>=3&&a.includes(ql)))){
       all.forEach(a=>terms.add(a));
     }
   });
   return [...terms];
 }
+// 空白分開的每個詞都要符合（例如「燒杯 250」）
 function matchesEquip(e,q){
   if(!q||!q.trim())return true;
   const hay=((e.name||'')+' '+(e.spec||'')+' '+(e.alias||'')).toLowerCase();
-  return expandSearchTerms(q).some(t=>hay.includes(t));
+  return q.trim().split(/\s+/).every(tok=>expandSearchTerms(tok).some(t=>hay.includes(t)));
+}
+// 排序：名稱完全一樣 → 名稱開頭 → 名稱包含 → 只在規格／別名裡出現
+function equipSearchRank(e,q){
+  const n=(e.name||'').toLowerCase(),ql=(q||'').trim().toLowerCase();
+  if(!ql)return 9;
+  if(n===ql)return 0;if(n.startsWith(ql))return 1;if(n.includes(ql))return 2;return 3;
+}
+function sortBySearch(list,q){
+  if(!q||!q.trim())return list;
+  return list.map((e,i)=>[e,i]).sort((a,b)=>(equipSearchRank(a[0],q)-equipSearchRank(b[0],q))||(a[1]-b[1])).map(x=>x[0]);
 }
 
 let allEquipBrowse=[];
@@ -4046,7 +4111,7 @@ function applyEquipBrowseFilter(){
     if(lowStockOnly&&!isLowStock(e))return false;
     return true;
   });
-  renderEquipBrowse(filtered);
+  renderEquipBrowse(sortBySearch(filtered,q));
 }
 function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
@@ -4404,7 +4469,7 @@ function doTplExtraSearch(q){
   clearTimeout(tplExtraTimer);
   if(!q.trim()){box.innerHTML='';return;}
   tplExtraTimer=setTimeout(()=>{
-    const filtered=allEquipment.filter(e=>matchesEquip(e,q)).slice(0,8);
+    const filtered=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q).slice(0,8);
     let html='';
     if(filtered.length){
       html+='<div class="search-dropdown" style="margin-top:6px">'+filtered.map(e=>{
