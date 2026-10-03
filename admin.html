@@ -1320,7 +1320,9 @@ function renderDepositSummary(){
   box.innerHTML=card('待收款',waitIn.length,sum(waitIn),'#9a6b00')+card('保管中',holding.length,sum(holding),'var(--accent)')+card('待退還',waitOut.length,outSum,'#2a3a8a');
 }
 // 側欄最下方：登入信箱＋登出
-function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}</span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
+// 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
+const ADMIN_VERSION='2026-10-03g';
+function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
 // 手機／平板的選單：所有分頁（含數字提醒）都在這裡，最底下是登入帳號＋登出
@@ -1335,7 +1337,7 @@ function openSettingsSheet(){
   const main=[...document.querySelectorAll('.tabs > button.tab[data-tab]')].map(row).join('');
   const more=[...document.querySelectorAll('#tabMoreMenu button[data-tab]')].map(row).join('');
   showModal('選單',`<div class="settings-sheet"><div class="ss-group">審核與流程</div>${main}<div class="ss-group">設定與資料</div>${more}</div>
-    <div class="ss-foot"><span>${escH(typeof ADMIN_EMAIL!=='undefined'?ADMIN_EMAIL:'')}</span><button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="closeModal();logout()">登出</button></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+    <div class="ss-foot"><span>${escH(typeof ADMIN_EMAIL!=='undefined'?ADMIN_EMAIL:'')}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="closeModal();logout()">登出</button></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // ── 資料備份：把所有資料表下載成一個檔案（用登入後的權限讀取，每張表都完整分頁讀完）──
 const BACKUP_TABLES=['borrow_records','venue_bookings','equipment','chemicals','course_templates','teachers','holidays','semester_settings','floorplan_hotspots','equipment_writeoffs','borrow_purposes','deposit_settings'];
