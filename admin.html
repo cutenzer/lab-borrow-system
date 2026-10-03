@@ -21,6 +21,35 @@
   .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-secondary:hover{background:var(--border);}
   .btn-danger{background:var(--danger);color:#fff;}.btn-warn{background:var(--warn);color:#fff;}
   .btn-sm{padding:5px 11px;font-size:12.5px;}
+  /* 次要的危險按鈕：外框紅字（只有「核准」這類主要動作是實心） */
+  .btn-danger-outline{background:transparent;color:var(--danger);border:1px solid #e8b4ae;}
+  .btn-danger-outline:hover{background:#fdf0ee;}
+  /* 「⋯ 更多」小選單：不常用的按鈕收在這裡 */
+  .act-more{position:relative;display:inline-block;}
+  .act-more>summary{list-style:none;cursor:pointer;user-select:none;}
+  .act-more>summary::-webkit-details-marker{display:none;}
+  .act-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);min-width:150px;padding:4px;display:flex;flex-direction:column;}
+  .act-pop button{all:unset;box-sizing:border-box;display:block;width:100%;padding:9px 12px;border-radius:6px;font-size:13.5px;cursor:pointer;color:var(--text);white-space:nowrap;}
+  .act-pop button:hover{background:var(--surface2);}
+  .act-pop button.danger{color:var(--danger);}
+  .act-pop hr{border:none;border-top:1px solid var(--border);margin:4px 2px;}
+  .record-actions .act-more{margin-left:auto;}
+  /* 批次核准 */
+  .bsel-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;}
+  .bsel-bar label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .bsel{display:inline-flex;align-items:center;margin-right:8px;vertical-align:middle;}
+  .bsel input,.bsel-bar input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
+  .record-card.bsel-on{outline:2px solid var(--accent);outline-offset:-1px;}
+  /* 拒絕原因快速選 */
+  .reason-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .reason-chips button{border:1px solid var(--border);background:var(--surface2);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer;font-family:inherit;color:var(--text);}
+  .reason-chips button:hover{border-color:var(--accent);}
+  /* 說明框收進標題旁的「?」 */
+  .help-q{margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+  .help-q[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .info-box.help-collapsed{display:none;}
+  /* 全部紀錄搜尋 */
+  .rec-search{width:100%;margin:0 0 12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
   .tabs{display:flex;flex-wrap:nowrap;gap:0;margin-bottom:18px;border-bottom:2px solid var(--border);overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none;}
   .tabs::-webkit-scrollbar{display:none;}
@@ -389,7 +418,8 @@
   @media(max-width:700px){
     #adminEquipList .record-card>div:first-child,.eq-card-row{flex-wrap:wrap!important;}
     .eq-actions{flex-direction:row!important;flex-wrap:nowrap!important;width:100%;gap:6px!important;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
-    .eq-actions{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));}
+    .eq-actions{display:grid!important;grid-template-columns:minmax(0,1fr) auto;}
+    .eq-actions .act-more>summary{padding:7px 16px!important;font-size:15px!important;}
     .eq-actions .btn{justify-content:center;padding:7px 2px!important;font-size:12px!important;white-space:nowrap;min-width:0;overflow:hidden;}
     .eq-thumb{width:84px!important;height:84px!important;}
     .eq-actions .eq-btn-txt{display:none;}
@@ -965,6 +995,7 @@
 <div id="panel-all" class="panel">
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
+  <input type="search" id="allSearch" class="rec-search" maxlength="40" placeholder="搜尋姓名、學號、單號或器材…" oninput="clearTimeout(window._allSearchT);window._allSearchT=setTimeout(()=>renderWithFilter('all'),200)">
   <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
 </main>
@@ -1415,6 +1446,11 @@ function renderPurposeTabs(panel){
   el.innerHTML=PURPOSES.map(p=>`<button class="purpose-tab ${currentPurposeFilter[panel]===p?'active':''}" onclick="setPurposeFilter('${panel}','${p}')">${p}</button>`).join('');
 }
 function setPurposeFilter(panel,purpose){currentPurposeFilter[panel]=purpose;renderPurposeTabs(panel);renderWithFilter(panel);}
+// 全部紀錄的搜尋：單號、姓名、學號、目的、器材名稱都找得到
+function recordSearchText(r){
+  const items=Array.isArray(r.items)?r.items.map(i=>i&&i.name||'').join(' '):'';
+  return [r.id,r.name,r.studentId,r.purpose,r.courseName,items].map(v=>String(v||'')).join(' ').toLowerCase();
+}
 function renderWithFilter(panel){
   let records=allRecords;
   if(panel==='pending')records=allRecords.filter(r=>r.status==='待審核');
@@ -1427,6 +1463,10 @@ function renderWithFilter(panel){
     });
   }
   const f=currentPurposeFilter[panel];if(f&&f!=='全部')records=records.filter(r=>r.purpose===f);
+  if(panel==='all'){
+    const q=(document.getElementById('allSearch')?.value||'').trim().toLowerCase();
+    if(q)records=records.filter(r=>recordSearchText(r).includes(q));
+  }
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
@@ -1556,7 +1596,86 @@ function closePhotoViewer(){const v=document.getElementById('photoViewer');if(v)
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePhotoViewer();});
 function renderList(records,container,mode){
   if(!records||!records.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';return;}
-  container.innerHTML='<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
+  let bar='';
+  if(mode==='pending'){
+    const ids=records.filter(r=>r.status==='待審核').map(r=>String(r.id));
+    [...batchSel].forEach(id=>{if(!ids.includes(id))batchSel.delete(id);});
+    if(ids.length>1)bar=`<div class="bsel-bar"><label><input type="checkbox" id="bselAll" ${batchSel.size===ids.length?'checked':''} onchange="batchSelectAll(this.checked)">全選</label>
+      <span id="bselCount" style="color:var(--text2)">已選 ${batchSel.size} 筆</span>
+      <button type="button" class="btn btn-primary btn-sm" id="bselGo" style="margin-left:auto" ${batchSel.size?'':'disabled'} onclick="confirmBatchApprove()">核准選取的 ${batchSel.size} 筆</button></div>`;
+  }
+  container.innerHTML=bar+'<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
+}
+// ── 批次核准：勾選幾筆後一次核准（拒絕仍要一筆一筆來，因為要寫原因）──
+const batchSel=new Set();
+function batchToggle(id,on){
+  id=String(id);if(on)batchSel.add(id);else batchSel.delete(id);
+  const card=document.querySelector(`.record-card[data-rid="${CSS.escape(id)}"]`);if(card)card.classList.toggle('bsel-on',on);
+  updateBatchBar();
+}
+function batchSelectAll(on){
+  document.querySelectorAll('#pendingList .bsel input').forEach(cb=>{cb.checked=on;batchToggle(cb.dataset.rid,on);});
+}
+function updateBatchBar(){
+  const n=batchSel.size,total=document.querySelectorAll('#pendingList .bsel input').length;
+  const c=document.getElementById('bselCount');if(c)c.textContent=`已選 ${n} 筆`;
+  const g=document.getElementById('bselGo');if(g){g.disabled=!n;g.textContent=`核准選取的 ${n} 筆`;}
+  const a=document.getElementById('bselAll');if(a)a.checked=n>0&&n===total;
+}
+function confirmBatchApprove(){
+  const recs=[...batchSel].map(id=>allRecords.find(r=>String(r.id)===id&&r.status==='待審核')).filter(Boolean);
+  if(!recs.length){showToast('沒有選取待審核的申請','error');return;}
+  showModal('核准選取的申請',`<p style="font-size:14px">確定一次核准這 <strong>${recs.length}</strong> 筆嗎？</p>
+    <div style="max-height:220px;overflow:auto;margin-top:8px;font-size:13px;line-height:1.8">${recs.map(r=>`・${escH(r.name)}【${escH(r.purpose)}】${escH(r.borrowDate||'')}`).join('<br>')}</div>
+    <p class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">庫存不夠的那幾筆會自動跳過、留在待審核，請再單獨處理。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:`核准 ${recs.length} 筆`,cls:'btn-primary',fn:'doBatchApprove()'}]);
+}
+async function doBatchApprove(){
+  closeModal();
+  const recs=[...batchSel].map(id=>allRecords.find(r=>String(r.id)===id&&r.status==='待審核')).filter(Boolean);
+  if(!recs.length)return;
+  showToast(`核准中…（共 ${recs.length} 筆）`);
+  let ok=0;const skipped=[],failed=[];
+  try{
+    // 跟單筆核准一樣：以資料庫現在的「已借出量」為準，批次內前面核准的也要算進去
+    const approved=await sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'});
+    const borrowedMap={};
+    const addUse=items=>(items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+    (Array.isArray(approved)?approved:[]).forEach(r=>addUse(r.items));
+    for(const rec of recs){
+      const short=(rec.items||[]).some(it=>{
+        if(it.loose)return false;
+        const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name);
+        const total=eq?parseInt(eq.total)||0:0;
+        return (borrowedMap[it.room+'__'+it.name]||0)+(parseInt(it.quantity)||0)>total;
+      });
+      if(short){skipped.push(rec);continue;}
+      try{
+        await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(rec.id)+'&status=eq.'+encodeURIComponent('待審核'),body:{status:'已核准'},prefer:'return=minimal'});
+        addUse(rec.items);ok++;batchSel.delete(String(rec.id));
+      }catch(e){failed.push(rec);}
+    }
+  }catch(e){showToast('批次核准失敗：'+e.message,'error');return;}
+  loadAll();
+  if(skipped.length||failed.length){
+    showModal('批次核准完成',`<p style="font-size:14px">已核准 <strong>${ok}</strong> 筆。</p>
+      ${skipped.length?`<p style="font-size:13px;margin-top:8px">庫存不足、留在待審核（請單獨按核准，會顯示缺哪些）：</p><div style="font-size:13px;line-height:1.8">${skipped.map(r=>'・'+escH(r.name)+'【'+escH(r.purpose)+'】').join('<br>')}</div>`:''}
+      ${failed.length?`<p style="font-size:13px;margin-top:8px;color:var(--danger)">這幾筆沒有成功，請重新整理後再試：${failed.map(r=>escH(r.name)).join('、')}</p>`:''}`,
+      [{label:'知道了',cls:'btn-primary',fn:'closeModal()'}]);
+  }else showToast(`已核准 ${ok} 筆`,'success');
+}
+// ── 「⋯ 更多」選單：點外面就關起來，一次只開一個 ──
+document.addEventListener('click',e=>{
+  document.querySelectorAll('details.act-more[open]').forEach(d=>{if(!d.contains(e.target))d.removeAttribute('open');});
+});
+document.addEventListener('toggle',e=>{
+  const d=e.target;if(!(d instanceof HTMLDetailsElement)||!d.classList.contains('act-more')||!d.open)return;
+  document.querySelectorAll('details.act-more[open]').forEach(x=>{if(x!==d)x.removeAttribute('open');});
+},true);
+function moreMenuHtml(entries){
+  // entries：[{label, fn, danger}] 或 'hr'；fn 是已經安全組好的 onclick 字串
+  if(!entries.length)return '';
+  return `<details class="act-more"><summary class="btn btn-secondary btn-sm" aria-label="更多動作">⋯<span class="eq-btn-txt"> 更多</span></summary><div class="act-pop">${entries.map(x=>x==='hr'?'<hr>':`<button type="button" class="${x.danger?'danger':''}" onclick="this.closest('details').removeAttribute('open');${x.fn}">${x.label}</button>`).join('')}</div></details>`;
 }
 
 function renderRecord(r,mode){
@@ -1572,19 +1691,29 @@ function renderRecord(r,mode){
   const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽</span></button>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   let actions='';
-  if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord(${ja(r.id)})">✅ 核准</button><button class="btn btn-danger btn-sm" onclick="rejectRecord(${ja(r.id)})">❌ 拒絕</button>`;
-  if(mode==='return'&&(r.status==='已核准'||r.status==='逾期'))actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn(${ja(r.id)})">📬 完整歸還</button><button class="btn btn-danger btn-sm" onclick="openDamageModal(${ja(r.id)})">⚠️ 損壞歸還</button>`;
+  if(mode==='pending'&&r.status==='待審核')actions=`<button class="btn btn-primary btn-sm" onclick="approveRecord(${ja(r.id)})">核准</button><button class="btn btn-danger-outline btn-sm" onclick="rejectRecord(${ja(r.id)})">拒絕</button>`;
+  if(mode==='return'&&(r.status==='已核准'||r.status==='逾期'))actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn(${ja(r.id)})">完整歸還</button><button class="btn btn-danger-outline btn-sm" onclick="openDamageModal(${ja(r.id)})">損壞歸還</button>`;
   if(mode==='deposit'&&r.depositAmount>0){
     if(r.depositStatus==='待繳納')actions=`<button class="btn btn-secondary btn-sm" onclick="updateDeposit(${ja(r.id)},'已繳納')">💰 標記已繳納</button>${r.role==='老師'?`<button class="btn btn-secondary btn-sm" onclick="waiveDeposit(${ja(r.id)})">🙅 老師免收</button>`:''}`;
     if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund(${ja(r.id)},${r.depositAmount})">↩️ 確認退還</button>`;
     if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal(${ja(r.id)},${r.depositAmount})">💸 計算賠償</button>`;
   }
-  if(items.length)actions+=`<button class="btn btn-secondary btn-sm" onclick="openExportModal(${ja(r.id)})">📄 匯出表單</button>`;
-  actions+=`<button class="btn btn-secondary btn-sm" onclick="openAdminNote(${ja(r.id)})">🗒️ ${r.adminNote?'改備註':'備註'}</button>`;
-  actions+=`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteBorrowRecord(${ja(r.id)})">🗑️ 刪除</button>`;
-  return `<div class="record-card ${r.status==='逾期'?'overdue':''}">
+  // 主要動作留在外面；不常用的（匯出、備註、刪除）收進「⋯」。這一頁沒有主要動作時，匯出表單留在外面
+  const more=[];
+  if(items.length){
+    const exp=`openExportModal(${ja(r.id)})`;
+    if(actions)more.push({label:'📄 匯出表單',fn:exp});
+    else actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">匯出表單</button>`;
+  }
+  more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
+  more.push('hr');
+  more.push({label:'🗑️ 刪除這筆',fn:`deleteBorrowRecord(${ja(r.id)})`,danger:true});
+  actions+=moreMenuHtml(more);
+  const canBatch=mode==='pending'&&r.status==='待審核';
+  const bOn=canBatch&&batchSel.has(String(r.id));
+  return `<div class="record-card ${r.status==='逾期'?'overdue':''} ${bOn?'bsel-on':''}" data-rid="${escH(r.id)}">
     <div class="record-header">
-      <div><span class="record-id">${escH(r.id)}</span>
+      <div>${canBatch?`<label class="bsel" title="勾選後可一次核准"><input type="checkbox" data-rid="${escH(r.id)}" ${bOn?'checked':''} onchange="batchToggle(this.dataset.rid,this.checked)"></label>`:''}<span class="record-id">${escH(r.id)}</span>
         <div style="font-size:14px;font-weight:700;margin-top:2px">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
         <div style="font-size:12px;color:var(--text2)">${escH(r.role||'學生')}${r.studentId?' ・ '+escH(r.studentId):''}</div>
         ${isProxyRecord(r)?'<span class="proxy-badge">👩‍🏫 老師代借：學生需另填表單＋繳保證金</span>':''}</div>
@@ -2620,7 +2749,14 @@ async function doDeleteWholeSeries(bookingId){
 
 // ── 器材審核 ──────────────────────────────────────────────
 function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doApprove('${id}')`}]);}
-function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${id}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因</label><textarea id="rejectNote" rows="2" style="margin-top:4px"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doReject('${id}')`}]);}
+const REJECT_REASONS=['數量不足，請減少數量或改日期','時段衝突，請改其他日期','請先詢問選修課負責老師','資料不完整，請補填後重新申請','器材維修中，暫停出借'];
+function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${escH(id)}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因（借用人查紀錄時看得到）</label>
+  <div class="reason-chips">${REJECT_REASONS.map((t,i)=>`<button type="button" onclick="pickRejectReason(${i})">${escH(t)}</button>`).join('')}</div>
+  <textarea id="rejectNote" rows="2" maxlength="300" style="margin-top:8px" placeholder="點上面的常用原因，或自己寫"></textarea></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認拒絕',cls:'btn-danger',fn:`doReject(${ja(id)})`}]);}
+function pickRejectReason(i){
+  const t=REJECT_REASONS[i],ta=document.getElementById('rejectNote');if(!t||!ta)return;
+  ta.value=ta.value.trim()?ta.value.trim()+'；'+t:t;ta.focus();
+}
 
 // 核准：核准當下重新計算各器材已借出量；庫存不足時改為「可確認後強制核准」（庫存採推導模型，不寫 available）
 async function doApprove(id,force){
@@ -2661,8 +2797,13 @@ async function doApprove(id,force){
 async function doReject(id){
   closeModal();
   try{
-    const note=document.getElementById('rejectNote')?.value||'';
-    const body={status:'已拒絕'};if(note)body.note=note;
+    const reason=(document.getElementById('rejectNote')?.value||'').trim().slice(0,300);
+    const body={status:'已拒絕'};
+    // 拒絕原因加在原本備註前面，不再把借用人寫的備註、課綱備註蓋掉
+    if(reason){
+      const old=String((allRecords.find(r=>r.id===id)||{}).note||'').replace(/^【拒絕原因】[^\n]*\n?/,'');
+      body.note=('【拒絕原因】'+reason.replace(/\n/g,' ')+(old?'\n'+old:'')).slice(0,2000);
+    }
     await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
     showToast('已拒絕','success');loadAll();
   }catch(e){showToast('更新失敗','error');}
@@ -4602,7 +4743,7 @@ function renderAdminEquipCard(e){
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div style="flex:1;min-width:0">
-          <div class="eq-name">${escH(e.name)} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
+          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">實點數量：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake(${ja(e.id)},this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
@@ -4616,11 +4757,14 @@ function renderAdminEquipCard(e){
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
         <div class="eq-actions">
-          <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">✏️ 編輯</button>
-          <button class="btn btn-secondary btn-sm" onclick="toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})">${e.featured===true?'★ <span class="eq-btn-txt">取消</span>精選':'☆ <span class="eq-btn-txt">設</span>精選'}</button>
-          <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload(${ja(e.id)})">🖼️ 換照片</button>
-          <button class="btn btn-warn btn-sm" onclick="openWriteoffModal(${ja(e.id)})">♻️ 報廢</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteEquip(${ja(e.id)})" aria-label="刪除">🗑️<span class="eq-btn-txt"> 刪除</span></button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">編輯</button>
+          ${moreMenuHtml([
+            {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
+            {label:'🖼️ 換照片',fn:`openEquipPhotoUpload(${ja(e.id)})`},
+            'hr',
+            {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
+            {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
+          ])}
         </div>
       </div>
       <input type="file" id="eq-photo-input-${e.id}" accept="image/*" style="display:none" onchange="uploadEquipPhoto(${ja(e.id)},this)">
@@ -5898,5 +6042,26 @@ async function doDeleteHighlight(id){
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="實驗室後台">
   
+<script>
+/* 說明框收進標題旁的「?」：卡片標題正下方那段藍色說明，平常收起來，點「?」才展開。
+   展開過的會記在這台電腦（下次還是展開），不用每次重點 */
+(function(){
+  const KEY='adminHelpOpen';
+  let opened={};try{opened=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(_){opened={};}
+  document.querySelectorAll('.card-title + .info-box').forEach((box,i)=>{
+    const title=box.previousElementSibling;
+    const id='h'+i+'_'+(title.textContent||'').trim().slice(0,12);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='help-q';btn.textContent='?';btn.title='說明';
+    const set=open=>{box.classList.toggle('help-collapsed',!open);btn.setAttribute('aria-expanded',open?'true':'false');};
+    set(!!opened[id]);
+    btn.addEventListener('click',()=>{
+      const open=box.classList.contains('help-collapsed');set(open);
+      opened[id]=open;try{localStorage.setItem(KEY,JSON.stringify(opened));}catch(_){}
+    });
+    title.appendChild(btn);
+  });
+})();
+</script>
 </body>
 </html>
