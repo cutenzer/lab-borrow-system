@@ -70,6 +70,37 @@
   .loan-tag.od{background:#fdecea;color:#9a3226;}
   .loan-acts{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
   .sem-end{padding:10px 12px;border-radius:8px;background:#fff7e6;border:1px solid #f5d39a;color:#7a4a00;font-size:13px;line-height:1.7;margin-bottom:10px;}
+  /* 借用目的列：電腦一列排完；手機改兩行（名稱一行、勾選一行），不再擠成一團 */
+  .pp-row{display:grid;grid-template-columns:auto minmax(120px,1.6fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:10px;}
+  .pp-move{display:flex;flex-direction:column;gap:2px;}
+  .pp-name{font-weight:700;min-width:0;}
+  .pp-checks{display:flex;flex-wrap:wrap;gap:6px 14px;}
+  .pp-checks label{display:flex;align-items:center;gap:5px;font-size:13px;white-space:nowrap;}
+  .pp-checks input{width:18px;height:18px;}
+  .pp-add{display:grid;grid-template-columns:2fr repeat(3,auto) auto;gap:10px;align-items:end;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);}
+  @media(max-width:700px){
+    .pp-row{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"move name del" "checks checks checks";gap:8px;}
+    .pp-move{grid-area:move;}.pp-name{grid-area:name;}.pp-row>.btn{grid-area:del;}
+    .pp-checks{grid-area:checks;padding-left:2px;}
+    .pp-add{grid-template-columns:1fr 1fr 1fr;}
+    .pp-add .form-group{grid-column:1/-1;}
+    .pp-add button{grid-column:1/-1;}
+  }
+  /* 場地週曆：手機改成「一眼看完整週」的精簡版——不用左右滑；空格直接點就能新增 */
+  @media(max-width:700px){
+    .venue-table{min-width:0!important;width:100%;table-layout:fixed;font-size:10px;}
+    .venue-table th{padding:4px 1px;font-size:10.5px;white-space:normal;line-height:1.25;}
+    /* 手機不用左右滑，所以左邊兩欄也不用「黏住」，避免互相疊到 */
+    .venue-table th,.venue-table .period-cell,.venue-table .lab-cell{position:static!important;}
+    .venue-table thead th{position:sticky!important;top:0;left:auto!important;}
+    .venue-table th:first-child,.venue-table .period-cell{min-width:0;width:34px;font-size:10px;white-space:normal;padding:1px;}
+    .venue-table th:nth-child(2),.venue-table .lab-cell{min-width:0;width:30px;font-size:10px;padding:1px;}
+    .venue-table td{min-width:0;padding:1px;height:20px;}
+    .venue-table td.vcell{cursor:pointer;}
+    .venue-booking{font-size:9.5px!important;padding:1px 2px!important;margin-bottom:1px;line-height:1.2;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .venue-add-admin{display:none;}
+    .venue-table .holiday-tag{display:block;font-size:9px;white-space:normal;}
+  }
   /* 全部紀錄搜尋 */
   .rec-search{width:100%;margin:0 0 12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
@@ -584,7 +615,7 @@
     <div class="card-title">💰 借用目的與保證金</div>
     <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
     <div id="purposeList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
-    <div style="display:grid;grid-template-columns:2fr repeat(3,auto) auto;gap:10px;align-items:end;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+    <div class="pp-add">
       <div class="form-group" style="margin:0"><label>新增借用目的</label><input type="text" id="pp-new-name" maxlength="20" placeholder="例如：校外比賽"></div>
       <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-t" checked style="width:18px;height:18px">老師可選</label>
       <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-s" style="width:18px;height:18px">學生可選</label>
@@ -1321,7 +1352,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03g';
+const ADMIN_VERSION='2026-10-03h';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2539,7 +2570,7 @@ function renderAdminVenueTable(dates,expanded){
           expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull)
             .forEach(b=>cellBookings.push({...b,_lab:lab,_venueFull:venueFull}));
         });
-        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''}">`;
+        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''}" onclick="vcellTap(event,'${dateStr}','${period}','${labFull['生物']}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -2561,7 +2592,7 @@ function renderAdminVenueTable(dates,expanded){
         const venueFull=labFull[lab];
         const isHoliday=!!holidayForDate(dateStr);
         const cellBookings=expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
-        html+=`<td class="vcell ${isHoliday?'holiday-col':''}">`;
+        html+=`<td class="vcell ${isHoliday?'holiday-col':''}" onclick="vcellTap(event,'${dateStr}','${period}','${venueFull}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -2577,6 +2608,12 @@ function renderAdminVenueTable(dates,expanded){
   html+=`</tbody>`;table.innerHTML=html;
 }
 
+// 手機版：「＋」按鈕藏起來省空間，改成點格子的空白處就新增（點到已有的預約還是打開那筆）
+function vcellTap(e,date,period,venue){
+  if(!window.matchMedia('(max-width:700px)').matches)return;
+  if(e.target!==e.currentTarget)return;
+  openAdminAddVenue(date,period,venue);
+}
 function clickAdminBooking(bookingId,date,period,venue){
   const booking=allVenueBookings.find(b=>b.id===bookingId);
   if(!booking){showToast('找不到資料','error');return;}
@@ -5065,16 +5102,16 @@ async function loadPurposesAdmin(){
 function renderPurposeRows(){
   const list=document.getElementById('purposeList');
   if(!purposeRows.length){list.innerHTML='<div class="empty"><p>目前沒有任何借用目的</p></div>';renderPurposePreview();return;}
-  const ck=(i,f,label)=>`<label style="display:flex;align-items:center;gap:5px;font-size:13px;white-space:nowrap"><input type="checkbox" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)" style="width:18px;height:18px">${label}</label>`;
+  const ck=(i,f,label)=>`<label><input type="checkbox" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)">${label}</label>`;
   list.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+purposeRows.map((r,i)=>`
-    <div style="display:grid;grid-template-columns:auto 1.6fr repeat(4,auto) auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
-      <div style="display:flex;flex-direction:column;gap:2px">
+    <div class="pp-row" style="background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
+      <div class="pp-move">
         <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},-1)" ${i===0?'disabled':''} aria-label="往上">▲</button>
         <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},1)" ${i===purposeRows.length-1?'disabled':''} aria-label="往下">▼</button>
       </div>
-      <input type="text" maxlength="20" value="${escH(r.name)}" onchange="setPurposeField(${i},'name',this.value)" style="font-weight:700">
-      ${ck(i,'for_teacher','老師可選')}${ck(i,'for_student','學生可選')}${ck(i,'needs_deposit','需保證金')}${ck(i,'is_active','啟用')}
-      <button class="btn btn-danger btn-sm" onclick="deletePurposeRow(${i})" aria-label="刪除">🗑️</button>
+      <input type="text" class="pp-name" maxlength="20" value="${escH(r.name)}" onchange="setPurposeField(${i},'name',this.value)" aria-label="目的名稱">
+      <div class="pp-checks">${ck(i,'for_teacher','老師可選')}${ck(i,'for_student','學生可選')}${ck(i,'needs_deposit','需保證金')}${ck(i,'is_active','啟用')}</div>
+      <button class="btn btn-danger-outline btn-sm" onclick="deletePurposeRow(${i})" aria-label="刪除">刪除</button>
     </div>`).join('')+`</div>`;
   renderPurposePreview();
 }
