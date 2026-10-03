@@ -99,6 +99,10 @@
     .venue-table td.vcell{cursor:pointer;}
     .venue-booking{font-size:9.5px!important;padding:1px 2px!important;margin-bottom:1px;line-height:1.2;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
     .venue-add-admin{display:none;}
+    /* 已經有預約的格子：留一個小「＋」，同一節還能再塞（例如自主學習好幾組） */
+    .venue-booking~.venue-add-admin{display:block;height:15px;line-height:13px;padding:0;font-size:10px;margin-top:1px;}
+    /* 同一格有 2 筆以上：每筆縮成一行，格子不會長太高；點進去看完整內容 */
+    .vcell.multi .venue-booking{display:block;white-space:nowrap;text-overflow:ellipsis;}
     .venue-table .holiday-tag{display:block;font-size:9px;white-space:normal;}
   }
   /* 全部紀錄搜尋 */
@@ -1352,7 +1356,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03h';
+const ADMIN_VERSION='2026-10-03i';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2570,7 +2574,7 @@ function renderAdminVenueTable(dates,expanded){
           expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull)
             .forEach(b=>cellBookings.push({...b,_lab:lab,_venueFull:venueFull}));
         });
-        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''}" onclick="vcellTap(event,'${dateStr}','${period}','${labFull['生物']}')">`;
+        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${labFull['生物']}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -2592,7 +2596,7 @@ function renderAdminVenueTable(dates,expanded){
         const venueFull=labFull[lab];
         const isHoliday=!!holidayForDate(dateStr);
         const cellBookings=expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
-        html+=`<td class="vcell ${isHoliday?'holiday-col':''}" onclick="vcellTap(event,'${dateStr}','${period}','${venueFull}')">`;
+        html+=`<td class="vcell ${isHoliday?'holiday-col':''} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${venueFull}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -2633,6 +2637,7 @@ function clickAdminBooking(bookingId,date,period,venue){
       {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准')`},
       {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已拒絕')`}
     ]:[]),
+    {label:'＋ 這節再加一筆',cls:'btn-secondary',fn:`closeModal();openAdminAddVenue(${ja(date)},${ja(period)},${ja(venue)})`},
     {label:'✏️ 編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal('${bookingId}')`},
     ...(rec?[
       {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal('${bookingId}')`},
