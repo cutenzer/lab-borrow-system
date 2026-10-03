@@ -769,6 +769,18 @@
   }
   /* 我的記錄：分類按鈕 */
   .rec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px;}
+  /* 我的紀錄：最上面的提醒摘要 */
+  .rec-alerts{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;}
+  .rec-alert{padding:9px 12px;border-radius:10px;font-size:13.5px;line-height:1.6;word-break:normal;overflow-wrap:anywhere;}
+  .rec-alert.bad{background:#fdecea;color:#9a3226;border:1px solid #f3c4bd;}
+  .rec-alert.soon{background:#fff4e0;color:#8a4b08;border:1px solid #f5d39a;}
+  .rec-alert.wait{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+  .reject-box{margin-top:8px;padding:8px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.6;}
+  .rec-card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .remember-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin:-4px 0 12px;}
+  .remember-row label{display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .remember-row input{width:17px;height:17px;accent-color:var(--accent);}
+  .remember-row .link{background:none;border:none;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:13px;font-family:inherit;padding:0;}
   .rec-tabs button{height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
   .rec-tabs button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
   .rec-tabs button small{font-family:'DM Mono',monospace;font-size:12px;opacity:.75;margin-left:4px;}
@@ -1178,6 +1190,10 @@
       <div class="form-group"><label>姓名 *</label><input type="text" id="queryName" maxlength="30" placeholder="輸入完整姓名" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
       <div class="form-group"><label>學號（學生必填）</label><input type="text" id="queryStudentId" maxlength="20" placeholder="學生請輸入學號" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
     </div>
+    <div class="remember-row">
+      <label><input type="checkbox" id="rememberMe">在這台裝置記住我（下次打開自動查詢）</label>
+      <button type="button" class="link" id="forgetMeBtn" style="display:none" onclick="forgetMe()">不是我／清除</button>
+    </div>
     <button class="btn btn-primary" onclick="loadMyRecords()" style="margin-bottom:14px">🔍 查詢</button>
     <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div></div>
   </div>
@@ -1247,7 +1263,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03e · 選修器材提醒＋平面圖門標示＋櫃位搜尋</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03f · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -4177,6 +4193,30 @@ function resetForm(){
   inlinePeriodRows=[];document.getElementById('inlinePeriodList').innerHTML='';
 }
 
+// ── 我的紀錄：記住身分（只存在這台裝置的瀏覽器，不會上傳；公用電腦不要勾）──
+const MYREC_KEY='myRecIdentity';
+function getSavedIdentity(){
+  try{const v=JSON.parse(localStorage.getItem(MYREC_KEY)||'null');
+    if(v&&typeof v.n==='string'&&v.n.length>=2&&v.n.length<=30&&(!v.s||/^[A-Za-z0-9-]{3,20}$/.test(v.s)))return v;}catch(_){}
+  return null;
+}
+function updateForgetBtn(){const b=document.getElementById('forgetMeBtn');if(b)b.style.display=getSavedIdentity()?'':'none';}
+function forgetMe(){
+  try{localStorage.removeItem(MYREC_KEY);}catch(_){}
+  ['queryName','queryStudentId'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const cb=document.getElementById('rememberMe');if(cb)cb.checked=false;
+  window._myRec=null;
+  const list=document.getElementById('myRecordsList');
+  if(list)list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div>';
+  updateForgetBtn();showToast('已清除這台裝置記住的資料','success');
+}
+function autoLoadMyRecords(){
+  const v=getSavedIdentity();updateForgetBtn();
+  if(!v||window._myRec)return;
+  const n=document.getElementById('queryName'),sid=document.getElementById('queryStudentId'),cb=document.getElementById('rememberMe');
+  if(n)n.value=v.n;if(sid)sid.value=v.s||'';if(cb)cb.checked=true;
+  loadMyRecords();
+}
 async function loadMyRecords(){
   const name=document.getElementById('queryName').value.trim();
   const studentId=document.getElementById('queryStudentId').value.trim();
@@ -4203,6 +4243,11 @@ async function loadMyRecords(){
     const venueRows=await sb('GET','venue_bookings',{filter:vf,order:'created_at.desc'});
     rows=Array.isArray(rows)?rows:[];
     window._myRec={rows,venueRows:Array.isArray(venueRows)?venueRows:[],studentId,filter:'all'};
+    try{
+      if(document.getElementById('rememberMe')?.checked)localStorage.setItem(MYREC_KEY,JSON.stringify({n:name,s:studentId||''}));
+      else localStorage.removeItem(MYREC_KEY);
+    }catch(_){}
+    updateForgetBtn();
     renderMyRecords();
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
 }
@@ -4215,6 +4260,56 @@ function recBucket(st){
   if(st==='已拒絕')return 'rejected';
   return 'pending';
 }
+// 我的紀錄最上面：逾期、3 天內要還、審核中，一眼看到要做什麼
+function myRecAlertsHtml(rows){
+  const today=new Date();today.setHours(0,0,0,0);
+  const day=s=>{const d=new Date(String(s||'')+'T00:00:00');return isNaN(d)?null:Math.round((d-today)/86400000);};
+  const md=s=>String(s||'').slice(5).replace('-','/');
+  const out=[],overdue=[],soon=[];
+  (rows||[]).forEach(r=>{
+    if(r.status!=='已核准'&&r.status!=='逾期')return;
+    const left=day(r.return_date);
+    if(r.status==='逾期'||(left!==null&&left<0))overdue.push(r);
+    else if(left!==null&&left<=3)soon.push({r,left});
+  });
+  const pending=(rows||[]).filter(r=>r.status==='待審核').length;
+  if(overdue.length)out.push(`<div class="rec-alert bad">🔴 有 <strong>${overdue.length}</strong> 筆已經超過歸還日，請盡快歸還（${overdue.map(r=>escH(md(r.return_date))).join('、')} 到期）</div>`);
+  if(soon.length)out.push(`<div class="rec-alert soon">⏰ 有 <strong>${soon.length}</strong> 筆快到期：${soon.map(x=>`${escH(md(x.r.return_date))}（${x.left===0?'今天':x.left+' 天後'}）`).join('、')}</div>`);
+  if(pending)out.push(`<div class="rec-alert wait">⏳ ${pending} 筆審核中，核准後就可以來領</div>`);
+  return out.length?`<div class="rec-alerts">${out.join('')}</div>`:'';
+}
+// ── 再借一次／修改後重新申請：把那筆申請的器材放回借用清單 ──
+function reborrowRecord(id){
+  const rec=(window._myRec?.rows||[]).find(r=>String(r.id)===String(id));
+  if(!rec){showToast('找不到這筆紀錄','error');return;}
+  const missing=[],reduced=[];let added=0;
+  (Array.isArray(rec.items)?rec.items:[]).forEach(it=>{
+    if(!it||!it.name)return;
+    const eq=(allEquipment||[]).find(e=>e.room===it.room&&e.name===it.name);
+    if(!eq){missing.push(it.name);return;}
+    let q=Math.max(1,parseInt(it.quantity)||1);
+    const key=eq.room+'__'+eq.name;
+    if(it.loose){
+      q=Math.min(q,LOOSE_MAX);
+      selectedItems[key]={room:eq.room,name:eq.name,spec:eq.spec||'',unit:eq.unit,quantity:q,loose:true,looseUnit:it.unit||'個'};
+    }else{
+      const avail=parseInt(eq.available)||0;
+      if(avail<=0){missing.push(it.name+'（目前借完了）');return;}
+      if(q>avail){reduced.push(`${it.name}（${q}→${avail}）`);q=avail;}
+      selectedItems[key]={room:eq.room,name:eq.name,spec:eq.spec||'',unit:eq.unit,quantity:q};
+    }
+    added++;
+  });
+  renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
+  if(!added){showModal('沒有可以放回的器材',`<p style="font-size:14px;line-height:1.7">這筆申請的器材目前都借不到或已下架：${missing.map(escH).join('、')||'（沒有器材）'}</p>`,[{label:'知道了',cls:'btn-primary',fn:'closeModal()'}]);return;}
+  if(missing.length||reduced.length){
+    showModal('已放回借用清單',`<p style="font-size:14px">放回了 <strong>${added}</strong> 項器材，借用日期和用途請重新選。</p>
+      ${reduced.length?`<p style="font-size:13px;margin-top:8px">數量調成目前可借的：${reduced.map(escH).join('、')}</p>`:''}
+      ${missing.length?`<p style="font-size:13px;margin-top:8px;color:var(--danger)">這些沒有放回：${missing.map(escH).join('、')}</p>`:''}
+      <p class="hint" style="font-size:12.5px;margin-top:8px">藥品要另外到「藥品查詢」加。</p>`,
+      [{label:'打開借用清單',cls:'btn-primary',fn:'closeModal();openCart()'}]);
+  }else{showToast(`已放回 ${added} 項器材，請重新選日期`,'success');openCart();}
+}
 function setRecFilter(f){if(window._myRec){window._myRec.filter=f;renderMyRecords();}}
 function renderMyRecords(){
   const d=window._myRec;if(!d)return;
@@ -4225,7 +4320,8 @@ function renderMyRecords(){
     list.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${d.studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;return;
   }
   const count=k=>k==='all'?all.length:all.filter(x=>x.b===k).length;
-  let html=`<div class="rec-tabs">${REC_TABS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>`<button type="button" class="${f===k?'active':''}" onclick="setRecFilter('${k}')">${l}<small>${count(k)}</small></button>`).join('')}</div>`;
+  let html=myRecAlertsHtml(d.rows);
+  html+=`<div class="rec-tabs">${REC_TABS.filter(([k])=>k==='all'||count(k)).map(([k,l])=>`<button type="button" class="${f===k?'active':''}" onclick="setRecFilter('${k}')">${l}<small>${count(k)}</small></button>`).join('')}</div>`;
   const pick=all.filter(x=>f==='all'||x.b===f);
   const br=pick.filter(x=>x.k==='b').map(x=>x.r),vr=pick.filter(x=>x.k==='v').map(x=>x.r);
   if(br.length)html+='<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px">器材借用記錄</div>'+renderRecordListHTML(br);
@@ -4259,8 +4355,21 @@ function renderRecordListHTML(rows){
         ${r.deposit_amount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.deposit_amount)||0}</span></div>`:''}
       </div>
       <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${escH(rn(i.room))} ${escH(i.name)} × ${parseInt(i.quantity)||0}${escH(i.unit||'')}${i.loose?`（從${escH(i.pack_unit||'盒')}裡拿）`:''}`).join('<br>')}</div>
-      ${r.note?`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${escH(r.note)}</div>`:''}
+      ${(()=>{
+        // 備註：拿掉系統標記（課綱備註），拒絕原因另外顯示
+        const raw=String(r.note||'');
+        const m=raw.match(/^【拒絕原因】([^\n]*)/);
+        const reason=m?m[1].trim():'';
+        const plain=raw.replace(/^【拒絕原因】[^\n]*\n?/,'').replace(/\[COURSE_NOTE\][\s\S]*?\[\/COURSE_NOTE\]/g,'').trim();
+        let h='';
+        if(r.status==='已拒絕')h+=`<div class="reject-box">❌ 沒有通過${reason?'：'+escH(reason):'，詳細原因可以詢問實驗室管理員'}</div>`;
+        if(plain)h+=`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${escH(plain)}</div>`;
+        return h;
+      })()}
       ${photosHtml}
+      ${items.length?`<div class="rec-card-actions">${r.status==='已拒絕'
+        ?`<button type="button" class="btn btn-primary btn-sm" onclick="reborrowRecord(${ja(r.id)})">✏️ 修改後重新申請</button>`
+        :`<button type="button" class="btn btn-secondary btn-sm" onclick="reborrowRecord(${ja(r.id)})">🔁 再借一次</button>`}</div>`:''}
     </div>`;
   }).join('')+'</div>';
 }
@@ -4511,6 +4620,7 @@ function showPage(page,opts){
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
   if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
+  if(page==='myrecords')autoLoadMyRecords();
   if(page==='floorplan'){
     floorplanHotspotsLoaded=false;
     if(!floorplanInitialized)showFloorplan(currentFloorplan,null);
