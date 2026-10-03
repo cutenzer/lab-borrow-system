@@ -875,6 +875,7 @@
         <input type="checkbox" id="eq-featured" style="width:auto">
         <label for="eq-featured" style="color:var(--text)">⭐ 精選展示（首頁輪播）</label>
       </div>
+      <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（填了前台就會提醒「借用前先詢問」，不是就留空）</label><input type="text" id="eq-restrict" maxlength="100" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
       <button class="btn btn-secondary" onclick="clearEquipForm()">清除</button>
@@ -1619,7 +1620,9 @@ function renderRecord(r,mode){
         }
       });
       let html='';
-      if(plainNote)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(plainNote)}</div>`;
+      {const eLines=plainNote.split('\n').filter(l=>l.startsWith('🎓'));const rest=plainNote.split('\n').filter(l=>!l.startsWith('🎓')).join('\n').trim();
+      if(rest)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(rest)}</div>`;
+      eLines.forEach(l=>{html+=`<div style="font-size:12.5px;color:#6b21a8;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:6px 10px;margin-top:6px">${escH(l)}</div>`;});}
       if(shared.length||chemicals.length||recycling.length){
         html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
         html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用課綱實驗）</div>`;
@@ -4348,7 +4351,7 @@ function equipAvailable(e){
 }
 function clearEquipForm(){
   editingEquipId=null;
-  ['eq-name','eq-spec','eq-location','eq-alias'].forEach(id=>document.getElementById(id).value='');
+  ['eq-name','eq-spec','eq-location','eq-alias','eq-restrict'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('eq-unit').value='個';
   document.getElementById('eq-total').value='0';
   document.getElementById('eq-room').value='Physics';
@@ -4431,6 +4434,7 @@ function renderInlineEditEquip(e){
       <div class="form-group"><label>耗材提醒</label>
         <select id="ie-consumable-${e.id}"><option value="" ${e.is_consumable!==true&&e.is_consumable!==false?'selected':''}>自動判斷</option><option value="true" ${e.is_consumable===true?'selected':''}>是耗材</option><option value="false" ${e.is_consumable===false?'selected':''}>非耗材</option></select>
       </div>
+      <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（留空＝一般器材）</label><input type="text" id="ie-restrict-${e.id}" maxlength="100" value="${escH(e.restricted_note||'')}" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">取消</button>
@@ -4450,7 +4454,8 @@ async function saveInlineEquip(id){
     alias:document.getElementById('ie-alias-'+id).value.trim()||null,
     is_available:document.getElementById('ie-available-'+id).checked,
     featured:document.getElementById('ie-featured-'+id).checked,
-    is_consumable:(v=>v===''?null:v==='true')(document.getElementById('ie-consumable-'+id).value)
+    is_consumable:(v=>v===''?null:v==='true')(document.getElementById('ie-consumable-'+id).value),
+    restricted_note:document.getElementById('ie-restrict-'+id).value.trim().slice(0,100)||null
   };
   try{
     await sb('PATCH','equipment',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
@@ -4472,7 +4477,8 @@ async function saveEquip(){
     alias:document.getElementById('eq-alias').value.trim()||null,
     is_available:document.getElementById('eq-available').checked,
     featured:document.getElementById('eq-featured').checked,
-    is_consumable:(v=>v===''?null:v==='true')(document.getElementById('eq-consumable').value)
+    is_consumable:(v=>v===''?null:v==='true')(document.getElementById('eq-consumable').value),
+    restricted_note:document.getElementById('eq-restrict').value.trim().slice(0,100)||null
   };
   try{
     if(editingEquipId){
@@ -4596,7 +4602,7 @@ function renderAdminEquipCard(e){
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div style="flex:1;min-width:0">
-          <div class="eq-name">${escH(e.name)} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
+          <div class="eq-name">${escH(e.name)} ${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">實點數量：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake(${ja(e.id)},this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
@@ -4605,6 +4611,7 @@ function renderAdminEquipCard(e){
             ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
+          ${e.restricted_note?`<div style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
           ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
