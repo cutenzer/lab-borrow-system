@@ -48,6 +48,28 @@
   .help-q{margin-left:auto;flex-shrink:0;width:24px;height:24px;border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
   .help-q[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:#fff;}
   .info-box.help-collapsed{display:none;}
+  /* 器材卡：誰在用、套組內容 */
+  .eq-usage{font-size:12px;margin-top:5px;padding:5px 9px;border-radius:6px;background:var(--surface2);color:var(--text);line-height:1.6;}
+  .eq-usage b{font-weight:600;}
+  .eq-usage .od{color:var(--danger);font-weight:600;}
+  .kit-badge{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#e0f2f1;color:#0f5c55;margin-left:4px;}
+  .kit-box{margin-top:5px;font-size:12px;color:var(--text2);}
+  .kit-box summary{cursor:pointer;color:var(--accent);font-weight:600;}
+  .kit-box ul{margin:4px 0 0;padding-left:18px;line-height:1.7;}
+  .kit-check{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);}
+  .kit-check label{display:flex;gap:8px;align-items:flex-start;font-size:13px;padding:3px 0;cursor:pointer;}
+  .kit-check input{width:17px;height:17px;flex-shrink:0;margin-top:1px;accent-color:var(--accent);}
+  /* 借出中追蹤 */
+  .loan-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--border);}
+  .loan-row:last-child{border-bottom:none;}
+  .loan-main{flex:1;min-width:0;font-size:13px;line-height:1.6;}
+  .loan-main .who{font-weight:700;font-size:14px;}
+  .loan-main .sub{color:var(--text2);font-size:12.5px;}
+  .loan-tag{display:inline-block;font-size:11px;font-weight:700;padding:0 7px;border-radius:9px;margin-left:4px;vertical-align:1px;}
+  .loan-tag.cross{background:#ede4ff;color:#5b2ea6;}
+  .loan-tag.od{background:#fdecea;color:#9a3226;}
+  .loan-acts{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+  .sem-end{padding:10px 12px;border-radius:8px;background:#fff7e6;border:1px solid #f5d39a;color:#7a4a00;font-size:13px;line-height:1.7;margin-bottom:10px;}
   /* 全部紀錄搜尋 */
   .rec-search{width:100%;margin:0 0 12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
@@ -480,7 +502,10 @@
   <div class="ov-head"><div><h2 class="ov-title" id="ovGreeting">總覽</h2><div class="ov-sub" id="ovDate"></div></div></div>
   <div class="stats-grid" id="statsGrid"></div>
   <div class="ov-grid">
+    <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card"><div class="card-title">📌 今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
+    <div class="card"><div class="card-title">📦 借出中追蹤</div><div id="ovLoan"></div></div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card"><div class="card-title" id="ovWeekTitle">🏛️ 本週實驗室使用</div><div id="ovWeek"></div><div class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去</div></div>
     <div class="card" id="backupCard"><div class="card-title">💾 資料備份</div>
@@ -906,6 +931,7 @@
         <label for="eq-featured" style="color:var(--text)">⭐ 精選展示（首頁輪播）</label>
       </div>
       <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（填了前台就會提醒「借用前先詢問」，不是就留空）</label><input type="text" id="eq-restrict" maxlength="100" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>📦 套組內容（整盒借出的實驗盒才填，一行一項；一般器材留空）</label><textarea id="eq-kit" rows="3" maxlength="2000" placeholder="例如：&#10;滴管 × 6&#10;培養皿 × 6&#10;鑷子 × 2"></textarea></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
       <button class="btn btn-secondary" onclick="clearEquipForm()">清除</button>
@@ -1266,6 +1292,7 @@ function renderOverview(){
   const bDays=lastB?Math.floor((Date.now()-lastB)/86400000):null;
   if(bDays===null||bDays>=30)rows.push({lv:'mute',t:bDays===null?'還沒有備份紀錄':`已經 ${bDays} 天沒備份`,s:'下載一份備份，萬一資料被誤刪還能救回來',tab:'__backup',b:'立即備份'});
   renderBackupInfo();
+  renderLoanTracker();
   todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
     :'<div class="empty" style="padding:24px 0"><div class="empty-icon">✅</div><p>今天沒有待處理的事項</p></div>';
   // 本週各實驗室使用節數
@@ -1606,6 +1633,87 @@ function renderList(records,container,mode){
   }
   container.innerHTML=bar+'<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
 }
+// ── 延長歸還日：跨學期繼續借的，改日期後會一直留在「借出中追蹤」直到歸還 ──
+function semesterRange(){
+  const ps=(activeSemester&&Array.isArray(activeSemester.periods))?activeSemester.periods:[];
+  const st=ps.map(p=>p.start_date).filter(Boolean).sort(),en=ps.map(p=>p.end_date).filter(Boolean).sort();
+  return st.length&&en.length?{start:st[0],end:en[en.length-1]}:null;
+}
+function addDaysStr(base,n){const d=new Date(String(base)+'T00:00:00');if(isNaN(d))return '';d.setDate(d.getDate()+n);return fmtDate(d);}
+function openExtendReturn(id){
+  const r=allRecords.find(x=>x.id===id);if(!r)return;
+  const today=fmtDate(new Date()),base=(r.returnDate&&r.returnDate>today)?r.returnDate:today;
+  const sem=semesterRange();
+  const quick=[['+1 週',addDaysStr(base,7)],['+1 個月',addDaysStr(base,30)]];
+  if(sem&&sem.end>today)quick.push(['到學期結束',sem.end]);
+  showModal('延長歸還日',`<p style="font-size:14px">${escH(r.name)}【${escH(r.purpose)}】原本 ${escH(r.returnDate||'未填')} 歸還</p>
+    <div class="reason-chips" style="margin-top:10px">${quick.map(([t,d])=>`<button type="button" onclick="document.getElementById('extDate').value='${d}'">${t}（${mdShort(d)}）</button>`).join('')}</div>
+    <div class="form-group" style="margin-top:10px"><label>新的歸還日</label><input type="date" id="extDate" value="${escH(base)}" min="${escH(today)}"></div>
+    <p class="hint" style="font-size:12px;color:var(--text2);margin-top:6px">會在管理員備註留下一行延長紀錄；跨學期的單會一直留在總覽的「借出中追蹤」，直到歸還。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確定延長',cls:'btn-primary',fn:`doExtendReturn(${ja(id)})`}]);
+}
+async function doExtendReturn(id){
+  const r=allRecords.find(x=>x.id===id);if(!r)return;
+  const v=(document.getElementById('extDate')?.value||'').trim(),today=fmtDate(new Date());
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||isNaN(new Date(v+'T00:00:00'))){showToast('請選日期','error');return;}
+  if(v<today){showToast('新的歸還日不能早於今天','error');return;}
+  closeModal();
+  const log=`📅 ${today} 延長歸還日：${r.returnDate||'未填'} → ${v}`;
+  const body={return_date:v,admin_note:((r.adminNote?r.adminNote+'\n':'')+log).slice(-1000)};
+  if(r.status==='逾期')body.status='已核准';
+  try{
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(id)+'&status=in.(已核准,逾期)',body,prefer:'return=minimal'});
+    showToast('已延長到 '+mdShort(v),'success');loadAll();
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+// ── 總覽：借出中追蹤（跨學期的排最前面，直到歸還）＋學期收尾 ──
+function renderLoanTracker(){
+  const box=document.getElementById('ovLoan');if(!box)return;
+  if(!activeSemester&&!window._semTried){window._semTried=true;loadActiveSemester().then(renderLoanTracker).catch(()=>{});}
+  const today=fmtDate(new Date()),sem=semesterRange();
+  const out=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期');
+  const isCross=r=>sem?(r.borrowDate&&r.borrowDate<sem.start):(r.borrowDate&&r.borrowDate<addDaysStr(today,-120));
+  const daysSince=d=>{const x=new Date(String(d)+'T00:00:00');return isNaN(x)?0:Math.floor((new Date(today+'T00:00:00')-x)/86400000);};
+  out.sort((a,b)=>(isCross(b)-isCross(a))||((b.status==='逾期')-(a.status==='逾期'))||String(a.returnDate||'9').localeCompare(String(b.returnDate||'9')));
+  const cross=out.filter(isCross).length,od=out.filter(r=>r.status==='逾期').length;
+  const depOut=allRecords.filter(r=>(r.depositStatus==='待退還'||r.depositStatus==='損壞-照價賠償')&&r.depositAmount>0).length;
+  const depIn=allRecords.filter(r=>r.depositStatus==='待繳納'&&r.depositAmount>0).length;
+  let h='';
+  // 學期最後 3 週（或學期已結束）出現收尾提醒
+  if(sem&&today>=addDaysStr(sem.end,-21)){
+    h+=`<div class="sem-end">🗓️ 本學期 ${escH(mdShort(sem.end))} 結束${today>sem.end?'（已結束）':''}：還有 <b>${out.length}</b> 筆未歸還、保證金待退 <b>${depOut}</b> 筆、待收 <b>${depIn}</b> 筆。<br>要延到下學期的，在那筆的「⋯」選「延長歸還日」，會繼續追蹤到拿回來。</div>`;
+  }
+  h+=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin-bottom:6px"><span>借出中 <b style="color:var(--text)">${out.length}</b> 筆${od?`・逾期 <b style="color:var(--danger)">${od}</b>`:''}${cross?`・跨學期 <b style="color:#5b2ea6">${cross}</b>`:''}</span>
+    ${out.length?`<button type="button" class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="exportLoanList()">下載未歸還清單</button>`:''}</div>`;
+  if(!out.length){box.innerHTML=h+'<div class="empty" style="padding:16px 0"><p>目前沒有借出中的器材</p></div>';return;}
+  h+=out.slice(0,8).map(r=>{
+    const items=(r.items||[]).map(i=>`${i.name}×${parseInt(i.quantity)||0}`);
+    return `<div class="loan-row"><div class="loan-main"><span class="who">${escH(r.name)}</span>${r.role==='學生'&&r.studentId?`<span class="sub">（${escH(r.studentId)}）</span>`:''}
+      ${isCross(r)?`<span class="loan-tag cross">跨學期・已借 ${daysSince(r.borrowDate)} 天</span>`:''}${r.status==='逾期'?'<span class="loan-tag od">逾期</span>':''}
+      <div class="sub">【${escH(r.purpose)}】${escH(r.borrowDate||'')} 借出・${r.status==='逾期'?'應於':'預計'} ${escH(r.returnDate||'─')} 歸還</div>
+      <div>${escH(items.slice(0,4).join('、'))}${items.length>4?` 等 ${items.length} 項`:''}</div></div>
+      <div class="loan-acts"><button type="button" class="btn btn-secondary btn-sm" onclick="openExtendReturn(${ja(r.id)})">延長</button></div></div>`;
+  }).join('');
+  if(out.length>8)h+=`<div style="text-align:center;margin-top:8px"><button type="button" class="btn btn-secondary btn-sm" onclick="showTab('return')">看全部 ${out.length} 筆（確認歸還）</button></div>`;
+  box.innerHTML=h;
+}
+function exportLoanList(){
+  if(typeof XLSX==='undefined'){showToast('Excel 元件還沒載入，請稍後再試','error');return;}
+  const sem=semesterRange();
+  const rows=allRecords.filter(r=>r.status==='已核准'||r.status==='逾期').map(r=>({
+    '單號':r.id,'姓名':r.name,'身分':r.role||'','學號':r.studentId||'','目的':r.purpose||'',
+    '借出日':r.borrowDate||'','應還日':r.returnDate||'','狀態':r.status,
+    '跨學期':sem&&r.borrowDate&&r.borrowDate<sem.start?'是':'',
+    '器材':(r.items||[]).map(i=>`${i.name}×${parseInt(i.quantity)||0}`).join('、'),
+    '保證金':r.depositAmount>0?`${r.depositAmount}（${r.depositStatus||''}）`:'',
+    '管理員備註':r.adminNote||''
+  }));
+  // 避免儲存格被 Excel 當成公式執行（= + - @ 開頭）
+  rows.forEach(o=>Object.keys(o).forEach(k=>{if(typeof o[k]==='string'&&/^[=+\-@]/.test(o[k]))o[k]="'"+o[k];}));
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'未歸還');
+  XLSX.writeFile(wb,'未歸還清單_'+fmtDate(new Date())+'.xlsx');
+}
 // ── 批次核准：勾選幾筆後一次核准（拒絕仍要一筆一筆來，因為要寫原因）──
 const batchSel=new Set();
 function batchToggle(id,on){
@@ -1705,6 +1813,7 @@ function renderRecord(r,mode){
     if(actions)more.push({label:'📄 匯出表單',fn:exp});
     else actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">匯出表單</button>`;
   }
+  if(r.status==='已核准'||r.status==='逾期')more.push({label:'📅 延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
   more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
   more.push('hr');
   more.push({label:'🗑️ 刪除這筆',fn:`deleteBorrowRecord(${ja(r.id)})`,danger:true});
@@ -3128,7 +3237,13 @@ async function doDeleteBorrowRecord(id){
   }catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
 
-function confirmReturn(id){showModal('確認完整歸還',`<p>確認器材完整歸還？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn('${id}',false,'',0)`}]);}
+function confirmReturn(id){
+  const rec=allRecords.find(r=>r.id===id);
+  // 套組：列出盒內清單讓你對照點收（只是對照用，不會擋）
+  const kits=(rec&&rec.items||[]).map(it=>({it,e:allEquipment.find(e=>e.room===it.room&&e.name===it.name)})).filter(x=>x.e&&kitLines(x.e).length);
+  const kitHtml=kits.map(x=>`<div class="kit-check"><div style="font-size:13px;font-weight:700;margin-bottom:4px">📦 ${escH(x.it.name)} × ${parseInt(x.it.quantity)||1}：盒內點收</div>${kitLines(x.e).map(l=>`<label><input type="checkbox">${escH(l)}</label>`).join('')}</div>`).join('');
+  showModal('確認完整歸還',`<p>確認器材完整歸還？</p>${kitHtml}${kits.length?'<p class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">盒內有缺的話，請改按「損壞歸還」記下來。</p>':''}`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn(${ja(id)},false,'',0)`}]);
+}
 function openDamageModal(id){
   const record=allRecords.find(r=>r.id===id);const items=record?.items||[];
   showModal('⚠️ 損壞歸還',`
@@ -3149,7 +3264,7 @@ function calcDamage(deposit){const items=window._dmgItems||[];let total=0;items.
 async function doReturn(id,damaged,damageNote,depositAmount){
   closeModal();
   try{
-    const today=new Date().toISOString().split('T')[0];
+    const today=fmtDate(new Date()); // 台灣本地日期（toISOString 是 UTC，早上 8 點前會記成前一天）
     const items=window._dmgItems||[];let comp=0;const lost={};
     if(damaged)items.forEach((item,i)=>{
       const q=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0;
@@ -4492,7 +4607,7 @@ function equipAvailable(e){
 }
 function clearEquipForm(){
   editingEquipId=null;
-  ['eq-name','eq-spec','eq-location','eq-alias','eq-restrict'].forEach(id=>document.getElementById(id).value='');
+  ['eq-name','eq-spec','eq-location','eq-alias','eq-restrict','eq-kit'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('eq-unit').value='個';
   document.getElementById('eq-total').value='0';
   document.getElementById('eq-room').value='Physics';
@@ -4576,6 +4691,7 @@ function renderInlineEditEquip(e){
         <select id="ie-consumable-${e.id}"><option value="" ${e.is_consumable!==true&&e.is_consumable!==false?'selected':''}>自動判斷</option><option value="true" ${e.is_consumable===true?'selected':''}>是耗材</option><option value="false" ${e.is_consumable===false?'selected':''}>非耗材</option></select>
       </div>
       <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（留空＝一般器材）</label><input type="text" id="ie-restrict-${e.id}" maxlength="100" value="${escH(e.restricted_note||'')}" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>📦 套組內容（一行一項；一般器材留空）</label><textarea id="ie-kit-${e.id}" rows="3" maxlength="2000" placeholder="滴管 × 6">${escH(e.kit_contents||'')}</textarea></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">取消</button>
@@ -4596,11 +4712,44 @@ async function saveInlineEquip(id){
     is_available:document.getElementById('ie-available-'+id).checked,
     featured:document.getElementById('ie-featured-'+id).checked,
     is_consumable:(v=>v===''?null:v==='true')(document.getElementById('ie-consumable-'+id).value),
-    restricted_note:document.getElementById('ie-restrict-'+id).value.trim().slice(0,100)||null
+    restricted_note:document.getElementById('ie-restrict-'+id).value.trim().slice(0,100)||null,
+    kit_contents:cleanKitText(document.getElementById('ie-kit-'+id).value)
   };
+  // 改了名稱或房間：還沒歸還／還在審核的單是用「房間＋名稱」記器材的，要一起處理，不然庫存會對不上
+  const old=allEquipment.find(x=>String(x.id)===String(id));
+  if(old&&(old.name!==body.name||old.room!==body.room)){
+    const refs=activeRecordsUsing(old.room,old.name);
+    if(refs.length){
+      window._pendingEquipEdit={id,body,old:{room:old.room,name:old.name}};
+      showModal('這項器材還在借用中',`<p style="font-size:14px;line-height:1.7">「${escH(old.name)}」還有 <strong>${refs.length}</strong> 筆申請中或借出中的單：</p>
+        <div style="font-size:13px;line-height:1.8;margin:6px 0 10px">${refs.slice(0,8).map(r=>'・'+escH(r.name)+'【'+escH(r.status)+'】').join('<br>')}${refs.length>8?'<br>…':''}</div>
+        <p style="font-size:13px;line-height:1.7">系統是用「房間＋名稱」對應這些單的。只改器材、不改單，這些單會對不上，可借數量會算錯。</p>`,
+        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+         {label:'只改器材',cls:'btn-secondary',fn:'confirmEquipEdit(false)'},
+         {label:'連同這些單一起改',cls:'btn-primary',fn:'confirmEquipEdit(true)'}]);
+      return;
+    }
+  }
+  await doSaveInlineEquip(id,body);
+}
+async function confirmEquipEdit(updateRecords){
+  const p=window._pendingEquipEdit;closeModal();if(!p)return;
+  window._pendingEquipEdit=null;
+  await doSaveInlineEquip(p.id,p.body,updateRecords?p.old:null);
+}
+async function doSaveInlineEquip(id,body,renameFrom){
   try{
-    await sb('PATCH','equipment',{filter:'id=eq.'+id,body,prefer:'return=minimal'});
-    showToast('已更新','success');
+    await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(id),body,prefer:'return=minimal'});
+    if(renameFrom){
+      const refs=activeRecordsUsing(renameFrom.room,renameFrom.name);let n=0;
+      for(const r of refs){
+        const items=(r.items||[]).map(it=>(it&&it.room===renameFrom.room&&it.name===renameFrom.name)?Object.assign({},it,{room:body.room,name:body.name}):it);
+        try{await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(r.id),body:{items},prefer:'return=minimal'});n++;}catch(_){}
+      }
+      showToast(`已更新器材，並同步 ${n} 筆借用單`,'success');
+      loadAll();
+    }
+    else showToast('已更新','success');
     inlineEditEquipId=null;
     loadAdminEquipment();
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
@@ -4619,7 +4768,8 @@ async function saveEquip(){
     is_available:document.getElementById('eq-available').checked,
     featured:document.getElementById('eq-featured').checked,
     is_consumable:(v=>v===''?null:v==='true')(document.getElementById('eq-consumable').value),
-    restricted_note:document.getElementById('eq-restrict').value.trim().slice(0,100)||null
+    restricted_note:document.getElementById('eq-restrict').value.trim().slice(0,100)||null,
+    kit_contents:cleanKitText(document.getElementById('eq-kit').value)
   };
   try{
     if(editingEquipId){
@@ -4635,9 +4785,17 @@ async function saveEquip(){
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
 }
 function deleteEquip(id){
+  const e=allEquipment.find(x=>String(x.id)===String(id));
+  const refs=e?activeRecordsUsing(e.room,e.name):[];
+  if(refs.length){
+    showModal('這項器材還在借用中',`<p style="font-size:14px;line-height:1.7">「${escH(e.name)}」還有 <strong>${refs.length}</strong> 筆申請中或借出中的單，現在刪除，那些單會找不到這項器材。</p>
+      <p style="font-size:13px;line-height:1.7;margin-top:8px">建議等歸還後再刪；不想讓人再借的話，可以先到「編輯」取消勾選「開放借用」。</p>`,
+      [{label:'知道了',cls:'btn-primary',fn:'closeModal()'}]);
+    return;
+  }
   showModal('確認刪除',`<p>確定刪除這筆器材資料嗎？此操作無法復原。</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteEquip('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteEquip(${ja(id)})`}
   ]);
 }
 async function doDeleteEquip(id){
@@ -4732,6 +4890,34 @@ function filterAdminEquip(){
   }).join('')+'</div>'+pager;
   renderFeaturedList();
 }
+// ── 器材相關小工具 ──
+const ACTIVE_ST=['待審核','已核准','逾期'];
+function activeRecordsUsing(room,name){
+  return (allRecords||[]).filter(r=>ACTIVE_ST.includes(r.status)&&(r.items||[]).some(it=>it&&it.room===room&&it.name===name));
+}
+function cleanKitText(v){
+  const lines=String(v||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,60).map(x=>x.slice(0,80));
+  return lines.length?lines.join('\n'):null;
+}
+function kitLines(e){return String(e&&e.kit_contents||'').split('\n').map(x=>x.trim()).filter(Boolean);}
+function mdShort(d){const m=String(d||'').match(/^\d{4}-(\d{2})-(\d{2})/);return m?`${+m[1]}/${+m[2]}`:'';}
+// 器材卡上的「誰在用」：方便知道找誰、協調輪流使用
+function equipUsageHtml(e){
+  const lent=[],wait=[];
+  (allRecords||[]).forEach(r=>{
+    if(!ACTIVE_ST.includes(r.status))return;
+    const q=(r.items||[]).filter(it=>it&&it.room===e.room&&it.name===e.name).reduce((a,it)=>a+(parseInt(it.quantity)||0),0);
+    if(!q)return;
+    (r.status==='待審核'?wait:lent).push({r,q});
+  });
+  if(!lent.length&&!wait.length)return '';
+  lent.sort((a,b)=>String(a.r.returnDate||'9').localeCompare(String(b.r.returnDate||'9')));
+  const who=x=>`<b>${escH(x.r.name)}</b>${x.r.role==='學生'&&x.r.studentId?'（'+escH(x.r.studentId)+'）':''} ×${x.q}`;
+  let h='';
+  if(lent.length)h+='📌 借用中：'+lent.map(x=>`${who(x)} ${x.r.status==='逾期'?`<span class="od">已逾期（${escH(mdShort(x.r.returnDate))}）</span>`:'到 '+escH(mdShort(x.r.returnDate))}`).join('、');
+  if(wait.length)h+=(h?'<br>':'')+'⏳ 申請中：'+wait.map(x=>`${who(x)}（${escH(mdShort(x.r.borrowDate))} 起）`).join('、');
+  return `<div class="eq-usage">${h}</div>`;
+}
 function renderAdminEquipCard(e){
     if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
@@ -4743,7 +4929,7 @@ function renderAdminEquipCard(e){
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div style="flex:1;min-width:0">
-          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
+          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">📦 套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">實點數量：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake(${ja(e.id)},this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
@@ -4753,6 +4939,8 @@ function renderAdminEquipCard(e){
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
           ${e.restricted_note?`<div style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
+          ${kitLines(e).length?`<details class="kit-box"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
+          ${equipUsageHtml(e)}
           ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
