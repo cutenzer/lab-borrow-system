@@ -1356,7 +1356,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03i';
+const ADMIN_VERSION='2026-10-03j';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3838,6 +3838,7 @@ let allAdminChems = [], editingChemId = null;
 // 每個藥品櫃：5 層（由上往下）× 14 排（1 在最右邊；右門 1～7、左門 8～14）
 // 位置資料在 chem_locations 表：一種藥品可以有好幾個位置，各自記瓶數
 const CAB_CN=['','一','二','三','四'];
+// 櫃子按鈕照進門看到的位置排：第一櫃在最右邊（跟櫃內的「排」一樣，從右邊開始數）
 function cabCode(l){return `${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}`;}
 function cabText(l){return `第${CAB_CN[l.cab]}櫃・${l.layer} 層・${l.col} 排`;}
 function cabDoor(col){return col<=7?'右門':'左門';}
@@ -3894,7 +3895,7 @@ function makeCabUI(rootId,opts){
   ui.render=()=>{
     const r=root();if(!r)return;const st=ui.state;
     r.innerHTML=`<div class="cab-ui">${routeHtml()}
-      <div class="cab-tabs">${[1,2,3,4].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃</button>`).join('')}</div>
+      <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃</button>`).join('')}</div>
       <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div></div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
