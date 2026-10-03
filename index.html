@@ -769,6 +769,10 @@
   }
   /* 我的記錄：分類按鈕 */
   .rec-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 12px;}
+  .eq-tag.kit{background:#e0f2f1;color:#0f5c55;font-weight:700;}
+  .eq-tag.next{background:#fff4e0;color:#8a4b08;}
+  .kit-list{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);font-size:13.5px;line-height:1.7;}
+  .kit-list ul{margin:4px 0 0;padding-left:20px;}
   /* 我的紀錄：最上面的提醒摘要 */
   .rec-alerts{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;}
   .rec-alert{padding:9px 12px;border-radius:10px;font-size:13.5px;line-height:1.6;word-break:normal;overflow-wrap:anywhere;}
@@ -1922,6 +1926,7 @@ function renderEquipDetail(){
     <div class="hint" style="margin-top:2px">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">${pill}${loc}</div>
     ${electiveBoxHtml(e.room,e.name)}
+    ${kitLinesOf(e).length?`<div class="kit-list"><strong>📦 整盒借出，盒內有：</strong><ul>${kitLinesOf(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:''}
     ${getBorrowerInfo(e.name,e.room)}
     <div style="margin-top:14px">${action}</div>`;
 }
@@ -3305,10 +3310,19 @@ function fitInlineVenue(){
 }
 
 // ── 搜尋 ──────────────────────────────────────────────────
+// 套組（實驗盒）內容：一行一項
+function kitLinesOf(e){return String(e&&e.kit_contents||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,60);}
+function md(d){const m=String(d||'').match(/^\d{4}-(\d{2})-(\d{2})/);return m?`${+m[1]}/${+m[2]}`:'';}
+// 這項器材最早什麼時候會還（借完的時候顯示，讓人知道要等多久）
+function nextReturnDate(name,room){
+  const ds=activeBorrowRecords.filter(r=>(r.status==='已核准'||r.status==='逾期')&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room&&!i.loose))
+    .map(r=>String(r.return_date||'')).filter(d=>/^\d{4}-\d{2}-\d{2}/.test(d)).sort();
+  return ds[0]||'';
+}
 function getBorrowerInfo(name,room){
   const active=activeBorrowRecords.filter(r=>(r.status==='已核准'||r.status==='逾期')&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
   if(!active.length)return '';
-  return active.map(r=>`<div class="borrower-tag">📌 ${escH(r.borrower_name)} 借用中</div>`).join('');
+  return active.map(r=>`<div class="borrower-tag">📌 ${escH(r.borrower_name)} 借用中${r.return_date?`（${r.status==='逾期'?'已逾期，原訂':'預計'} ${escH(md(r.return_date))} 還）`:''}</div>`).join('');
 }
 
 // ── 照片上傳（備註用，主表單與購物車快速送出共用）──────────
@@ -3633,7 +3647,7 @@ function renderCart(){
     const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
     const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">📍${escH(equip.location)}</span>`:'';
     return `<div class="cart-item">${imgHtml}
-      <div class="cart-item-info"><div class="cart-item-name ${equip?.location?'sr-link':''}" ${equip?.location?`onclick="cartItemLoc(${idx})" title="點我看平面圖位置"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}</div>
+      <div class="cart-item-info"><div class="cart-item-name ${equip?.location?'sr-link':''}" ${equip?.location?`onclick="cartItemLoc(${idx})" title="點我看平面圖位置"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">📦 套組・${k.length} 項</span>`:'';})()}</div>
         ${isPackUnit(i.unit)?`<div class="loose-toggle" role="group" aria-label="借用方式">
           <button type="button" class="${i.loose?'':'on'}" onclick="cartSetLoose(${idx},false)">整${escH(i.unit)}借</button>
           <button type="button" class="${i.loose?'on':''}" onclick="cartSetLoose(${idx},true)">只拿幾個</button></div>`:''}</div>
@@ -3713,7 +3727,7 @@ async function loadEquipmentData(){
     const mapped=rows.filter(r=>r.is_available!==false).map(r=>{
       const total=parseInt(r.total)||0,borrowed=borrowedMap[r.room+'__'+r.name]||0;
       return {id:r.id,room:r.room,name:r.name,spec:r.spec||'',total,
-        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||'',alias:r.alias||'',featured:r.featured===true,is_consumable:(r.is_consumable===true||r.is_consumable===false)?r.is_consumable:null,restricted_note:String(r.restricted_note||'').trim().slice(0,100)};
+        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||'',alias:r.alias||'',featured:r.featured===true,is_consumable:(r.is_consumable===true||r.is_consumable===false)?r.is_consumable:null,restricted_note:String(r.restricted_note||'').trim().slice(0,100),kit_contents:String(r.kit_contents||'').slice(0,2000)};
     });
     allEquipment=mapped;allEquipBrowse=mapped;
     allRooms=[...new Set(rows.map(r=>r.room))];
@@ -4210,6 +4224,15 @@ function forgetMe(){
   if(list)list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div>';
   updateForgetBtn();showToast('已清除這台裝置記住的資料','success');
 }
+// 借用表單：姓名、學號空著的話，帶入「我的紀錄」記住的資料
+function prefillBorrowIdentity(){
+  const v=getSavedIdentity();if(!v)return;
+  const n=document.getElementById('f-name'),sid=document.getElementById('f-student-id');
+  let done=false;
+  if(n&&!n.value.trim()){n.value=v.n;done=true;}
+  if(sid&&v.s&&!sid.value.trim()){sid.value=v.s;done=true;}
+  if(done)showToast('已帶入這台裝置記住的姓名'+(v.s?'和學號':''));
+}
 function autoLoadMyRecords(){
   const v=getSavedIdentity();updateForgetBtn();
   if(!v||window._myRec)return;
@@ -4548,6 +4571,8 @@ function renderEquipBrowse(items){
     if(userHomeLab&&e.room!==userHomeLab)tags.push('<span class="eq-tag">跨科</span>');
     if(avail>0&&isLowStock(e,avail))tags.push('<span class="eq-tag warn">庫存不足</span>');
     if(e.restricted_note)tags.push(electiveTagHtml(e.room,e.name));
+    if(e.kit_contents)tags.push(`<span class="eq-tag kit" title="整盒借出，內含 ${kitLinesOf(e).length} 項">📦 套組</span>`);
+    if(avail<=0&&total>0){const nr=nextReturnDate(e.name,e.room);if(nr)tags.push(`<span class="eq-tag next">最早 ${escH(md(nr))} 還</span>`);}
     const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">📍${escH(e.location)}</span>`:'';
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
@@ -4621,6 +4646,7 @@ function showPage(page,opts){
   if(page==='venue')loadVenue();
   if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
   if(page==='myrecords')autoLoadMyRecords();
+  if(page==='borrow')prefillBorrowIdentity();
   if(page==='floorplan'){
     floorplanHotspotsLoaded=false;
     if(!floorplanInitialized)showFloorplan(currentFloorplan,null);
