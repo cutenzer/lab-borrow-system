@@ -275,6 +275,43 @@
   .photo-viewer .pv-close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;}
   .bp-thumb.bp-bad .bp-fallback{display:flex;width:60px;height:60px;align-items:center;justify-content:center;text-align:center;font-size:10.5px;line-height:1.25;color:var(--text2);background:var(--surface2);border:1px dashed var(--border);border-radius:6px;}
   .qa-photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+  /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
+  .cab-ui{margin-top:4px;}
+  #chemCabView,#adminChemCab{scroll-margin-top:84px;}
+  .cab-route{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:12px;}
+  .cab-route .nm{font-size:18px;font-weight:700;line-height:1.35;}
+  .cab-route .cnt{font-size:13px;color:var(--text2);}
+  .cab-steps{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px;}
+  .cab-step{background:#f2c94c;color:#3d2f00;font-weight:700;font-size:14px;border-radius:9px;padding:4px 9px;}
+  .cab-arrow{color:var(--text2);font-size:13px;}
+  .cab-also{margin-top:8px;font-size:12.5px;color:var(--text2);}
+  .cab-also button{border:1px solid var(--border);background:var(--surface2);color:var(--text);font:inherit;font-size:12.5px;border-radius:12px;padding:2px 9px;margin:4px 4px 0 0;cursor:pointer;}
+  .cab-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+  .cab-tabs button{height:38px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font:inherit;font-size:14.5px;cursor:pointer;}
+  .cab-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+  .cab-front{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 8px 6px;}
+  .cab-front svg{display:block;width:100%;height:auto;}
+  .cab-front .cap{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text2);padding:2px 6px 0;}
+  .cab-cell{cursor:pointer;}
+  .cab-layers{display:flex;align-items:center;gap:6px;margin:12px 0 8px;}
+  .cab-layers span{font-size:13.5px;color:var(--text2);}
+  .cab-layers button{flex:1;height:34px;border-radius:9px;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font:inherit;font-size:14.5px;cursor:pointer;}
+  .cab-layers button.on{background:var(--text);border-color:var(--text);color:var(--surface);font-weight:700;}
+  .cab-shelf{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2px 12px 8px;}
+  .cab-door{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text2);padding:9px 0 2px;}
+  .cab-row{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--surface2);}
+  .cab-row .no{flex:0 0 32px;font-size:12.5px;color:var(--text2);padding-top:4px;}
+  .cab-row.sel{background:#fbf3d6;margin:0 -12px;padding:7px 12px;border-radius:9px;border-top-color:transparent;}
+  .cab-row.sel .no{color:#7a5c00;font-weight:700;}
+  .cab-chips{display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0;}
+  .cab-chip{border:none;font:inherit;font-size:13.5px;line-height:1.4;padding:4px 9px;border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;text-align:left;}
+  .cab-chip i{font-style:normal;color:var(--text2);font-size:11.5px;margin-left:3px;}
+  .cab-chip.hit{background:#f2c94c;color:#3d2f00;font-weight:700;}
+  .cab-chip.hit i{color:#3d2f00;}
+  .cab-empty{font-size:12.5px;color:var(--text2);padding-top:4px;}
+  .cab-add{flex-shrink:0;border:1px dashed var(--border);background:none;color:var(--accent);border-radius:8px;font:inherit;font-size:13px;padding:3px 9px;cursor:pointer;}
+  .chem-loc-chip{display:inline-block;border:1px solid var(--border);background:var(--surface);color:var(--accent);border-radius:12px;padding:1px 8px;margin:2px 4px 2px 0;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap;}
+  .cab-move{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .admin-note{margin-top:8px;padding:8px 10px;border-radius:8px;background:#fffbea;border:1px solid #f1dc8a;font-size:12.5px;white-space:pre-wrap;word-break:break-word;}
   .proxy-badge{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:600;color:#27406b;background:#eef4ff;border:1px solid #c7d7f5;border-radius:10px;padding:2px 8px;}
   .dep-lbl{font-size:12.5px;color:var(--text2);}
@@ -733,6 +770,17 @@
 </div>
 
 <div id="panel-chemicals" class="panel">
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🗄️ 藥品櫃</div>
+    <div class="info-box">點格子看內容；每一排右邊的「＋」可以直接加藥品；點藥品可以改瓶數、容量，或「搬到」別的位置。改完前台馬上看得到，藥品清單的瓶數和位置也會自動跟著更新。</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📥 匯入櫃位 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemCabXlsx(this)"></label>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="printChemCabinet()">🖨️ 列印這一櫃（貼門上）</button>
+    </div>
+    <div class="hint" id="chemCabMsg"></div>
+    <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
+  </div>
+
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📥 批次匯入（貼上 CSV）</div>
     <div class="info-box">從 Google Sheet 複製資料（含標題列）貼到下方，格式：中文名稱、英文名稱、位置、分類、剩餘瓶數、藥品回收、附註</div>
@@ -3482,13 +3530,305 @@ async function doDeleteTemplate(id){
   // ── 藥品管理 ────────────────────────────────────────────
 let allAdminChems = [], editingChemId = null;
 
+// ── 藥品櫃元件（前台查詢、後台編輯共用）────────────────────
+// 每個藥品櫃：5 層（由上往下）× 14 排（1 在最右邊；右門 1～7、左門 8～14）
+// 位置資料在 chem_locations 表：一種藥品可以有好幾個位置，各自記瓶數
+const CAB_CN=['','一','二','三','四'];
+function cabCode(l){return `${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}`;}
+function cabText(l){return `第${CAB_CN[l.cab]}櫃・${l.layer} 層・${l.col} 排`;}
+function cabDoor(col){return col<=7?'右門':'左門';}
+function makeCabUI(rootId,opts){
+  const ui={state:{cab:1,L:1,col:null,locId:null},opts};
+  const root=()=>document.getElementById(rootId);
+  const locs=()=>opts.getLocs()||[];
+  const chem=id=>opts.getChem(id);
+  const cellLocs=(cab,L,col)=>locs().filter(l=>l.cab===cab&&l.layer===L&&l.col===col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));
+  ui.select=(cab,L,col,locId)=>{Object.assign(ui.state,{cab,L,col,locId:locId??null});ui.render();};
+  ui.selectLoc=(locId,scroll)=>{
+    const l=locs().find(x=>String(x.id)===String(locId));if(!l)return;
+    ui.select(l.cab,l.layer,l.col,l.id);
+    if(scroll){const r=root();if(r)r.scrollIntoView({behavior:'smooth',block:'start'});}
+  };
+  function routeHtml(){
+    const st=ui.state;if(st.col==null)return '';
+    const steps=`<div class="cab-steps"><span class="cab-step">第${CAB_CN[st.cab]}櫃</span><span class="cab-arrow">→</span><span class="cab-step">${cabDoor(st.col)}</span><span class="cab-arrow">→</span><span class="cab-step">第 ${st.L} 層</span><span class="cab-arrow">→</span><span class="cab-step">右數第 ${st.col} 排</span></div>`;
+    const here=cellLocs(st.cab,st.L,st.col);
+    const sel=here.find(l=>String(l.id)===String(st.locId));
+    if(sel){
+      const c=chem(sel.chem_id),name=c?c.name_zh:'（已刪除的藥品）';
+      const others=locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id);
+      return `<div class="cab-route"><div class="nm">${escH(name)}</div><div class="cnt">這一格 ${parseInt(sel.bottles)||0} 瓶${sel.capacity?'・'+escH(sel.capacity):''}${sel.note?'・'+escH(sel.note):''}</div>${steps}
+        ${others.length?`<div class="cab-also">其他位置也有：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}</div>`;
+    }
+    return `<div class="cab-route"><div class="nm">第${CAB_CN[st.cab]}櫃・第 ${st.L} 層・第 ${st.col} 排</div><div class="cnt">${here.length?here.map(l=>escH(chem(l.chem_id)?.name_zh||'?')+((parseInt(l.bottles)||0)>1?' ×'+l.bottles:'')).join('、'):'這一格目前是空的'}</div>${steps}</div>`;
+  }
+  function frontSvg(){
+    const st=ui.state,top=6,H=40,W=(170-6)/7;let h='';
+    h+=`<rect x="1" y="1" width="338" height="${top+5*H+2}" rx="8" fill="none" stroke="var(--text2)" stroke-width="1.5"/><line x1="170" y1="1" x2="170" y2="${top+5*H+3}" stroke="var(--text2)" stroke-width="1.5"/>`;
+    for(let L=1;L<=5;L++){
+      const y=top+(L-1)*H;
+      h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
+      for(let c=1;c<=14;c++){
+        const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);
+        const has=cellLocs(st.cab,L,c).length>0,sel=st.L===L&&st.col===c;
+        h+=`<rect class="cab-cell" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(has?'#c9bfa9':'var(--surface2)')}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':''}><title>第${L}層 第${c}排</title></rect>`;
+      }
+      h+=`<text x="7" y="${y+16}" font-size="10" fill="var(--text2)" pointer-events="none">${L}</text>`;
+    }
+    for(let c=1;c<=14;c++){const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);h+=`<text x="${(x+W/2).toFixed(1)}" y="${top+5*H+16}" text-anchor="middle" font-size="10" fill="var(--text2)">${c}</text>`;}
+    return `<svg viewBox="0 0 340 222" role="img" aria-label="第${CAB_CN[st.cab]}櫃正面圖">${h}</svg>`;
+  }
+  function shelfHtml(){
+    const st=ui.state;
+    const row=c=>{
+      const items=cellLocs(st.cab,st.L,c),sel=st.col===c;
+      const chips=items.length?items.map(l=>{const cc=chem(l.chem_id);const n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip ${String(st.locId)===String(l.id)?'hit':''}" data-loc="${escH(String(l.id))}">${escH(cc?cc.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}${l.capacity?`<i>${escH(l.capacity)}</i>`:''}</button>`;}).join(''):'<span class="cab-empty">空</span>';
+      return `<div class="cab-row ${sel?'sel':''}"><span class="no">${c} 排</span><div class="cab-chips">${chips}</div>${opts.onAdd?`<button type="button" class="cab-add" data-add="${c}" aria-label="在第${c}排加藥品">＋</button>`:''}</div>`;
+    };
+    return `<div class="cab-door"><span>右門</span><span>第${CAB_CN[st.cab]}櫃・第 ${st.L} 層</span></div>${[1,2,3,4,5,6,7].map(row).join('')}<div class="cab-door"><span>左門</span></div>${[8,9,10,11,12,13,14].map(row).join('')}`;
+  }
+  ui.render=()=>{
+    const r=root();if(!r)return;const st=ui.state;
+    r.innerHTML=`<div class="cab-ui">${routeHtml()}
+      <div class="cab-tabs">${[1,2,3,4].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃</button>`).join('')}</div>
+      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div></div>
+      <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
+      <div class="cab-shelf">${shelfHtml()}</div></div>`;
+    r.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>ui.select(+b.dataset.cab,1,null,null));
+    r.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>ui.select(st.cab,+b.dataset.layer,null,null));
+    r.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>ui.select(st.cab,+c.dataset.l,+c.dataset.c,null));
+    r.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
+      const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
+      if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.select(l.cab,l.layer,l.col,l.id);
+    });
+    r.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
+  };
+  return ui;
+}
+
+let allChemLocs=[],chemLocsReady=false;
+const adminCabUI=makeCabUI('adminChemCab',{
+  getLocs:()=>allChemLocs,
+  getChem:id=>allAdminChems.find(c=>String(c.id)===String(id)),
+  onChip:(l,ui)=>{ui.select(l.cab,l.layer,l.col,l.id);openCabEdit(l.id);},
+  onAdd:(cab,L,col)=>openCabAdd(cab,L,col)
+});
+async function loadChemLocs(){
+  const msg=document.getElementById('chemCabMsg');
+  try{
+    const rows=await sb('GET','chem_locations',{order:'cab,layer,col,sort,id'});
+    allChemLocs=Array.isArray(rows)?rows:[];chemLocsReady=true;if(msg)msg.textContent='';
+  }catch(e){
+    allChemLocs=[];chemLocsReady=false;
+    if(msg)msg.innerHTML='⚠️ 資料庫還沒有「藥品櫃位置」資料表，請先到 Supabase 執行 <b>chem_cabinet.sql</b>（只要執行一次）。';
+  }
+}
 async function loadAdminChems() {
   try {
-    const rows = await sb('GET', 'chemicals', { order: 'category,name_zh' });
+    const [rows]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),loadChemLocs()]);
     allAdminChems = Array.isArray(rows) ? rows : [];
     filterAdminChems();
     renderChemQuickSort();
+    adminCabUI.render();
   } catch(e) { showToast('載入藥品失敗', 'error'); }
+}
+function chemLocsOf(id){return allChemLocs.filter(l=>String(l.chem_id)===String(id)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);}
+function goChemLoc(locId){adminCabUI.selectLoc(locId,true);}
+function cabSelectOpts(n,cur,fmt){return Array.from({length:n},(_,i)=>i+1).map(v=>`<option value="${v}" ${v===cur?'selected':''}>${fmt(v)}</option>`).join('');}
+// ＋ 在某一排加藥品：打名稱（可以從清單選），找不到就會新建一筆藥品
+function openCabAdd(cab,L,col){
+  if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
+  window._cabAdd={cab,L,col};
+  const opts=allAdminChems.map(c=>`<option value="${escH(c.name_zh)}"></option>`).join('');
+  showModal(`＋ 加藥品到 第${CAB_CN[cab]}櫃・${L} 層・${col} 排`,`
+    <div class="form-group"><label>藥品名稱 *（打字會跳出現有藥品）</label><input id="cab-add-name" list="cabChemNames" maxlength="60" autocomplete="off" oninput="cabAddHint()"><datalist id="cabChemNames">${opts}</datalist><div class="hint" id="cab-add-hint"></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>瓶數</label><input id="cab-add-btl" type="number" min="0" max="999" value="1" inputmode="numeric"></div>
+      <div class="form-group"><label>容量（選填）</label><input id="cab-add-cap" maxlength="30" placeholder="例如 500 mL"></div>
+    </div>
+    <div class="form-group"><label>備註（選填）</label><input id="cab-add-note" maxlength="100"></div>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'💾 加入',cls:'btn-primary',fn:'saveCabAdd()'}
+  ]);
+  setTimeout(()=>document.getElementById('cab-add-name')?.focus(),60);
+}
+function cabAddHint(){
+  const v=(document.getElementById('cab-add-name')?.value||'').trim(),el=document.getElementById('cab-add-hint');if(!el)return;
+  if(!v){el.textContent='';return;}
+  const c=allAdminChems.find(x=>x.name_zh===v);
+  el.textContent=c?`✔ 現有藥品${chemLocsOf(c.id).length?`，目前已經放在：${chemLocsOf(c.id).map(cabCode).join('、')}`:''}`:'這是新的名稱，按「加入」會同時新建這筆藥品';
+}
+let cabBusy=false;
+async function saveCabAdd(){
+  if(cabBusy)return;const ctx=window._cabAdd;if(!ctx)return;
+  const name=(document.getElementById('cab-add-name')?.value||'').trim();
+  const btl=parseInt(document.getElementById('cab-add-btl')?.value,10);
+  if(!name){showToast('請填藥品名稱','error');return;}
+  if(!Number.isFinite(btl)||btl<0||btl>999){showToast('瓶數請填 0～999','error');return;}
+  cabBusy=true;
+  try{
+    let c=allAdminChems.find(x=>x.name_zh===name);
+    if(!c){
+      const rows=await sb('POST','chemicals',{body:{name_zh:name,is_available:true,bottles_left:0},prefer:'return=representation'});
+      c=Array.isArray(rows)?rows[0]:rows;if(!c)throw new Error('新建藥品失敗');
+    }
+    const same=allChemLocs.filter(l=>l.cab===ctx.cab&&l.layer===ctx.L&&l.col===ctx.col);
+    const sort=same.reduce((m,l)=>Math.max(m,l.sort||0),0)+1;
+    await sb('POST','chem_locations',{body:{chem_id:c.id,cab:ctx.cab,layer:ctx.L,col:ctx.col,bottles:btl,
+      capacity:(document.getElementById('cab-add-cap')?.value||'').trim()||null,note:(document.getElementById('cab-add-note')?.value||'').trim()||null,sort},prefer:'return=minimal'});
+    closeModal();showToast(`已加入「${name}」`,'success');
+    await loadAdminChems();adminCabUI.select(ctx.cab,ctx.L,ctx.col,null);
+  }catch(e){showToast('加入失敗：'+e.message,'error');}
+  finally{cabBusy=false;}
+}
+// 點藥品：改瓶數／容量／備註、搬位置、刪除這個位置
+function openCabEdit(locId){
+  const l=allChemLocs.find(x=>String(x.id)===String(locId));if(!l)return;
+  const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
+  window._cabEdit=l.id;
+  showModal(`🧪 ${c?c.name_zh:'藥品'}`,`
+    <div class="hint" style="margin-bottom:10px">目前位置：${escH(cabText(l))}（${cabDoor(l.col)}）</div>
+    <div class="form-group"><label>瓶數</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="btn btn-secondary" onclick="cabBtlStep(-1)">−</button>
+        <input id="cab-ed-btl" type="number" min="0" max="999" value="${parseInt(l.bottles)||0}" inputmode="numeric" style="width:90px;text-align:center">
+        <button type="button" class="btn btn-secondary" onclick="cabBtlStep(1)">＋</button>
+      </div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>容量（選填）</label><input id="cab-ed-cap" maxlength="30" value="${escH(l.capacity||'')}"></div>
+      <div class="form-group"><label>備註（選填）</label><input id="cab-ed-note" maxlength="100" value="${escH(l.note||'')}"></div>
+    </div>
+    <div class="form-group"><label>📦 搬到</label><div class="cab-move">
+      <select id="cab-ed-cab">${cabSelectOpts(4,l.cab,v=>`第${CAB_CN[v]}櫃`)}</select>
+      <select id="cab-ed-layer">${cabSelectOpts(5,l.layer,v=>`${v} 層`)}</select>
+      <select id="cab-ed-col">${cabSelectOpts(14,l.col,v=>`${v} 排（${cabDoor(v)}）`)}</select></div></div>
+    <button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteCabLoc()">🗑️ 從這個位置移除（用完／報廢）</button>`,[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+    {label:'💾 儲存',cls:'btn-primary',fn:'saveCabEdit()'}
+  ]);
+}
+function cabBtlStep(d){const el=document.getElementById('cab-ed-btl');if(el)el.value=Math.max(0,Math.min(999,(parseInt(el.value)||0)+d));}
+async function saveCabEdit(){
+  if(cabBusy)return;const l=allChemLocs.find(x=>x.id===window._cabEdit);if(!l)return;
+  const btl=parseInt(document.getElementById('cab-ed-btl')?.value,10);
+  if(!Number.isFinite(btl)||btl<0||btl>999){showToast('瓶數請填 0～999','error');return;}
+  const body={bottles:btl,capacity:(document.getElementById('cab-ed-cap')?.value||'').trim()||null,note:(document.getElementById('cab-ed-note')?.value||'').trim()||null,
+    cab:+document.getElementById('cab-ed-cab').value,layer:+document.getElementById('cab-ed-layer').value,col:+document.getElementById('cab-ed-col').value,updated_at:new Date().toISOString()};
+  const moved=body.cab!==l.cab||body.layer!==l.layer||body.col!==l.col;
+  if(moved)body.sort=allChemLocs.filter(x=>x.cab===body.cab&&x.layer===body.layer&&x.col===body.col).reduce((m,x)=>Math.max(m,x.sort||0),0)+1;
+  cabBusy=true;
+  try{
+    await sb('PATCH','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),body,prefer:'return=minimal'});
+    closeModal();showToast(moved?`已搬到 ${cabText(body)}`:'已更新','success');
+    await loadAdminChems();adminCabUI.selectLoc(l.id,false);
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+  finally{cabBusy=false;}
+}
+async function deleteCabLoc(){
+  const l=allChemLocs.find(x=>x.id===window._cabEdit);if(!l)return;
+  const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
+  if(!confirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這個位置不再有它）`))return;
+  try{
+    await sb('DELETE','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),prefer:'return=minimal'});
+    closeModal();showToast('已移除','success');await loadAdminChems();adminCabUI.select(l.cab,l.layer,l.col,null);
+  }catch(e){showToast('移除失敗：'+e.message,'error');}
+}
+// ── 匯入櫃位 Excel（「藥品櫃位置核對表.xlsx」的「藥品清單」分頁）──
+const nzName=s=>String(s||'').replace(/\s+/g,'').replace(/（/g,'(').replace(/）/g,')').toLowerCase();
+const baseName=s=>nzName(s).replace(/\(.*?\)/g,'');
+const innerName=s=>(nzName(s).match(/\((.*?)\)/)||[])[1]||'';
+function matchChemByName(name){
+  const n=nzName(name),b=baseName(name),i=innerName(name);
+  return allAdminChems.find(c=>nzName(c.name_zh)===n)
+    ||allAdminChems.find(c=>baseName(c.name_zh)===b)
+    ||(i&&allAdminChems.find(c=>baseName(c.name_zh)===i))
+    ||allAdminChems.find(c=>innerName(c.name_zh)&&innerName(c.name_zh)===b)
+    ||null;
+}
+let cabImportPlan=null;
+function importChemCabXlsx(input){
+  const f=input.files&&input.files[0];input.value='';if(!f)return;
+  if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets['藥品清單']||wb.Sheets[wb.SheetNames.find(n=>/藥品/.test(n))||wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      const cabNo=v=>{const t=String(v).trim();const m=t.match(/[1-4]/);if(m)return +m[0];return {'一':1,'二':2,'三':3,'四':4}[(t.match(/[一二三四]/)||[])[0]]||0;};
+      const ok=[],manual=[],bad=[];
+      rows.forEach((r,idx)=>{
+        const name=String(r['品名']||'').trim();if(!name)return;
+        const cab=cabNo(r['櫃']),L=parseInt(r['層'],10),col=parseInt(r['排'],10);
+        const btl=r['瓶數']===''?1:parseInt(r['瓶數'],10);
+        const chk=String(r['核對（✓／改）']||r['核對']||'').trim();
+        if(chk==='改'){manual.push({row:idx+2,name,fix:String(r['修正內容']||'').trim()});return;}
+        if(!(cab>=1&&cab<=4&&L>=1&&L<=5&&col>=1&&col<=14&&Number.isFinite(btl)&&btl>=0&&btl<=999)){bad.push({row:idx+2,name});return;}
+        ok.push({name:name.slice(0,60),cab,layer:L,col,bottles:btl,capacity:String(r['容量（選填）']||r['容量']||'').trim().slice(0,30)||null,sort:parseInt(r['格內順序'],10)||0,match:matchChemByName(name)});
+      });
+      if(!ok.length){showToast('檔案裡找不到可以匯入的資料（需要「櫃、層、排、品名」欄位）','error');return;}
+      const newNames=[...new Set(ok.filter(x=>!x.match).map(x=>x.name))];
+      const fuzzy=[...new Map(ok.filter(x=>x.match&&nzName(x.match.name_zh)!==nzName(x.name)).map(x=>[x.name,x.match.name_zh])).entries()];
+      cabImportPlan={ok,newNames};
+      const li=a=>a.map(t=>`<li>${t}</li>`).join('');
+      showModal('📥 匯入藥品櫃位置',`
+        <p>共 <b>${ok.length}</b> 個位置、<b>${ok.reduce((s,x)=>s+x.bottles,0)}</b> 瓶。</p>
+        <p>✔ 對到現有藥品：${ok.length-ok.filter(x=>!x.match).length} 筆</p>
+        ${fuzzy.length?`<details><summary>名稱寫法不同、自動對上的 ${fuzzy.length} 種（請看一下對不對）</summary><ul style="font-size:13px">${li(fuzzy.map(([a,b])=>`${escH(a)} → ${escH(b)}`))}</ul></details>`:''}
+        ${newNames.length?`<details><summary>系統裡沒有、會<b>新建</b>的藥品 ${newNames.length} 種</summary><ul style="font-size:13px">${li(newNames.map(escH))}</ul></details>`:''}
+        ${manual.length?`<details open><summary style="color:var(--danger)">核對欄填「改」的 ${manual.length} 筆不會匯入，請匯入後手動處理</summary><ul style="font-size:13px">${li(manual.map(m=>`第 ${m.row} 列 ${escH(m.name)}${m.fix?'：'+escH(m.fix):''}`))}</ul></details>`:''}
+        ${bad.length?`<p style="color:var(--danger);font-size:13px">有 ${bad.length} 列的櫃／層／排／瓶數格式不對，會略過（第 ${bad.slice(0,8).map(b=>b.row).join('、')}${bad.length>8?'…':''} 列）</p>`:''}
+        <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${allChemLocs.length?'':'checked'} style="width:auto"> 取代：先清空目前所有藥品櫃位置（目前 ${allChemLocs.length} 筆），再匯入</label>
+        <label><input type="radio" name="cabImpMode" value="append" ${allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
+        {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
+        {label:'確定匯入',cls:'btn-primary',fn:'runCabImport()'}
+      ]);
+    }catch(err){showToast('讀不出這個 Excel：'+err.message,'error');}
+  };
+  rd.readAsArrayBuffer(f);
+}
+async function runCabImport(){
+  const plan=cabImportPlan;if(!plan||cabBusy)return;
+  const mode=document.querySelector('input[name="cabImpMode"]:checked')?.value||'append';
+  if(mode==='replace'&&allChemLocs.length&&!confirm(`確定要先清空目前 ${allChemLocs.length} 筆藥品櫃位置嗎？`))return;
+  cabBusy=true;const msg=document.getElementById('chemCabMsg');
+  try{
+    closeModal();if(msg)msg.textContent='匯入中…';
+    const created={};
+    for(let i=0;i<plan.newNames.length;i+=100){
+      const rows=await sb('POST','chemicals',{body:plan.newNames.slice(i,i+100).map(n=>({name_zh:n,is_available:true,bottles_left:0})),prefer:'return=representation'});
+      (rows||[]).forEach(r=>{created[r.name_zh]=r;});
+    }
+    if(mode==='replace')await sb('DELETE','chem_locations',{filter:'id=gt.0',prefer:'return=minimal'});
+    const body=plan.ok.map(x=>{const c=x.match||created[x.name];return c?{chem_id:c.id,cab:x.cab,layer:x.layer,col:x.col,bottles:x.bottles,capacity:x.capacity,sort:x.sort}:null;}).filter(Boolean);
+    for(let i=0;i<body.length;i+=200)await sb('POST','chem_locations',{body:body.slice(i,i+200),prefer:'return=minimal'});
+    showToast(`已匯入 ${body.length} 個位置${plan.newNames.length?`，新建 ${plan.newNames.length} 種藥品`:''}`,'success');
+    if(msg)msg.textContent='';
+    await loadAdminChems();
+  }catch(e){if(msg)msg.textContent='';showToast('匯入失敗：'+e.message,'error');}
+  finally{cabBusy=false;cabImportPlan=null;}
+}
+// ── 列印門上的櫃位表（A4 橫式，排法跟原本的紙表一樣：14 在左、1 在右）──
+function printChemCabinet(){
+  const cab=adminCabUI.state.cab;
+  const t=new Date(),printed=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`;
+  const cols=[14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+  const cell=(L,c)=>allChemLocs.filter(l=>l.cab===cab&&l.layer===L&&l.col===c).sort((a,b)=>(a.sort||0)-(b.sort||0)||a.id-b.id)
+    .map(l=>{const n=allAdminChems.find(x=>String(x.id)===String(l.chem_id))?.name_zh||'?';const b=parseInt(l.bottles)||0;return `<div>${escH(n)}${b!==1?` ×${b}`:''}</div>`;}).join('');
+  const html=`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>第${CAB_CN[cab]}櫃 ${printed}</title>
+<style>@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1{text-align:center;font-size:20pt;margin:0 0 4px}table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border:1px solid #666;padding:2px 3px;vertical-align:top;font-size:9.5pt;line-height:1.3}th{background:#ddd;font-size:10pt}
+td.l{width:9mm;text-align:center;vertical-align:middle;font-weight:700;background:#eee}tr.r td{height:33mm}.door{background:#f3f3f3}
+.f{display:flex;justify-content:space-between;font-size:8.5pt;color:#444;margin-top:3px}.bar{padding:10px;border-bottom:1px solid #ddd}.bar button{font-size:16px;padding:8px 16px}@media print{.bar{display:none}}</style></head><body>
+<div class="bar"><button onclick="window.print()">🖨️ 列印</button></div>
+<h1>第${CAB_CN[cab]}櫃</h1>
+<table><thead><tr><th class="l">層</th>${cols.map(c=>`<th class="${c>7?'door':''}">${c}</th>`).join('')}</tr></thead>
+<tbody>${[1,2,3,4,5].map(L=>`<tr class="r"><td class="l">${L}</td>${cols.map(c=>`<td>${cell(L,c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+<div class="f"><span>左門 14～8　右門 7～1　｜　以系統為準，搬動後請重印</span><span>列印 ${printed}</span></div></body></html>`;
+  const w=window.open('','_blank');
+  if(!w){showToast('瀏覽器擋住了新視窗，請允許彈出視窗後再試','error');return;}
+  w.document.open();w.document.write(html);w.document.close();
 }
 
 const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機溶劑','指示劑','培養基／生化','溶液成品','其他'];
@@ -3539,7 +3879,7 @@ function filterAdminChems() {
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
             ${c.category?`<span>${escH(c.category)}</span>`:''}
-            ${c.location?`<span>📍 ${escH(c.location)}</span>`:''}
+            ${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="goChemLoc(${ja(l.id)})">📍 ${escH(cabCode(l))}${(parseInt(l.bottles)||0)!==1?' ×'+l.bottles:''}</button>`).join(''):(c.location?`<span>📍 ${escH(c.location)}</span>`:'')}
             <span style="font-family:'DM Mono',monospace;font-weight:700">${escH(c.bottles_left??0)} 瓶</span>
             ${c.recycle_type?`<span>♻️ ${escH(c.recycle_type)}</span>`:''}
           </div>
@@ -3554,9 +3894,9 @@ function filterAdminChems() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="form-group"><label>中文名稱 *</label><input id="ci-zh-${c.id}" value="${esc(c.name_zh)}"></div>
           <div class="form-group"><label>英文名稱</label><input id="ci-en-${c.id}" value="${esc(c.name_en||'')}"></div>
-          <div class="form-group"><label>位置</label><input id="ci-loc-${c.id}" value="${esc(c.location||'')}"></div>
+          <div class="form-group"><label>位置</label><input id="ci-loc-${c.id}" value="${esc(c.location||'')}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，位置請到上面的藥品櫃修改"':''}></div>
           <div class="form-group"><label>分類</label><select id="ci-cat-${c.id}">${catOpts}</select></div>
-          <div class="form-group"><label>剩餘瓶數</label><input type="number" id="ci-btl-${c.id}" min="0" value="${c.bottles_left??0}"></div>
+          <div class="form-group"><label>剩餘瓶數</label><input type="number" id="ci-btl-${c.id}" min="0" value="${c.bottles_left??0}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，瓶數由各位置加總，請到上面的藥品櫃修改"':''}></div>
           <div class="form-group"><label>藥品回收</label><input id="ci-rec-${c.id}" value="${esc(c.recycle_type||'')}"></div>
           <div class="form-group" style="grid-column:1/-1"><label>附註</label><textarea id="ci-note-${c.id}" rows="2">${esc(c.note&&c.note!=='附註'?c.note:'')}</textarea></div>
         </div>
@@ -3593,6 +3933,8 @@ async function saveChemInline(id) {
     is_available: document.getElementById(`ci-avail-${id}`)?.checked ?? true,
     updated_at: new Date().toISOString()
   };
+  // 有放在藥品櫃的藥品：瓶數和位置由藥品櫃自動計算，這裡不覆蓋
+  if (chemLocsOf(id).length) { delete body.bottles_left; delete body.location; }
   try {
     await sb('PATCH', 'chemicals', { filter: 'id=eq.' + id, body, prefer: 'return=minimal' });
     showToast('已儲存', 'success');
