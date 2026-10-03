@@ -325,6 +325,8 @@
   .venue-booking{border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:11px;line-height:1.3;text-align:center;}
   /* 類別配色（依科目／目的），與後台一致；狀態改用邊框樣式表示 */
   /* 場地週課表：實驗室切換常駐一排；格子內「班級／名字」兩行短標籤 */
+  .venue-filter-note{margin:0 0 10px;padding:9px 12px;border-radius:10px;background:#fff7e0;border:1px solid #f0d78c;font-size:13.5px;color:#5c4400;}
+  .venue-filter-note button{margin-left:6px;border:none;background:var(--accent);color:#fff;font:inherit;font-size:13px;font-weight:700;border-radius:8px;padding:3px 10px;cursor:pointer;}
   .venue-lab-tabs{margin:8px 0 10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
   .venue-lab-tabs::-webkit-scrollbar{display:none;}
   .venue-lab-tabs .room-tab{flex:1 1 0;min-width:0;text-align:center;padding:7px 4px;}
@@ -1115,6 +1117,7 @@
       <button type="button" class="room-tab" data-lab="地科" onclick="setVenueLabFilter('地科')"><span class="vt-dot vbl-地科"></span>地科</button>
     </div>
     <div id="venueDayView" style="display:none"></div>
+    <div class="venue-filter-note" id="venueFilterNote" style="display:none"></div>
     <div class="venue-table-wrap" id="venueTableWrapEl">
       <div id="venueScaleOuter"><div id="venueScaleInner"><table class="venue-table" id="venueTable"></table></div></div>
     </div>
@@ -1222,7 +1225,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-01 · 藥品資料卡版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03 · 平面圖修正版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2099,14 +2102,20 @@ async function jumpToFloorplanLocation(room,code,itemName){
     openFloorplanLocModal(expandLocationField(code)[0]||code);
     return;
   }
-  // 手機上櫃子太小的話先放大兩倍，泡泡比較看得清楚
-  if(window.innerWidth<700&&spots.some(s=>s.width<8)&&floorplanZoomScale<2){floorplanZoomScale=2;applyFloorplanZoom();}
+  // 一律用正常大小顯示整張平面圖（不自動放大），一眼就看得出櫃子在房間的哪裡；要看細節再自己按「🔍＋」
+  if(floorplanZoomScale!==1)floorplanZoomReset();
   showFloorplanBubbles(spots,code,itemName);
   if(typeof fpSideMode==='function'&&fpSideMode())openFloorplanLocModal(spots[0].code);
 }
 function scrollToFloorplanBubble(ci){
   const bb=document.querySelector(`#floorplanBubbleLayer .fp-bubble[data-ci="${ci}"]`);
   if(bb){bb.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});bb.style.animation='none';void bb.offsetWidth;bb.style.animation='';}
+}
+function resetFloorplanMarks(){
+  clearFloorplanBubbles();
+  if(typeof floorplanOpenLoc!=='undefined'&&floorplanOpenLoc){floorplanOpenLoc='';floorplanExpandedRowId=null;if(typeof renderFloorplanHotspots==='function')renderFloorplanHotspots();}
+  const side=document.getElementById('floorplanSide');
+  if(side&&typeof fpSideMode==='function'&&fpSideMode())side.innerHTML='<div class="hint" style="padding:30px 6px;text-align:center">點圖上的櫃子，<br>這裡會列出裡面有什麼</div>';
 }
 function clearFloorplanBubbles(){
   const layer=document.getElementById('floorplanBubbleLayer');if(layer)layer.innerHTML='';
@@ -3077,6 +3086,17 @@ function renderVenueTable(dates){
   if(wBtn){wBtn.textContent=venueShowWeekend?'－收起週末':`＋週末${wkEndCount?'（'+wkEndCount+'）':''}`;wBtn.classList.toggle('btn-warn',!venueShowWeekend&&wkEndCount>0);}
   if(!venueShowWeekend)dates=dates.slice(0,5);
   syncVenueLabTabs();
+  // 只看某一間、而那間這週沒人預約時，提醒「其他實驗室其實有」——免得以為課表不見了
+  const fn=document.getElementById('venueFilterNote');
+  if(fn){
+    const wk=dates.map(d=>fmtDate(d)),inWeek=venueBookings.filter(x=>wk.includes(x.displayDate)&&x.periodStatus!=='已拒絕');
+    const mine=venueLabFilter?inWeek.filter(x=>x.displayVenue===venueLabFilter+'實驗室').length:0;
+    const others=inWeek.length-mine;
+    if(venueLabFilter&&!mine&&others>0){
+      fn.innerHTML=`目前只顯示<b>${escH(venueLabFilter)}實驗室</b>，這週還沒有預約。其他實驗室這週有 ${others} 筆，<button type="button" onclick="setVenueLabFilter('')">看全部實驗室</button>`;
+      fn.style.display='';
+    }else fn.style.display='none';
+  }
   const merged=venueMergedMode();_venueMergedLast=merged;
   const LABS=venueLabFilter?[venueLabFilter]:VENUE_LABS;
   const showLabCol=!venueLabFilter&&!merged;
@@ -4308,6 +4328,8 @@ function showPage(page,opts){
   const fromHist=!!(opts&&opts.fromHistory);
   if(!document.getElementById('page-'+page))return;
   if(page!=='floorplan'&&typeof closeFpSheet==='function')closeFpSheet(true);
+  // 離開平面圖＝這次找東西結束：把剛剛的提示泡泡、黃色框都清掉，下次進來是乾淨的平面圖
+  if(page!=='floorplan'&&document.getElementById('page-floorplan')?.classList.contains('active'))resetFloorplanMarks();
   const currentPage=document.querySelector('.page.active')?.id?.replace('page-','');
   if(currentPage===page){if(!fromHist)window.scrollTo({top:0,behavior:'smooth'});return;}
   if(!fromHist)navSaveScroll();
@@ -4798,7 +4820,7 @@ async function openChemDetail(id){
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
     ${row('分類',c.category?`<span class="chem-cat-tag ${chemCatClass(c.category)}">${escH(c.category)}</span>`:'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
-    ${row('位置',locHtml)}
+    ${row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
     ${row('回收',c.recycle_type?'♻️ '+escH(c.recycle_type):'')}
     ${row('附註',c.note&&c.note!=='附註'?escH(c.note):'')}
     ${locs.length?'<div class="hint" style="margin-top:8px">點位置會帶到藥品櫃，亮出那一格</div>':''}`,
