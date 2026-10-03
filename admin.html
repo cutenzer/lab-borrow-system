@@ -838,6 +838,7 @@
     <option value="培養基／生化">培養基／生化</option><option value="溶液成品">溶液成品</option><option value="其他">其他</option>
   </select>
   <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
 </div>
     <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
   </div>
@@ -3744,6 +3745,101 @@ function matchChemByName(name){
     ||(i&&allAdminChems.find(c=>baseName(c.name_zh)===i))
     ||allAdminChems.find(c=>innerName(c.name_zh)&&innerName(c.name_zh)===b)
     ||null;
+}
+// ── 相似名稱：找出「可能是同一種藥品、只是名字寫法不同」的組合，確認後可以合併或刪除 ──
+// 判斷依據（寧可少抓、不要亂抓）：
+//   1. 去掉空白、全半形括號後完全一樣
+//   2. 括號外的名稱一樣（醋酸 ↔ 醋酸（乙酸））
+//   3. 一個的括號內別名＝另一個的名稱（乙酸 ↔ 醋酸（乙酸））
+//   4. 英文名稱一樣
+//   5. 常見異體字／錯字（篦↔蓖、臘↔蠟、臺↔台、碱↔鹼、硷↔鹼）
+const CHEM_CHAR_FIX={'篦':'蓖','臘':'蠟','臺':'台','碱':'鹼','硷':'鹼','銹':'鏽','着':'著'};
+const fixChars=s=>String(s||'').replace(/[篦臘臺碱硷銹着]/g,ch=>CHEM_CHAR_FIX[ch]);
+function chemSimilarGroups(){
+  const list=allAdminChems,n=list.length,parent=list.map((_,i)=>i),why={};
+  const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+  const join=(a,b,r)=>{const x=find(a),y=find(b);if(x!==y){parent[y]=x;}const k=find(a);(why[k]=why[k]||new Set()).add(r);};
+  const idx=(keyFn,reason)=>{const m=new Map();list.forEach((c,i)=>{const k=keyFn(c);if(!k)return;if(m.has(k))join(m.get(k),i,reason);else m.set(k,i);});};
+  idx(c=>nzName(c.name_zh),'名稱寫法');
+  idx(c=>nzName(fixChars(c.name_zh)),'異體字／錯字');
+  idx(c=>baseName(fixChars(c.name_zh)),'括號外名稱相同');
+  idx(c=>(c.name_en||'').trim().toLowerCase().replace(/\s+/g,' ')||null,'英文名稱相同');
+  // 別名：A 的括號內＝B 的名稱
+  const byBase=new Map();list.forEach((c,i)=>{const b=baseName(fixChars(c.name_zh));if(b)byBase.set(b,i);});
+  list.forEach((c,i)=>{const inn=innerName(fixChars(c.name_zh));if(inn&&byBase.has(inn)&&byBase.get(inn)!==i)join(byBase.get(inn),i,'別名相同');});
+  const groups=new Map();list.forEach((c,i)=>{const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(c);});
+  // reasons were recorded on old roots too; collect all reasons whose root now matches
+  const reasons=new Map();Object.keys(why).forEach(k=>{const r=find(+k);if(!reasons.has(r))reasons.set(r,new Set());why[k].forEach(x=>reasons.get(r).add(x));});
+  return [...groups.entries()].filter(([,g])=>g.length>1).map(([r,g])=>({items:g.sort((a,b)=>(chemLocsOf(b.id).length-chemLocsOf(a.id).length)||((b.bottles_left||0)-(a.bottles_left||0))),reasons:[...(reasons.get(r)||[])]}));
+}
+let chemSimGroups=[];
+function checkChemSimilar(){
+  chemSimGroups=chemSimilarGroups();
+  if(!chemSimGroups.length){showModal('🔎 相似名稱','<div class="empty"><div class="empty-icon">✅</div><p>沒有找到寫法相似的藥品</p></div>',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);return;}
+  const body=chemSimGroups.map((g,gi)=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">第 ${gi+1} 組・${escH(g.reasons.join('、')||'名稱相似')}</div>
+      ${g.items.map((c,ci)=>`<label style="display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px;background:var(--surface2);margin-bottom:4px;cursor:pointer;font-size:13px">
+        <input type="radio" name="sim-keep-${gi}" value="${escH(String(c.id))}" ${ci===0?'checked':''} style="width:auto;margin-top:3px">
+        <span style="flex:1;min-width:0"><b>${escH(c.name_zh)}</b>${c.name_en?` <span style="color:var(--text2)">${escH(c.name_en)}</span>`:''}<br>
+          <span style="color:var(--text2)">${escH(String(c.bottles_left??0))} 瓶${c.category?'・'+escH(c.category):''}${chemLocsOf(c.id).length?'・📍 '+chemLocsOf(c.id).map(l=>escH(cabCode(l))).join('、'):(c.location?'・📍 '+escH(c.location):'')}・#${escH(String(c.id))}</span></span>
+        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="event.preventDefault();event.stopPropagation();deleteSimilarOne(${ja(c.id)})">刪除</button></label>`).join('')}
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarGroup(${gi})">不是同一種</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="mergeSimilarGroup(${gi})">合併到選中的那筆</button></div>
+    </div>`).join('');
+  showModal(`🔎 找到 ${chemSimGroups.length} 組寫法相似的藥品`,`<div class="hint" style="margin-bottom:10px">每組請先確認是不是同一種藥品。<b>合併</b>：保留選中的那筆，其他筆的藥品櫃位置和瓶數搬過來，再刪掉其他筆（建議用這個）。<b>刪除</b>：只刪那一筆，它在藥品櫃的位置也會一起消失。</div>${body}`,[
+    {label:'📥 匯出成 Excel',cls:'btn-secondary',fn:'exportChemSimilar()'},
+    {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
+  ]);
+}
+// 「不是同一種」記在這台電腦，下次不再列出
+function simGroupKey(g){return g.items.map(c=>String(c.id)).sort().join(',');}
+function dismissSimilarGroup(gi){
+  const g=chemSimGroups[gi];if(!g)return;
+  try{const a=JSON.parse(localStorage.getItem('chemSimDismissed')||'[]');a.push(simGroupKey(g));localStorage.setItem('chemSimDismissed',JSON.stringify(a.slice(-500)));}catch(_){}
+  showToast('已記下，下次不再列出這組','success');checkChemSimilarFiltered();
+}
+function checkChemSimilarFiltered(){
+  let dis=[];try{dis=JSON.parse(localStorage.getItem('chemSimDismissed')||'[]');}catch(_){}
+  const orig=chemSimilarGroups;
+  chemSimilarGroups=()=>orig().filter(g=>!dis.includes(simGroupKey(g)));
+  try{checkChemSimilar();}finally{chemSimilarGroups=orig;}
+}
+async function mergeSimilarGroup(gi){
+  const g=chemSimGroups[gi];if(!g)return;
+  const keepId=document.querySelector(`input[name="sim-keep-${gi}"]:checked`)?.value;
+  const keep=g.items.find(c=>String(c.id)===String(keepId));if(!keep)return;
+  const others=g.items.filter(c=>c!==keep);
+  const anyLocs=g.items.some(c=>chemLocsOf(c.id).length);
+  const lost=anyLocs?others.filter(c=>!chemLocsOf(c.id).length&&(parseInt(c.bottles_left)||0)>0):[];
+  if(!confirm(`保留「${keep.name_zh}」，把 ${others.map(c=>'「'+c.name_zh+'」').join('、')} 合併進來後刪除？${lost.length?`\n\n注意：${lost.map(c=>'「'+c.name_zh+'」'+c.bottles_left+' 瓶').join('、')}沒有登記在藥品櫃，瓶數不會自動加進來，合併後請到藥品櫃補上位置。`:''}`))return;
+  try{
+    for(const o of others){
+      if(chemLocsOf(o.id).length)await sb('PATCH','chem_locations',{filter:'chem_id=eq.'+encodeURIComponent(o.id),body:{chem_id:keep.id},prefer:'return=minimal'});
+    }
+    if(!anyLocs){const total=g.items.reduce((s,c)=>s+(parseInt(c.bottles_left)||0),0);await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(keep.id),body:{bottles_left:total},prefer:'return=minimal'});}
+    const patch={};if(!keep.name_en){const en=others.find(c=>c.name_en)?.name_en;if(en)patch.name_en=en;}
+    if(!keep.category){const cat=others.find(c=>c.category)?.category;if(cat)patch.category=cat;}
+    if(Object.keys(patch).length)await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(keep.id),body:patch,prefer:'return=minimal'});
+    for(const o of others)await sb('DELETE','chemicals',{filter:'id=eq.'+encodeURIComponent(o.id),prefer:'return=minimal'});
+    showToast(`已合併到「${keep.name_zh}」`,'success');
+    await loadAdminChems();checkChemSimilarFiltered();
+  }catch(e){showToast('合併失敗：'+e.message,'error');}
+}
+async function deleteSimilarOne(id){
+  const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
+  const n=chemLocsOf(c.id).length;
+  if(!confirm(`刪除「${c.name_zh}」？${n?`\n它在藥品櫃有 ${n} 個位置，也會一起刪掉。如果只是名字重複，建議改用「合併」。`:''}`))return;
+  try{await sb('DELETE','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),prefer:'return=minimal'});showToast('已刪除','success');await loadAdminChems();checkChemSimilarFiltered();}
+  catch(e){showToast('刪除失敗：'+e.message,'error');}
+}
+function exportChemSimilar(){
+  const rows=[['組別','判斷原因','編號','中文名稱','英文名稱','分類','瓶數','位置','是同一種？（填 ✓）','要保留哪筆（填 ✓）']];
+  chemSimGroups.forEach((g,gi)=>g.items.forEach(c=>rows.push([gi+1,g.reasons.join('、'),c.id,c.name_zh||'',c.name_en||'',c.category||'',c.bottles_left??0,chemLocsOf(c.id).map(cabCode).join('、')||c.location||'','',''])));
+  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:6},{wch:16},{wch:7},{wch:22},{wch:22},{wch:10},{wch:6},{wch:18},{wch:16},{wch:16}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'相似名稱');
+  const t=new Date();XLSX.writeFile(wb,`藥品相似名稱_${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}.xlsx`);
 }
 let cabImportPlan=null;
 function importChemCabXlsx(input){
