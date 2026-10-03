@@ -440,7 +440,7 @@
   @media(max-width:700px){
     #adminEquipList .record-card>div:first-child,.eq-card-row{flex-wrap:wrap!important;}
     .eq-actions{flex-direction:row!important;flex-wrap:nowrap!important;width:100%;gap:6px!important;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);}
-    .eq-actions{display:grid!important;grid-template-columns:minmax(0,1fr) auto;}
+    .eq-actions{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;}
     .eq-actions .act-more>summary{padding:7px 16px!important;font-size:15px!important;}
     .eq-actions .btn{justify-content:center;padding:7px 2px!important;font-size:12px!important;white-space:nowrap;min-width:0;overflow:hidden;}
     .eq-thumb{width:84px!important;height:84px!important;}
@@ -4946,9 +4946,9 @@ function renderAdminEquipCard(e){
         </div>
         <div class="eq-actions">
           <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">編輯</button>
+          <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload(${ja(e.id)})">換照片</button>
           ${moreMenuHtml([
             {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
-            {label:'🖼️ 換照片',fn:`openEquipPhotoUpload(${ja(e.id)})`},
             'hr',
             {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
             {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
