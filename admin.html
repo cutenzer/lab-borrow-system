@@ -978,7 +978,7 @@
     <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
       <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
     </div>
-    <div class="info-box">現場點貨：數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「💾 儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「✏️ 編輯」。</div>
+    <div class="info-box">現場點貨：只點<b>架上</b>的數量，借出中的系統會自動加回總數。數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「💾 儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「✏️ 編輯」。</div>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1">
       <select id="adminEquipRoomFilter" onchange="adminEquipPage=1;filterAdminEquip()">
@@ -1356,7 +1356,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03j';
+const ADMIN_VERSION='2026-10-03k';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4615,6 +4615,8 @@ async function doApplyChemDiff() {
 // 器材管理（照藥品那套：搜尋/房間篩選/單筆編輯/盤點模式/Excel匯出入）
 // ══════════════════════════════════════════════════════════
 let allAdminEquipment=[],editingEquipId=null,equipBorrowedMap={};
+// 盤點用：真的「不在架上」的數量＝已逾期＋已核准且借用日已到的（核准了但還沒到借用日的，東西還在架上）
+let equipOutMap={};
 
 async function loadAdminEquipment(){
   const list=document.getElementById('adminEquipList');
@@ -4625,9 +4627,13 @@ async function loadAdminEquipment(){
       sb('GET','borrow_records',{filter:'status=in.(已核准,逾期)'})
     ]);
     allAdminEquipment=Array.isArray(rows)?rows:[];
-    equipBorrowedMap={};
+    equipBorrowedMap={};equipOutMap={};
+    const todayStr=fmtDate(new Date());
     (Array.isArray(borrows)?borrows:[]).forEach(r=>{
-      (r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+(parseInt(it.quantity)||0);});
+      const out=r.status==='逾期'||!r.borrow_date||String(r.borrow_date).slice(0,10)<=todayStr;
+      (r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name,q=parseInt(it.quantity)||0;
+        equipBorrowedMap[k]=(equipBorrowedMap[k]||0)+q;
+        if(out)equipOutMap[k]=(equipOutMap[k]||0)+q;});
     });
     filterAdminEquip();
     loadWriteoffLog();
@@ -4646,6 +4652,9 @@ function adminIsLowStock(e){
   if(!adminIsStockTracked(e))return false;
   return equipAvailable(e)<=Math.max(2,Math.ceil((parseInt(e.total)||0)*0.2));
 }
+// 盤點：架上應該有幾個＝總數－現在借出去的（實點數量是跟這個比，不是跟總數比）
+function equipOut(e){return equipOutMap[e.room+'__'+e.name]||0;}
+function stkShelfExpected(e){return Math.max(0,(parseInt(e.total)||0)-equipOut(e));}
 function equipAvailable(e){
   const borrowed=equipBorrowedMap[e.room+'__'+e.name]||0;
   return Math.max(0,(parseInt(e.total)||0)-borrowed);
@@ -4977,8 +4986,9 @@ function renderAdminEquipCard(e){
           <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">📦 套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
           <div class="eq-meta">
-            <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">實點數量：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??(e.total??0)}" data-orig="${e.total??0}" oninput="markStocktake(${ja(e.id)},this.value,${parseInt(e.total)||0})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
-              <button type="button" class="stk-same ${stkSameOn?'on':''}" id="stks-${e.id}" style="${stkChanged?'display:none':''}" onclick="toggleStkSame(${ja(e.id)})">${stkSameOn?'✓ 無變動':'無變動'}</button></span>
+            <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">${equipOut(e)?'架上實點':'實點數量'}：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??stkShelfExpected(e)}" data-orig="${stkShelfExpected(e)}" oninput="markStocktake(${ja(e.id)},this.value,${stkShelfExpected(e)})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
+              <button type="button" class="stk-same ${stkSameOn?'on':''}" id="stks-${e.id}" style="${stkChanged?'display:none':''}" onclick="toggleStkSame(${ja(e.id)})">${stkSameOn?'✓ 無變動':'無變動'}</button>
+              ${equipOut(e)?`<span style="font-size:11.5px;color:var(--text2);white-space:nowrap">總數 ${parseInt(e.total)||0}，借出中 ${equipOut(e)}，只點架上的</span>`:''}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
             ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
@@ -5304,7 +5314,7 @@ function printStocktakeSheet(){
     const cab=stkCabinet(e);
     const pg=Math.floor(i/ADMIN_EQ_PAGE)+1,seq=i%ADMIN_EQ_PAGE+1;
     const newCab=stkSort==='loc'&&cab!==prevCab;prevCab=cab;
-    return `<tr class="${newCab&&i?'cab':''}"><td class="c">${pg}-${seq}</td><td>${escH(cab||'—')}</td><td>${escH(e.name)}${e.spec?`<div class="sp">${escH(e.spec)}</div>`:''}</td><td class="c">${escH(String(e.total??0))} ${escH(e.unit||'個')}</td><td class="c box">☐</td><td></td><td></td></tr>`;
+    return `<tr class="${newCab&&i?'cab':''}"><td class="c">${pg}-${seq}</td><td>${escH(cab||'—')}</td><td>${escH(e.name)}${e.spec?`<div class="sp">${escH(e.spec)}</div>`:''}</td><td class="c">${escH(String(stkShelfExpected(e)))} ${escH(e.unit||'個')}${equipOut(e)?`<div class="sp">借出 ${equipOut(e)}</div>`:''}</td><td class="c box">☐</td><td></td><td></td></tr>`;
   }).join('');
   const html=`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>盤點表 ${escH(roomTxt)} ${today}</title>
 <style>
@@ -5329,8 +5339,8 @@ function printStocktakeSheet(){
 <div class="noprint"><button onclick="window.print()" style="font-size:16px;padding:8px 16px">🖨️ 列印</button></div>
 <h1>器材盤點表</h1>
 <div class="meta">房間：${escH(roomTxt)}　範圍：${escH(viewTxt)}${q?'　搜尋：'+escH(q):''}　共 ${items.length} 項　列印日期：${today}</div>
-<div class="how">填法：數量<b>沒變</b>→ 勾「無變動」☑；數量<b>不同</b>→ 在「實點」寫實際數字。回到電腦輸入時，「頁-序」就是後台清單的第幾頁、第幾項；請<b>全部輸入完再按一次「儲存盤點」</b>（中途存檔，存好的會移到已盤點，後面的頁序就會往前移）。</div>
-<table><thead><tr><th style="width:9%">頁-序</th><th style="width:12%">櫃位</th><th>名稱／規格</th><th style="width:13%">系統數量</th><th style="width:9%">無變動</th><th style="width:11%">實點</th><th style="width:16%">備註</th></tr></thead>
+<div class="how">填法：只點<b>架上</b>的（借出中的不用找，系統會自己加回去）。數量<b>沒變</b>→ 勾「無變動」☑；數量<b>不同</b>→ 在「實點」寫架上實際數字。回到電腦輸入時，「頁-序」就是後台清單的第幾頁、第幾項；請<b>全部輸入完再按一次「儲存盤點」</b>（中途存檔，存好的會移到已盤點，後面的頁序就會往前移）。</div>
+<table><thead><tr><th style="width:9%">頁-序</th><th style="width:12%">櫃位</th><th>名稱／規格</th><th style="width:13%">架上應有</th><th style="width:9%">無變動</th><th style="width:11%">實點</th><th style="width:16%">備註</th></tr></thead>
 <tbody>${rows}</tbody></table>
 <div class="sign">盤點人：＿＿＿＿＿＿＿＿　日期：＿＿＿＿＿＿＿＿</div>
 </body></html>`;
@@ -5422,8 +5432,11 @@ async function saveVisibleStocktake(){
   if(!entries.length&&!sameIds.length){showToast('還沒有改數量或標「無變動」的項目','success');return;}
   let changed=0,same=0,failed=0;
   const now=new Date().toISOString();
-  for(const [id,newTotal] of entries){
+  for(const [id,shelfCount] of entries){
     if(!/^[A-Za-z0-9_-]+$/.test(String(id))){failed++;continue;}
+    // 實點的是「架上」的數量，存回總數時要把借出中的加回去（例：12 支借出 5，架上點到 7 → 總數還是 12）
+    const eq=allAdminEquipment.find(x=>String(x.id)===String(id));
+    const newTotal=Math.max(0,parseInt(shelfCount)||0)+(eq?equipOut(eq):0);
     try{
       await sb('PATCH','equipment',{filter:'id=eq.'+id,body:{total:newTotal,last_counted_at:now},prefer:'return=minimal'});
       changed++;delete stocktakePending[id];stocktakeSame.delete(String(id));
