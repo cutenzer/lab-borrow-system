@@ -364,12 +364,30 @@
   /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
   .cab-ui{margin-top:4px;}
   #chemCabView,#adminChemCab{scroll-margin-top:84px;}
-  .cab-route{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:12px;}
-  .cab-route .nm{font-size:18px;font-weight:700;line-height:1.35;}
-  .cab-route .cnt{font-size:13px;color:var(--text2);}
-  .cab-steps{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px;}
-  .cab-step{background:#f2c94c;color:#3d2f00;font-weight:700;font-size:14px;border-radius:9px;padding:4px 9px;}
-  .cab-arrow{color:var(--text2);font-size:13px;}
+  .cab-route{background:#fffbea;border:1.5px solid #f2c94c;border-radius:14px;padding:10px 14px 12px;margin-bottom:12px;animation:cabIn .25s ease-out;}
+  @keyframes cabIn{from{opacity:.35;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+  /* 位置：一行就好、不用加粗（下面的圖就是拿來對照的）；右邊是上下左右移一格 */
+  .cab-pos{display:flex;align-items:center;gap:8px;font-size:13px;color:#7a5c00;}
+  .cab-pos .t{flex:1;min-width:0;}
+  .cab-nav{display:flex;gap:4px;flex-shrink:0;}
+  .cab-nav button{width:30px;height:30px;border-radius:8px;border:1px solid #e8d48a;background:#fff;color:#7a5c00;font:inherit;font-size:14px;cursor:pointer;line-height:1;padding:0;}
+  .cab-nav button:disabled{opacity:.3;cursor:default;}
+  .cab-nav button:not(:disabled):hover{background:#f2c94c;}
+  /* 這一格有什麼：主角，字大、清楚 */
+  .cab-route .nm{font-size:19px;font-weight:700;line-height:1.35;margin-top:6px;color:var(--text);}
+  .cab-route .cnt{font-size:13px;color:var(--text2);margin-top:2px;}
+  .cab-here{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .cab-chip.cab-big{font-size:16px;font-weight:600;padding:7px 12px;border-radius:10px;background:#fff;border:1px solid #ecdca0;box-shadow:0 1px 2px rgba(0,0,0,.05);transition:transform .12s,background .12s;}
+  .cab-chip.cab-big:hover{transform:translateY(-1px);background:#fff4c7;}
+  .cab-chip.cab-big i{font-size:13px;}
+  .cab-here-empty{font-size:15px;color:var(--text2);margin-top:8px;}
+  .cab-sub{font-size:12.5px;color:var(--text2);margin-top:10px;}
+  /* 平面小圖：選到的格子跳一下；同一種藥品的其他位置用虛線框標出來 */
+  .cab-cell{transition:fill .2s;}
+  .cab-cell.sel{animation:cabPulse .9s ease-out 1;}
+  @keyframes cabPulse{0%{stroke-width:6;stroke-opacity:.2;}60%{stroke-width:1.5;stroke-opacity:1;}100%{stroke-width:1.5;}}
+  .cab-cell:hover{filter:brightness(.93);}
+  .cab-ui:focus{outline:none;}
   .cab-also{margin-top:8px;font-size:12.5px;color:var(--text2);}
   .cab-also button{border:1px solid var(--border);background:var(--surface2);color:var(--text);font:inherit;font-size:12.5px;border-radius:12px;padding:2px 9px;margin:4px 4px 0 0;cursor:pointer;}
   .cab-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
@@ -3856,29 +3874,41 @@ function makeCabUI(rootId,opts){
     ui.select(l.cab,l.layer,l.col,l.id);
     if(scroll){const r=root();if(r)r.scrollIntoView({behavior:'smooth',block:'start'});}
   };
+  // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
+  const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
+  ui.move=dir=>{const st=ui.state;if(st.col==null)return;const [dl,dc]=NAV[dir]||[0,0];const L=st.L+dl,c=st.col+dc;if(L<1||L>5||c<1||c>14)return;ui.select(st.cab,L,c,null);};
   function routeHtml(){
     const st=ui.state;if(st.col==null)return '';
-    const steps=`<div class="cab-steps"><span class="cab-step">第${CAB_CN[st.cab]}櫃</span><span class="cab-arrow">→</span><span class="cab-step">${cabDoor(st.col)}</span><span class="cab-arrow">→</span><span class="cab-step">第 ${st.L} 層</span><span class="cab-arrow">→</span><span class="cab-step">右數第 ${st.col} 排</span></div>`;
+    const nav=`<span class="cab-nav"><button type="button" data-nav="up" aria-label="上一層" ${st.L<=1?'disabled':''}>↑</button><button type="button" data-nav="down" aria-label="下一層" ${st.L>=5?'disabled':''}>↓</button><button type="button" data-nav="left" aria-label="左邊一排" ${st.col>=14?'disabled':''}>←</button><button type="button" data-nav="right" aria-label="右邊一排" ${st.col<=1?'disabled':''}>→</button></span>`;
+    const pos=`<div class="cab-pos"><span class="t">📍 第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${st.L} 層・右數第 ${st.col} 排</span>${nav}</div>`;
     const here=cellLocs(st.cab,st.L,st.col);
+    const chip=(l,big)=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip ${big?'cab-big':''}" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
     const sel=here.find(l=>String(l.id)===String(st.locId));
     if(sel){
+      // 從搜尋找過來的：藥品名稱最大，同一格的其他東西放下面
       const c=chem(sel.chem_id),name=c?c.name_zh:'（已刪除的藥品）';
       const others=locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id);
-      return `<div class="cab-route"><div class="nm">${escH(name)}</div><div class="cnt">這一格 ${parseInt(sel.bottles)||0} 瓶${sel.capacity?'・'+escH(sel.capacity):''}${sel.note?'・'+escH(sel.note):''}</div>${steps}
-        ${others.length?`<div class="cab-also">其他位置也有：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}</div>`;
+      const mates=here.filter(l=>l.id!==sel.id);
+      return `<div class="cab-route">${pos}<div class="nm">${escH(name)}</div><div class="cnt">這一格 ${parseInt(sel.bottles)||0} 瓶${sel.capacity?'・'+escH(sel.capacity):''}${sel.note?'・'+escH(sel.note):''}</div>
+        ${mates.length?`<div class="cab-sub">同一格還有：</div><div class="cab-here">${mates.map(l=>chip(l,false)).join('')}</div>`:''}
+        ${others.length?`<div class="cab-also">其他位置也有（圖上虛線框）：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}</div>`;
     }
-    return `<div class="cab-route"><div class="nm">第${CAB_CN[st.cab]}櫃・第 ${st.L} 層・第 ${st.col} 排</div><div class="cnt">${here.length?here.map(l=>escH(chem(l.chem_id)?.name_zh||'?')+((parseInt(l.bottles)||0)>1?' ×'+l.bottles:'')).join('、'):'這一格目前是空的'}</div>${steps}</div>`;
+    // 點格子進來的：這一格有什麼，大字列出來
+    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣：</div><div class="cab-here">${here.map(l=>chip(l,true)).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}</div>`;
   }
   function frontSvg(){
     const st=ui.state,top=6,H=40,W=(170-6)/7;let h='';
+    const selLoc=st.locId!=null?locs().find(l=>String(l.id)===String(st.locId)):null,selChem=selLoc?String(selLoc.chem_id):null;
     h+=`<rect x="1" y="1" width="338" height="${top+5*H+2}" rx="8" fill="none" stroke="var(--text2)" stroke-width="1.5"/><line x1="170" y1="1" x2="170" y2="${top+5*H+3}" stroke="var(--text2)" stroke-width="1.5"/>`;
     for(let L=1;L<=5;L++){
       const y=top+(L-1)*H;
       h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
       for(let c=1;c<=14;c++){
         const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);
-        const has=cellLocs(st.cab,L,c).length>0,sel=st.L===L&&st.col===c;
-        h+=`<rect class="cab-cell" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(has?'#c9bfa9':'var(--surface2)')}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':''}><title>第${L}層 第${c}排</title></rect>`;
+        const inCell=cellLocs(st.cab,L,c),has=inCell.length>0,sel=st.L===L&&st.col===c;
+        const same=!sel&&selChem!=null&&inCell.some(l=>String(l.chem_id)===selChem);
+        const tip=has?'：'+inCell.slice(0,4).map(l=>chem(l.chem_id)?.name_zh||'?').join('、')+(inCell.length>4?'…':''):'（空）';
+        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(same?'#f7e4a0':(has?'#c9bfa9':'var(--surface2)'))}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':'')}><title>${escH(`第${L}層 第${c}排${tip}`)}</title></rect>`;
       }
       h+=`<text x="7" y="${y+16}" font-size="10" fill="var(--text2)" pointer-events="none">${L}</text>`;
     }
@@ -3896,19 +3926,23 @@ function makeCabUI(rootId,opts){
   }
   ui.render=()=>{
     const r=root();if(!r)return;const st=ui.state;
-    r.innerHTML=`<div class="cab-ui">${routeHtml()}
+    r.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃</button>`).join('')}</div>
       <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div></div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
     r.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>ui.select(+b.dataset.cab,1,null,null));
     r.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>ui.select(st.cab,+b.dataset.layer,null,null));
-    r.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>ui.select(st.cab,+c.dataset.l,+c.dataset.c,null));
+    r.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>{ui.select(st.cab,+c.dataset.l,+c.dataset.c,null);const n=root()&&root().querySelector('.cab-ui');if(n)n.focus({preventScroll:true});});
     r.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
       if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.select(l.cab,l.layer,l.col,l.id);
     });
     r.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
+    r.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);const u=root()&&root().querySelector('.cab-ui');if(u)u.focus({preventScroll:true});});
+    // 電腦：選到格子後可以用鍵盤方向鍵移動
+    const u=r.querySelector('.cab-ui');
+    if(u)u.onkeydown=e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;e.preventDefault();ui.move(m);const n=root()&&root().querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
   };
   return ui;
 }
