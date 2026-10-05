@@ -388,6 +388,27 @@
   @keyframes cabPulse{0%{stroke-width:6;stroke-opacity:.2;}60%{stroke-width:1.5;stroke-opacity:1;}100%{stroke-width:1.5;}}
   .cab-cell:hover{filter:brightness(.93);}
   .cab-ui:focus{outline:none;}
+  /* 藥品櫃內搜尋 */
+  .cab-search{position:relative;margin-bottom:10px;}
+  .cab-q{width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font:inherit;font-size:15px;background:var(--surface);color:var(--text);}
+  .cab-q:focus{outline:none;border-color:var(--accent);}
+  .cab-results{display:flex;flex-direction:column;gap:2px;margin-top:6px;}
+  .cab-results:empty{display:none;}
+  .cab-results button{display:flex;justify-content:space-between;gap:10px;align-items:baseline;width:100%;text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:14.5px;padding:8px 12px;border-radius:10px;cursor:pointer;}
+  .cab-results button:hover,.cab-results button:focus{background:#fff4c7;border-color:#e8d48a;outline:none;}
+  .cab-results small{color:var(--text2);font-size:12.5px;white-space:nowrap;}
+  .cab-results .none{font-size:13.5px;color:var(--text2);padding:4px 2px;}
+  .cab-tabs button .qn{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:9px;background:#1f5b4c;color:#fff;font-size:11.5px;font-weight:700;line-height:18px;}
+  .cab-tabs button.on .qn{background:#fff;color:var(--accent);}
+  /* 後台：點格子直接改（瓶數 −／＋、移除、在這格加藥品） */
+  .cab-item{display:inline-flex;align-items:center;gap:2px;background:#fff;border:1px solid #ecdca0;border-radius:10px;padding:2px 4px 2px 2px;}
+  .cab-item .cab-chip.cab-big{border:none;box-shadow:none;background:transparent;padding:5px 8px;}
+  .cab-item .qb{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font:inherit;font-size:15px;cursor:pointer;padding:0;line-height:1;}
+  .cab-item .qb:hover{background:#f2c94c;}
+  .cab-item .qb.rm{color:var(--danger);background:transparent;border-color:transparent;}
+  .cab-item .qb.rm:hover{background:#fdecea;}
+  .cab-add-here{margin-top:10px;border:1.5px dashed #d9bf5c;background:transparent;color:#7a5c00;border-radius:10px;font:inherit;font-size:14px;padding:7px 14px;cursor:pointer;}
+  .cab-add-here:hover{background:#fff4c7;}
   .cab-also{margin-top:8px;font-size:12.5px;color:var(--text2);}
   .cab-also button{border:1px solid var(--border);background:var(--surface2);color:var(--text);font:inherit;font-size:12.5px;border-radius:12px;padding:2px 9px;margin:4px 4px 0 0;cursor:pointer;}
   .cab-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
@@ -1376,7 +1397,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03o';
+const ADMIN_VERSION='2026-10-03p';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3893,12 +3914,18 @@ function makeCabUI(rootId,opts){
         ${mates.length?`<div class="cab-sub">同一格還有：</div><div class="cab-here">${mates.map(l=>chip(l,false)).join('')}</div>`:''}
         ${others.length?`<div class="cab-also">其他位置也有（圖上虛線框）：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}</div>`;
     }
-    // 點格子進來的：這一格有什麼，大字列出來
-    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣：</div><div class="cab-here">${here.map(l=>chip(l,true)).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}</div>`;
+    // 點格子進來的：這一格有什麼，大字列出來；後台多了「−／＋ 瓶數、✕ 移除、＋ 在這格加藥品」
+    const item=l=>opts.onQuick?`<span class="cab-item">${chip(l,true)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`:chip(l,true);
+    const addBtn=opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:'';
+    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣${opts.onQuick?'（點名稱可以改容量、搬位置）':''}：</div><div class="cab-here">${here.map(item).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}${addBtn}</div>`;
   }
+  // 搜尋：名稱比對（不分大小寫、忽略空白和括號）
+  const qn=v=>String(v||'').toLowerCase().replace(/[\s（）()]/g,'');
+  const qHits=()=>{const q=qn(ui.state.q);if(!q)return [];return locs().filter(l=>qn(chem(l.chem_id)?.name_zh).includes(q)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);};
   function frontSvg(){
     const st=ui.state,top=6,H=40,W=(170-6)/7;let h='';
     const selLoc=st.locId!=null?locs().find(l=>String(l.id)===String(st.locId)):null,selChem=selLoc?String(selLoc.chem_id):null;
+    const qSet=new Set(qHits().filter(l=>l.cab===st.cab).map(l=>l.layer+'-'+l.col));
     h+=`<rect x="1" y="1" width="338" height="${top+5*H+2}" rx="8" fill="none" stroke="var(--text2)" stroke-width="1.5"/><line x1="170" y1="1" x2="170" y2="${top+5*H+3}" stroke="var(--text2)" stroke-width="1.5"/>`;
     for(let L=1;L<=5;L++){
       const y=top+(L-1)*H;
@@ -3907,8 +3934,9 @@ function makeCabUI(rootId,opts){
         const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);
         const inCell=cellLocs(st.cab,L,c),has=inCell.length>0,sel=st.L===L&&st.col===c;
         const same=!sel&&selChem!=null&&inCell.some(l=>String(l.chem_id)===selChem);
+        const qm=!sel&&!same&&qSet.has(L+'-'+c);
         const tip=has?'：'+inCell.slice(0,4).map(l=>chem(l.chem_id)?.name_zh||'?').join('、')+(inCell.length>4?'…':''):'（空）';
-        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(same?'#f7e4a0':(has?'#c9bfa9':'var(--surface2)'))}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':'')}><title>${escH(`第${L}層 第${c}排${tip}`)}</title></rect>`;
+        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(same?'#f7e4a0':(qm?'#cfe8dc':(has?'#c9bfa9':'var(--surface2)')))}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':(qm?'stroke="#1f5b4c" stroke-width="1.5"':''))}><title>${escH(`第${L}層 第${c}排${tip}`)}</title></rect>`;
       }
       h+=`<text x="7" y="${y+16}" font-size="10" fill="var(--text2)" pointer-events="none">${L}</text>`;
     }
@@ -3926,23 +3954,48 @@ function makeCabUI(rootId,opts){
   }
   ui.render=()=>{
     const r=root();if(!r)return;const st=ui.state;
-    r.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
-      <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃</button>`).join('')}</div>
+    // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
+    if(!r.querySelector(':scope>.cab-search')){
+      r.innerHTML=`<div class="cab-search"><input type="search" class="cab-q" placeholder="🔍 在藥品櫃裡找藥品（打幾個字就好）" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      const inp=r.querySelector('.cab-q');
+      inp.oninput=()=>{ui.state.q=inp.value.trim();ui.state.picked=false;ui.render();};
+      inp.onkeydown=e=>{
+        if(e.key==='Enter'){const f=r.querySelector('.cab-results [data-hit]');if(f){e.preventDefault();f.click();}}
+        else if(e.key==='Escape'){inp.value='';ui.state.q='';ui.render();}
+        else if(e.key==='ArrowDown'){const f=r.querySelector('.cab-results [data-hit]');if(f){e.preventDefault();f.focus();}}
+      };
+    }
+    const hits=qHits();
+    const qCount=c=>hits.filter(l=>l.cab===c).length;
+    const res=r.querySelector(':scope>.cab-search .cab-results');
+    if(!st.q||st.picked)res.innerHTML='';
+    else if(!hits.length)res.innerHTML=`<div class="none">藥品櫃裡找不到「${escH(st.q)}」</div>`;
+    else res.innerHTML=hits.slice(0,10).map(l=>`<button type="button" data-hit="${escH(String(l.id))}"><span>${escH(chem(l.chem_id)?.name_zh||'?')}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`).join('')+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；圖上綠框是目前這一櫃找到的位置</div>`:'');
+    res.querySelectorAll('[data-hit]').forEach(b=>{
+      b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);};
+      b.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();(b.nextElementSibling||b).focus();}else if(e.key==='ArrowUp'){e.preventDefault();(b.previousElementSibling||r.querySelector('.cab-q')).focus();}};
+    });
+    const body=r.querySelector(':scope>.cab-body');
+    body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
+      <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
       <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div></div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
-    r.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>ui.select(+b.dataset.cab,1,null,null));
-    r.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>ui.select(st.cab,+b.dataset.layer,null,null));
-    r.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>{ui.select(st.cab,+c.dataset.l,+c.dataset.c,null);const n=root()&&root().querySelector('.cab-ui');if(n)n.focus({preventScroll:true});});
-    r.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
+    const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
+    body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>ui.select(+b.dataset.cab,1,null,null));
+    body.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>ui.select(st.cab,+b.dataset.layer,null,null));
+    body.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>{ui.select(st.cab,+c.dataset.l,+c.dataset.c,null);focusUi();});
+    body.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
       if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.select(l.cab,l.layer,l.col,l.id);
     });
-    r.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
-    r.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);const u=root()&&root().querySelector('.cab-ui');if(u)u.focus({preventScroll:true});});
+    body.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
+    body.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.ql);if(l&&opts.onQuick)opts.onQuick(l,+b.dataset.qd,ui);});
+    body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
+    body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);focusUi();});
     // 電腦：選到格子後可以用鍵盤方向鍵移動
-    const u=r.querySelector('.cab-ui');
-    if(u)u.onkeydown=e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;e.preventDefault();ui.move(m);const n=root()&&root().querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
+    const u=body.querySelector('.cab-ui');
+    if(u)u.onkeydown=e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;e.preventDefault();ui.move(m);focusUi();};
   };
   return ui;
 }
@@ -3952,8 +4005,35 @@ const adminCabUI=makeCabUI('adminChemCab',{
   getLocs:()=>allChemLocs,
   getChem:id=>allAdminChems.find(c=>String(c.id)===String(id)),
   onChip:(l,ui)=>{ui.select(l.cab,l.layer,l.col,l.id);openCabEdit(l.id);},
-  onAdd:(cab,L,col)=>openCabAdd(cab,L,col)
+  onAdd:(cab,L,col)=>openCabAdd(cab,L,col),
+  onQuick:(l,d)=>cabQuickBottles(l.id,d),
+  onRemove:l=>cabQuickRemove(l.id)
 });
+// ── 點格子直接改：瓶數 −／＋（到 0 會問要不要移除）、✕ 移除 ──
+async function cabQuickBottles(locId,d){
+  if(cabBusy)return;
+  const l=allChemLocs.find(x=>String(x.id)===String(locId));if(!l)return;
+  const n=(parseInt(l.bottles)||0)+d;
+  if(n<1){cabQuickRemove(locId);return;}
+  if(n>999)return;
+  cabBusy=true;
+  const st={...adminCabUI.state};
+  try{
+    await sb('PATCH','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),body:{bottles:n,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    l.bottles=n;adminCabUI.render();      // 先在畫面上更新，不用等重新載入
+    loadAdminChems().then(()=>{Object.assign(adminCabUI.state,{cab:st.cab,L:st.L,col:st.col,locId:st.locId});adminCabUI.render();});
+  }catch(e){showToast('更新失敗：'+e.message,'error');}
+  finally{cabBusy=false;}
+}
+async function cabQuickRemove(locId){
+  const l=allChemLocs.find(x=>String(x.id)===String(locId));if(!l)return;
+  const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
+  if(!confirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這一格不再有它）`))return;
+  try{
+    await sb('DELETE','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),prefer:'return=minimal'});
+    showToast('已移除','success');await loadAdminChems();adminCabUI.select(l.cab,l.layer,l.col,null);
+  }catch(e){showToast('移除失敗：'+e.message,'error');}
+}
 async function loadChemLocs(){
   const msg=document.getElementById('chemCabMsg');
   try{
