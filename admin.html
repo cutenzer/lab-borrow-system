@@ -105,6 +105,29 @@
     .vcell.multi .venue-booking{display:block;white-space:nowrap;text-overflow:ellipsis;}
     .venue-table .holiday-tag{display:block;font-size:9px;white-space:normal;}
   }
+
+  /* ── 藥品頁版面：電腦兩欄（左：藥品櫃｜右：分頁），手機一次一個區塊 ── */
+  .chem-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px;background:var(--bg);}
+  .chem-tabs::-webkit-scrollbar{display:none;}
+  .chem-tabs button{flex:0 0 auto;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font:inherit;font-size:14px;padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+  .chem-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
+  .chem-tabs .ct-n{display:inline-block;min-width:18px;margin-left:5px;padding:0 6px;border-radius:9px;background:#c2410c;color:#fff;font-size:11.5px;line-height:18px;font-weight:700;}
+  .chem-tabs .ct-n:empty{display:none;}
+  .chem-sec{display:none;}
+  .chem-sec.on{display:block;}
+  @media(min-width:1100px){
+    body:has(#panel-chemicals.active) main{max-width:1560px;}
+    .chem-ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(400px,1fr);gap:16px;align-items:start;}
+    .chem-tabs .ct-cab{display:none;}
+    .chem-left{display:block!important;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;border-radius:14px;}
+    .chem-right .chem-sec.on{max-height:calc(100vh - 150px);overflow:auto;border-radius:14px;}
+  }
+  @media(max-width:1099px){
+    /* 手機：分頁列放最上面、捲動時黏在頂端 */
+    .chem-ws{display:flex;flex-direction:column;}
+    .chem-right{display:contents;}
+    .chem-tabs{order:-1;position:sticky;top:56px;z-index:15;margin:0 -16px 6px;padding:8px 16px 10px;}
+  }
   /* 全部紀錄搜尋 */
   .rec-search{width:100%;margin:0 0 12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:var(--surface);}
   .btn:disabled{opacity:0.5;cursor:not-allowed;}
@@ -915,7 +938,10 @@
 </div>
 
 <div id="panel-chemicals" class="panel">
-  <div class="card" style="margin-bottom:16px">
+  <!-- 藥品頁：電腦左邊固定是藥品櫃、右邊用分頁切換（清單／新增／大類／未分類／匯入）；手機每次只顯示一個區塊 -->
+  <div class="chem-ws">
+    <div class="chem-left chem-sec" data-sec="cab">
+  <div class="card">
     <div class="card-title">🗄️ 藥品櫃</div>
     <div class="info-box">點格子看內容；每一排右邊的「＋」可以直接加藥品；點藥品可以改瓶數、容量，或「搬到」別的位置。改完前台馬上看得到，藥品清單的瓶數和位置也會自動跟著更新。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -927,24 +953,32 @@
     <div id="chemCabOrphan"></div>
     <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">🏷️ 藥品大類</div>
-    <div class="info-box">大類決定藥品清單的分類標籤和藥品櫃分區的顏色。改名、改顏色、調順序後按「儲存」，已經分好類的藥品和分區會一起跟著改。老師討論好的「藥品分類草稿」Excel 可以直接匯入。</div>
-    <div id="catManager"><div class="empty"><p>點重新整理載入</p></div></div>
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📥 批次匯入（貼上 CSV）</div>
-    <div class="info-box">從 Google Sheet 複製資料（含標題列）貼到下方，格式：中文名稱、英文名稱、位置、分類、剩餘瓶數、藥品回收、附註</div>
-    <textarea id="chemCsvInput" rows="6" placeholder="貼上從 Google Sheet 複製的資料…" style="font-family:'DM Mono',monospace;font-size:12px"></textarea>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-secondary" onclick="previewChemCsv()">👁️ 預覽</button>
-      <button class="btn btn-primary" onclick="importChemCsv()">🔍 比對並匯入</button>
     </div>
-    <div id="chemCsvPreview" style="margin-top:10px"></div>
+    <div class="chem-right">
+      <div class="chem-tabs" id="chemTabs" role="tablist">
+        <button type="button" data-ct="cab" class="ct-cab">🗄️ 藥品櫃</button>
+        <button type="button" data-ct="list">📋 清單</button>
+        <button type="button" data-ct="add">➕ 新增</button>
+        <button type="button" data-ct="cats">🏷️ 大類</button>
+        <button type="button" data-ct="sort">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
+        <button type="button" data-ct="csv">📥 匯入</button>
+      </div>
+      <div class="chem-sec" data-sec="list">
+  <div class="card">
+    <div class="card-title">📋 藥品清單</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
+  <select id="adminChemCat" onchange="filterAdminChems()">
+    <option value="">全部分類</option>
+  </select>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
+</div>
+    <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
   </div>
-
-  <div class="card" style="margin-bottom:16px">
+      </div>
+      <div class="chem-sec" data-sec="add">
+  <div class="card">
     <div class="card-title">➕ 新增 / 編輯藥品</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group" style="grid-column:1/-1"><label>中文名稱 *</label><input type="text" id="chem-name-zh"></div>
@@ -969,26 +1003,37 @@
       <button class="btn btn-primary" onclick="saveChem()">💾 儲存</button>
     </div>
   </div>
-
-  <div class="card" style="margin-bottom:16px">
+      </div>
+      <div class="chem-sec" data-sec="cats">
+  <div class="card">
+    <div class="card-title">🏷️ 藥品大類</div>
+    <div class="info-box">大類決定藥品清單的分類標籤和藥品櫃分區的顏色。改名、改顏色、調順序後按「儲存」，已經分好類的藥品和分區會一起跟著改。老師討論好的「藥品分類草稿」Excel 可以直接匯入。</div>
+    <div id="catManager"><div class="empty"><p>點重新整理載入</p></div></div>
+  </div>
+      </div>
+      <div class="chem-sec" data-sec="sort">
+  <div class="card">
     <div class="card-title">🏷️ 快速歸類「其他／未分類」藥品</div>
     <div class="info-box">把目前分類是「其他」或還沒填分類的藥品集中列在這裡，每一筆旁邊直接選新分類即可儲存，不用逐筆點進去編輯。</div>
     <div id="chemQuickSortList"><div class="empty"><div class="empty-icon">🏷️</div><p>點重新整理載入</p></div></div>
   </div>
-
+      </div>
+      <div class="chem-sec" data-sec="csv">
   <div class="card">
-    <div class="card-title">📋 藥品清單</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-  <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
-  <select id="adminChemCat" onchange="filterAdminChems()">
-    <option value="">全部分類</option>
-  </select>
-  <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
-  <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
-</div>
-    <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
+    <div class="card-title">📥 批次匯入（貼上 CSV）</div>
+    <div class="info-box">從 Google Sheet 複製資料（含標題列）貼到下方，格式：中文名稱、英文名稱、位置、分類、剩餘瓶數、藥品回收、附註</div>
+    <textarea id="chemCsvInput" rows="6" placeholder="貼上從 Google Sheet 複製的資料…" style="font-family:'DM Mono',monospace;font-size:12px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary" onclick="previewChemCsv()">👁️ 預覽</button>
+      <button class="btn btn-primary" onclick="importChemCsv()">🔍 比對並匯入</button>
+    </div>
+    <div id="chemCsvPreview" style="margin-top:10px"></div>
   </div>
-</div>  
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="panel-equipment" class="panel">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">🏷️ 新增 / 編輯器材</div>
@@ -1412,7 +1457,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03u';
+const ADMIN_VERSION='2026-10-03v';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4231,7 +4276,26 @@ async function deleteChemLocsOf(id){
   if(chemLocsOf(id).length)await sb('DELETE','chem_locations',{filter:'chem_id=eq.'+encodeURIComponent(id),prefer:'return=minimal'});
 }
 function chemLocsOf(id){return allChemLocs.filter(l=>String(l.chem_id)===String(id)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);}
-function goChemLoc(locId){adminCabUI.selectLoc(locId,true);}
+
+// ── 藥品頁分頁 ──
+const isWideChem=()=>window.matchMedia('(min-width:1100px)').matches;
+function setChemTab(t,save=true){
+  const tabs=document.getElementById('chemTabs');if(!tabs)return;
+  if(isWideChem()&&t==='cab')t='list';      // 電腦版藥品櫃一直顯示在左邊
+  tabs.querySelectorAll('[data-ct]').forEach(b=>b.classList.toggle('on',b.dataset.ct===t));
+  document.querySelectorAll('#panel-chemicals .chem-sec').forEach(sec=>sec.classList.toggle('on',sec.dataset.sec===t));
+  if(save){try{localStorage.setItem('chemTab',t);}catch(_){}}
+  if(t==='cab'&&typeof adminCabUI!=='undefined')adminCabUI.render();
+}
+function initChemTabs(){
+  const tabs=document.getElementById('chemTabs');if(!tabs||tabs._init)return;tabs._init=true;
+  tabs.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{setChemTab(b.dataset.ct);const ws=document.querySelector('#panel-chemicals .chem-ws');if(!isWideChem()&&ws)window.scrollTo({top:Math.max(0,ws.getBoundingClientRect().top+window.scrollY-120),behavior:'smooth'});});
+  let t='cab';try{t=localStorage.getItem('chemTab')||'cab';}catch(_){}
+  setChemTab(t,false);
+  window.matchMedia('(min-width:1100px)').addEventListener?.('change',()=>{const cur=tabs.querySelector('.on')?.dataset.ct||'list';setChemTab(cur,false);});
+}
+(function(){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initChemTabs);else initChemTabs();})();
+function goChemLoc(locId){if(!isWideChem())setChemTab('cab');adminCabUI.selectLoc(locId,true);}
 function cabSelectOpts(n,cur,fmt){return Array.from({length:n},(_,i)=>i+1).map(v=>`<option value="${v}" ${v===cur?'selected':''}>${fmt(v)}</option>`).join('');}
 // ＋ 在某一排加藥品：打名稱（可以從清單選），找不到就會新建一筆藥品
 function openCabAdd(cab,L,col){
@@ -4927,6 +4991,7 @@ async function runClassImport(){
 function renderChemQuickSort(){
   const box=document.getElementById('chemQuickSortList');if(!box)return;
   const targets=allAdminChems.filter(c=>!catName(c.category));
+  const nEl=document.getElementById('chemSortN');if(nEl)nEl.textContent=targets.length?String(targets.length):'';
   if(!targets.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>目前沒有「其他／未分類」的藥品</p></div>';return;}
   box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">共 ${targets.length} 筆</div>`+targets.map(c=>{
     const catOpts=CHEM_CATS.map(x=>x.name).map(v=>`<option value="${escH(v)}" ${catName(c.category)===v?'selected':''}>${escH(v)}</option>`).join('');
@@ -4977,8 +5042,8 @@ function filterAdminChems() {
           ${c.note&&c.note!=='附註'?`<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${escH(c.note)}</div>`:''}
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="toggleChemEdit(${c.id})">✏️ 編輯</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteChem(${c.id})">🗑️</button>
+          <button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="toggleChemEdit(${c.id})">編輯</button>
+          <button class="btn btn-danger-outline btn-sm" onclick="deleteChem(${c.id})" aria-label="刪除">🗑️</button>
         </div>
       </div>
       <div id="cheминеdit-${c.id}" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
