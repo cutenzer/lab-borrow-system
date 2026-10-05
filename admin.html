@@ -1412,7 +1412,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03t';
+const ADMIN_VERSION='2026-10-03u';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4376,7 +4376,8 @@ function chemEnKeys(c){
   const out=new Set();
   const en=String(c.name_en||'');
   if(enNorm(en).length>=2)out.add(enNorm(en));
-  en.split(/[()（）,，;；\/]/).forEach(t=>{const k=enNorm(t);if(k.length>=2)out.add(k);});
+  // 逗號是化學名的一部分（例如 Sodium phosphate, dibasic），不能拆；只拆括號（簡寫）和斜線、分號（另一種寫法）
+  en.split(/[()（）;；\/]/).forEach(t=>{const k=enNorm(t);if(k.length>=2)out.add(k);});
   (String(c.name_zh||'').match(/[A-Za-z][A-Za-z0-9+]{1,}/g)||[]).forEach(t=>{const k=enNorm(t);if(k.length>=2)out.add(k);});
   return [...out];
 }
@@ -4410,19 +4411,25 @@ function checkChemSimilar(){
   const body=chemSimGroups.map((g,gi)=>`
     <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:6px">第 ${gi+1} 組・${escH(g.reasons.join('、')||'名稱相似')}</div>
-      ${g.items.map((c,ci)=>`<label style="display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px;background:var(--surface2);margin-bottom:4px;cursor:pointer;font-size:13px">
-        <input type="radio" name="sim-keep-${gi}" value="${escH(String(c.id))}" ${ci===0?'checked':''} style="width:auto;margin-top:3px">
+      ${g.items.map((c,ci)=>{const id=escH(String(c.id));return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:8px;background:var(--surface2);margin-bottom:4px;font-size:13px">
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;padding-top:2px">
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap"><input type="radio" name="sim-keep-${gi}" value="${id}" ${ci===0?'checked':''} style="width:auto" onchange="simKeepChanged(${gi})">保留</label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;${ci===0?'opacity:.35':''}"><input type="checkbox" class="sim-in-${gi}" value="${id}" ${ci===0?'disabled':''} style="width:auto">併入</label>
+        </div>
         <span style="flex:1;min-width:0"><span style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-            <input id="sim-zh-${escH(String(c.id))}" value="${escH(c.name_zh||'')}" maxlength="60" style="flex:1 1 140px;min-width:0;font-weight:700;padding:5px 8px" aria-label="中文名稱" onclick="event.stopPropagation()">
-            <input id="sim-en-${escH(String(c.id))}" value="${escH(c.name_en||'')}" maxlength="100" placeholder="英文／簡寫" style="flex:1 1 140px;min-width:0;padding:5px 8px" aria-label="英文名稱" onclick="event.stopPropagation()">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="event.preventDefault();event.stopPropagation();saveSimName(${ja(c.id)})">存名稱</button></span>
-          <span style="color:var(--text2)">${escH(String(c.bottles_left??0))} 瓶${c.category?'・'+escH(c.category):''}${chemLocsOf(c.id).length?'・📍 '+chemLocsOf(c.id).map(l=>escH(cabCode(l))).join('、'):(c.location?'・📍 '+escH(c.location):'')}・#${escH(String(c.id))}</span></span>
-        <button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="event.preventDefault();event.stopPropagation();deleteSimilarOne(${ja(c.id)})">刪除</button></label>`).join('')}
-      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarGroup(${gi})">不是同一種</button>
-        <button type="button" class="btn btn-primary btn-sm" onclick="mergeSimilarGroup(${gi})">合併到選中的那筆</button></div>
+            <input id="sim-zh-${id}" value="${escH(c.name_zh||'')}" maxlength="60" style="flex:1 1 140px;min-width:0;font-weight:700;padding:5px 8px" aria-label="中文名稱">
+            <input id="sim-en-${id}" value="${escH(c.name_en||'')}" maxlength="100" placeholder="英文／簡寫" style="flex:1 1 140px;min-width:0;padding:5px 8px" aria-label="英文名稱">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="saveSimName(${ja(c.id)})">存名稱</button></span>
+          <span style="color:var(--text2)">${escH(String(c.bottles_left??0))} 瓶${c.category?'・'+escH(catName(c.category)):''}${chemLocsOf(c.id).length?'・📍 '+chemLocsOf(c.id).map(l=>escH(cabCode(l))).join('、'):(c.location?'・📍 '+escH(c.location):'')}・#${id}</span></span>
+        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarOne(${gi},${ja(c.id)})" title="這一筆跟同組其他的都不是同一種">移出這組</button>
+          <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteSimilarOne(${ja(c.id)})">刪除</button>
+        </div></div>`;}).join('')}
+      <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarGroup(${gi})">全部都不是同一種</button>
+        <button type="button" class="btn btn-primary btn-sm" onclick="mergeSimilarGroup(${gi})">把勾「併入」的合併到「保留」那筆</button></div>
     </div>`).join('');
-  showModal(`🔎 找到 ${chemSimGroups.length} 組寫法相似的藥品`,`<div class="hint" style="margin-bottom:10px">每組請先確認是不是同一種藥品。<b>合併</b>：保留選中的那筆，其他筆的藥品櫃位置和瓶數搬過來，再刪掉其他筆（建議用這個）。<b>刪除</b>：只刪那一筆，它在藥品櫃的位置也會一起消失。</div>${body}`,[
+  showModal(`🔎 找到 ${chemSimGroups.length} 組寫法相似的藥品`,`<div class="hint" style="margin-bottom:10px">一組裡不一定全部都是同一種。<b>只有部分相同</b>：選一筆「保留」，把相同的勾「併入」，再按合併；不相同的按「移出這組」，之後就不會再跟它們配在一起。<b>合併</b>會把併入那幾筆的藥品櫃位置和瓶數搬到保留那筆，再刪掉它們。</div>${body}`,[
     {label:'📥 匯出成 Excel',cls:'btn-secondary',fn:'exportChemSimilar()'},
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
   ]);
@@ -4434,10 +4441,29 @@ function dismissSimilarGroup(gi){
   try{const a=JSON.parse(localStorage.getItem('chemSimDismissed')||'[]');a.push(simGroupKey(g));localStorage.setItem('chemSimDismissed',JSON.stringify(a.slice(-500)));}catch(_){}
   showToast('已記下，下次不再列出這組','success');checkChemSimilarFiltered();
 }
+// 「移出這組」：記下這一筆跟同組其他筆「不是同一種」（記在這台電腦）
+const simPair=(a,b)=>[String(a),String(b)].sort().join('|');
+function dismissSimilarOne(gi,id){
+  const g=chemSimGroups[gi];if(!g)return;
+  try{const a=JSON.parse(localStorage.getItem('chemSimPairs')||'[]');g.items.forEach(o=>{if(String(o.id)!==String(id))a.push(simPair(id,o.id));});localStorage.setItem('chemSimPairs',JSON.stringify([...new Set(a)].slice(-3000)));}catch(_){}
+  checkChemSimilarFiltered();
+}
+// 把標記成「不是同一種」的拿掉：跟同組每一筆都不是同一種的，就移出這組
+function applySimPairs(groups){
+  let pairs=[];try{pairs=JSON.parse(localStorage.getItem('chemSimPairs')||'[]');}catch(_){}
+  const P=new Set(pairs);
+  return groups.map(g=>{let items=g.items.slice(),changed=true;
+    while(changed){changed=false;items=items.filter(c=>{const ok=items.some(o=>o!==c&&!P.has(simPair(c.id,o.id)));if(!ok)changed=true;return ok;});}
+    return {...g,items};}).filter(g=>g.items.length>1);
+}
+function simKeepChanged(gi){
+  const keep=document.querySelector(`input[name="sim-keep-${gi}"]:checked`)?.value;
+  document.querySelectorAll(`.sim-in-${gi}`).forEach(cb=>{const me=cb.value===keep;cb.disabled=me;if(me)cb.checked=false;cb.parentElement.style.opacity=me?'.35':'';});
+}
 function checkChemSimilarFiltered(){
   let dis=[];try{dis=JSON.parse(localStorage.getItem('chemSimDismissed')||'[]');}catch(_){}
   const orig=chemSimilarGroups;
-  chemSimilarGroups=()=>orig().filter(g=>!dis.includes(simGroupKey(g)));
+  chemSimilarGroups=()=>applySimPairs(orig()).filter(g=>!dis.includes(simGroupKey(g)));
   try{checkChemSimilar();}finally{chemSimilarGroups=orig;}
 }
 // 相似名稱清單裡直接改名稱、補英文
@@ -4455,15 +4481,18 @@ async function mergeSimilarGroup(gi){
   const g=chemSimGroups[gi];if(!g)return;
   const keepId=document.querySelector(`input[name="sim-keep-${gi}"]:checked`)?.value;
   const keep=g.items.find(c=>String(c.id)===String(keepId));if(!keep)return;
-  const others=g.items.filter(c=>c!==keep);
-  const anyLocs=g.items.some(c=>chemLocsOf(c.id).length);
+  const picked=[...document.querySelectorAll(`.sim-in-${gi}:checked`)].map(cb=>cb.value);
+  const others=g.items.filter(c=>c!==keep&&picked.includes(String(c.id)));
+  if(!others.length){showToast('請先勾選要「併入」的那幾筆','error');return;}
+  const involved=[keep,...others];
+  const anyLocs=involved.some(c=>chemLocsOf(c.id).length);
   const lost=anyLocs?others.filter(c=>!chemLocsOf(c.id).length&&(parseInt(c.bottles_left)||0)>0):[];
   if(!confirm(`保留「${keep.name_zh}」，把 ${others.map(c=>'「'+c.name_zh+'」').join('、')} 合併進來後刪除？${lost.length?`\n\n注意：${lost.map(c=>'「'+c.name_zh+'」'+c.bottles_left+' 瓶').join('、')}沒有登記在藥品櫃，瓶數不會自動加進來，合併後請到藥品櫃補上位置。`:''}`))return;
   try{
     for(const o of others){
       if(chemLocsOf(o.id).length)await sb('PATCH','chem_locations',{filter:'chem_id=eq.'+encodeURIComponent(o.id),body:{chem_id:keep.id},prefer:'return=minimal'});
     }
-    if(!anyLocs){const total=g.items.reduce((s,c)=>s+(parseInt(c.bottles_left)||0),0);await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(keep.id),body:{bottles_left:total},prefer:'return=minimal'});}
+    if(!anyLocs){const total=involved.reduce((s,c)=>s+(parseInt(c.bottles_left)||0),0);await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(keep.id),body:{bottles_left:total},prefer:'return=minimal'});}
     const patch={};if(!keep.name_en){const en=others.find(c=>c.name_en)?.name_en;if(en)patch.name_en=en;}
     if(!keep.category){const cat=others.find(c=>c.category)?.category;if(cat)patch.category=cat;}
     if(Object.keys(patch).length)await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(keep.id),body:patch,prefer:'return=minimal'});
