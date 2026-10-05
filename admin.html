@@ -920,6 +920,11 @@
     <div id="chemCabOrphan"></div>
     <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
   </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-title">🏷️ 藥品大類</div>
+    <div class="info-box">大類決定藥品清單的分類標籤和藥品櫃分區的顏色。改名、改顏色、調順序後按「儲存」，已經分好類的藥品和分區會一起跟著改。老師討論好的「藥品分類草稿」Excel 可以直接匯入。</div>
+    <div id="catManager"><div class="empty"><p>點重新整理載入</p></div></div>
+  </div>
 
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📥 批次匯入（貼上 CSV）</div>
@@ -942,9 +947,6 @@
         <label>分類</label>
         <select id="chem-category">
           <option value="">不指定</option>
-          <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
-          <option value="有機溶劑">有機溶劑</option><option value="指示劑">指示劑</option>
-          <option value="培養基／生化">培養基／生化</option><option value="溶液成品">溶液成品</option><option value="其他">其他</option>
         </select>
       </div>
       <div class="form-group"><label>剩餘瓶數</label><input type="number" id="chem-bottles" min="0" value="0"></div>
@@ -973,9 +975,6 @@
   <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
   <select id="adminChemCat" onchange="filterAdminChems()">
     <option value="">全部分類</option>
-    <option value="酸">酸</option><option value="鹼">鹼</option><option value="鹽">鹽</option>
-    <option value="有機溶劑">有機溶劑</option><option value="指示劑">指示劑</option>
-    <option value="培養基／生化">培養基／生化</option><option value="溶液成品">溶液成品</option><option value="其他">其他</option>
   </select>
   <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
   <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
@@ -1406,7 +1405,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03q';
+const ADMIN_VERSION='2026-10-03r';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3896,6 +3895,32 @@ function cabDoor(col){return col<=7?'右門':'左門';}
 const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
 function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.codePointAt(0))>>>0;return ZONE_COLORS[h%ZONE_COLORS.length];}
 
+// ── 藥品大類（後台可以自己編輯；存在資料表 chem_categories，還沒建表時用下面的預設）──
+const CHEM_CAT_DEFAULTS=[
+  {name:'酸',color:'#e53935',icon:'🧪'},
+  {name:'鹼',color:'#1e88e5',icon:'⚗️'},
+  {name:'氧化劑',color:'#fb8c00',icon:'🔥'},
+  {name:'易燃・有機溶劑',color:'#f9a825',icon:'🛢️'},
+  {name:'一般鹽類・氧化物',color:'#43a047',icon:'🧂'},
+  {name:'金屬・元素',color:'#757575',icon:'⚙️'},
+  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:'🌈'},
+  {name:'生化・有機固體・其他',color:'#8d6e63',icon:'📦'}];
+let CHEM_CATS=CHEM_CAT_DEFAULTS.map((c,i)=>({...c,sort:i+1}));
+// 舊的分類名稱 → 新大類（資料還沒轉換前也能正確顯示）
+const CHEM_CAT_LEGACY={'鹽':'一般鹽類・氧化物','有機溶劑':'易燃・有機溶劑','指示劑':'指示劑・染劑・分析試劑','培養基／生化':'生化・有機固體・其他','溶液成品':'生化・有機固體・其他','其他':'生化・有機固體・其他'};
+function catName(v){const s=String(v??'').trim().replace(/^\d+\s+/,'');if(!s)return '';if(CHEM_CATS.some(c=>c.name===s))return s;return CHEM_CAT_LEGACY[s]||s;}
+function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:'📦'};}
+function hexMix(hex,t,to){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return to?'#eeeeee':'#555555';const n=parseInt(m[1],16);return '#'+[n>>16,(n>>8)&255,n&255].map(x=>Math.round(to?x+(255-x)*t:x*(1-t))).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function catTagHtml(v,extra=''){const c=catInfo(v);return `<span class="chem-cat-tag ${extra}" style="background:${hexMix(c.color,.86,1)};color:${hexMix(c.color,.3,0)}">${escH(c.name)}</span>`;}
+async function loadChemCats(){
+  try{const r=await sb('GET','chem_categories',{order:'sort,name'});
+    if(Array.isArray(r)&&r.length){CHEM_CATS=r.filter(x=>x&&x.name).map(x=>({id:x.id,name:String(x.name).slice(0,20),color:/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#9e9e9e',icon:String(x.icon||'').slice(0,4),sort:x.sort||0}));}
+    window._catsFromDb=Array.isArray(r);
+  }catch(_){window._catsFromDb=false;}
+}
+// 分區顏色跟著大類走；舊資料沒有大類的，用名稱猜一個顏色
+function zoneColorOf(z){if(z&&z.category){const c=catInfo(z.category);return [hexMix(c.color,.82,1),c.color];}return zoneColor(z&&z.text);}
+
 function makeCabUI(rootId,opts){
   const ui={state:{cab:1,L:1,col:null,locId:null},opts};
   const root=()=>document.getElementById(rootId);
@@ -3915,7 +3940,7 @@ function makeCabUI(rootId,opts){
   // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
   const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
   ui.move=dir=>{const st=ui.state;if(st.col==null)return;const [dl,dc]=NAV[dir]||[0,0];const L=st.L+dl,c=st.col+dc;if(L<1||L>5||c<1||c>14)return;ui.select(st.cab,L,c,null);};
-  function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColor(z.text);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
+  function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColorOf(z);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
   function routeHtml(){
     const st=ui.state;
     if(st.zone!=null&&st.col==null){
@@ -3965,11 +3990,13 @@ function makeCabUI(rootId,opts){
       h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
       // 分區色塊：左門、右門分開畫（中間有門縫）
       zs.filter(z=>z.layer===L).forEach(z=>{
-        const [bg,fg]=zoneColor(z.text),on=String(st.zone)===String(z.id);
+        const [bg,fg]=zoneColorOf(z),on=String(st.zone)===String(z.id);
         [[Math.max(z.a,8),z.b],[z.a,Math.min(z.b,7)]].forEach(([lo,hi])=>{
           if(lo>hi)return;
           const x1=colX(hi),x2=colX(lo)+W;
-          h+=`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="${on?2.2:1.2}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
+          // 平常只在格子下面畫一條細色線（不吵）；點了圖例才整區框起來
+          h+=on?`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="2.2" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`
+               :`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+2).toFixed(1)}" y="${y+H-6}" width="${(x2-x1-4).toFixed(1)}" height="3.5" rx="1.75" fill="${fg}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
         });
       });
       for(let c=1;c<=14;c++){
@@ -4020,7 +4047,7 @@ function makeCabUI(rootId,opts){
     const body=r.querySelector(':scope>.cab-body');
     body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
-      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColor(z.text);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
+      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColorOf(z);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
     const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
@@ -4062,8 +4089,10 @@ function openZoneEdit(cab,L,col,z){
   window._zoneEdit={cab,L,id:z?z.id:null};
   const a=z?Math.max(z.col_from,z.col_to):col,b=z?Math.min(z.col_from,z.col_to):col;
   const names=[...new Set(allChemLabels.map(x=>x.text))].map(t=>`<option value="${escH(t)}"></option>`).join('');
+  const zc=z?catName(z.category):'';
   showModal(`🏷️ ${z?'修改':'設定'}分區・第${CAB_CN[cab]}櫃第 ${L} 層`,`
-    <div class="form-group"><label>分區名稱（例如：指示劑、有機溶劑、氯化物）</label><input id="zn-text" maxlength="30" list="znNames" value="${escH(z?z.text:'')}" autocomplete="off"><datalist id="znNames">${names}</datalist></div>
+    <div class="form-group"><label>大類（決定顏色）</label><select id="zn-cat">${CHEM_CATS.map(c=>`<option value="${escH(c.name)}" ${zc===c.name?'selected':''}>${escH(c.name)}</option>`).join('')}</select></div>
+    <div class="form-group"><label>細分名稱（選填，例如：指示劑溶液、氯化物；空白就顯示大類名稱）</label><input id="zn-text" maxlength="30" list="znNames" value="${escH(z&&z.text!==zc?z.text:'')}" autocomplete="off"><datalist id="znNames">${names}</datalist></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label>從（左邊）</label><select id="zn-from">${cabSelectOpts(14,a,v=>`${v} 排（${cabDoor(v)}）`)}</select></div>
       <div class="form-group"><label>到（右邊）</label><select id="zn-to">${cabSelectOpts(14,b,v=>`${v} 排（${cabDoor(v)}）`)}</select></div>
@@ -4075,14 +4104,15 @@ function openZoneEdit(cab,L,col,z){
 }
 async function saveZone(){
   const ctx=window._zoneEdit;if(!ctx)return;
-  const text=(document.getElementById('zn-text')?.value||'').trim().slice(0,30);
+  const category=document.getElementById('zn-cat')?.value||'';
+  const text=((document.getElementById('zn-text')?.value||'').trim()||category).slice(0,30);
   let a=parseInt(document.getElementById('zn-from')?.value),b=parseInt(document.getElementById('zn-to')?.value);
-  if(!text){showToast('請填分區名稱','error');return;}
+  if(!text){showToast('請選大類','error');return;}
   if(!(a>=1&&a<=14&&b>=1&&b<=14)){showToast('排數不對','error');return;}
   const hi=Math.max(a,b),lo=Math.min(a,b);
   const clash=allChemLabels.find(x=>x.cab===ctx.cab&&x.layer===ctx.L&&String(x.id)!==String(ctx.id)&&!(Math.max(x.col_from,x.col_to)<lo||Math.min(x.col_from,x.col_to)>hi));
   if(clash){showToast(`跟「${clash.text}」重疊了，請調整範圍`,'error');return;}
-  const body={cab:ctx.cab,layer:ctx.L,col_from:hi,col_to:lo,text};
+  const body={cab:ctx.cab,layer:ctx.L,col_from:hi,col_to:lo,text,category:category||null};
   try{
     if(ctx.id)await sb('PATCH','chem_cab_labels',{filter:'id=eq.'+encodeURIComponent(ctx.id),body,prefer:'return=minimal'});
     else await sb('POST','chem_cab_labels',{body,prefer:'return=minimal'});
@@ -4135,6 +4165,7 @@ async function loadChemLocs(){
 }
 async function loadAdminChems() {
   try {
+    await loadChemCats();fillAdminCatSelects();
     const [rows,labs]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),sb('GET','chem_cab_labels',{order:'cab,layer,col_from.desc'}).catch(()=>null),loadChemLocs()]);
     allChemLabels=Array.isArray(labs)?labs:[];window._zonesReady=Array.isArray(labs);
     allAdminChems = Array.isArray(rows) ? rows : [];
@@ -4142,6 +4173,7 @@ async function loadAdminChems() {
     renderChemQuickSort();
     adminCabUI.render();
     renderChemCabOrphans();
+    renderCatManager();
   } catch(e) { showToast('載入藥品失敗', 'error'); }
 }
 // ── 藥品櫃裡顯示「?」的位置：對應的藥品已經不在藥品清單（例如被刪掉了）──
@@ -4388,6 +4420,13 @@ let cabImportPlan=null;
 // 規則：第 2 列是排號（14…1）；灰色底的列是「層的分隔線」，分隔線上的字是該層的分區標籤（例如「指示劑溶液」）；
 //       兩條分隔線之間是一層，每一格＝一瓶，同一欄同名的格子加起來就是瓶數（由下往上排）。
 // 回傳：null＝不是這種格式；false＝是這種格式但有錯（已經提示）；物件＝讀到的資料
+// 從分區文字猜大類（例如「指示劑溶液」→ 指示劑・染劑・分析試劑；「硝酸鹽」→ 氧化劑）
+function guessZoneCat(t){
+  const s=String(t||'');const exact=catName(s);if(CHEM_CATS.some(c=>c.name===exact))return exact;
+  const rules=[[/指示|染/,'指示劑・染劑・分析試劑'],[/硝酸鹽|過錳|氯酸|鉻酸|氧化劑/,'氧化劑'],[/有機|溶劑|醇|醚|酮|油/,'易燃・有機溶劑'],[/氧化物|氯化|硫酸鹽|碳酸鹽|磷酸鹽|草酸鹽|醋酸鹽|鹽/,'一般鹽類・氧化物'],[/鹼|氫氧化/,'鹼'],[/酸/,'酸'],[/金屬|元素/,'金屬・元素'],[/生化|糖|培養/,'生化・有機固體・其他']];
+  const hit=rules.find(([re,n])=>re.test(s)&&CHEM_CATS.some(c=>c.name===n));
+  return hit?hit[1]:null;
+}
 function parseCabGridWorkbook(wb){
   const sheets=wb.SheetNames.map(n=>({n,cab:(()=>{const m=n.match(/第\s*([一二三四1-4])\s*櫃/);if(!m)return 0;return {'一':1,'二':2,'三':3,'四':4}[m[1]]||+m[1];})()})).filter(x=>x.cab);
   if(!sheets.length)return null;
@@ -4445,7 +4484,7 @@ function parseCabGridWorkbook(wb){
         const t=clean(val(sr,c));if(!t||!colMap[c])continue;
         const m=mergeOf(sr,c);if(m&&m.s.c!==c)continue;
         const a=colMap[c],b=m?colMap[m.e.c]||a:a;
-        labels.push({cab,layer,col_from:Math.max(a,b),col_to:Math.min(a,b),text:t.slice(0,30)});
+        labels.push({cab,layer,col_from:Math.max(a,b),col_to:Math.min(a,b),text:t.slice(0,30),category:guessZoneCat(t)});
       }
       top=sr+1;
     });
@@ -4534,7 +4573,10 @@ async function runCabImport(){
     if(plan.grid){
       try{
         await sb('DELETE','chem_cab_labels',{filter:'cab=in.('+cabs.join(',')+')',prefer:'return=minimal'});
-        if(plan.grid.labels.length)await sb('POST','chem_cab_labels',{body:plan.grid.labels,prefer:'return=minimal'});
+        if(plan.grid.labels.length){
+          try{await sb('POST','chem_cab_labels',{body:plan.grid.labels,prefer:'return=minimal'});}
+          catch(_){await sb('POST','chem_cab_labels',{body:plan.grid.labels.map(({category,...x})=>x),prefer:'return=minimal'});} // 還沒加大類欄位時
+        }
       }catch(e){labelMsg='（分區標籤沒存到：請先在 Supabase 執行「藥品櫃分區標籤.sql」）';}
     }
     showToast(`已匯入 ${body.length} 個位置${plan.newNames.length?`，新建 ${plan.newNames.length} 種藥品`:''}${labelMsg}`,labelMsg?'error':'success');
@@ -4627,14 +4669,167 @@ td.l{width:9mm;text-align:center;vertical-align:middle;font-weight:700;backgroun
   w.document.open();w.document.write(html);w.document.close();
 }
 
-const CHEM_CATEGORIES = ['','酸','鹼','鹽','有機溶劑','指示劑','培養基／生化','溶液成品','其他'];
+function fillAdminCatSelects(){
+  const opts=CHEM_CATS.map(c=>`<option value="${escH(c.name)}">${escH(c.name)}</option>`).join('');
+  const a=document.getElementById('adminChemCat');if(a){const v=a.value;a.innerHTML='<option value="">全部分類</option>'+opts+'<option value="__none">未分類</option>';a.value=v;}
+  const f=document.getElementById('chem-category');if(f){const v=f.value;f.innerHTML='<option value="">不指定</option>'+opts;f.value=v;}
+}
 
+// ── 藥品大類管理 ──
+let catDraft=null;
+function catCount(name){return allAdminChems.filter(c=>catName(c.category)===name).length;}
+function renderCatManager(){
+  const box=document.getElementById('catManager');if(!box)return;
+  if(!catDraft)catDraft=CHEM_CATS.map(c=>({...c,orig:c.name}));
+  const live=catDraft.filter(c=>!c._del);
+  const none=allAdminChems.filter(c=>!catName(c.category)).length;
+  box.innerHTML=`${window._catsFromDb?'':`<div class="hint" style="color:var(--danger);margin-bottom:8px">⚠️ 資料庫還沒有「藥品大類」資料表，目前顯示的是預設值。請先在 Supabase 執行「藥品大類.sql」，才能儲存修改。</div>`}
+    <div style="display:flex;flex-direction:column;gap:6px">${live.map(c=>{const i=catDraft.indexOf(c);return `
+      <div style="display:grid;grid-template-columns:auto 44px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--border);border-radius:10px">
+        <div style="display:flex;flex-direction:column;gap:2px"><button class="btn btn-secondary btn-sm" style="padding:0 8px;height:20px" onclick="moveCatRow(${i},-1)" aria-label="往上">▲</button><button class="btn btn-secondary btn-sm" style="padding:0 8px;height:20px" onclick="moveCatRow(${i},1)" aria-label="往下">▼</button></div>
+        <input type="color" value="${escH(c.color)}" onchange="catDraft[${i}].color=this.value" style="width:44px;height:34px;padding:2px;border-radius:8px" aria-label="顏色">
+        <input type="text" maxlength="20" value="${escH(c.name)}" onchange="catDraft[${i}].name=this.value.trim()" aria-label="大類名稱" style="font-weight:700">
+        <span style="font-size:12.5px;color:var(--text2);white-space:nowrap">${c.orig?catCount(c.orig)+' 種':'新'}</span>
+        <button class="btn btn-danger-outline btn-sm" onclick="deleteCatRow(${i})">刪除</button>
+      </div>`;}).join('')}</div>
+    ${none?`<div class="hint" style="margin-top:8px">還有 ${none} 種藥品沒有分類，可以在下面「快速分類」一個一個選，或匯入分類 Excel。</div>`:''}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="addCatRow()">＋ 新增大類</button>
+      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📥 匯入藥品分類 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemClassXlsx(this)"></label>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveCats()">💾 儲存大類</button>
+    </div>`;
+}
+function moveCatRow(i,d){const live=catDraft.filter(c=>!c._del),k=live.indexOf(catDraft[i]),t=live[k+d];if(!t)return;const j=catDraft.indexOf(t);[catDraft[i],catDraft[j]]=[catDraft[j],catDraft[i]];renderCatManager();}
+function addCatRow(){catDraft.push({name:'新大類',color:'#607d8b',icon:'',orig:null});renderCatManager();}
+function deleteCatRow(i){
+  const c=catDraft[i];const n=c.orig?catCount(c.orig):0;
+  const others=catDraft.filter(x=>!x._del&&x!==c);
+  if(!n){c._del=true;renderCatManager();return;}
+  if(!others.length){showToast('至少要留一個大類','error');return;}
+  window._catDelIdx=i;
+  showModal(`刪除「${c.name}」`,`<p style="font-size:14px">這一類目前有 <b>${n}</b> 種藥品，要改到哪一類？</p>
+    <div class="form-group" style="margin-top:8px"><select id="catMoveTo">${others.map(x=>`<option value="${escH(x.name)}">${escH(x.name)}</option>`).join('')}</select></div>
+    <p class="hint" style="font-size:12.5px">按「儲存大類」之後才會真的改。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確定',cls:'btn-danger',fn:'confirmCatDelete()'}]);
+}
+function confirmCatDelete(){const c=catDraft[window._catDelIdx];if(!c)return;c._del=true;c._moveTo=document.getElementById('catMoveTo')?.value||'';closeModal();renderCatManager();}
+async function saveCats(){
+  if(!window._catsFromDb){showToast('請先在 Supabase 執行「藥品大類.sql」','error');return;}
+  const live=catDraft.filter(c=>!c._del);
+  for(const c of live){
+    c.name=String(c.name||'').trim().slice(0,20);
+    if(!c.name){showToast('大類名稱不能空白','error');return;}
+    if(!/^#[0-9a-f]{6}$/i.test(c.color||'')){showToast('顏色格式不對','error');return;}
+  }
+  if(new Set(live.map(c=>c.name)).size!==live.length){showToast('大類名稱不能重複','error');return;}
+  try{
+    // 1. 刪除的：先把藥品和分區改到指定的大類
+    for(const c of catDraft.filter(c=>c._del&&c.id)){
+      const to=live.find(x=>x.name===c._moveTo||x.orig===c._moveTo);
+      if(to){
+        await sb('PATCH','chemicals',{filter:'category=eq.'+encodeURIComponent(c.orig),body:{category:to.name},prefer:'return=minimal'});
+        await sb('PATCH','chem_cab_labels',{filter:'category=eq.'+encodeURIComponent(c.orig),body:{category:to.name},prefer:'return=minimal'}).catch(()=>{});
+      }
+      await sb('DELETE','chem_categories',{filter:'id=eq.'+encodeURIComponent(c.id),prefer:'return=minimal'});
+    }
+    // 2. 改名的：藥品和分區一起改
+    for(const c of live.filter(c=>c.orig&&c.orig!==c.name)){
+      await sb('PATCH','chemicals',{filter:'category=eq.'+encodeURIComponent(c.orig),body:{category:c.name},prefer:'return=minimal'});
+      await sb('PATCH','chem_cab_labels',{filter:'category=eq.'+encodeURIComponent(c.orig),body:{category:c.name},prefer:'return=minimal'}).catch(()=>{});
+    }
+    // 3. 存大類本身（順序、顏色、名稱）
+    for(let k=0;k<live.length;k++){
+      const c=live[k],body={name:c.name,color:c.color,sort:k+1};
+      if(c.id)await sb('PATCH','chem_categories',{filter:'id=eq.'+encodeURIComponent(c.id),body,prefer:'return=minimal'});
+      else await sb('POST','chem_categories',{body,prefer:'return=minimal'});
+    }
+    showToast('已儲存大類','success');catDraft=null;await loadAdminChems();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+// ── 匯入「藥品分類草稿」Excel：大類清單（名稱、顏色）＋每種藥品的大類（有填「老師修改」就用老師的）──
+const CAT_COLOR_WORDS={'紅':'#e53935','藍':'#1e88e5','橘':'#fb8c00','橙':'#fb8c00','黃':'#f9a825','綠':'#43a047','灰':'#757575','紫':'#8e24aa','棕':'#8d6e63','咖啡':'#8d6e63','粉':'#d81b60','青':'#00897b','黑':'#424242'};
+let classImportPlan=null;
+function importChemClassXlsx(input){
+  const f=input.files&&input.files[0];input.value='';if(!f)return;
+  if(typeof XLSX==='undefined'){showToast('Excel 元件還沒載入，請稍後再試','error');return;}
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellStyles:true});
+      const strip=v=>String(v??'').trim().replace(/^\d+\s+/,'');
+      // 大類清單
+      const cats=[];const ws1=wb.Sheets['大類清單'];
+      if(ws1){
+        const R=XLSX.utils.decode_range(ws1['!ref']);
+        for(let r=1;r<=R.e.r;r++){
+          const nm=strip(ws1[XLSX.utils.encode_cell({r,c:0})]?.v);if(!nm)continue;
+          const cc=ws1[XLSX.utils.encode_cell({r,c:1})];let color='';
+          const rgb=cc&&cc.s&&cc.s.fgColor&&cc.s.fgColor.rgb;if(rgb&&/^([0-9a-f]{2})?[0-9a-f]{6}$/i.test(rgb))color='#'+rgb.slice(-6).toLowerCase();
+          if(!color){const w=String(cc?.v||'');color=Object.entries(CAT_COLOR_WORDS).find(([k])=>w.includes(k))?.[1]||'#607d8b';}
+          cats.push({name:nm.slice(0,20),color});
+        }
+      }
+      const ws2=wb.Sheets['藥品分類'];
+      if(!ws2){showToast('找不到「藥品分類」分頁','error');return;}
+      const rows=XLSX.utils.sheet_to_json(ws2,{defval:''});
+      const key=(o,re)=>Object.keys(o).find(k=>re.test(k));
+      const list=[],unmatched=[];
+      rows.forEach(o=>{
+        const n=String(o[key(o,/藥品名稱|品名/)]||'').trim();if(!n)return;
+        const teacher=strip(o[key(o,/老師修改/)]||''),sug=strip(o[key(o,/建議大類|大類/)]||'');
+        const cat=teacher||sug;if(!cat)return;
+        const m=matchChemByName(n);
+        if(!m){unmatched.push(n);return;}
+        list.push({id:m.id,name:m.name_zh,from:catName(m.category),raw:String(m.category||''),to:cat});
+      });
+      const allCatNames=new Set([...CHEM_CATS.map(c=>c.name),...cats.map(c=>c.name)]);
+      const unknown=[...new Set(list.map(x=>x.to).filter(t=>!allCatNames.has(t)))];
+      const changes=list.filter(x=>x.raw!==x.to); // 舊名稱（例如「指示劑」）也順便換成新大類
+      const newCats=cats.filter(c=>!CHEM_CATS.some(x=>x.name===c.name));
+      classImportPlan={cats,list,changes,unknown};
+      const li=a=>a.slice(0,80).map(x=>`<li>${x}</li>`).join('')+(a.length>80?`<li>…還有 ${a.length-80} 筆</li>`:'');
+      showModal('匯入藥品分類',`
+        <p style="font-size:14px">讀到 ${list.length+unmatched.length} 種藥品，對到系統裡的 <b>${list.length}</b> 種，其中 <b>${changes.length}</b> 種的分類會改變。</p>
+        ${cats.length?`<p style="font-size:13px;margin-top:6px">大類清單：${cats.map(c=>`<span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${escH(c.color)};margin:0 3px 0 6px"></span>${escH(c.name)}`).join('')}${newCats.length?`（新增 ${newCats.length} 個）`:''}</p>`:''}
+        ${changes.length?`<details><summary>會改分類的 ${changes.length} 種</summary><ul style="font-size:13px">${li(changes.map(x=>`${escH(x.name)}：${escH(x.from||'未分類')} → <b>${escH(x.to)}</b>`))}</ul></details>`:''}
+        ${unknown.length?`<p style="font-size:13px;color:var(--danger)">這些大類名稱不在清單裡，會自動新增：${unknown.map(escH).join('、')}</p>`:''}
+        ${unmatched.length?`<details><summary>系統裡找不到、這次略過的 ${unmatched.length} 種</summary><ul style="font-size:13px">${li(unmatched.map(escH))}</ul></details>`:''}`,
+        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確定匯入',cls:'btn-primary',fn:'runClassImport()'}]);
+    }catch(err){showToast('讀不出這個 Excel：'+err.message,'error');}
+  };
+  rd.readAsArrayBuffer(f);
+}
+async function runClassImport(){
+  const p=classImportPlan;if(!p)return;closeModal();
+  if(!window._catsFromDb){showToast('請先在 Supabase 執行「藥品大類.sql」','error');return;}
+  try{
+    // 1. 大類：清單裡有的照清單（順序、顏色），沒有的補上
+    const want=[...p.cats];
+    p.unknown.forEach(n=>{if(!want.some(c=>c.name===n))want.push({name:n.slice(0,20),color:'#607d8b'});});
+    let sort=0;
+    for(const c of want){
+      sort++;const ex=CHEM_CATS.find(x=>x.name===c.name);
+      if(ex&&ex.id)await sb('PATCH','chem_categories',{filter:'id=eq.'+encodeURIComponent(ex.id),body:{color:c.color,sort},prefer:'return=minimal'});
+      else if(!ex||!ex.id)await sb('POST','chem_categories',{body:{name:c.name,color:c.color,sort},prefer:'return=minimal'});
+    }
+    // 2. 藥品：同一個大類的一次改（每次最多 100 筆）
+    const by={};p.changes.forEach(x=>{(by[x.to]=by[x.to]||[]).push(x.id);});
+    for(const [cat,ids] of Object.entries(by)){
+      for(let i=0;i<ids.length;i+=100){
+        const part=ids.slice(i,i+100).map(v=>parseInt(v)).filter(Number.isFinite);
+        if(part.length)await sb('PATCH','chemicals',{filter:'id=in.('+part.join(',')+')',body:{category:cat},prefer:'return=minimal'});
+      }
+    }
+    showToast(`已更新 ${p.changes.length} 種藥品的分類`,'success');
+    classImportPlan=null;catDraft=null;await loadAdminChems();
+  }catch(e){showToast('匯入失敗：'+e.message,'error');}
+}
 function renderChemQuickSort(){
   const box=document.getElementById('chemQuickSortList');if(!box)return;
-  const targets=allAdminChems.filter(c=>!c.category||c.category==='其他');
+  const targets=allAdminChems.filter(c=>!catName(c.category));
   if(!targets.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>目前沒有「其他／未分類」的藥品</p></div>';return;}
   box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">共 ${targets.length} 筆</div>`+targets.map(c=>{
-    const catOpts=CHEM_CATEGORIES.filter(v=>v).map(v=>`<option value="${v}" ${c.category===v?'selected':''}>${v}</option>`).join('');
+    const catOpts=CHEM_CATS.map(x=>x.name).map(v=>`<option value="${escH(v)}" ${catName(c.category)===v?'selected':''}>${escH(v)}</option>`).join('');
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
       <span style="flex:1;min-width:120px;font-weight:600">${escH(c.name_zh)}${c.name_en?' <span style="color:var(--text2);font-weight:400;font-size:12px">'+escH(c.name_en)+'</span>':''}</span>
       <select style="max-width:160px" onchange="quickSetChemCategory(${c.id},this.value)">
@@ -4660,13 +4855,13 @@ function filterAdminChems() {
   const cat = document.getElementById('adminChemCat')?.value || '';
   const items = allAdminChems.filter(c =>
     (!q || c.name_zh?.toLowerCase().includes(q) || c.name_en?.toLowerCase().includes(q)) &&
-    (!cat || c.category === cat)
+    (!cat || (cat==='__none'?!catName(c.category):catName(c.category) === cat))
   );
   const list = document.getElementById('adminChemList');
   if (!items.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合藥品</p></div>'; return; }
   list.innerHTML = '<div class="record-list">' + items.map(c => {
     const esc = s => (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/`/g, '&#96;');
-    const catOpts = CHEM_CATEGORIES.map(v => `<option value="${v}" ${c.category===v?'selected':''}>${v||'不指定'}</option>`).join('');
+    const catOpts = ['',...CHEM_CATS.map(x=>x.name)].map(v => `<option value="${escH(v)}" ${catName(c.category)===v?'selected':''}>${escH(v||'不指定')}</option>`).join('');
     return `
     <div class="record-card" id="chemcard-${safeId(c.id)}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -4674,7 +4869,7 @@ function filterAdminChems() {
           <div style="font-size:15px;font-weight:700">${escH(c.name_zh)} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-            ${c.category?`<span>${escH(c.category)}</span>`:''}
+            ${catName(c.category)?catTagHtml(c.category):''}
             ${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="goChemLoc(${ja(l.id)})">📍 ${escH(cabCode(l))}${(parseInt(l.bottles)||0)!==1?' ×'+l.bottles:''}</button>`).join(''):(c.location?`<span>📍 ${escH(c.location)}</span>`:'')}
             <span style="font-family:'DM Mono',monospace;font-weight:700">${escH(c.bottles_left??0)} 瓶</span>
             ${c.recycle_type?`<span>♻️ ${escH(c.recycle_type)}</span>`:''}
