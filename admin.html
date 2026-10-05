@@ -1357,7 +1357,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03m';
+const ADMIN_VERSION='2026-10-03n';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4172,7 +4172,17 @@ function parseCabGridWorkbook(wb){
     // 灰色分隔列
     const isSep=r=>{for(let c=R.s.c;c<=R.e.c;c++){const x=ws[E({r,c})];const s=x&&x.s;if(s&&s.patternType&&s.patternType!=='none')return true;}return false;};
     const seps=[];for(let r=hr+1;r<=R.e.r;r++)if(isSep(r))seps.push(r);
-    if(seps.length!==5){warn.push(`${n}：灰色分隔列找到 ${seps.length} 條（應該是 5 條，每層下面一條），這一櫃略過`);continue;}
+    if(seps.length!==5){
+      // 講清楚是哪幾列，方便回 Excel 找
+      let extra='';
+      if(seps.length>5){
+        const a=seps[4],b=seps[5],names=[];
+        for(let r=a+1;r<b;r++)for(let c=R.s.c;c<=R.e.c;c++){const t=clean(val(r,c));if(t)names.push(t);}
+        extra=names.length?`；第 ${a+2}～${b} 列多出一層（${names.slice(0,5).join('、')}${names.length>5?'…':''}）`:`；第 ${b+1} 列多了一條灰色列`;
+      }
+      warn.push(`${n}：灰色分隔列有 ${seps.length} 條（第 ${seps.map(r=>r+1).join('、')} 列），應該是 5 條、每層下面一條${extra}。這一櫃先略過，其他櫃照常匯入`);
+      continue;
+    }
     cabs.push(cab);
     let top=hr+1;
     seps.forEach((sr,li)=>{
@@ -4257,7 +4267,7 @@ function showCabImportPreview(ok,manual,bad,grid){
         ${manual.length?`<details open><summary style="color:var(--danger)">核對欄填「改」的 ${manual.length} 筆不會匯入，請匯入後手動處理</summary><ul style="font-size:13px">${li(manual.map(m=>`第 ${m.row} 列 ${escH(m.name)}${m.fix?'：'+escH(m.fix):''}`))}</ul></details>`:''}
         ${bad.length?`<p style="color:var(--danger);font-size:13px">有 ${bad.length} 列的櫃／層／排／瓶數格式不對，會略過（第 ${bad.slice(0,8).map(b=>b.row).join('、')}${bad.length>8?'…':''} 列）</p>`:''}
         ${grid?`<p style="font-size:13px">讀到：${gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、')}${grid.labels.length?`，分區標籤 ${grid.labels.length} 個（例如「${escH(grid.labels[0].text)}」）`:''}</p>`:''}
-        ${grid&&grid.warn.length?`<details><summary style="color:var(--danger)">有 ${grid.warn.length} 個地方請注意</summary><ul style="font-size:13px">${li(grid.warn.map(escH))}</ul></details>`:''}
+        ${grid&&grid.warn.length?`<div style="margin:8px 0;padding:8px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7"><b>⚠️ 有 ${grid.warn.length} 個櫃子沒讀到：</b><ul style="margin:4px 0 0;padding-left:18px">${li(grid.warn.map(escH))}</ul></div>`:''}
         <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${grid||!allChemLocs.length?'checked':''} style="width:auto"> 取代：先清空${grid?gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前的位置（${curInCabs} 筆），再匯入</label>
         <label><input type="radio" name="cabImpMode" value="append" ${!grid&&allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
