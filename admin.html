@@ -409,6 +409,15 @@
   .cab-item .qb.rm:hover{background:#fdecea;}
   .cab-add-here{margin-top:10px;border:1.5px dashed #d9bf5c;background:transparent;color:#7a5c00;border-radius:10px;font:inherit;font-size:14px;padding:7px 14px;cursor:pointer;}
   .cab-add-here:hover{background:#fff4c7;}
+  /* 分區（例如「指示劑溶液」）：櫃子圖上同一區用同一個顏色框起來，下面有圖例可以點 */
+  .cab-zones{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 2px;}
+  .cab-zones button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;cursor:pointer;}
+  .cab-zones button i{width:11px;height:11px;border-radius:3px;display:inline-block;flex-shrink:0;}
+  .cab-zones button small{color:var(--text2);font-size:11.5px;}
+  .cab-zones button.on{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text);font-weight:700;}
+  .cab-zone-tag{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:13px;color:var(--text);background:#fff;border-radius:999px;padding:2px 10px 2px 8px;border:1px solid #ecdca0;cursor:pointer;}
+  .cab-zone-tag i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .cab-zone-edit{margin-top:10px;margin-left:6px;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:10px;font:inherit;font-size:13px;padding:7px 12px;cursor:pointer;}
   .cab-also{margin-top:8px;font-size:12.5px;color:var(--text2);}
   .cab-also button{border:1px solid var(--border);background:var(--surface2);color:var(--text);font:inherit;font-size:12.5px;border-radius:12px;padding:2px 9px;margin:4px 4px 0 0;cursor:pointer;}
   .cab-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
@@ -1397,7 +1406,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03p';
+const ADMIN_VERSION='2026-10-03q';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3883,13 +3892,21 @@ const CAB_CN=['','一','二','三','四'];
 function cabCode(l){return `${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}`;}
 function cabText(l){return `第${CAB_CN[l.cab]}櫃・${l.layer} 層・${l.col} 排`;}
 function cabDoor(col){return col<=7?'右門':'左門';}
+// 分區顏色（淡底＋深框），同一個名稱永遠同一個顏色
+const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
+function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.codePointAt(0))>>>0;return ZONE_COLORS[h%ZONE_COLORS.length];}
+
 function makeCabUI(rootId,opts){
   const ui={state:{cab:1,L:1,col:null,locId:null},opts};
   const root=()=>document.getElementById(rootId);
   const locs=()=>opts.getLocs()||[];
   const chem=id=>opts.getChem(id);
+  const labels=()=>(opts.getLabels&&opts.getLabels())||[];
+  const zonesOf=cab=>labels().filter(z=>z.cab===cab).map(z=>({...z,a:Math.min(z.col_from,z.col_to),b:Math.max(z.col_from,z.col_to)})).sort((x,y)=>x.layer-y.layer||y.b-x.b);
+  const zoneAt=(cab,L,col)=>zonesOf(cab).find(z=>z.layer===L&&col>=z.a&&col<=z.b);
+  ui.selectZone=id=>{const z=labels().find(x=>String(x.id)===String(id));if(!z)return;Object.assign(ui.state,{cab:z.cab,L:z.layer,col:null,locId:null,zone:z.id});ui.render();};
   const cellLocs=(cab,L,col)=>locs().filter(l=>l.cab===cab&&l.layer===L&&l.col===col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));
-  ui.select=(cab,L,col,locId)=>{Object.assign(ui.state,{cab,L,col,locId:locId??null});ui.render();};
+  ui.select=(cab,L,col,locId)=>{Object.assign(ui.state,{cab,L,col,locId:locId??null,zone:null});ui.render();};
   ui.selectLoc=(locId,scroll)=>{
     const l=locs().find(x=>String(x.id)===String(locId));if(!l)return;
     ui.select(l.cab,l.layer,l.col,l.id);
@@ -3898,10 +3915,23 @@ function makeCabUI(rootId,opts){
   // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
   const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
   ui.move=dir=>{const st=ui.state;if(st.col==null)return;const [dl,dc]=NAV[dir]||[0,0];const L=st.L+dl,c=st.col+dc;if(L<1||L>5||c<1||c>14)return;ui.select(st.cab,L,c,null);};
+  function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColor(z.text);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
   function routeHtml(){
-    const st=ui.state;if(st.col==null)return '';
+    const st=ui.state;
+    if(st.zone!=null&&st.col==null){
+      // 點圖例：這一區在哪裡、裡面大概有什麼
+      const z=zonesOf(st.cab).find(x=>String(x.id)===String(st.zone));if(!z)return '';
+      const items=locs().filter(l=>l.cab===z.cab&&l.layer===z.layer&&l.col>=z.a&&l.col<=z.b).sort((x,y)=>y.col-x.col||(x.sort||0)-(y.sort||0));
+      const names=[...new Set(items.map(l=>chem(l.chem_id)?.name_zh||'?'))];
+      return `<div class="cab-route"><div class="cab-pos"><span class="t">📍 第${CAB_CN[z.cab]}櫃・第 ${z.layer} 層・${z.b===z.a?`第 ${z.a} 排`:`${z.b}～${z.a} 排`}</span></div>
+        <div style="margin-top:6px">${zoneTag(z,false)}</div>
+        ${names.length?`<div class="cab-sub">這一區有 ${names.length} 種：</div><div class="cab-here">${items.filter((l,i,arr)=>arr.findIndex(o=>o.chem_id===l.chem_id)===i).map(l=>`<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(chem(l.chem_id)?.name_zh||'?')}</button>`).join('')}</div>`:'<div class="cab-here-empty">這一區目前是空的</div>'}
+        ${opts.onZone?`<button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">🏷️ 修改這個分區</button>`:''}</div>`;
+    }
+    if(st.col==null)return '';
     const nav=`<span class="cab-nav"><button type="button" data-nav="up" aria-label="上一層" ${st.L<=1?'disabled':''}>↑</button><button type="button" data-nav="down" aria-label="下一層" ${st.L>=5?'disabled':''}>↓</button><button type="button" data-nav="left" aria-label="左邊一排" ${st.col>=14?'disabled':''}>←</button><button type="button" data-nav="right" aria-label="右邊一排" ${st.col<=1?'disabled':''}>→</button></span>`;
-    const pos=`<div class="cab-pos"><span class="t">📍 第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${st.L} 層・右數第 ${st.col} 排</span>${nav}</div>`;
+    const zHere=zoneAt(st.cab,st.L,st.col);
+    const pos=`<div class="cab-pos"><span class="t">📍 第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${st.L} 層・右數第 ${st.col} 排</span>${nav}</div>${zHere?zoneTag(zHere,true):''}`;
     const here=cellLocs(st.cab,st.L,st.col);
     const chip=(l,big)=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip ${big?'cab-big':''}" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
     const sel=here.find(l=>String(l.id)===String(st.locId));
@@ -3917,7 +3947,8 @@ function makeCabUI(rootId,opts){
     // 點格子進來的：這一格有什麼，大字列出來；後台多了「−／＋ 瓶數、✕ 移除、＋ 在這格加藥品」
     const item=l=>opts.onQuick?`<span class="cab-item">${chip(l,true)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`:chip(l,true);
     const addBtn=opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:'';
-    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣${opts.onQuick?'（點名稱可以改容量、搬位置）':''}：</div><div class="cab-here">${here.map(item).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}${addBtn}</div>`;
+    const zBtn=opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">🏷️ ${zHere?'修改分區':'設定分區'}</button>`:'';
+    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣${opts.onQuick?'（點名稱可以改容量、搬位置）':''}：</div><div class="cab-here">${here.map(item).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}${addBtn}${zBtn}</div>`;
   }
   // 搜尋：名稱比對（不分大小寫、忽略空白和括號）
   const qn=v=>String(v||'').toLowerCase().replace(/[\s（）()]/g,'');
@@ -3927,9 +3958,20 @@ function makeCabUI(rootId,opts){
     const selLoc=st.locId!=null?locs().find(l=>String(l.id)===String(st.locId)):null,selChem=selLoc?String(selLoc.chem_id):null;
     const qSet=new Set(qHits().filter(l=>l.cab===st.cab).map(l=>l.layer+'-'+l.col));
     h+=`<rect x="1" y="1" width="338" height="${top+5*H+2}" rx="8" fill="none" stroke="var(--text2)" stroke-width="1.5"/><line x1="170" y1="1" x2="170" y2="${top+5*H+3}" stroke="var(--text2)" stroke-width="1.5"/>`;
+    const colX=c=>c<=7?(173+(7-c)*W):(3+(14-c)*W);
+    const zs=zonesOf(st.cab);
     for(let L=1;L<=5;L++){
       const y=top+(L-1)*H;
       h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
+      // 分區色塊：左門、右門分開畫（中間有門縫）
+      zs.filter(z=>z.layer===L).forEach(z=>{
+        const [bg,fg]=zoneColor(z.text),on=String(st.zone)===String(z.id);
+        [[Math.max(z.a,8),z.b],[z.a,Math.min(z.b,7)]].forEach(([lo,hi])=>{
+          if(lo>hi)return;
+          const x1=colX(hi),x2=colX(lo)+W;
+          h+=`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="${on?2.2:1.2}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
+        });
+      });
       for(let c=1;c<=14;c++){
         const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);
         const inCell=cellLocs(st.cab,L,c),has=inCell.length>0,sel=st.L===L&&st.col===c;
@@ -3978,7 +4020,7 @@ function makeCabUI(rootId,opts){
     const body=r.querySelector(':scope>.cab-body');
     body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
-      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div></div>
+      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColor(z.text);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
     const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
@@ -3993,6 +4035,9 @@ function makeCabUI(rootId,opts){
     body.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.ql);if(l&&opts.onQuick)opts.onQuick(l,+b.dataset.qd,ui);});
     body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
     body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);focusUi();});
+    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();ui.selectZone(b.dataset.zone);}));
+    body.querySelectorAll('[data-zedit]').forEach(b=>b.onclick=()=>{const z=labels().find(x=>String(x.id)===b.dataset.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);});
+    body.querySelectorAll('[data-zcell]').forEach(b=>b.onclick=()=>{if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);});
     // 電腦：選到格子後可以用鍵盤方向鍵移動
     const u=body.querySelector('.cab-ui');
     if(u)u.onkeydown=e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;e.preventDefault();ui.move(m);focusUi();};
@@ -4000,15 +4045,59 @@ function makeCabUI(rootId,opts){
   return ui;
 }
 
-let allChemLocs=[],chemLocsReady=false;
+let allChemLocs=[],chemLocsReady=false,allChemLabels=[];
 const adminCabUI=makeCabUI('adminChemCab',{
   getLocs:()=>allChemLocs,
   getChem:id=>allAdminChems.find(c=>String(c.id)===String(id)),
   onChip:(l,ui)=>{ui.select(l.cab,l.layer,l.col,l.id);openCabEdit(l.id);},
   onAdd:(cab,L,col)=>openCabAdd(cab,L,col),
+  getLabels:()=>allChemLabels,
+  onZone:(cab,L,col,z)=>openZoneEdit(cab,L,col,z),
   onQuick:(l,d)=>cabQuickBottles(l.id,d),
   onRemove:l=>cabQuickRemove(l.id)
 });
+// ── 分區：設定這一格所在的分區（名稱＋從第幾排到第幾排）──
+function openZoneEdit(cab,L,col,z){
+  if(!window._zonesReady){showToast('請先在 Supabase 執行「藥品櫃分區標籤.sql」','error');return;}
+  window._zoneEdit={cab,L,id:z?z.id:null};
+  const a=z?Math.max(z.col_from,z.col_to):col,b=z?Math.min(z.col_from,z.col_to):col;
+  const names=[...new Set(allChemLabels.map(x=>x.text))].map(t=>`<option value="${escH(t)}"></option>`).join('');
+  showModal(`🏷️ ${z?'修改':'設定'}分區・第${CAB_CN[cab]}櫃第 ${L} 層`,`
+    <div class="form-group"><label>分區名稱（例如：指示劑、有機溶劑、氯化物）</label><input id="zn-text" maxlength="30" list="znNames" value="${escH(z?z.text:'')}" autocomplete="off"><datalist id="znNames">${names}</datalist></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>從（左邊）</label><select id="zn-from">${cabSelectOpts(14,a,v=>`${v} 排（${cabDoor(v)}）`)}</select></div>
+      <div class="form-group"><label>到（右邊）</label><select id="zn-to">${cabSelectOpts(14,b,v=>`${v} 排（${cabDoor(v)}）`)}</select></div>
+    </div>
+    <p class="hint" style="font-size:12.5px">同一層的分區不能重疊。下載 Excel 時，分區會寫在那一層下面的灰色列上。</p>
+    ${z?`<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteZone()">刪除這個分區</button>`:''}`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveZone()'}]);
+  setTimeout(()=>document.getElementById('zn-text')?.focus(),60);
+}
+async function saveZone(){
+  const ctx=window._zoneEdit;if(!ctx)return;
+  const text=(document.getElementById('zn-text')?.value||'').trim().slice(0,30);
+  let a=parseInt(document.getElementById('zn-from')?.value),b=parseInt(document.getElementById('zn-to')?.value);
+  if(!text){showToast('請填分區名稱','error');return;}
+  if(!(a>=1&&a<=14&&b>=1&&b<=14)){showToast('排數不對','error');return;}
+  const hi=Math.max(a,b),lo=Math.min(a,b);
+  const clash=allChemLabels.find(x=>x.cab===ctx.cab&&x.layer===ctx.L&&String(x.id)!==String(ctx.id)&&!(Math.max(x.col_from,x.col_to)<lo||Math.min(x.col_from,x.col_to)>hi));
+  if(clash){showToast(`跟「${clash.text}」重疊了，請調整範圍`,'error');return;}
+  const body={cab:ctx.cab,layer:ctx.L,col_from:hi,col_to:lo,text};
+  try{
+    if(ctx.id)await sb('PATCH','chem_cab_labels',{filter:'id=eq.'+encodeURIComponent(ctx.id),body,prefer:'return=minimal'});
+    else await sb('POST','chem_cab_labels',{body,prefer:'return=minimal'});
+    closeModal();showToast('已儲存分區','success');
+    await loadAdminChems();
+    const z=allChemLabels.find(x=>x.cab===ctx.cab&&x.layer===ctx.L&&x.text===text&&x.col_from===hi);
+    if(z)adminCabUI.selectZone(z.id);
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+async function deleteZone(){
+  const ctx=window._zoneEdit;if(!ctx||!ctx.id)return;
+  if(!confirm('刪除這個分區？（櫃子裡的藥品不會受影響）'))return;
+  try{await sb('DELETE','chem_cab_labels',{filter:'id=eq.'+encodeURIComponent(ctx.id),prefer:'return=minimal'});closeModal();showToast('已刪除分區','success');await loadAdminChems();adminCabUI.select(ctx.cab,ctx.L,null,null);}
+  catch(e){showToast('刪除失敗：'+e.message,'error');}
+}
 // ── 點格子直接改：瓶數 −／＋（到 0 會問要不要移除）、✕ 移除 ──
 async function cabQuickBottles(locId,d){
   if(cabBusy)return;
@@ -4046,7 +4135,8 @@ async function loadChemLocs(){
 }
 async function loadAdminChems() {
   try {
-    const [rows]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),loadChemLocs()]);
+    const [rows,labs]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),sb('GET','chem_cab_labels',{order:'cab,layer,col_from.desc'}).catch(()=>null),loadChemLocs()]);
+    allChemLabels=Array.isArray(labs)?labs:[];window._zonesReady=Array.isArray(labs);
     allAdminChems = Array.isArray(rows) ? rows : [];
     filterAdminChems();
     renderChemQuickSort();
