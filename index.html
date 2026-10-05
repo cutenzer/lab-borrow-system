@@ -1264,7 +1264,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03g · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03h · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5106,6 +5106,11 @@ async function ensureChemData(){
   ]);
   allChemicals=Array.isArray(rows)?rows:[];if(!filteredChemicals.length)filteredChemicals=allChemicals;
   allChemLocs=Array.isArray(locs)?locs:[];chemLocsLoaded=true;
+  // 櫃位用到的藥品不在手上的清單（例如後台剛匯入新藥品）→ 重抓一次藥品，避免顯示「?」
+  const have=new Set(allChemicals.map(c=>String(c.id)));
+  if(allChemLocs.some(l=>!have.has(String(l.chem_id)))){
+    try{const fresh=await sb('GET','chemicals',{order:'category,name_zh'});if(Array.isArray(fresh)&&fresh.length){allChemicals=fresh;filteredChemicals=fresh;}}catch(_){}
+  }
   const b=document.getElementById('chemViewCabBtn');if(b)b.style.display=allChemLocs.length?'':'none';
 }
 // 點藥品 → 跳出資料卡：名稱、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
