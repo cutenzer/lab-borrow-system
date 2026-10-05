@@ -869,6 +869,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="exportChemCabXlsx()">⬇️ 下載 Excel</button>
     </div>
     <div class="hint" id="chemCabMsg"></div>
+    <div id="chemCabOrphan"></div>
     <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
   </div>
 
@@ -1357,7 +1358,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03n';
+const ADMIN_VERSION='2026-10-03o';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3936,7 +3937,39 @@ async function loadAdminChems() {
     filterAdminChems();
     renderChemQuickSort();
     adminCabUI.render();
+    renderChemCabOrphans();
   } catch(e) { showToast('載入藥品失敗', 'error'); }
+}
+// ── 藥品櫃裡顯示「?」的位置：對應的藥品已經不在藥品清單（例如被刪掉了）──
+function chemCabOrphans(){
+  const ids=new Set(allAdminChems.map(c=>String(c.id)));
+  return allChemLocs.filter(l=>!ids.has(String(l.chem_id)));
+}
+function renderChemCabOrphans(){
+  const box=document.getElementById('chemCabOrphan');if(!box)return;
+  const o=chemCabOrphans();
+  if(!o.length){box.innerHTML='';return;}
+  const where=o.slice(0,6).map(l=>`第${CAB_CN[l.cab]||l.cab}櫃第${l.layer}層第${l.col}排`).join('、');
+  box.innerHTML=`<div style="margin:0 0 10px;padding:9px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7">
+    ⚠️ 有 <b>${o.length}</b> 個位置顯示「?」：它們對應的藥品已經不在藥品清單（通常是藥品被刪掉了，但櫃位還留著）。<br>
+    <span style="font-size:12px">${escH(where)}${o.length>6?' 等':''}</span><br>
+    <button type="button" class="btn btn-danger-outline btn-sm" style="margin-top:6px" onclick="clearChemCabOrphans()">清掉這 ${o.length} 個「?」位置</button>
+    <span style="font-size:12px;margin-left:6px">或直接重新匯入 Excel 並選「取代」，也會一起清掉、重新對應。</span></div>`;
+}
+async function clearChemCabOrphans(){
+  const o=chemCabOrphans();if(!o.length)return;
+  if(!confirm(`確定清掉 ${o.length} 個找不到藥品的櫃位？`))return;
+  try{
+    for(let i=0;i<o.length;i+=100){
+      const ids=o.slice(i,i+100).map(l=>parseInt(l.id)).filter(n=>Number.isFinite(n));
+      if(ids.length)await sb('DELETE','chem_locations',{filter:'id=in.('+ids.join(',')+')',prefer:'return=minimal'});
+    }
+    showToast('已清掉','success');await loadAdminChems();
+  }catch(e){showToast('清除失敗：'+e.message,'error');}
+}
+// 刪除藥品時，櫃位也一起刪（不靠資料庫自動處理，避免留下「?」）
+async function deleteChemLocsOf(id){
+  if(chemLocsOf(id).length)await sb('DELETE','chem_locations',{filter:'chem_id=eq.'+encodeURIComponent(id),prefer:'return=minimal'});
 }
 function chemLocsOf(id){return allChemLocs.filter(l=>String(l.chem_id)===String(id)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);}
 function goChemLoc(locId){adminCabUI.selectLoc(locId,true);}
@@ -4136,7 +4169,7 @@ async function deleteSimilarOne(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
   const n=chemLocsOf(c.id).length;
   if(!confirm(`刪除「${c.name_zh}」？${n?`\n它在藥品櫃有 ${n} 個位置，也會一起刪掉。如果只是名字重複，建議改用「合併」。`:''}`))return;
-  try{await sb('DELETE','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),prefer:'return=minimal'});showToast('已刪除','success');await loadAdminChems();checkChemSimilarFiltered();}
+  try{await deleteChemLocsOf(c.id);await sb('DELETE','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),prefer:'return=minimal'});showToast('已刪除','success');await loadAdminChems();checkChemSimilarFiltered();}
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
 function exportChemSimilar(){
@@ -4258,6 +4291,7 @@ function showCabImportPreview(ok,manual,bad,grid){
       cabImportPlan={ok,newNames,grid};
       const gridCabs=grid?grid.cabs:[];
       const curInCabs=grid?allChemLocs.filter(l=>gridCabs.includes(l.cab)).length:allChemLocs.length;
+      const orphanN=chemCabOrphans().filter(l=>!grid||gridCabs.includes(l.cab)).length;
       const li=a=>a.map(t=>`<li>${t}</li>`).join('');
       showModal('📥 匯入藥品櫃位置',`
         <p>共 <b>${ok.length}</b> 個位置、<b>${ok.reduce((s,x)=>s+x.bottles,0)}</b> 瓶。</p>
@@ -4268,6 +4302,7 @@ function showCabImportPreview(ok,manual,bad,grid){
         ${bad.length?`<p style="color:var(--danger);font-size:13px">有 ${bad.length} 列的櫃／層／排／瓶數格式不對，會略過（第 ${bad.slice(0,8).map(b=>b.row).join('、')}${bad.length>8?'…':''} 列）</p>`:''}
         ${grid?`<p style="font-size:13px">讀到：${gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、')}${grid.labels.length?`，分區標籤 ${grid.labels.length} 個（例如「${escH(grid.labels[0].text)}」）`:''}</p>`:''}
         ${grid&&grid.warn.length?`<div style="margin:8px 0;padding:8px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7"><b>⚠️ 有 ${grid.warn.length} 個櫃子沒讀到：</b><ul style="margin:4px 0 0;padding-left:18px">${li(grid.warn.map(escH))}</ul></div>`:''}
+        ${orphanN?`<p style="font-size:13px;color:#9a3226">目前有 ${orphanN} 個「?」位置，選「取代」會一起清掉。</p>`:''}
         <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${grid||!allChemLocs.length?'checked':''} style="width:auto"> 取代：先清空${grid?gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前的位置（${curInCabs} 筆），再匯入</label>
         <label><input type="radio" name="cabImpMode" value="append" ${!grid&&allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
@@ -4534,15 +4569,17 @@ async function saveChem() {
 }
 
 function deleteChem(id) {
-  showModal('確認刪除', `<p>確定刪除這筆藥品資料嗎？</p>`, [
+  const n=chemLocsOf(id).length;
+  showModal('確認刪除', `<p>確定刪除這筆藥品資料嗎？</p>${n?`<p style="font-size:13px;color:var(--danger);margin-top:6px">它在藥品櫃有 ${n} 個位置，會一起刪掉。</p>`:''}`, [
     { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
-    { label: '確認刪除', cls: 'btn-danger', fn: `doDeleteChem(${id})` }
+    { label: '確認刪除', cls: 'btn-danger', fn: `doDeleteChem(${ja(id)})` }
   ]);
 }
 async function doDeleteChem(id) {
   closeModal();
   try {
-    await sb('DELETE', 'chemicals', { filter: 'id=eq.' + id, prefer: 'return=minimal' });
+    await deleteChemLocsOf(id);
+    await sb('DELETE', 'chemicals', { filter: 'id=eq.' + encodeURIComponent(id), prefer: 'return=minimal' });
     showToast('已刪除', 'success'); loadAdminChems();
   } catch(e) { showToast('刪除失敗', 'error'); }
 }
