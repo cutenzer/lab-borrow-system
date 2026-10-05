@@ -1263,14 +1263,6 @@
       <input type="text" id="chemSearch" placeholder="搜尋中文或英文名稱…" oninput="filterChemicals()" style="flex:1;min-width:140px">
       <select id="chemCatFilter" onchange="filterChemicals()" style="min-width:100px">
         <option value="">全部分類</option>
-        <option value="酸">酸</option>
-        <option value="鹼">鹼</option>
-        <option value="鹽">鹽</option>
-        <option value="有機溶劑">有機溶劑</option>
-        <option value="指示劑">指示劑</option>
-        <option value="培養基／生化">培養基／生化</option>
-        <option value="溶液成品">溶液成品</option>
-        <option value="其他">其他</option>
       </select>
     </div>
     <div id="chemList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
@@ -1312,7 +1304,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03j · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03k · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1773,6 +1765,7 @@ let homeChemCat='',homeChemLoading=false;
 async function renderHomeChem(){
   const list=document.getElementById('homeChemList');if(!list)return;
   if(getComputedStyle(document.getElementById('homeChemSection')).display==='none')return; // 手機不載入
+  if(!chemCatsLoaded){await ensureChemCats();}
   if(!allChemicals.length){
     if(homeChemLoading)return;
     homeChemLoading=true;
@@ -1781,15 +1774,15 @@ async function renderHomeChem(){
     catch(e){list.innerHTML='<div class="hint">藥品資料載入失敗</div>';homeChemLoading=false;return;}
     homeChemLoading=false;
   }
-  const cats=Object.keys(CHEM_CAT_CLASS_MAP).filter(c=>allChemicals.some(x=>(x.category||'其他')===c));
+  const cats=CHEM_CATS.map(c=>c.name).filter(c=>allChemicals.some(x=>catName(x.category)===c));
   document.getElementById('homeChemCats').innerHTML=cats.map(c=>{
-    const n=allChemicals.filter(x=>(x.category||'其他')===c).length;
-    return `<span class="chem-cat-tag ${chemCatClass(c)} ${homeChemCat===c?'active':''}" data-cat="${escH(c)}" onclick="setHomeChemCat(this.dataset.cat)">${escH(c)} ${n}</span>`;
+    const n=allChemicals.filter(x=>catName(x.category)===c).length,ci=catInfo(c);
+    return `<span class="chem-cat-tag ${homeChemCat===c?'active':''}" style="background:${hexMix(ci.color,.86,1)};color:${hexMix(ci.color,.3,0)}" data-cat="${escH(c)}" onclick="setHomeChemCat(this.dataset.cat)">${escH(c)} ${n}</span>`;
   }).join('');
   const q=(document.getElementById('homeChemSearch').value||'').trim().toLowerCase();
   let items,head='';
   if(q||homeChemCat){
-    items=allChemicals.filter(c=>(!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q))&&(!homeChemCat||(c.category||'其他')===homeChemCat));
+    items=allChemicals.filter(c=>(!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q))&&(!homeChemCat||catName(c.category)===homeChemCat));
     head=`找到 ${items.length} 項${items.length>6?'（顯示前 6 項）':''}`;
   }else{
     items=allChemicals.filter(c=>c.is_available!==false&&c.bottles_left!=null&&Number(c.bottles_left)<=2).sort((a,b)=>Number(a.bottles_left)-Number(b.bottles_left));
@@ -1797,16 +1790,15 @@ async function renderHomeChem(){
     if(!items.length)items=allChemicals.filter(c=>c.is_available!==false);
   }
   window._homeChemItems=items.slice(0,6);
-  const ICON={'酸':'🧪','鹼':'⚗️','鹽':'🧂','有機溶劑':'🛢️','指示劑':'🌈','培養基／生化':'🧫','溶液成品':'💧','其他':'📦'};
-  const BG={'酸':'#fde8e8','鹼':'#e0f2fe','鹽':'#f0fdf4','有機溶劑':'#fef9c3','指示劑':'#ede9fe','培養基／生化':'#fff7ed','溶液成品':'#e0e7ff'};
+
   list.innerHTML=`<div class="home-chem-head">${escH(head)}</div>`+(window._homeChemItems.length?window._homeChemItems.map((c,i)=>{
-    const cat=c.category||'其他',avail=c.is_available!==false,left=c.bottles_left;
+    const ci=catInfo(c.category),avail=c.is_available!==false,left=c.bottles_left;
     const low=left!=null&&Number(left)<=2;
     return `<div class="home-chem-row chem-clickable ${avail?'':'chem-unavail'}" onclick="openChemDetail(window._homeChemItems[${i}].id)">
-      <div class="hc-icon" style="background:${BG[cat]||'var(--surface2)'}">${ICON[cat]||'📦'}</div>
+      <div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>
       <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
         <div class="hc-sub">${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
-        <div class="hc-sub"><span class="chem-cat-tag ${chemCatClass(cat)}">${escH(cat)}</span>　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
+        <div class="hc-sub">${catName(c.category)?catTagHtml(c.category):''}　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
       ${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(window._homeChemItems[${i}].id)">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}
     </div>`;
   }).join(''):'<div class="hint" style="text-align:center;padding:12px 0">找不到符合的藥品</div>');
@@ -5068,6 +5060,32 @@ function cabDoor(col){return col<=7?'右門':'左門';}
 const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
 function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.codePointAt(0))>>>0;return ZONE_COLORS[h%ZONE_COLORS.length];}
 
+// ── 藥品大類（後台可以自己編輯；存在資料表 chem_categories，還沒建表時用下面的預設）──
+const CHEM_CAT_DEFAULTS=[
+  {name:'酸',color:'#e53935',icon:'🧪'},
+  {name:'鹼',color:'#1e88e5',icon:'⚗️'},
+  {name:'氧化劑',color:'#fb8c00',icon:'🔥'},
+  {name:'易燃・有機溶劑',color:'#f9a825',icon:'🛢️'},
+  {name:'一般鹽類・氧化物',color:'#43a047',icon:'🧂'},
+  {name:'金屬・元素',color:'#757575',icon:'⚙️'},
+  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:'🌈'},
+  {name:'生化・有機固體・其他',color:'#8d6e63',icon:'📦'}];
+let CHEM_CATS=CHEM_CAT_DEFAULTS.map((c,i)=>({...c,sort:i+1}));
+// 舊的分類名稱 → 新大類（資料還沒轉換前也能正確顯示）
+const CHEM_CAT_LEGACY={'鹽':'一般鹽類・氧化物','有機溶劑':'易燃・有機溶劑','指示劑':'指示劑・染劑・分析試劑','培養基／生化':'生化・有機固體・其他','溶液成品':'生化・有機固體・其他','其他':'生化・有機固體・其他'};
+function catName(v){const s=String(v??'').trim().replace(/^\d+\s+/,'');if(!s)return '';if(CHEM_CATS.some(c=>c.name===s))return s;return CHEM_CAT_LEGACY[s]||s;}
+function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:'📦'};}
+function hexMix(hex,t,to){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return to?'#eeeeee':'#555555';const n=parseInt(m[1],16);return '#'+[n>>16,(n>>8)&255,n&255].map(x=>Math.round(to?x+(255-x)*t:x*(1-t))).map(x=>x.toString(16).padStart(2,'0')).join('');}
+function catTagHtml(v,extra=''){const c=catInfo(v);return `<span class="chem-cat-tag ${extra}" style="background:${hexMix(c.color,.86,1)};color:${hexMix(c.color,.3,0)}">${escH(c.name)}</span>`;}
+async function loadChemCats(){
+  try{const r=await sb('GET','chem_categories',{order:'sort,name'});
+    if(Array.isArray(r)&&r.length){CHEM_CATS=r.filter(x=>x&&x.name).map(x=>({id:x.id,name:String(x.name).slice(0,20),color:/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#9e9e9e',icon:String(x.icon||'').slice(0,4),sort:x.sort||0}));}
+    window._catsFromDb=Array.isArray(r);
+  }catch(_){window._catsFromDb=false;}
+}
+// 分區顏色跟著大類走；舊資料沒有大類的，用名稱猜一個顏色
+function zoneColorOf(z){if(z&&z.category){const c=catInfo(z.category);return [hexMix(c.color,.82,1),c.color];}return zoneColor(z&&z.text);}
+
 function makeCabUI(rootId,opts){
   const ui={state:{cab:1,L:1,col:null,locId:null},opts};
   const root=()=>document.getElementById(rootId);
@@ -5087,7 +5105,7 @@ function makeCabUI(rootId,opts){
   // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
   const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
   ui.move=dir=>{const st=ui.state;if(st.col==null)return;const [dl,dc]=NAV[dir]||[0,0];const L=st.L+dl,c=st.col+dc;if(L<1||L>5||c<1||c>14)return;ui.select(st.cab,L,c,null);};
-  function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColor(z.text);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
+  function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColorOf(z);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
   function routeHtml(){
     const st=ui.state;
     if(st.zone!=null&&st.col==null){
@@ -5137,11 +5155,13 @@ function makeCabUI(rootId,opts){
       h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
       // 分區色塊：左門、右門分開畫（中間有門縫）
       zs.filter(z=>z.layer===L).forEach(z=>{
-        const [bg,fg]=zoneColor(z.text),on=String(st.zone)===String(z.id);
+        const [bg,fg]=zoneColorOf(z),on=String(st.zone)===String(z.id);
         [[Math.max(z.a,8),z.b],[z.a,Math.min(z.b,7)]].forEach(([lo,hi])=>{
           if(lo>hi)return;
           const x1=colX(hi),x2=colX(lo)+W;
-          h+=`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="${on?2.2:1.2}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
+          // 平常只在格子下面畫一條細色線（不吵）；點了圖例才整區框起來
+          h+=on?`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="2.2" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`
+               :`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+2).toFixed(1)}" y="${y+H-6}" width="${(x2-x1-4).toFixed(1)}" height="3.5" rx="1.75" fill="${fg}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
         });
       });
       for(let c=1;c<=14;c++){
@@ -5192,7 +5212,7 @@ function makeCabUI(rootId,opts){
     const body=r.querySelector(':scope>.cab-body');
     body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
-      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColor(z.text);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
+      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColorOf(z);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
     const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
@@ -5255,7 +5275,7 @@ async function openChemDetail(id){
   const locHtml=locs.length?locs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
   showModal('🧪 '+(c.name_zh||'藥品'),`
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
-    ${row('分類',c.category?`<span class="chem-cat-tag ${chemCatClass(c.category)}">${escH(c.category)}</span>`:'')}
+    ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
     ${row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
     ${row('回收',c.recycle_type?'♻️ '+escH(c.recycle_type):'')}
@@ -5266,7 +5286,15 @@ async function openChemDetail(id){
 }
 // 點清單上的位置 → 切到藥品櫃，亮出那一格
 function showChemLoc(locId){setChemView('cab');chemCabUI.selectLoc(locId,true);}
+let chemCatsLoaded=false;
+async function ensureChemCats(){
+  if(chemCatsLoaded)return;chemCatsLoaded=true;
+  await loadChemCats();
+  const sel=document.getElementById('chemCatFilter');
+  if(sel){const cur=sel.value;sel.innerHTML='<option value="">全部分類</option>'+CHEM_CATS.map(c=>`<option value="${escH(c.name)}">${escH(c.icon?c.icon+' ':'')}${escH(c.name)}</option>`).join('')+'<option value="__none">未分類</option>';sel.value=cur;}
+}
 async function loadChemicals(){
+  await ensureChemCats();
   if(allChemicals.length&&chemLocsLoaded){renderChemList(filteredChemicals.length?filteredChemicals:allChemicals);return;}
   try{
     await ensureChemData();
@@ -5278,18 +5306,18 @@ const CHEM_CAT_CLASS_MAP={'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','�
 function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
 function filterChemicals(){
   const q=document.getElementById('chemSearch').value.toLowerCase(),cat=document.getElementById('chemCatFilter').value;
-  filteredChemicals=allChemicals.filter(c=>(!q||c.name_zh?.toLowerCase().includes(q)||c.name_en?.toLowerCase().includes(q))&&(!cat||c.category===cat));
+  filteredChemicals=allChemicals.filter(c=>(!q||c.name_zh?.toLowerCase().includes(q)||c.name_en?.toLowerCase().includes(q))&&(!cat||(cat==='__none'?!catName(c.category):catName(c.category)===cat)));
   renderChemList(filteredChemicals);
 }
 function renderChemList(items){
   const box=document.getElementById('chemList');
   if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>';return;}
   box.innerHTML='<div class="chem-table-head"><span>名稱</span><span>分類</span><span>存量</span><span>位置</span><span>回收類別</span><span></span></div>'+items.map(c=>{
-    const avail=c.is_available!==false;const catCls=chemCatClass(c.category);
+    const avail=c.is_available!==false;
     const left=c.bottles_left;const low=left!=null&&Number(left)<=2;
     return `<div class="chem-tr ${avail?'':'chem-unavail'}">
       <div class="c-name chem-clickable" onclick="openChemDetail(${parseInt(c.id)||0})"><b>${escH(c.name_zh)}</b>${c.name_en?`<div class="c-en">${escH(c.name_en)}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">📝 ${escH(c.note)}</div>`:''}</div>
-      <div class="c-cat"><span class="chem-cat-tag ${catCls}">${escH(c.category||'其他')}</span></div>
+      <div class="c-cat">${catName(c.category)?catTagHtml(c.category):'<span class="chem-cat-tag">未分類</span>'}</div>
       <div class="c-left ${low?'low':''}">${escH(left??'?')} 瓶</div>
       <div class="c-loc">${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="showChemLoc(${ja(l.id)})" title="${escH(cabText(l))}">📍 ${escH(cabCode(l))}</button>`).join(''):(c.location?'📍 '+escH(c.location):'')}</div>
       <div class="c-rec">${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${escH(c.recycle_type)}</span>`:''}</div>
