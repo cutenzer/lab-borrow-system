@@ -575,6 +575,13 @@
   .cab-add-here{margin-top:10px;border:1.5px dashed #d9bf5c;background:transparent;color:#7a5c00;border-radius:10px;font:inherit;font-size:14px;padding:7px 14px;cursor:pointer;}
   .cab-add-here:hover{background:#fff4c7;}
   /* 分區（例如「指示劑溶液」）：櫃子圖上同一區用同一個顏色框起來，下面有圖例可以點 */
+
+  /* 藥品大類圖例（格子依大類上色） */
+  .cab-cats{display:flex;flex-wrap:wrap;gap:4px 10px;padding:8px 6px 0;}
+  .cab-cats button{display:inline-flex;align-items:center;gap:5px;border:none;background:none;color:var(--text2);font:inherit;font-size:12.5px;padding:3px 4px;border-radius:6px;cursor:pointer;}
+  .cab-cats button i{width:12px;height:12px;border-radius:3px;border:1.5px solid;display:inline-block;}
+  .cab-cats button small{font-size:11px;opacity:.75;}
+  .cab-cats button.on{background:var(--surface2);color:var(--text);font-weight:700;}
   .cab-zones{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 2px;}
   .cab-zones button{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font:inherit;font-size:13px;padding:4px 10px;border-radius:999px;cursor:pointer;}
   .cab-zones button i{width:11px;height:11px;border-radius:3px;display:inline-block;flex-shrink:0;}
@@ -1304,7 +1311,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03k · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03l · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5170,7 +5177,17 @@ function makeCabUI(rootId,opts){
         const same=!sel&&selChem!=null&&inCell.some(l=>String(l.chem_id)===selChem);
         const qm=!sel&&!same&&qSet.has(L+'-'+c);
         const tip=has?'：'+inCell.slice(0,4).map(l=>chem(l.chem_id)?.name_zh||'?').join('、')+(inCell.length>4?'…':''):'（空）';
-        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${(x+2).toFixed(1)}" y="${y+4}" width="${(W-4).toFixed(1)}" height="${H-10}" rx="3" fill="${sel?'#f2c94c':(same?'#f7e4a0':(qm?'#cfe8dc':(has?'#c9bfa9':'var(--surface2)')))}" ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':(qm?'stroke="#1f5b4c" stroke-width="1.5"':''))}><title>${escH(`第${L}層 第${c}排${tip}`)}</title></rect>`;
+        // 依藥品大類上色：一種大類就整格淡色；混了幾種就切成直條（最多 3 種）
+        const cats=[...new Set(inCell.map(l=>catName(chem(l.chem_id)?.category)).filter(Boolean))];
+        const dim=st.catHi&&!cats.includes(st.catHi);
+        const cx=x+2,cw=W-4,cy=y+4,ch=H-10;
+        if(!sel&&!same&&!qm&&cats.length){
+          const show=cats.slice(0,3),sw=cw/show.length;
+          h+=`<g pointer-events="none" opacity="${dim?.25:1}"><clipPath id="cc${L}_${c}_${st.cab}"><rect x="${cx.toFixed(1)}" y="${cy}" width="${cw.toFixed(1)}" height="${ch}" rx="3"/></clipPath><g clip-path="url(#cc${L}_${c}_${st.cab})">${show.map((n,k)=>`<rect x="${(cx+k*sw).toFixed(1)}" y="${cy}" width="${(sw+.3).toFixed(1)}" height="${ch}" fill="${hexMix(catInfo(n).color,.45,1)}"/>`).join('')}</g></g>`;
+        }
+        const catTip=cats.length?'\n大類：'+cats.join('、'):'';
+        const baseFill=sel?'#f2c94c':(same?'#f7e4a0':(qm?'#cfe8dc':(cats.length?'#000':(has?'#c9bfa9':'var(--surface2)'))));
+        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${cx.toFixed(1)}" y="${cy}" width="${cw.toFixed(1)}" height="${ch}" rx="3" fill="${baseFill}" ${(!sel&&!same&&!qm&&cats.length)?'fill-opacity="0"':''} ${dim&&!sel?'opacity=".35"':''} ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':(qm?'stroke="#1f5b4c" stroke-width="1.5"':''))}><title>${escH(`第${L}層 第${c}排${tip}${catTip}`)}</title></rect>`;
       }
       h+=`<text x="7" y="${y+16}" font-size="10" fill="var(--text2)" pointer-events="none">${L}</text>`;
     }
@@ -5212,7 +5229,12 @@ function makeCabUI(rootId,opts){
     const body=r.querySelector(':scope>.cab-body');
     body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
-      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColorOf(z);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
+      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{
+        // 這一櫃有哪些大類（點了只亮那一類，再點一次取消）
+        const cnt={};locs().filter(l=>l.cab===st.cab).forEach(l=>{const n=catName(chem(l.chem_id)?.category);if(n)cnt[n]=(cnt[n]||0)+1;});
+        const names=CHEM_CATS.map(c=>c.name).filter(n=>cnt[n]);
+        return names.length?`<div class="cab-cats">${names.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:'';
+      })()}${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColorOf(z);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
       <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
       <div class="cab-shelf">${shelfHtml()}</div></div>`;
     const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
@@ -5228,6 +5250,7 @@ function makeCabUI(rootId,opts){
     body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
     body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);focusUi();});
     body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();ui.selectZone(b.dataset.zone);}));
+    body.querySelectorAll('[data-cathi]').forEach(b=>b.onclick=()=>{ui.state.catHi=ui.state.catHi===b.dataset.cathi?null:b.dataset.cathi;ui.render();});
     body.querySelectorAll('[data-zedit]').forEach(b=>b.onclick=()=>{const z=labels().find(x=>String(x.id)===b.dataset.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);});
     body.querySelectorAll('[data-zcell]').forEach(b=>b.onclick=()=>{if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);});
     // 電腦：選到格子後可以用鍵盤方向鍵移動
