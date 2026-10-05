@@ -1357,7 +1357,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03l';
+const ADMIN_VERSION='2026-10-03m';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4147,13 +4147,82 @@ function exportChemSimilar(){
   const t=new Date();XLSX.writeFile(wb,`藥品相似名稱_${t.getFullYear()}${String(t.getMonth()+1).padStart(2,'0')}${String(t.getDate()).padStart(2,'0')}.xlsx`);
 }
 let cabImportPlan=null;
+// ── 讀「門上表格」格式（第一櫃～第四櫃分頁）──
+// 規則：第 2 列是排號（14…1）；灰色底的列是「層的分隔線」，分隔線上的字是該層的分區標籤（例如「指示劑溶液」）；
+//       兩條分隔線之間是一層，每一格＝一瓶，同一欄同名的格子加起來就是瓶數（由下往上排）。
+// 回傳：null＝不是這種格式；false＝是這種格式但有錯（已經提示）；物件＝讀到的資料
+function parseCabGridWorkbook(wb){
+  const sheets=wb.SheetNames.map(n=>({n,cab:(()=>{const m=n.match(/第\s*([一二三四1-4])\s*櫃/);if(!m)return 0;return {'一':1,'二':2,'三':3,'四':4}[m[1]]||+m[1];})()})).filter(x=>x.cab);
+  if(!sheets.length)return null;
+  const E=XLSX.utils.encode_cell,clean=v=>String(v??'').replace(/[\r\n]+/g,'').replace(/\s+/g,' ').trim();
+  const ok=[],labels=[],warn=[],cabs=[];
+  for(const {n,cab} of sheets){
+    const ws=wb.Sheets[n];if(!ws||!ws['!ref'])continue;
+    const R=XLSX.utils.decode_range(ws['!ref']);
+    const val=(r,c)=>{const x=ws[E({r,c})];return x?x.v:undefined;};
+    // 找排號那一列：同一列裡有 1 和 14 的數字
+    let hr=-1;
+    for(let r=R.s.r;r<=Math.min(R.e.r,8)&&hr<0;r++){const nums=[];for(let c=R.s.c;c<=R.e.c;c++){const v=parseInt(val(r,c));if(v>=1&&v<=14)nums.push(v);}if(nums.includes(1)&&nums.includes(14))hr=r;}
+    if(hr<0){warn.push(`${n}：找不到排號（14～1）那一列，略過`);continue;}
+    // 每一欄對應第幾排；合併成兩格寬的排（例如 2、1）右邊那格也算同一排
+    const colMap={};let last=0;
+    for(let c=R.s.c;c<=R.e.c;c++){const v=parseInt(val(hr,c));if(v>=1&&v<=14){colMap[c]=v;last=v;}else if(last)colMap[c]=last;}
+    const merges=ws['!merges']||[];
+    const mergeOf=(r,c)=>merges.find(m=>m.s.r<=r&&r<=m.e.r&&m.s.c<=c&&c<=m.e.c);
+    // 灰色分隔列
+    const isSep=r=>{for(let c=R.s.c;c<=R.e.c;c++){const x=ws[E({r,c})];const s=x&&x.s;if(s&&s.patternType&&s.patternType!=='none')return true;}return false;};
+    const seps=[];for(let r=hr+1;r<=R.e.r;r++)if(isSep(r))seps.push(r);
+    if(seps.length!==5){warn.push(`${n}：灰色分隔列找到 ${seps.length} 條（應該是 5 條，每層下面一條），這一櫃略過`);continue;}
+    cabs.push(cab);
+    let top=hr+1;
+    seps.forEach((sr,li)=>{
+      const layer=li+1;
+      // 這一層：每一排由下往上讀
+      const byCol={};
+      for(let r=sr-1;r>=top;r--){
+        for(let c=R.s.c;c<=R.e.c;c++){
+          const col=colMap[c];if(!col)continue;
+          const m=mergeOf(r,c);if(m&&(m.s.c!==c||m.s.r!==r))continue; // 合併格只算左上那格
+          const name=clean(val(r,c));if(!name)continue;
+          if(/^\d+$/.test(name))continue;
+          (byCol[col]=byCol[col]||[]).push(name);
+        }
+      }
+      Object.entries(byCol).forEach(([col,names])=>{
+        const order=[];const cnt={};
+        names.forEach(nm=>{if(!(nm in cnt)){cnt[nm]=0;order.push(nm);}cnt[nm]++;});
+        order.forEach((nm,i)=>ok.push({name:nm.slice(0,60),cab,layer,col:+col,bottles:cnt[nm],capacity:null,sort:i+1,match:matchChemByName(nm)}));
+      });
+      // 分隔列上的字＝這一層的分區標籤（合併幾排就涵蓋幾排）
+      for(let c=R.s.c;c<=R.e.c;c++){
+        const t=clean(val(sr,c));if(!t||!colMap[c])continue;
+        const m=mergeOf(sr,c);if(m&&m.s.c!==c)continue;
+        const a=colMap[c],b=m?colMap[m.e.c]||a:a;
+        labels.push({cab,layer,col_from:Math.max(a,b),col_to:Math.min(a,b),text:t.slice(0,30)});
+      }
+      top=sr+1;
+    });
+  }
+  if(!ok.length){showToast(warn[0]||'讀不到藥品櫃資料','error');return false;}
+  return {ok,labels,warn,cabs};
+}
+// ── 下載：照門上表格的樣子（ExcelJS 才能寫框線、灰底、合併格）──
+function loadExcelJS(){
+  if(window.ExcelJS)return Promise.resolve();
+  const urls=['https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js','https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js'];
+  return urls.reduce((p,u)=>p.catch(()=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=()=>window.ExcelJS?res():rej();s.onerror=rej;document.head.appendChild(s);})),Promise.reject());
+}
 function importChemCabXlsx(input){
   const f=input.files&&input.files[0];input.value='';if(!f)return;
   if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
   const rd=new FileReader();
   rd.onload=e=>{
     try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
+      const wb=XLSX.read(e.target.result,{type:'array',cellStyles:true,sheetStubs:true});
+      // 新格式：「第一櫃」～「第四櫃」分頁，排法跟門上的表一樣（一格一瓶、灰色列分層）
+      const grid=parseCabGridWorkbook(wb);
+      if(grid){showCabImportPreview(grid.ok,[],[],grid);return;}
+      if(grid===false)return;
       const ws=wb.Sheets['藥品清單']||wb.Sheets[wb.SheetNames.find(n=>/藥品/.test(n))||wb.SheetNames[0]];
       const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
       const cabNo=v=>{const t=String(v).trim();const m=t.match(/[1-4]/);if(m)return +m[0];return {'一':1,'二':2,'三':3,'四':4}[(t.match(/[一二三四]/)||[])[0]]||0;};
@@ -4168,9 +4237,17 @@ function importChemCabXlsx(input){
         ok.push({name:name.slice(0,60),cab,layer:L,col,bottles:btl,capacity:String(r['容量（選填）']||r['容量']||'').trim().slice(0,30)||null,sort:parseInt(r['格內順序'],10)||0,match:matchChemByName(name)});
       });
       if(!ok.length){showToast('檔案裡找不到可以匯入的資料（需要「櫃、層、排、品名」欄位）','error');return;}
+      showCabImportPreview(ok,manual,bad,null);
+    }catch(err){showToast('讀不出這個 Excel：'+err.message,'error');}
+  };
+  rd.readAsArrayBuffer(f);
+}
+function showCabImportPreview(ok,manual,bad,grid){
       const newNames=[...new Set(ok.filter(x=>!x.match).map(x=>x.name))];
       const fuzzy=[...new Map(ok.filter(x=>x.match&&nzName(x.match.name_zh)!==nzName(x.name)).map(x=>[x.name,x.match.name_zh])).entries()];
-      cabImportPlan={ok,newNames};
+      cabImportPlan={ok,newNames,grid};
+      const gridCabs=grid?grid.cabs:[];
+      const curInCabs=grid?allChemLocs.filter(l=>gridCabs.includes(l.cab)).length:allChemLocs.length;
       const li=a=>a.map(t=>`<li>${t}</li>`).join('');
       showModal('📥 匯入藥品櫃位置',`
         <p>共 <b>${ok.length}</b> 個位置、<b>${ok.reduce((s,x)=>s+x.bottles,0)}</b> 瓶。</p>
@@ -4179,19 +4256,20 @@ function importChemCabXlsx(input){
         ${newNames.length?`<details><summary>系統裡沒有、會<b>新建</b>的藥品 ${newNames.length} 種</summary><ul style="font-size:13px">${li(newNames.map(escH))}</ul></details>`:''}
         ${manual.length?`<details open><summary style="color:var(--danger)">核對欄填「改」的 ${manual.length} 筆不會匯入，請匯入後手動處理</summary><ul style="font-size:13px">${li(manual.map(m=>`第 ${m.row} 列 ${escH(m.name)}${m.fix?'：'+escH(m.fix):''}`))}</ul></details>`:''}
         ${bad.length?`<p style="color:var(--danger);font-size:13px">有 ${bad.length} 列的櫃／層／排／瓶數格式不對，會略過（第 ${bad.slice(0,8).map(b=>b.row).join('、')}${bad.length>8?'…':''} 列）</p>`:''}
-        <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${allChemLocs.length?'':'checked'} style="width:auto"> 取代：先清空目前所有藥品櫃位置（目前 ${allChemLocs.length} 筆），再匯入</label>
-        <label><input type="radio" name="cabImpMode" value="append" ${allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
+        ${grid?`<p style="font-size:13px">讀到：${gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、')}${grid.labels.length?`，分區標籤 ${grid.labels.length} 個（例如「${escH(grid.labels[0].text)}」）`:''}</p>`:''}
+        ${grid&&grid.warn.length?`<details><summary style="color:var(--danger)">有 ${grid.warn.length} 個地方請注意</summary><ul style="font-size:13px">${li(grid.warn.map(escH))}</ul></details>`:''}
+        <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${grid||!allChemLocs.length?'checked':''} style="width:auto"> 取代：先清空${grid?gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前的位置（${curInCabs} 筆），再匯入</label>
+        <label><input type="radio" name="cabImpMode" value="append" ${!grid&&allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'確定匯入',cls:'btn-primary',fn:'runCabImport()'}
       ]);
-    }catch(err){showToast('讀不出這個 Excel：'+err.message,'error');}
-  };
-  rd.readAsArrayBuffer(f);
 }
 async function runCabImport(){
   const plan=cabImportPlan;if(!plan||cabBusy)return;
   const mode=document.querySelector('input[name="cabImpMode"]:checked')?.value||'append';
-  if(mode==='replace'&&allChemLocs.length&&!confirm(`確定要先清空目前 ${allChemLocs.length} 筆藥品櫃位置嗎？`))return;
+  const cabs=plan.grid?plan.grid.cabs:[1,2,3,4];
+  const curN=allChemLocs.filter(l=>cabs.includes(l.cab)).length;
+  if(mode==='replace'&&curN&&!confirm(`確定要先清空${plan.grid?cabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前 ${curN} 筆位置嗎？`))return;
   cabBusy=true;const msg=document.getElementById('chemCabMsg');
   try{
     closeModal();if(msg)msg.textContent='匯入中…';
@@ -4200,46 +4278,81 @@ async function runCabImport(){
       const rows=await sb('POST','chemicals',{body:plan.newNames.slice(i,i+100).map(n=>({name_zh:n,is_available:true,bottles_left:0})),prefer:'return=representation'});
       (rows||[]).forEach(r=>{created[r.name_zh]=r;});
     }
-    if(mode==='replace')await sb('DELETE','chem_locations',{filter:'id=gt.0',prefer:'return=minimal'});
+    if(mode==='replace')await sb('DELETE','chem_locations',{filter:plan.grid?'cab=in.('+cabs.join(',')+')':'id=gt.0',prefer:'return=minimal'});
     const body=plan.ok.map(x=>{const c=x.match||created[x.name];return c?{chem_id:c.id,cab:x.cab,layer:x.layer,col:x.col,bottles:x.bottles,capacity:x.capacity,sort:x.sort}:null;}).filter(Boolean);
     for(let i=0;i<body.length;i+=200)await sb('POST','chem_locations',{body:body.slice(i,i+200),prefer:'return=minimal'});
-    showToast(`已匯入 ${body.length} 個位置${plan.newNames.length?`，新建 ${plan.newNames.length} 種藥品`:''}`,'success');
+    let labelMsg='';
+    if(plan.grid){
+      try{
+        await sb('DELETE','chem_cab_labels',{filter:'cab=in.('+cabs.join(',')+')',prefer:'return=minimal'});
+        if(plan.grid.labels.length)await sb('POST','chem_cab_labels',{body:plan.grid.labels,prefer:'return=minimal'});
+      }catch(e){labelMsg='（分區標籤沒存到：請先在 Supabase 執行「藥品櫃分區標籤.sql」）';}
+    }
+    showToast(`已匯入 ${body.length} 個位置${plan.newNames.length?`，新建 ${plan.newNames.length} 種藥品`:''}${labelMsg}`,labelMsg?'error':'success');
     if(msg)msg.textContent='';
     await loadAdminChems();
   }catch(e){if(msg)msg.textContent='';showToast('匯入失敗：'+e.message,'error');}
   finally{cabBusy=false;cabImportPlan=null;}
 }
-// ── 下載藥品櫃 Excel ──
-// 第 1 頁「藥品清單」：跟匯入用的格式一樣，改完可以直接再「匯入櫃位 Excel」
-// 第 2～5 頁「第一櫃」～「第四櫃」：排法跟門上的紙表一樣（14 在左、1 在右），一格一項，方便複製貼上
-function exportChemCabXlsx(){
-  if(typeof XLSX==='undefined'){showToast('Excel 元件還沒載入，請稍後再試','error');return;}
+// ── 下載藥品櫃 Excel：跟門上的表一樣——第一櫃～第四櫃各一頁、14 在左 1 在右、一格一瓶由下往上疊、灰色列分層（灰色列上可寫分區標籤）
+// 下載的檔案改完可以直接用「📥 匯入櫃位 Excel」匯回來
+async function exportChemCabXlsx(){
   if(!allChemLocs.length){showToast('藥品櫃目前沒有資料','error');return;}
-  const safe=v=>{const t=String(v??'');return /^[=+\-@]/.test(t)?"'"+t:t;}; // 避免被 Excel 當公式
+  showToast('產生 Excel 中…');
+  try{await loadExcelJS();}catch(_){showToast('Excel 元件載入失敗，請檢查網路後再試','error');return;}
+  let labels=[];try{labels=await sb('GET','chem_cab_labels',{order:'cab,layer,col_from.desc'})||[];}catch(_){}
+  const safe=v=>{const t=String(v??'');return /^[=+\-@]/.test(t)?"'"+t:t;};
   const nameOf=l=>allAdminChems.find(x=>String(x.id)===String(l.chem_id))?.name_zh||'（找不到藥品）';
-  const locs=[...allChemLocs].sort((a,b)=>a.cab-b.cab||a.layer-b.layer||b.col-a.col||(a.sort||0)-(b.sort||0)||a.id-b.id);
-  // 清單頁：同一格的順序重新編 1、2、3…
-  const seq={};
-  const list=locs.map(l=>{const k=l.cab+'-'+l.layer+'-'+l.col;seq[k]=(seq[k]||0)+1;
-    return {'櫃':l.cab,'層':l.layer,'排':l.col,'門':l.col<=7?'右門':'左門','格內順序':seq[k],'品名':safe(nameOf(l)),'瓶數':parseInt(l.bottles)||0,'容量（選填）':safe(l.capacity||''),'核對（✓／改）':'','修正內容':''};});
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.json_to_sheet(list);
-  ws['!cols']=[6,6,6,7,9,30,7,14,13,30].map(w=>({wch:w}));
-  ws['!autofilter']={ref:'A1:J'+(list.length+1)};
-  XLSX.utils.book_append_sheet(wb,ws,'藥品清單');
   const cols=[14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+  const GRAY={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}};
+  const thin={style:'thin',color:{argb:'FF7F7F7F'}};
+  const border={top:thin,left:thin,bottom:thin,right:thin};
+  const font={name:'Arial',size:12};
+  const wb=new ExcelJS.Workbook();
   for(let cab=1;cab<=4;cab++){
-    const aoa=[[`第${CAB_CN[cab]}櫃`,...cols.map(c=>`${c}（${c<=7?'右門':'左門'}）`)]];
+    const ws=wb.addWorksheet(`第${CAB_CN[cab]}櫃`,{pageSetup:{orientation:'landscape',paperSize:9,fitToPage:true,fitToWidth:1,fitToHeight:1,margins:{left:.25,right:.25,top:.3,bottom:.3,header:0,footer:0}}});
+    ws.columns=cols.map(()=>({width:13.4}));
+    const style=(cell,extra)=>{cell.font=font;cell.border=border;cell.alignment={horizontal:'center',vertical:'middle',wrapText:true};if(extra)Object.assign(cell,extra);};
+    ws.mergeCells(1,1,1,14);
+    const t=ws.getCell(1,1);t.value=`第${CAB_CN[cab]}櫃`;style(t);t.font={name:'Arial',size:20,bold:true};ws.getRow(1).height=25.5;
+    cols.forEach((c,i)=>{const h=ws.getCell(2,i+1);h.value=c;style(h);h.fill=GRAY;});
+    let row=3;
     for(let L=1;L<=5;L++){
-      const cells=cols.map(c=>locs.filter(l=>l.cab===cab&&l.layer===L&&l.col===c).map(l=>{const b=parseInt(l.bottles)||0;return safe(nameOf(l)+(b!==1?' ×'+b:''));}));
-      const h=Math.max(1,...cells.map(x=>x.length));
-      for(let r=0;r<h;r++)aoa.push([r===0?`第 ${L} 層`:'',...cells.map(x=>x[r]||'')]);
+      // 每一排：照順序把每瓶展開成一格（第 1 順位在最下面）
+      const stacks=cols.map(c=>{
+        const arr=[];
+        allChemLocs.filter(l=>l.cab===cab&&l.layer===L&&l.col===c).sort((a,b)=>(a.sort||0)-(b.sort||0)||a.id-b.id)
+          .forEach(l=>{const n=safe(nameOf(l)),b=Math.max(1,Math.min(60,parseInt(l.bottles)||0));for(let k=0;k<b;k++)arr.push(n);});
+        return arr;
+      });
+      const h=Math.max(1,...stacks.map(a=>a.length));
+      for(let r=0;r<h;r++){
+        let longest=0;
+        cols.forEach((c,i)=>{
+          const fromBottom=h-1-r,v=stacks[i][fromBottom]||'';
+          const cell=ws.getCell(row+r,i+1);cell.value=v||null;style(cell);
+          // 估字寬：中文 2、英數 1；欄寬 13 放得下約 13 個單位，超過就自動換行、列高加倍
+          longest=Math.max(longest,[...String(v)].reduce((w,ch)=>w+(/[\x00-\xff]/.test(ch)?1:2),0));
+        });
+        ws.getRow(row+r).height=longest>13?33:16.5;
+      }
+      row+=h;
+      // 灰色分隔列（這一層的分區標籤寫在這裡）
+      for(let i=0;i<14;i++){const cell=ws.getCell(row,i+1);style(cell);cell.fill=GRAY;}
+      labels.filter(x=>x.cab===cab&&x.layer===L).forEach(x=>{
+        const a=cols.indexOf(Math.max(x.col_from,x.col_to))+1,b=cols.indexOf(Math.min(x.col_from,x.col_to))+1;
+        if(a<1||b<1)return;
+        if(b>a){try{ws.mergeCells(row,a,row,b);}catch(_){}}
+        const cell=ws.getCell(row,a);cell.value=safe(x.text);style(cell);cell.fill=GRAY;
+      });
+      ws.getRow(row).height=18;
+      row++;
     }
-    const w2=XLSX.utils.aoa_to_sheet(aoa);
-    w2['!cols']=[{wch:8},...cols.map(()=>({wch:16}))];
-    XLSX.utils.book_append_sheet(wb,w2,`第${CAB_CN[cab]}櫃`);
   }
-  XLSX.writeFile(wb,'藥品櫃_'+fmtDate(new Date())+'.xlsx');
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='藥品櫃清單_'+fmtDate(new Date()).replace(/-/g,'')+'.xlsx';
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
   showToast('已下載','success');
 }
 // ── 列印門上的櫃位表（A4 橫式，排法跟原本的紙表一樣：14 在左、1 在右）──
