@@ -866,6 +866,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📥 匯入櫃位 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemCabXlsx(this)"></label>
       <button type="button" class="btn btn-secondary btn-sm" onclick="printChemCabinet()">🖨️ 列印這一櫃（貼門上）</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="exportChemCabXlsx()">⬇️ 下載 Excel</button>
     </div>
     <div class="hint" id="chemCabMsg"></div>
     <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
@@ -1356,7 +1357,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03k';
+const ADMIN_VERSION='2026-10-03l';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4207,6 +4208,39 @@ async function runCabImport(){
     await loadAdminChems();
   }catch(e){if(msg)msg.textContent='';showToast('匯入失敗：'+e.message,'error');}
   finally{cabBusy=false;cabImportPlan=null;}
+}
+// ── 下載藥品櫃 Excel ──
+// 第 1 頁「藥品清單」：跟匯入用的格式一樣，改完可以直接再「匯入櫃位 Excel」
+// 第 2～5 頁「第一櫃」～「第四櫃」：排法跟門上的紙表一樣（14 在左、1 在右），一格一項，方便複製貼上
+function exportChemCabXlsx(){
+  if(typeof XLSX==='undefined'){showToast('Excel 元件還沒載入，請稍後再試','error');return;}
+  if(!allChemLocs.length){showToast('藥品櫃目前沒有資料','error');return;}
+  const safe=v=>{const t=String(v??'');return /^[=+\-@]/.test(t)?"'"+t:t;}; // 避免被 Excel 當公式
+  const nameOf=l=>allAdminChems.find(x=>String(x.id)===String(l.chem_id))?.name_zh||'（找不到藥品）';
+  const locs=[...allChemLocs].sort((a,b)=>a.cab-b.cab||a.layer-b.layer||b.col-a.col||(a.sort||0)-(b.sort||0)||a.id-b.id);
+  // 清單頁：同一格的順序重新編 1、2、3…
+  const seq={};
+  const list=locs.map(l=>{const k=l.cab+'-'+l.layer+'-'+l.col;seq[k]=(seq[k]||0)+1;
+    return {'櫃':l.cab,'層':l.layer,'排':l.col,'門':l.col<=7?'右門':'左門','格內順序':seq[k],'品名':safe(nameOf(l)),'瓶數':parseInt(l.bottles)||0,'容量（選填）':safe(l.capacity||''),'核對（✓／改）':'','修正內容':''};});
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(list);
+  ws['!cols']=[6,6,6,7,9,30,7,14,13,30].map(w=>({wch:w}));
+  ws['!autofilter']={ref:'A1:J'+(list.length+1)};
+  XLSX.utils.book_append_sheet(wb,ws,'藥品清單');
+  const cols=[14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+  for(let cab=1;cab<=4;cab++){
+    const aoa=[[`第${CAB_CN[cab]}櫃`,...cols.map(c=>`${c}（${c<=7?'右門':'左門'}）`)]];
+    for(let L=1;L<=5;L++){
+      const cells=cols.map(c=>locs.filter(l=>l.cab===cab&&l.layer===L&&l.col===c).map(l=>{const b=parseInt(l.bottles)||0;return safe(nameOf(l)+(b!==1?' ×'+b:''));}));
+      const h=Math.max(1,...cells.map(x=>x.length));
+      for(let r=0;r<h;r++)aoa.push([r===0?`第 ${L} 層`:'',...cells.map(x=>x[r]||'')]);
+    }
+    const w2=XLSX.utils.aoa_to_sheet(aoa);
+    w2['!cols']=[{wch:8},...cols.map(()=>({wch:16}))];
+    XLSX.utils.book_append_sheet(wb,w2,`第${CAB_CN[cab]}櫃`);
+  }
+  XLSX.writeFile(wb,'藥品櫃_'+fmtDate(new Date())+'.xlsx');
+  showToast('已下載','success');
 }
 // ── 列印門上的櫃位表（A4 橫式，排法跟原本的紙表一樣：14 在左、1 在右）──
 function printChemCabinet(){
