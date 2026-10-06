@@ -114,6 +114,15 @@
   .chem-tabs .ct-n{display:inline-block;min-width:18px;margin-left:5px;padding:0 6px;border-radius:9px;background:#c2410c;color:#fff;font-size:11.5px;line-height:18px;font-weight:700;}
   .chem-tabs .ct-n:empty{display:none;}
   .chem-sec{display:none;}
+  /* 藥品清單：搜尋列往下捲也看得到 */
+  .chem-list-tools{display:flex;gap:8px;margin:0 -4px 12px;padding:8px 4px;flex-wrap:wrap;position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border);}
+  .chem-list-tools select{flex:0 1 150px;min-width:0;}
+  @media(max-width:1099px){.chem-list-tools{top:108px;gap:6px;}.chem-list-tools input{flex:1 1 120px!important;min-width:0;}.chem-list-tools .btn{padding:5px 9px;}}
+  .noloc-row{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--border);}
+  .noloc-row:last-child{border-bottom:none;}
+  .noloc-row .nm{font-weight:700;font-size:14.5px;}
+  .noloc-row .sub{font-size:12.5px;color:var(--text2);margin-top:2px;}
+  .noloc-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;max-width:52%;}
   .chem-sec.on{display:block;}
   @media(min-width:1100px){
     body:has(#panel-chemicals.active) main{max-width:1560px;}
@@ -961,18 +970,21 @@
         <button type="button" data-ct="add">➕ 新增</button>
         <button type="button" data-ct="cats">🏷️ 大類</button>
         <button type="button" data-ct="sort">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
+          <button type="button" data-ct="noloc">📭 沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
         <button type="button" data-ct="csv">📥 匯入</button>
       </div>
       <div class="chem-sec" data-sec="list">
   <div class="card">
     <div class="card-title">📋 藥品清單</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-  <input type="text" id="adminChemSearch" placeholder="搜尋…" oninput="filterAdminChems()" style="flex:1">
+    <div class="chem-list-tools">
+  <input type="search" id="adminChemSearch" placeholder="🔍 搜尋中文、英文…" oninput="filterAdminChems()" style="flex:1 1 180px">
   <select id="adminChemCat" onchange="filterAdminChems()">
     <option value="">全部分類</option>
   </select>
   <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
   <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
+  <button class="btn btn-secondary btn-sm" onclick="exportChemListXlsx()">⬇️ 下載藥品清單</button>
+  <span class="hint" id="adminChemCount" style="align-self:center;margin-left:auto"></span>
 </div>
     <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
   </div>
@@ -1016,6 +1028,19 @@
     <div class="card-title">🏷️ 快速歸類「其他／未分類」藥品</div>
     <div class="info-box">把目前分類是「其他」或還沒填分類的藥品集中列在這裡，每一筆旁邊直接選新分類即可儲存，不用逐筆點進去編輯。</div>
     <div id="chemQuickSortList"><div class="empty"><div class="empty-icon">🏷️</div><p>點重新整理載入</p></div></div>
+  </div>
+      </div>
+      <div class="chem-sec" data-sec="noloc">
+  <div class="card">
+    <div class="card-title">📭 不在藥品櫃的藥品</div>
+    <div class="info-box">藥品清單裡有、但藥品櫃沒有位置的藥品。可能放在別間教室（例如生物教室冰箱），也可能已經用完或處理掉了。每一筆可以：放進藥品櫃、記下在哪裡、標成已處理（不再出借，資料保留）、或直接刪除。</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="nolocFilter">
+      <button type="button" class="btn btn-secondary btn-sm" data-nf="all">全部</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-nf="where">有寫在哪裡</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-nf="none">什麼都沒寫</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-nf="off">已處理（停用）</button>
+    </div>
+    <div id="nolocList"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
       </div>
       <div class="chem-sec" data-sec="csv">
@@ -1457,7 +1482,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03v';
+const ADMIN_VERSION='2026-10-03w';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4242,6 +4267,7 @@ async function loadAdminChems() {
     adminCabUI.render();
     renderChemCabOrphans();
     renderCatManager();
+    renderNoLoc();
   } catch(e) { showToast('載入藥品失敗', 'error'); }
 }
 // ── 藥品櫃裡顯示「?」的位置：對應的藥品已經不在藥品清單（例如被刪掉了）──
@@ -4445,6 +4471,15 @@ function chemEnKeys(c){
   (String(c.name_zh||'').match(/[A-Za-z][A-Za-z0-9+]{1,}/g)||[]).forEach(t=>{const k=enNorm(t);if(k.length>=2)out.add(k);});
   return [...out];
 }
+// 中文比對鍵：拿掉「無水、含水、結晶、晶體、粉末、固體、試藥級、五水合物…」這類描述，只留藥品本身的名字
+// 例：無水醋酸鈉、醋酸鈉(無水)、醋酸鈉晶體 → 醋酸鈉
+function chemModKey(name){
+  let t=baseName(fixChars(String(name||'')));
+  if(!t)return null;
+  t=t.replace(/(無水|含水|結晶|晶體|粉末|固體|顆粒|片狀|試藥級|分析級|特級|一級|化學純|工業級|食品級)/g,'')
+     .replace(/[一二三四五六七八九十]+水(合物|合|物)?/g,'').replace(/水合物$/,'');
+  return t.length>=2?t:null;
+}
 // 改名時檢查：跟別的藥品中文一樣、或英文／簡寫一樣
 function chemNameClash(selfId,zh,en){
   const me={name_zh:zh,name_en:en},keys=new Set(chemEnKeys(me));
@@ -4458,6 +4493,9 @@ function chemSimilarGroups(){
   idx(c=>nzName(c.name_zh),'名稱寫法');
   idx(c=>nzName(fixChars(c.name_zh)),'異體字／錯字');
   idx(c=>baseName(fixChars(c.name_zh)),'括號外名稱相同');
+  // 只差「無水、五水、晶體…」這類字：例如 醋酸鈉 ↔ 無水醋酸鈉、硫酸銅 ↔ 五水硫酸銅
+  {const m=new Map();list.forEach((c,i)=>{const k=chemModKey(c.name_zh);if(!k)return;
+    if(m.has(k)){const j=m.get(k);if(baseName(fixChars(list[j].name_zh))!==baseName(fixChars(c.name_zh)))join(j,i,'只差無水／含水等字');}else m.set(k,i);});}
   idx(c=>(c.name_en||'').trim().toLowerCase().replace(/\s+/g,' ')||null,'英文名稱相同');
   idx(c=>chemEnKeys(c),'英文／簡寫相同');
   // 別名：A 的括號內＝B 的名稱
@@ -4839,6 +4877,88 @@ function fillAdminCatSelects(){
   const f=document.getElementById('chem-category');if(f){const v=f.value;f.innerHTML='<option value="">不指定</option>'+opts;f.value=v;}
 }
 
+// ── 沒有櫃位的藥品 ──
+let nolocFilter='all';
+function renderNoLoc(){
+  const box=document.getElementById('nolocList');if(!box)return;
+  const has=new Set(allChemLocs.map(l=>String(l.chem_id)));
+  const all=allAdminChems.filter(c=>!has.has(String(c.id)));
+  const n=document.getElementById('chemNoLocN');if(n)n.textContent=all.filter(c=>c.is_available!==false).length||'';
+  const f=document.getElementById('nolocFilter');
+  if(f&&!f._init){f._init=true;f.querySelectorAll('[data-nf]').forEach(b=>b.onclick=()=>{nolocFilter=b.dataset.nf;renderNoLoc();});}
+  if(f)f.querySelectorAll('[data-nf]').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.nf===nolocFilter);b.classList.toggle('btn-secondary',b.dataset.nf!==nolocFilter);});
+  const items=all.filter(c=>nolocFilter==='all'?true:nolocFilter==='off'?c.is_available===false:nolocFilter==='where'?(c.is_available!==false&&String(c.location||'').trim()):(c.is_available!==false&&!String(c.location||'').trim()))
+    .sort((a,b)=>(a.is_available===false)-(b.is_available===false)||String(a.name_zh).localeCompare(String(b.name_zh),'zh-Hant'));
+  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>這一類沒有藥品</p></div>';return;}
+  box.innerHTML=`<div class="hint" style="margin-bottom:6px">共 ${items.length} 筆</div>`+items.map(c=>{const id=ja(c.id);return `<div class="noloc-row" ${c.is_available===false?'style="opacity:.6"':''}>
+    <div style="flex:1;min-width:0"><div class="nm">${escH(c.name_zh)}${c.is_available===false?' <span class="badge badge-rejected">已處理</span>':''}</div>
+      <div class="sub">${c.name_en?escH(c.name_en)+'・':''}${catName(c.category)?escH(catName(c.category))+'・':''}${parseInt(c.bottles_left)||0} 瓶</div>
+      ${String(c.location||'').trim()?`<div class="sub">📍 ${escH(c.location)}</div>`:''}</div>
+    <div class="noloc-acts">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openNoLocPlace(${id})">放進藥品櫃</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openNoLocWhere(${id})">在哪裡</button>
+      ${c.is_available===false?`<button type="button" class="btn btn-secondary btn-sm" onclick="setChemAvailable(${id},true)">恢復</button>`:`<button type="button" class="btn btn-secondary btn-sm" onclick="setChemAvailable(${id},false)">已處理</button>`}
+      <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteChem(${id})" aria-label="刪除">🗑️</button>
+    </div></div>`;}).join('');
+}
+function openNoLocPlace(id){
+  const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
+  if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
+  window._nolocId=c.id;
+  showModal(`🗄️ 把「${c.name_zh}」放進藥品櫃`,`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="form-group"><label>櫃</label><select id="nl-cab">${[1,2,3,4].map(v=>`<option value="${v}">第${CAB_CN[v]}櫃</option>`).join('')}</select></div>
+      <div class="form-group"><label>層</label><select id="nl-layer">${cabSelectOpts(5,1,v=>v+' 層')}</select></div>
+      <div class="form-group"><label>排</label><select id="nl-col">${cabSelectOpts(14,1,v=>`${v} 排（${cabDoor(v)}）`)}</select></div>
+    </div>
+    <div class="form-group"><label>瓶數</label><input id="nl-btl" type="number" min="0" max="999" value="${Math.max(1,parseInt(c.bottles_left)||1)}" inputmode="numeric"></div>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'放進去',cls:'btn-primary',fn:'saveNoLocPlace()'}]);
+}
+async function saveNoLocPlace(){
+  const id=window._nolocId;if(id==null)return;
+  const cab=+document.getElementById('nl-cab').value,L=+document.getElementById('nl-layer').value,col=+document.getElementById('nl-col').value,btl=parseInt(document.getElementById('nl-btl').value,10);
+  if(!(cab>=1&&cab<=4&&L>=1&&L<=5&&col>=1&&col<=14)||!Number.isFinite(btl)||btl<0||btl>999){showToast('位置或瓶數不對','error');return;}
+  const sort=allChemLocs.filter(l=>l.cab===cab&&l.layer===L&&l.col===col).reduce((m,l)=>Math.max(m,l.sort||0),0)+1;
+  try{await sb('POST','chem_locations',{body:{chem_id:id,cab,layer:L,col,bottles:btl,sort},prefer:'return=minimal'});closeModal();showToast('已放進藥品櫃','success');await loadAdminChems();}
+  catch(e){showToast('失敗：'+e.message,'error');}
+}
+function openNoLocWhere(id){
+  const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;window._nolocId=c.id;
+  const sugg=['生物實驗室冰箱','化學實驗室冰箱','理化實驗室','物理實驗室','地科教室','教具室','準備室','已用完'];
+  showModal(`📍 「${c.name_zh}」在哪裡`,`<div class="form-group"><label>位置說明（例如：生物教室冰箱第 2 層）</label><input id="nl-where" maxlength="60" list="nlWhere" value="${escH(c.location||'')}" autocomplete="off"><datalist id="nlWhere">${sugg.map(v=>`<option value="${escH(v)}"></option>`).join('')}</datalist></div>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveNoLocWhere()'}]);
+  setTimeout(()=>document.getElementById('nl-where')?.focus(),60);
+}
+async function saveNoLocWhere(){
+  const id=window._nolocId;if(id==null)return;
+  const v=(document.getElementById('nl-where')?.value||'').trim().slice(0,60);
+  try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(id),body:{location:v||null},prefer:'return=minimal'});closeModal();showToast('已儲存','success');await loadAdminChems();}
+  catch(e){showToast('失敗：'+e.message,'error');}
+}
+async function setChemAvailable(id,on){
+  try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(id),body:{is_available:!!on},prefer:'return=minimal'});showToast(on?'已恢復':'已標成已處理（不再出借，資料保留）','success');await loadAdminChems();}
+  catch(e){showToast('失敗：'+e.message,'error');}
+}
+// ── 5. 下載藥品清單（直式，一筆一列） ──
+function exportChemListXlsx(){
+  if(typeof XLSX==='undefined'){showToast('Excel 元件還沒載入，請稍後再試','error');return;}
+  if(!allAdminChems.length){showToast('沒有藥品資料','error');return;}
+  const safe=v=>{const t=String(v??'');return /^[=+\-@]/.test(t)?"'"+t:t;};
+  const order=n=>{const i=CHEM_CATS.findIndex(c=>c.name===n);return i<0?999:i;};
+  const rows=[...allAdminChems].sort((a,b)=>order(catName(a.category))-order(catName(b.category))||String(a.name_zh).localeCompare(String(b.name_zh),'zh-Hant'))
+    .map((c,i)=>{const locs=chemLocsOf(c.id);return {
+      '編號':i+1,'中文名稱':safe(c.name_zh),'英文名稱':safe(c.name_en||''),'大類':safe(catName(c.category)||'未分類'),
+      '瓶數':locs.length?locs.reduce((s,l)=>s+(parseInt(l.bottles)||0),0):(parseInt(c.bottles_left)||0),
+      '藥品櫃位置':locs.map(l=>`${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}${(parseInt(l.bottles)||0)!==1?'×'+(parseInt(l.bottles)||0):''}`).join('、'),
+      '其他位置':safe(locs.length?'':(c.location||'')),'狀態':c.is_available===false?'已處理／停用':'可借',
+      '回收類別':safe(c.recycle_type||c.recycle||''),'附註':safe(c.note||'')};});
+  const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[6,26,28,22,7,24,22,12,14,30].map(w=>({wch:w}));
+  ws['!autofilter']={ref:'A1:J'+(rows.length+1)};
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'藥品清單');
+  XLSX.writeFile(wb,'藥品清單_'+fmtDate(new Date()).replace(/-/g,'')+'.xlsx');
+  showToast(`已下載 ${rows.length} 筆`,'success');
+}
 // ── 藥品大類管理 ──
 let catDraft=null;
 function catCount(name){return allAdminChems.filter(c=>catName(c.category)===name).length;}
@@ -5023,6 +5143,7 @@ function filterAdminChems() {
     (!cat || (cat==='__none'?!catName(c.category):catName(c.category) === cat))
   );
   const list = document.getElementById('adminChemList');
+  const cntEl=document.getElementById('adminChemCount');if(cntEl)cntEl.textContent=`共 ${items.length} 筆`;
   if (!items.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合藥品</p></div>'; return; }
   list.innerHTML = '<div class="record-list">' + items.map(c => {
     const esc = s => (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/`/g, '&#96;');
@@ -5610,6 +5731,52 @@ function deleteEquip(id){
     {label:'確認刪除',cls:'btn-danger',fn:`doDeleteEquip(${ja(id)})`}
   ]);
 }
+// ── 器材轉成藥品：例如其他教室冰箱裡的試劑被登記成器材 ──
+async function openEquipToChem(id){
+  const e=allEquipment.find(x=>String(x.id)===String(id));if(!e)return;
+  if(!allAdminChems.length){try{allAdminChems=await sb('GET','chemicals',{order:'category,name_zh'})||[];}catch(_){}}
+  if(!window._catsFromDb&&typeof loadChemCats==='function'){try{await loadChemCats();}catch(_){}}
+  const m=matchChemByName(e.name);
+  const refs=activeRecordsUsing(e.room,e.name);
+  window._e2c={id:e.id,match:m?m.id:null};
+  const where=[rn(e.room),e.location].filter(Boolean).join(' ');
+  showModal('🧪 把這筆器材轉成藥品',`
+    <div class="form-group"><label>藥品中文名稱</label><input id="e2c-zh" maxlength="60" value="${escH(e.name)}"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>英文名稱／簡寫（選填）</label><input id="e2c-en" maxlength="100" value="${escH(e.alias||'')}"></div>
+      <div class="form-group"><label>大類</label><select id="e2c-cat"><option value="">不指定</option>${CHEM_CATS.map(c=>`<option value="${escH(c.name)}">${escH(c.name)}</option>`).join('')}</select></div>
+      <div class="form-group"><label>瓶數</label><input id="e2c-btl" type="number" min="0" max="9999" value="${parseInt(e.total)||0}" inputmode="numeric"></div>
+      <div class="form-group"><label>放在哪裡</label><input id="e2c-where" maxlength="60" value="${escH(where)}"></div>
+    </div>
+    ${m?`<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-top:4px"><input type="checkbox" id="e2c-merge" checked style="width:auto;margin-top:3px">藥品清單已經有「${escH(m.name_zh)}」，把瓶數加到它上面（不另外新建）</label>`:''}
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-top:8px"><input type="checkbox" id="e2c-del" ${refs.length?'disabled':'checked'} style="width:auto;margin-top:3px">轉完後刪除這筆器材${refs.length?`<span style="color:var(--danger)">（還有 ${refs.length} 筆借用中，先改成「不開放借用」，歸還後再刪）</span>`:'（不勾的話改成「不開放借用」）'}</label>
+    <p class="hint" style="font-size:12.5px;margin-top:8px">轉過去的藥品會出現在藥品管理的「📭 沒位置」，之後可以放進藥品櫃。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'轉成藥品',cls:'btn-primary',fn:'doEquipToChem()'}]);
+}
+async function doEquipToChem(){
+  const ctx=window._e2c;if(!ctx)return;
+  const e=allEquipment.find(x=>String(x.id)===String(ctx.id));if(!e)return;
+  const zh=(document.getElementById('e2c-zh').value||'').trim().slice(0,60),en=(document.getElementById('e2c-en').value||'').trim().slice(0,100);
+  const cat=document.getElementById('e2c-cat').value||null,where=(document.getElementById('e2c-where').value||'').trim().slice(0,60);
+  const btl=parseInt(document.getElementById('e2c-btl').value,10);
+  if(!zh){showToast('請填藥品名稱','error');return;}
+  if(!Number.isFinite(btl)||btl<0||btl>9999){showToast('瓶數不對','error');return;}
+  const merge=ctx.match&&document.getElementById('e2c-merge')?.checked;
+  const del=document.getElementById('e2c-del')?.checked&&!activeRecordsUsing(e.room,e.name).length;
+  closeModal();
+  try{
+    if(merge){
+      const m=allAdminChems.find(x=>String(x.id)===String(ctx.match));
+      await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(ctx.match),body:{bottles_left:(parseInt(m&&m.bottles_left)||0)+btl,...(m&&!m.location&&where?{location:where}:{}),...(m&&!m.name_en&&en?{name_en:en}:{})},prefer:'return=minimal'});
+    }else{
+      await sb('POST','chemicals',{body:{name_zh:zh,name_en:en||null,category:cat,bottles_left:btl,location:where||null,is_available:true,note:`由器材轉入（原：${rn(e.room)}）`},prefer:'return=minimal'});
+    }
+    if(del)await sb('DELETE','equipment',{filter:'id=eq.'+encodeURIComponent(e.id),prefer:'return=minimal'});
+    else await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(e.id),body:{is_available:false},prefer:'return=minimal'});
+    showToast(`已轉成藥品${del?'，器材已刪除':'，器材改成不開放借用'}`,'success');
+    loadAdminChems().catch(()=>{});loadAdminEquipment();
+  }catch(err){showToast('轉換失敗：'+err.message,'error');}
+}
 async function doDeleteEquip(id){
   closeModal();
   try{await sb('DELETE','equipment',{filter:'id=eq.'+id,prefer:'return=minimal'});showToast('已刪除','success');loadAdminEquipment();}
@@ -5762,6 +5929,8 @@ function renderAdminEquipCard(e){
           <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload(${ja(e.id)})">換照片</button>
           ${moreMenuHtml([
             {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
+            'hr',
+            {label:'🧪 這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
             'hr',
             {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
             {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
