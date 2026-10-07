@@ -553,6 +553,9 @@
   @keyframes cabPulse{0%{stroke-width:6;stroke-opacity:.2;}60%{stroke-width:1.5;stroke-opacity:1;}100%{stroke-width:1.5;}}
   .cab-cell:hover{filter:brightness(.93);}
   .cab-ui:focus{outline:none;}
+  .chem-formula{font-family:'Times New Roman',Times,serif;font-size:1.08em;letter-spacing:.02em;white-space:nowrap;}
+  .chem-formula sub{font-size:.68em;vertical-align:-.28em;line-height:0;}
+  .chem-formula sup{font-size:.68em;vertical-align:.55em;line-height:0;}
   /* 藥品櫃內搜尋 */
   .cab-search{position:relative;margin-bottom:10px;}
   .cab-q{width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font:inherit;font-size:15px;background:var(--surface);color:var(--text);}
@@ -1311,7 +1314,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03l · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03m · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5063,6 +5066,17 @@ const CAB_CN=['','一','二','三','四'];
 function cabCode(l){return `${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}`;}
 function cabText(l){return `第${CAB_CN[l.cab]}櫃・${l.layer} 層・${l.col} 排`;}
 function cabDoor(col){return col<=7?'右門':'左門';}
+// ── 分子式顯示：自動下標（CuSO4·5H2O → CuSO₄·5H₂O；結晶水前的係數不縮小；^2- 這類電荷變上標）──
+function fmtFormula(f){
+  let s=String(f??'').trim().slice(0,60);if(!s)return '';
+  s=s.replace(/[•∙⋅*]/g,'·').replace(/([A-Za-z)\]]\d*)\.(?=\d)/g,'$1·'); // CuSO4.5H2O 的點也當成結晶水
+  return '<span class="chem-formula">'+s.split('·').map(part=>{
+    let t=escH(part);
+    t=t.replace(/\^(\d*[+\-−])/g,(m,c)=>'<sup>'+c.replace('-','−')+'</sup>');
+    t=t.replace(/([A-Za-z)\]])(\d+)/g,'$1<sub>$2</sub>');
+    return t;
+  }).join('·')+'</span>';
+}
 // 分區顏色（淡底＋深框），同一個名稱永遠同一個顏色
 const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
 function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.codePointAt(0))>>>0;return ZONE_COLORS[h%ZONE_COLORS.length];}
@@ -5298,6 +5312,7 @@ async function openChemDetail(id){
   const locHtml=locs.length?locs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
   showModal('🧪 '+(c.name_zh||'藥品'),`
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
+    ${row('分子式',c.formula?fmtFormula(c.formula):'')}
     ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
     ${row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
