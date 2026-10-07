@@ -1270,7 +1270,7 @@
     <div id="chemCabView" style="display:none"></div>
     <div id="chemListView">
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <input type="text" id="chemSearch" placeholder="搜尋中文或英文名稱…" oninput="filterChemicals()" style="flex:1;min-width:140px">
+      <input type="text" id="chemSearch" placeholder="搜尋中文、英文名稱或分子式（例如 NaOH）…" oninput="filterChemicals()" style="flex:1;min-width:140px">
       <select id="chemCatFilter" onchange="filterChemicals()" style="min-width:100px">
         <option value="">全部分類</option>
       </select>
@@ -1314,7 +1314,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-03m · 選修提醒＋門標示＋櫃位搜尋＋我的紀錄改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08a · 藥品分子式（顯示＋搜尋）</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1792,7 +1792,7 @@ async function renderHomeChem(){
   const q=(document.getElementById('homeChemSearch').value||'').trim().toLowerCase();
   let items,head='';
   if(q||homeChemCat){
-    items=allChemicals.filter(c=>(!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q))&&(!homeChemCat||catName(c.category)===homeChemCat));
+    items=allChemicals.filter(c=>chemHit(c,q)&&(!homeChemCat||catName(c.category)===homeChemCat));
     head=`找到 ${items.length} 項${items.length>6?'（顯示前 6 項）':''}`;
   }else{
     items=allChemicals.filter(c=>c.is_available!==false&&c.bottles_left!=null&&Number(c.bottles_left)<=2).sort((a,b)=>Number(a.bottles_left)-Number(b.bottles_left));
@@ -1807,7 +1807,7 @@ async function renderHomeChem(){
     return `<div class="home-chem-row chem-clickable ${avail?'':'chem-unavail'}" onclick="openChemDetail(window._homeChemItems[${i}].id)">
       <div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>
       <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
-        <div class="hc-sub">${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
+        <div class="hc-sub">${c.formula?fmtFormula(c.formula)+'　':''}${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
         <div class="hc-sub">${catName(c.category)?catTagHtml(c.category):''}　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
       ${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(window._homeChemItems[${i}].id)">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}
     </div>`;
@@ -1861,7 +1861,7 @@ function heroSearchLive(q){
     const ql=q.toLowerCase();
     const eq=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q);
     window._srLists.hero=eq.slice(0,5);
-    const ch=allChemicals.filter(c=>(c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)).slice(0,4);
+    const ch=allChemicals.filter(c=>chemHit(c,ql)).slice(0,4);
     window._heroChems=ch;
     // 櫃位：代碼開頭符合（例如打 BB02 會找到 BB02、BB02-4）
     const locMap=new Map();
@@ -1871,7 +1871,7 @@ function heroSearchLive(q){
     let html='';
     if(locs.length)html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" onclick="heroLoc(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項</span></button>`).join('')}</div>`;
     if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
-    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph">🧪</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
+    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph">🧪</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
     if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
     else if(eq.length>5)html+=`<button type="button" class="hr-more" onclick="heroSearchGo()">看全部 ${eq.length} 項器材 ›</button>`;
     box.innerHTML=html;
@@ -3500,7 +3500,7 @@ function updateBorrowDraftBar(){
   const show=['equipment','floorplan','chemicals'].includes(page)&&(items.length>0||venue);
   bar.classList.toggle('show',!!show);
   if(!show){bar.innerHTML='';return;}
-  const total=items.reduce((a,i)=>a+(parseInt(i.quantity)||0),0);
+  const total=items.reduce((a,i)=>a+itemCount(i),0);
   const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
   bar.innerHTML=`<div class="db-text">📋 <b>借用單還沒送出</b>　已選 ${items.length} 項／${total} 件　${bd?escH(bd.slice(5))+'～'+escH((rd||'').slice(5)):''}
     ${venue?`<br><span class="db-venue">📅 會一起預約場地：${venueDraftText(venue)}</span>`:''}${venueNotBookedWarning()?`<br><span style="color:var(--danger);font-weight:600">${venueNotBookedWarning()}</span>`:''}</div>
@@ -3544,7 +3544,7 @@ function renderBorrowSidePanel(){
   if(getComputedStyle(box).display==='none')return;
   const items=Object.values(selectedItems);
   window._sideItems=items;
-  const total=items.reduce((a,i)=>a+(parseInt(i.quantity)||0),0);
+  const total=items.reduce((a,i)=>a+itemCount(i),0);
   const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
   const pSel=document.getElementById('f-purpose').value;
   const venue=getInlineVenueDraft();
@@ -3552,6 +3552,10 @@ function renderBorrowSidePanel(){
   const dep=depositFor(needs,!!document.getElementById('f-venue').value,items.length>0);
   const warn=venueNotBookedWarning();
   const list=items.length?items.map((i,idx)=>{
+    if(i._isChem)return `<div class="bsp-item"><div class="ph">🧪</div>
+      <div class="nm"><b>${escH(i.name)}</b><span>藥品・${escH(i.spec||'')}</span></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="sideItemQty(${idx},0)">修改</button>
+    </div>`;
     const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(eq?.image_url);
     return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph">🔬</div>'}
@@ -3575,6 +3579,7 @@ function renderBorrowSidePanel(){
 }
 function sideItemQty(idx,d){
   const i=(window._sideItems||[])[idx];if(!i)return;
+  if(i._isChem){editChemItem(i);return;}
   const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(eq?.available)||0;
   changeQty(i.room,i.name,i.spec||'',i.unit,avail,d);
 }
@@ -3603,14 +3608,14 @@ function updateCartBadge(){
   const items=Object.values(selectedItems);
   setTimeout(updateBorrowDraftBar,0);
   setTimeout(renderBorrowSidePanel,0);
-  const total=items.reduce((s,i)=>s+i.quantity,0);
+  const total=items.reduce((s,i)=>s+itemCount(i),0);
   document.getElementById('cartBadge').textContent=total;
   const summaryEl=document.getElementById('cartSummaryText');
   if(summaryEl){
     if(!items.length){summaryEl.textContent='尚未選擇任何器材';}
     else{
       summaryEl.innerHTML=`已選 <strong>${items.length}</strong> 項、共 <strong>${total}</strong> 件：`+
-        items.slice(0,4).map(i=>i.name).join('、')+(items.length>4?' 等…':'');
+        items.slice(0,4).map(i=>escH(i.name)).join('、')+(items.length>4?' 等…':'');
     }
   }
 }
@@ -3689,6 +3694,11 @@ function renderCart(){
   window._cartItems=items;
   if(!items.length){body.innerHTML='<div class="empty"><div class="empty-icon">🛒</div><p>尚未選擇任何器材</p></div>';return;}
   body.innerHTML=items.map((i,idx)=>{
+    if(i._isChem)return `<div class="cart-item"><div class="cart-item-thumb-ph">🧪</div>
+      <div class="cart-item-info"><div class="cart-item-name">${escH(i.name)}</div><div class="cart-item-sub">藥品・${escH(i.spec||'')}${i.note?'・📝 '+escH(i.note):''}</div></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="cartItemQty(${idx},0)">修改</button>
+      <button class="cart-item-remove" onclick="cartItemRemove(${idx})" aria-label="移除">✕</button>
+    </div>`;
     const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(equip?.image_url);
     const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
@@ -3712,12 +3722,13 @@ function renderCart(){
 }
 function cartItemQty(idx,d){
   const i=(window._cartItems||[])[idx];if(!i)return;
+  if(i._isChem){editChemItem(i);return;}
   const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(equip?.available)||0;
   changeQty(i.room,i.name,i.spec||'',i.unit,i.loose?LOOSE_MAX:avail,d);renderCart();
 }
 function cartSetLoose(idx,on){
   const i=(window._cartItems||[])[idx];if(!i)return;
-  const key=i.room+'__'+i.name,it=selectedItems[key];if(!it)return;
+  const key=itemKey(i),it=selectedItems[key];if(!it)return;
   if(on){it.loose=true;it.looseUnit=it.looseUnit||'個';it.quantity=Math.max(1,parseInt(it.quantity)||1);}
   else{
     const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(eq?.available)||0;
@@ -3729,16 +3740,23 @@ function cartSetLoose(idx,on){
 // 改數字／單位時不重畫整個清單（重畫會把正在打字的格子換掉），只修正這一格的值
 function cartLooseQty(idx,el){
   const i=(window._cartItems||[])[idx];if(!i)return;
-  const it=selectedItems[i.room+'__'+i.name];if(!it)return;
+  const it=selectedItems[itemKey(i)];if(!it)return;
   it.quantity=Math.max(1,Math.min(LOOSE_MAX,parseInt(el.value)||1));el.value=it.quantity;updateCartBadge();
 }
 function cartLooseUnit(idx,el){
   const i=(window._cartItems||[])[idx];if(!i)return;
-  const it=selectedItems[i.room+'__'+i.name];if(!it)return;
+  const it=selectedItems[itemKey(i)];if(!it)return;
   const u=String(el.value||'').trim().replace(/[^\u4e00-\u9fa5A-Za-z]/g,'').slice(0,4);
   it.looseUnit=u||'個';el.value=it.looseUnit;
 }
-function cartItemRemove(idx){const i=(window._cartItems||[])[idx];if(!i)return;removeItem(i.room+'__'+i.name);renderCart();}
+// 找出這一項在 selectedItems 裡的代號（藥品是 CHEM__編號，器材是 房間__名稱）
+function itemKey(i){for(const k in selectedItems)if(selectedItems[k]===i)return k;return i.room+'__'+i.name;}
+function chemIdOfItem(i){const k=itemKey(i);return k.startsWith('CHEM__')?(parseInt(k.slice(6))||0):0;}
+// 藥品一筆算 1 件（不把 500 mL 算成 500 件）
+function itemCount(i){return i&&i._isChem?1:(parseInt(i?.quantity)||0);}
+// 藥品要改瓶數／濃度：重新打開申請視窗，送出後會取代原本那一筆
+function editChemItem(i){const id=chemIdOfItem(i);if(!id)return;closeCart();openChemRequestModal(id);}
+function cartItemRemove(idx){const i=(window._cartItems||[])[idx];if(!i)return;removeItem(itemKey(i));renderCart();}
 function cartItemLoc(idx){
   const i=(window._cartItems||[])[idx];if(!i)return;
   const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
@@ -4523,13 +4541,13 @@ async function renderChemSearchSection(){
   }
   const q=getQ();
   if(equipSearchType==='equip'||(equipSearchType==='all'&&!q)){box.innerHTML='';return;}
-  const list=allChemicals.filter(c=>!q||(c.name_zh||'').toLowerCase().includes(q)||(c.name_en||'').toLowerCase().includes(q));
+  const list=allChemicals.filter(c=>chemHit(c,q));
   const limit=equipSearchType==='all'?6:list.length;
   if(!list.length){box.innerHTML=equipSearchType==='chem'?'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>':'<div class="hint" style="margin-top:14px">🧪 藥品：沒有符合的結果</div>';return;}
   box.innerHTML=`<div class="chem-sec-title">🧪 藥品（${list.length} 筆）</div><div class="home-eq-list chem-sec-list">${list.slice(0,limit).map(c=>{
     const avail=c.is_available!==false;
     return `<div class="home-eq-row chem-clickable" onclick="openChemDetail(${parseInt(c.id)})" title="看藥品資料與位置"><div class="home-eq-thumb">🧪</div><div class="home-eq-info">
-      <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en?`<div class="home-eq-spec">${escH(c.name_en)}</div>`:''}
+      <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en||c.formula?`<div class="home-eq-spec">${c.formula?fmtFormula(c.formula)+(c.name_en?'　':''):''}${escH(c.name_en||'')}</div>`:''}
       <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?`<span class="eq-tag">📍${escH(c.location)}</span>`:''}</div>
     </div>${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(${parseInt(c.id)})">申請</button>`:`<button type="button" class="home-eq-add" disabled>暫不開放</button>`}</div>`;
   }).join('')}</div>${list.length>limit?`<span class="home-eq-more" onclick="setEquipSearchType('chem')">看全部 ${list.length} 筆藥品 ›</span>`:''}`;
@@ -5069,13 +5087,22 @@ function cabDoor(col){return col<=7?'右門':'左門';}
 // ── 分子式顯示：自動下標（CuSO4·5H2O → CuSO₄·5H₂O；結晶水前的係數不縮小；^2- 這類電荷變上標）──
 function fmtFormula(f){
   let s=String(f??'').trim().slice(0,60);if(!s)return '';
-  s=s.replace(/[•∙⋅*]/g,'·').replace(/([A-Za-z)\]]\d*)\.(?=\d)/g,'$1·'); // CuSO4.5H2O 的點也當成結晶水
+  s=s.replace(/[\u2080-\u2089]/g,d=>String(d.charCodeAt(0)-0x2080)) // 貼上的 H₂O 下標字先轉回一般數字
+     .replace(/[•∙⋅*]/g,'·').replace(/([A-Za-z)\]]\d*)\.(?=\d)/g,'$1·'); // CuSO4.5H2O 的點也當成結晶水
   return '<span class="chem-formula">'+s.split('·').map(part=>{
-    let t=escH(part);
+    let t=escH(part); // 先跳脫再加標籤，打 <script> 也只會顯示成文字
     t=t.replace(/\^(\d*[+\-−])/g,(m,c)=>'<sup>'+c.replace('-','−')+'</sup>');
     t=t.replace(/([A-Za-z)\]])(\d+)/g,'$1<sub>$2</sub>');
+    t=t.replace(/([A-Za-z)\]>])([+\-−])$/,(m,a,c)=>a+'<sup>'+(c==='+'?'+':'−')+'</sup>'); // 結尾單獨的 +／- 是電荷：NH4+ → NH₄⁺
     return t;
   }).join('·')+'</span>';
+}
+// 搜尋用：分子式去掉空白、點、下標字，不分大小寫（打 cuso4、CuSO₄、CuSO4·5H2O 都找得到）
+function formulaKey(f){return String(f??'').replace(/[\u2080-\u2089]/g,d=>String(d.charCodeAt(0)-0x2080)).replace(/[\s·•∙⋅*.^]/g,'').toLowerCase();}
+function chemHit(c,ql){
+  if(!ql)return true;
+  if((c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql))return true;
+  const k=formulaKey(ql);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
 }
 // 分區顏色（淡底＋深框），同一個名稱永遠同一個顏色
 const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
@@ -5344,7 +5371,7 @@ const CHEM_CAT_CLASS_MAP={'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','�
 function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
 function filterChemicals(){
   const q=document.getElementById('chemSearch').value.toLowerCase(),cat=document.getElementById('chemCatFilter').value;
-  filteredChemicals=allChemicals.filter(c=>(!q||c.name_zh?.toLowerCase().includes(q)||c.name_en?.toLowerCase().includes(q))&&(!cat||(cat==='__none'?!catName(c.category):catName(c.category)===cat)));
+  filteredChemicals=allChemicals.filter(c=>chemHit(c,q)&&(!cat||(cat==='__none'?!catName(c.category):catName(c.category)===cat)));
   renderChemList(filteredChemicals);
 }
 function renderChemList(items){
@@ -5354,7 +5381,7 @@ function renderChemList(items){
     const avail=c.is_available!==false;
     const left=c.bottles_left;const low=left!=null&&Number(left)<=2;
     return `<div class="chem-tr ${avail?'':'chem-unavail'}">
-      <div class="c-name chem-clickable" onclick="openChemDetail(${parseInt(c.id)||0})"><b>${escH(c.name_zh)}</b>${c.name_en?`<div class="c-en">${escH(c.name_en)}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">📝 ${escH(c.note)}</div>`:''}</div>
+      <div class="c-name chem-clickable" onclick="openChemDetail(${parseInt(c.id)||0})"><b>${escH(c.name_zh)}</b>${c.name_en||c.formula?`<div class="c-en">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">📝 ${escH(c.note)}</div>`:''}</div>
       <div class="c-cat">${catName(c.category)?catTagHtml(c.category):'<span class="chem-cat-tag">未分類</span>'}</div>
       <div class="c-left ${low?'low':''}">${escH(left??'?')} 瓶</div>
       <div class="c-loc">${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="showChemLoc(${ja(l.id)})" title="${escH(cabText(l))}">📍 ${escH(cabCode(l))}</button>`).join(''):(c.location?'📍 '+escH(c.location):'')}</div>
@@ -5366,7 +5393,7 @@ function renderChemList(items){
 function openChemRequestModal(id){
   const c=allChemicals.find(x=>x.id===id);if(!c)return;
   showModal(`🧪 申請藥品 — ${escH(c.name_zh)}`,`
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${escH(c.name_en||'')}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>
     <div class="form-group"><label>借用方式 *</label>
       <div style="display:flex;gap:8px;margin-top:4px">
         <label style="display:flex;align-items:center;gap:5px;font-size:14px;cursor:pointer;color:var(--text)"><input type="radio" name="chemMode" value="原液" id="chemModeBottle" onchange="toggleChemMode()" checked style="width:auto"> 原液（整瓶）</label>
