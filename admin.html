@@ -420,6 +420,9 @@
   @keyframes cabPulse{0%{stroke-width:6;stroke-opacity:.2;}60%{stroke-width:1.5;stroke-opacity:1;}100%{stroke-width:1.5;}}
   .cab-cell:hover{filter:brightness(.93);}
   .cab-ui:focus{outline:none;}
+  .chem-formula{font-family:'Times New Roman',Times,serif;font-size:1.08em;letter-spacing:.02em;white-space:nowrap;}
+  .chem-formula sub{font-size:.68em;vertical-align:-.28em;line-height:0;}
+  .chem-formula sup{font-size:.68em;vertical-align:.55em;line-height:0;}
   /* 藥品櫃內搜尋 */
   .cab-search{position:relative;margin-bottom:10px;}
   .cab-q{width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;font:inherit;font-size:15px;background:var(--surface);color:var(--text);}
@@ -995,6 +998,7 @@
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group" style="grid-column:1/-1"><label>中文名稱 *</label><input type="text" id="chem-name-zh"></div>
       <div class="form-group"><label>英文名稱</label><input type="text" id="chem-name-en"></div>
+      <div class="form-group"><label>分子式（選填，直接打 CuSO4·5H2O，數字會自動變下標）</label><input type="text" id="chem-formula" maxlength="60" autocomplete="off" spellcheck="false" oninput="document.getElementById('chem-formula-pv').innerHTML=fmtFormula(this.value)"><div class="hint" id="chem-formula-pv" style="min-height:1.4em;font-size:15px"></div></div>
       <div class="form-group"><label>位置</label><input type="text" id="chem-location"></div>
       <div class="form-group">
         <label>分類</label>
@@ -1482,7 +1486,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-03w';
+const ADMIN_VERSION='2026-10-03x';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3968,6 +3972,17 @@ const CAB_CN=['','一','二','三','四'];
 function cabCode(l){return `${l.cab}-${l.layer}-${String(l.col).padStart(2,'0')}`;}
 function cabText(l){return `第${CAB_CN[l.cab]}櫃・${l.layer} 層・${l.col} 排`;}
 function cabDoor(col){return col<=7?'右門':'左門';}
+// ── 分子式顯示：自動下標（CuSO4·5H2O → CuSO₄·5H₂O；結晶水前的係數不縮小；^2- 這類電荷變上標）──
+function fmtFormula(f){
+  let s=String(f??'').trim().slice(0,60);if(!s)return '';
+  s=s.replace(/[•∙⋅*]/g,'·').replace(/([A-Za-z)\]]\d*)\.(?=\d)/g,'$1·'); // CuSO4.5H2O 的點也當成結晶水
+  return '<span class="chem-formula">'+s.split('·').map(part=>{
+    let t=escH(part);
+    t=t.replace(/\^(\d*[+\-−])/g,(m,c)=>'<sup>'+c.replace('-','−')+'</sup>');
+    t=t.replace(/([A-Za-z)\]])(\d+)/g,'$1<sub>$2</sub>');
+    return t;
+  }).join('·')+'</span>';
+}
 // 分區顏色（淡底＋深框），同一個名稱永遠同一個顏色
 const ZONE_COLORS=[['#dbeafe','#2563eb'],['#dcfce7','#16a34a'],['#fce7f3','#db2777'],['#ede9fe','#7c3aed'],['#ffedd5','#ea580c'],['#cffafe','#0891b2'],['#fef3c7','#ca8a04'],['#e0e7ff','#4f46e5'],['#fee2e2','#dc2626'],['#ecfccb','#65a30d']];
 function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.codePointAt(0))>>>0;return ZONE_COLORS[h%ZONE_COLORS.length];}
@@ -5153,7 +5168,7 @@ function filterAdminChems() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
           <div style="font-size:15px;font-weight:700">${escH(c.name_zh)} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
             ${catName(c.category)?catTagHtml(c.category):''}
             ${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="goChemLoc(${ja(l.id)})">📍 ${escH(cabCode(l))}${(parseInt(l.bottles)||0)!==1?' ×'+l.bottles:''}</button>`).join(''):(c.location?`<span>📍 ${escH(c.location)}</span>`:'')}
@@ -5171,6 +5186,7 @@ function filterAdminChems() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div class="form-group"><label>中文名稱 *</label><input id="ci-zh-${c.id}" value="${esc(c.name_zh)}"></div>
           <div class="form-group"><label>英文名稱</label><input id="ci-en-${c.id}" value="${esc(c.name_en||'')}"></div>
+          <div class="form-group"><label>分子式（數字自動變下標）</label><input id="ci-fm-${c.id}" data-orig="${escH(c.formula||'')}" maxlength="60" spellcheck="false" autocomplete="off" value="${escH(c.formula||'')}" oninput="document.getElementById('ci-fmpv-${c.id}').innerHTML=fmtFormula(this.value)"><div class="hint" id="ci-fmpv-${c.id}" style="min-height:1.4em;font-size:15px">${fmtFormula(c.formula)}</div></div>
           <div class="form-group"><label>位置</label><input id="ci-loc-${c.id}" value="${esc(c.location||'')}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，位置請到上面的藥品櫃修改"':''}></div>
           <div class="form-group"><label>分類</label><select id="ci-cat-${c.id}">${catOpts}</select></div>
           <div class="form-group"><label>剩餘瓶數</label><input type="number" id="ci-btl-${c.id}" min="0" value="${c.bottles_left??0}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，瓶數由各位置加總，請到上面的藥品櫃修改"':''}></div>
@@ -5202,6 +5218,7 @@ async function saveChemInline(id) {
   const body = {
     name_zh,
     name_en: document.getElementById(`ci-en-${id}`)?.value.trim() || null,
+    ...((el=>{if(!el)return {};const v=(el.value||'').trim().slice(0,60);return v!==(el.dataset.orig||'')?{formula:v||null}:{};})(document.getElementById(`ci-fm-${id}`))), // 有改才送
     location: document.getElementById(`ci-loc-${id}`)?.value.trim() || null,
     category: document.getElementById(`ci-cat-${id}`)?.value || null,
     bottles_left: parseInt(document.getElementById(`ci-btl-${id}`)?.value) || 0,
@@ -5221,7 +5238,8 @@ async function saveChemInline(id) {
 
 function clearChemForm() {
   editingChemId = null;
-  ['chem-name-zh','chem-name-en','chem-location','chem-recycle','chem-note'].forEach(id => document.getElementById(id).value = '');
+  ['chem-name-zh','chem-name-en','chem-formula','chem-location','chem-recycle','chem-note'].forEach(id => {const el=document.getElementById(id);if(el)el.value='';});
+  const fpv=document.getElementById('chem-formula-pv');if(fpv)fpv.innerHTML='';
   document.getElementById('chem-category').value = '';
   document.getElementById('chem-bottles').value = '0';
   document.getElementById('chem-available').checked = true;
@@ -5233,6 +5251,7 @@ async function saveChem() {
   const body = {
     name_zh,
     name_en: document.getElementById('chem-name-en').value.trim() || null,
+    ...((v=>v?{formula:v}:{})((document.getElementById('chem-formula')?.value||'').trim().slice(0,60))), // 沒填就不送（資料庫還沒加欄位也不會出錯）
     location: document.getElementById('chem-location').value.trim() || null,
     category: document.getElementById('chem-category').value || null,
     bottles_left: parseInt(document.getElementById('chem-bottles').value) || 0,
