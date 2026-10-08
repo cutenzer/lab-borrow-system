@@ -255,6 +255,11 @@
   .modal{background:var(--surface);border-radius:var(--radius);padding:22px;max-width:520px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;}
   .modal-title{font-size:15px;font-weight:700;margin-bottom:14px;}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap;}
+  /* 後台視窗：標題在上、內容在中間可以捲、儲存／取消固定在最下面（手機內容再長也按得到） */
+  #modalOverlay .modal{display:flex;flex-direction:column;overflow:hidden;padding:22px 0 0;}
+  #modalOverlay .modal-title{padding:0 22px;flex-shrink:0;}
+  #modalOverlay #modalBody{overflow-y:auto;flex:1;min-height:0;padding:0 22px 6px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+  #modalOverlay .modal-actions{margin-top:0;padding:12px 22px 18px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
   label{font-size:12px;font-weight:500;color:var(--text2);}
   input,select,textarea{border:1.5px solid var(--border);border-radius:7px;padding:8px 11px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;width:100%;}
   input:focus,select:focus,textarea:focus{border-color:var(--accent);}
@@ -479,6 +484,20 @@
   .cb2-legend{font-size:12px;color:var(--text2);padding:6px 4px 0;line-height:1.7;}
   .cab-results small small{font-size:11.5px;}
   .cab-qwrap{position:relative;}
+  /* 藥品盆編輯：一樣東西一張小卡（手機好填） */
+  .tray-row{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface2);}
+  .tr-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .tr-kind{display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface);}
+  .tr-kind button{border:none;background:transparent;padding:7px 16px;font:inherit;font-size:14px;cursor:pointer;color:var(--text2);}
+  .tr-kind button.on{background:#1f4f7a;color:#fff;font-weight:700;}
+  .tr-del{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit;font-size:15px;}
+  .tray-row input{width:100%;box-sizing:border-box;font-size:16px;}
+  .tr-sug,.chem-sug{display:flex;flex-direction:column;gap:3px;}
+  .tr-sug:empty,.chem-sug:empty{display:none;}
+  .tr-sug button,.chem-sug button{text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit;font-size:15px;cursor:pointer;}
+  .tr-sug button small,.chem-sug button small{color:var(--text2);font-size:12.5px;}
+  .tr-hint{font-size:12.5px;color:var(--text2);}
+  .tr-hint:empty{display:none;}
   .cab-qwrap .cab-q{padding-right:48px;}
   .cab-q::-webkit-search-cancel-button{display:none;}
   .cab-qx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:17px;border:none;background:#e6edf4;color:#1f4f7a;font:inherit;font-size:15px;font-weight:700;cursor:pointer;line-height:1;}
@@ -4489,9 +4508,12 @@ function makeCabUI(rootId,opts){
     new MutationObserver(()=>set(ov.classList.contains('show'))).observe(ov,{attributes:true,attributeFilter:['class']});
     ov.addEventListener('touchmove',e=>{
       if(!ov.classList.contains('show'))return;
-      const mb=document.getElementById('modalBody');
-      if(mb&&mb.contains(e.target)&&mb.scrollHeight>mb.clientHeight+1)return; // 視窗內容本身可以捲
-      e.preventDefault();
+      // 手指底下只要有「本身可以捲」的區塊（視窗本體、長清單、文字框），就讓它捲
+      for(let n=e.target;n&&n!==ov;n=n.parentElement){
+        if(n.tagName==='TEXTAREA'||n.tagName==='SELECT')return;
+        if(n.scrollHeight>n.clientHeight+1){const oy=getComputedStyle(n).overflowY;if(oy==='auto'||oy==='scroll')return;}
+      }
+      e.preventDefault(); // 視窗外面（灰色底）滑動：擋掉，後面的頁面不會動
     },{passive:false});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
@@ -4511,19 +4533,56 @@ const adminCabUI=makeCabUI('adminChemCab',{
   onQuick:(l,d)=>cabQuickBottles(l.id,d),
   onRemove:l=>cabQuickRemove(l.id)
 });
+// ── 藥品名稱「打字跳建議」：iPhone 不支援 datalist 下拉，改成自己畫一排建議按鈕 ──
+// input 打字時，在 box 裡列出藥品清單中符合的藥品（中文名、英文名、俗名、分子式都算）；點一下就填進去
+function chemSuggestHtml(q,skipExact){
+  const ql=String(q||'').trim().toLowerCase();if(!ql)return '';
+  const list=allAdminChems.filter(c=>chemHit(c,ql)&&!(skipExact&&c.name_zh===q.trim())).slice(0,6);
+  return list.map(c=>`<button type="button" data-sug="${escH(c.name_zh)}">${escH(c.name_zh)}${c.alias?`<small>（${escH(c.alias)}）</small>`:''}${c.formula?`<small>　${fmtFormula(c.formula)}</small>`:''}</button>`).join('');
+}
+function chemByExactName(n){const v=String(n||'').trim();if(!v)return null;return allAdminChems.find(c=>c.name_zh===v)||allAdminChems.find(c=>String(c.alias||'').split(/[、,，;；/／]/).map(s=>s.trim()).includes(v))||null;}
+
 // ── 藥品盆：登記一個盆佔哪幾格、裡面有什麼（資料表 chem_trays）──
 let allChemTrays=[];
+// 一樣東西＝一張小卡：［藥品｜器材］切換、名稱（打字跳建議）、規格／數量
 function trayRowHtml(x){
-  return `<div class="tray-row" style="display:grid;grid-template-columns:1.2fr 1.2fr 1fr auto;gap:6px;margin-bottom:6px">
-    <input class="tr-label" maxlength="40" placeholder="顯示名稱，例：0.1M 鹽酸" value="${escH(x.label||'')}" aria-label="顯示名稱">
-    <input class="tr-chem" maxlength="60" list="trayChemNames" placeholder="對應藥品（器材留白）" value="${escH(x.chem||'')}" autocomplete="off" aria-label="對應藥品">
-    <input class="tr-note" maxlength="40" placeholder="規格／數量" value="${escH(x.note||'')}" aria-label="規格或數量">
-    <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentNode.remove()" aria-label="刪掉這一樣">✕</button></div>`;
+  const kind=x.kind||'chem';
+  return `<div class="tray-row" data-label="${escH(x.oldLabel||'')}" data-orig="${escH(x.name||'')}">
+    <div class="tr-top"><div class="tr-kind" role="group" aria-label="種類"><button type="button" class="${kind==='chem'?'on':''}" data-k="chem">藥品</button><button type="button" class="${kind==='eq'?'on':''}" data-k="eq">器材</button></div>
+      <button type="button" class="tr-del" aria-label="刪掉這一樣">✕</button></div>
+    <input class="tr-name" maxlength="40" placeholder="名稱，例如：鹽酸" value="${escH(x.name||'')}" autocomplete="off" aria-label="名稱">
+    <div class="tr-sug"></div><div class="tr-hint"></div>
+    <input class="tr-note" maxlength="40" placeholder="濃度／規格／數量，例如：0.1M 500 mL" value="${escH(x.note||'')}" aria-label="濃度、規格或數量">
+  </div>`;
+}
+function trayRowHint(row){
+  const kind=row.querySelector('.tr-kind .on')?.dataset.k||'chem',v=row.querySelector('.tr-name').value.trim(),h=row.querySelector('.tr-hint');
+  if(!v){h.textContent='';return;}
+  if(kind==='eq'){h.textContent='器材：不會加進藥品清單';return;}
+  const c=chemByExactName(v);
+  h.textContent=c?`✔ 藥品清單裡的「${c.name_zh}」，俗名、分子式、警示會自動帶過來`:'＋ 藥品清單裡還沒有，儲存時會一起新增這個藥品';
+}
+function trayRowsWire(){
+  const box=document.getElementById('tray-rows');if(!box||box._wired)return;box._wired=true;
+  box.addEventListener('input',e=>{
+    const row=e.target.closest('.tray-row');if(!row||!e.target.classList.contains('tr-name'))return;
+    const kind=row.querySelector('.tr-kind .on')?.dataset.k||'chem';
+    row.querySelector('.tr-sug').innerHTML=kind==='chem'?chemSuggestHtml(e.target.value,true):'';
+    trayRowHint(row);
+  });
+  box.addEventListener('click',e=>{
+    const row=e.target.closest('.tray-row');if(!row)return;
+    const sug=e.target.closest('[data-sug]'),k=e.target.closest('.tr-kind button');
+    if(sug){row.querySelector('.tr-name').value=sug.dataset.sug;row.querySelector('.tr-sug').innerHTML='';trayRowHint(row);row.querySelector('.tr-note').focus();return;}
+    if(k){row.querySelectorAll('.tr-kind button').forEach(b=>b.classList.toggle('on',b===k));if(k.dataset.k==='eq')row.querySelector('.tr-sug').innerHTML='';trayRowHint(row);return;}
+    if(e.target.closest('.tr-del')){row.remove();return;}
+  });
+  box.querySelectorAll('.tray-row').forEach(trayRowHint);
 }
 function trayAddRow(){
   const box=document.getElementById('tray-rows');if(!box)return;
   if(box.children.length>=30){showToast('一個盆最多 30 樣','error');return;}
-  box.insertAdjacentHTML('beforeend',trayRowHtml({}));box.lastElementChild.querySelector('input').focus();
+  box.insertAdjacentHTML('beforeend',trayRowHtml({}));box.lastElementChild.querySelector('.tr-name').focus();
 }
 // t＝要修改的盆；沒有 t 就是從 (cab, L, col) 這一格開始放一個新的盆，往右（排號變小）延伸
 function openTrayEdit(cab,L,col,t){
@@ -4533,7 +4592,7 @@ function openTrayEdit(cab,L,col,t){
   const lo=start>=8?8:1,maxW=start-lo+1;              // 只能在同一扇門裡
   const w=t?Math.min(tc.b-tc.a+1,maxW):Math.min(3,maxW),tall=t?tc.tall:1;
   window._trayEdit={id:t?t.id:null,cab,layer,start};
-  const items=t?trayItems(t).map(x=>({label:x.label,note:x.note,chem:x.chem_id?(allAdminChems.find(c=>String(c.id)===x.chem_id)?.name_zh||''):''})):[{},{},{}];
+  const items=t?trayItems(t).map(x=>{const c=x.chem_id?allAdminChems.find(o=>String(o.id)===x.chem_id):null;return {kind:x.chem_id?'chem':'eq',name:c?c.name_zh:x.label,oldLabel:x.label,note:x.note};}):[{},{}];
   showModal(`🧺 ${t?'修改藥品盆':'放藥品盆'}・第${CAB_CN[cab]}櫃第 ${layer} 層、第 ${start} 排起`,`
     <div class="form-group"><label>盆名 *</label><input id="tray-name" maxlength="30" value="${escH(t?.name||'')}" placeholder="例如：酸鹼滴定盆"></div>
     <div class="form-group"><label>課程（選填）</label><input id="tray-course" maxlength="40" value="${escH(t?.course||'')}" placeholder="例如：高二探究・酸鹼滴定"></div>
@@ -4541,8 +4600,7 @@ function openTrayEdit(cab,L,col,t){
       <div class="form-group"><label>寬：往右佔幾排</label><select id="tray-w">${Array.from({length:maxW},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===w?'selected':''}>${n} 排（${start}${n>1?'～'+(start-n+1):''}）</option>`).join('')}</select></div>
       <div class="form-group"><label>高：往下佔幾層</label><select id="tray-tall">${Array.from({length:6-layer},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===tall?'selected':''}>${n} 層${n>1?`（${layer}～${layer+n-1} 層）`:''}</option>`).join('')}</select></div>
     </div>
-    <div class="form-group"><label>盆裡有什麼（「對應藥品」打字會跳出藥品清單，選了之後俗名、分子式、警示會自動帶過來；器材留白）</label>
-      <datalist id="trayChemNames">${allAdminChems.map(c=>`<option value="${escH(c.name_zh)}"></option>`).join('')}</datalist>
+    <div class="form-group"><label>盆裡有什麼（名稱打字會跳出藥品清單；清單沒有的藥品，儲存時會一起新增）</label>
       <div id="tray-rows">${items.map(trayRowHtml).join('')}</div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="trayAddRow()">＋ 再加一樣</button></div>
     <div class="form-group"><label>警示（選填；第一行是標題，下面每行一條）</label><textarea id="tray-warn" rows="3" maxlength="600" placeholder="盆內含強酸、強鹼&#10;濺到眼睛立刻沖眼 15 分鐘">${escH(t?.warning||'')}</textarea></div>
@@ -4550,42 +4608,53 @@ function openTrayEdit(cab,L,col,t){
     <p class="hint" style="font-size:12.5px">盆只能放在同一扇門裡（左門 14～8、右門 7～1）。盆蓋住的格子在櫃子圖上會合併成一個金色大格。</p>
     ${t?`<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteTray()">刪除這個盆</button>`:''}`,
     [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:'saveTray()'}]);
-  setTimeout(()=>document.getElementById('tray-name')?.focus(),60);
+  trayRowsWire();
 }
 async function saveTray(){
   const ctx=window._trayEdit;if(!ctx||cabBusy)return;
   const v=id=>(document.getElementById(id)?.value||'').trim();
   const name=v('tray-name').slice(0,30);
-  if(!name){showToast('請填盆名','error');return;}
+  if(!name){showToast('請填盆名','error');document.getElementById('tray-name')?.focus();return;}
   const w=parseInt(v('tray-w'),10),tall=parseInt(v('tray-tall'),10);
   const b=ctx.start,a=b-w+1,lo=b>=8?8:1;
   if(!(w>=1&&a>=lo)){showToast('寬度超出這扇門了','error');return;}
   if(!(tall>=1&&ctx.layer+tall-1<=5)){showToast('高度超出櫃子了','error');return;}
-  const items=[],bad=[];
+  const rows=[];
   document.querySelectorAll('#tray-rows .tray-row').forEach(r=>{
-    const label=r.querySelector('.tr-label').value.trim().slice(0,40),cn=r.querySelector('.tr-chem').value.trim(),note=r.querySelector('.tr-note').value.trim().slice(0,40);
-    if(!label&&!cn&&!note)return;
-    let chem_id=null;
-    if(cn){const c=allAdminChems.find(x=>x.name_zh===cn)||matchChemByName(cn);if(!c){bad.push(cn);return;}chem_id=c.id;}
-    items.push({label:label||cn,chem_id,note});
+    const nm=r.querySelector('.tr-name').value.trim().slice(0,40),note=r.querySelector('.tr-note').value.trim().slice(0,40);
+    if(!nm&&!note)return;
+    rows.push({kind:r.querySelector('.tr-kind .on')?.dataset.k||'chem',nm,note,oldLabel:r.dataset.label||'',orig:r.dataset.orig||''});
   });
-  if(bad.length){showToast('藥品清單裡找不到：'+bad.slice(0,3).join('、')+'（器材請把「對應藥品」留白）','error');return;}
-  if(items.length>30){showToast('一個盆最多 30 樣','error');return;}
+  if(rows.some(x=>!x.nm)){showToast('有一樣只填了規格、沒填名稱','error');return;}
+  if(rows.length>30){showToast('一個盆最多 30 樣','error');return;}
   const L2=ctx.layer+tall-1;
   const clash=allChemTrays.find(o=>{if(String(o.id)===String(ctx.id)||o.cab!==ctx.cab)return false;const oc=trayCols(o);return !(oc.b<a||oc.a>b)&&!(o.layer+oc.tall-1<ctx.layer||o.layer>L2);});
   if(clash){showToast(`跟「${clash.name}」重疊了，請調整寬度或高度`,'error');return;}
+  // 清單裡沒有的藥品：問一次，一起新增
+  const missing=[...new Set(rows.filter(x=>x.kind==='chem'&&!chemByExactName(x.nm)).map(x=>x.nm))];
+  if(missing.length&&!confirm(`藥品清單裡還沒有：${missing.join('、')}\n\n儲存時會一起新增到藥品清單（之後可以再補分子式、分類、警示）。\n要繼續嗎？`))return;
   const covered=allChemLocs.filter(l=>l.cab===ctx.cab&&l.layer>=ctx.layer&&l.layer<=L2&&l.col>=a&&l.col<=b);
   if(covered.length){
     const eg=covered.slice(0,3).map(l=>(allAdminChems.find(c=>String(c.id)===String(l.chem_id))?.name_zh||'?')+'（'+l.layer+'-'+l.col+'）').join('、');
     if(!confirm(`這個範圍裡登記了 ${covered.length} 個藥品位置，例如 ${eg}。\n放盆之後它們會被盆蓋住，櫃子圖上看不到（搜尋還找得到）。\n\n建議先把它們搬走或移除。仍要繼續嗎？`))return;
   }
-  const body={cab:ctx.cab,layer:ctx.layer,col_from:b,col_to:a,tall,name,course:v('tray-course').slice(0,40)||null,items,
-    warning:v('tray-warn').slice(0,600)||null,note:v('tray-note').slice(0,200)||null,updated_at:new Date().toISOString()};
   cabBusy=true;
   try{
+    for(const nm of missing){
+      const made=await sb('POST','chemicals',{body:{name_zh:nm,is_available:true,bottles_left:0},prefer:'return=representation'});
+      const c=Array.isArray(made)?made[0]:made;if(!c||c.id==null)throw new Error('新增藥品「'+nm+'」失敗');
+      allAdminChems.push(c);
+    }
+    const items=rows.map(x=>{
+      const c=x.kind==='chem'?chemByExactName(x.nm):null;
+      const label=(x.oldLabel&&x.nm===x.orig)?x.oldLabel:x.nm; // 名稱沒改就保留原本的顯示名稱
+      return {label:label.slice(0,40),chem_id:c?c.id:null,note:x.note};
+    });
+    const body={cab:ctx.cab,layer:ctx.layer,col_from:b,col_to:a,tall,name,course:v('tray-course').slice(0,40)||null,items,
+      warning:v('tray-warn').slice(0,600)||null,note:v('tray-note').slice(0,200)||null,updated_at:new Date().toISOString()};
     if(ctx.id)await sb('PATCH','chem_trays',{filter:'id=eq.'+encodeURIComponent(ctx.id),body,prefer:'return=minimal'});
     else await sb('POST','chem_trays',{body,prefer:'return=minimal'});
-    closeModal();showToast('已儲存藥品盆','success');
+    closeModal();showToast(missing.length?`已儲存藥品盆，並新增 ${missing.length} 個藥品`:'已儲存藥品盆','success');
     await loadAdminChems();
     const nt=allChemTrays.find(o=>o.cab===ctx.cab&&o.layer===ctx.layer&&o.col_from===b);
     if(nt)adminCabUI.selectTray(nt.id);
@@ -4750,9 +4819,8 @@ function cabSelectOpts(n,cur,fmt){return Array.from({length:n},(_,i)=>i+1).map(v
 function openCabAdd(cab,L,col){
   if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
   window._cabAdd={cab,L,col};
-  const opts=allAdminChems.map(c=>`<option value="${escH(c.name_zh)}"></option>`).join('');
   showModal(`＋ 加藥品到 第${CAB_CN[cab]}櫃・${L} 層・${col} 排`,`
-    <div class="form-group"><label>藥品名稱 *（打字會跳出現有藥品）</label><input id="cab-add-name" list="cabChemNames" maxlength="60" autocomplete="off" oninput="cabAddHint()"><datalist id="cabChemNames">${opts}</datalist><div class="hint" id="cab-add-hint"></div></div>
+    <div class="form-group"><label>藥品名稱 *（打字會跳出現有藥品）</label><input id="cab-add-name" maxlength="60" autocomplete="off" oninput="cabAddHint()" style="font-size:16px"><div class="chem-sug" id="cab-add-sug" onclick="const b=event.target.closest('[data-sug]');if(b){document.getElementById('cab-add-name').value=b.dataset.sug;cabAddHint();this.innerHTML='';}"></div><div class="hint" id="cab-add-hint"></div></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label>瓶數</label><input id="cab-add-btl" type="number" min="0" max="999" value="1" inputmode="numeric"></div>
       <div class="form-group"><label>容量（選填）</label><input id="cab-add-cap" maxlength="30" placeholder="例如 500 mL"></div>
@@ -4765,7 +4833,8 @@ function openCabAdd(cab,L,col){
 }
 function cabAddHint(){
   const v=(document.getElementById('cab-add-name')?.value||'').trim(),el=document.getElementById('cab-add-hint');if(!el)return;
-  if(!v){el.textContent='';return;}
+  const sg=document.getElementById('cab-add-sug');if(sg&&document.activeElement===document.getElementById('cab-add-name'))sg.innerHTML=chemSuggestHtml(v,true);
+  if(!v){el.textContent='';if(sg)sg.innerHTML='';return;}
   const c=allAdminChems.find(x=>x.name_zh===v);
   el.textContent=c?`✔ 現有藥品${chemLocsOf(c.id).length?`，目前已經放在：${chemLocsOf(c.id).map(cabCode).join('、')}`:''}`:'這是新的名稱，按「加入」會同時新建這筆藥品';
 }
