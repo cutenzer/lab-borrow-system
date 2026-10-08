@@ -4385,14 +4385,26 @@ function makeCabUI(rootId,opts){
       ${cabinetHtml()}
       ${catNames.length?`<div class="cab-cats">${catNames.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:''}
       <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　🧺＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
-    const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
+    // 手機（觸控）不搶焦點：有些手機會無視 preventScroll，把畫面捲回櫃子最上面
+    const focusUi=()=>{if(window.matchMedia&&matchMedia('(hover: none)').matches)return;const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
+    // 點了之後畫面重畫，手指點的那一格要留在原本的位置（上面的展開列收起來時也不會跳）
+    const keepPos=(el,sel,fn)=>{
+      const t0=el.getBoundingClientRect().top;fn();
+      const n=root()&&root().querySelector(sel);if(!n)return;
+      const d=n.getBoundingClientRect().top-t0;if(Math.abs(d)>1)window.scrollBy({top:d,left:0,behavior:'instant'});
+    };
     body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{Object.assign(ui.state,{cab:+b.dataset.cab,L:1,col:null,locId:null,zone:null,tray:null});ui.render();});
     body.querySelectorAll('.cb2-cell').forEach(c=>c.onclick=()=>{
       const L=+c.dataset.l,col=+c.dataset.c;
-      if(ui.state.tray==null&&ui.state.L===L&&ui.state.col===col){ui.close();return;} // 再點一次收起來
-      ui.select(st.cab,L,col,null);focusUi();
+      const sel=`.cb2-cell[data-l="${L}"][data-c="${col}"]`;
+      if(ui.state.tray==null&&ui.state.L===L&&ui.state.col===col){keepPos(c,sel,()=>ui.close());return;} // 再點一次收起來
+      keepPos(c,sel,()=>ui.select(st.cab,L,col,null));focusUi();
     });
-    body.querySelectorAll('.cb2-tray').forEach(b=>b.onclick=()=>{if(String(ui.state.tray)===b.dataset.tray){ui.close();return;}ui.selectTray(b.dataset.tray);});
+    body.querySelectorAll('.cb2-tray').forEach(b=>b.onclick=()=>{
+      const id=b.dataset.tray,sel=`.cb2-tray[data-tray="${CSS.escape(id)}"]`;
+      if(String(ui.state.tray)===id){keepPos(b,sel,()=>ui.close());return;}
+      keepPos(b,sel,()=>ui.selectTray(id));
+    });
     body.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>ui.close());
     body.querySelectorAll('[data-jar]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.jar);if(!l)return;
@@ -4426,6 +4438,19 @@ function makeCabUI(rootId,opts){
   };
   return ui;
 }
+// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
+(function(){
+  function init(){
+    const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
+    let y=0,locked=false;const b=document.body;
+    new MutationObserver(()=>{
+      const on=ov.classList.contains('show');
+      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
+      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
+    }).observe(ov,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 // ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
 (function(){
   function init(){
