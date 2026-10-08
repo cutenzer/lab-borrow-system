@@ -613,23 +613,55 @@
   .cab-results small small{font-size:11.5px;}
   .chem-warn{background:#fdecea;border:2px solid #c62828;border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;gap:3px;color:#7f1010;font-size:13.5px;line-height:1.55;margin:4px 0 10px;}
   .chem-warn b{font-size:15px;color:#c62828;}
-  @media (min-width:720px){
-    .cb2-cell,.cb2-tray{height:88px;}
-    .cb2-cell .nm,.cb2-tray .nm{font-size:13.5px;max-height:62px;}
-    .cb2-cell .nm.l4,.cb2-tray .nm.l4{font-size:12.5px;}
-    .cb2-cell .nm.l6,.cb2-tray .nm.l6{font-size:10.5px;}
-    .cb2-cell .nm.l9,.cb2-tray .nm.l9{font-size:9px;}
-    .cb2-cell .dots{max-width:28px;}
+  /* 依「櫃子本身有多寬」調整（手機窄、後台側欄中等、電腦整頁很寬），不是看螢幕寬度 */
+  .cb2{container-type:inline-size;}
+  @container (min-width:560px){
+    .cb2-cell,.cb2-tray{height:92px;}
+    .cb2-cell .nm,.cb2-tray .nm{font-size:14px;max-height:66px;}
+    .cb2-cell .nm.l4,.cb2-tray .nm.l4{font-size:13px;}
+    .cb2-cell .nm.l6,.cb2-tray .nm.l6{font-size:11px;}
+    .cb2-cell .nm.l9,.cb2-tray .nm.l9{font-size:9.5px;}
+    .cb2-cell .dots{max-width:30px;gap:2px;}
     .cb2-cell .dots i{width:5px;height:5px;}
-    .cb2-tray.wide .nm{font-size:13px;}
-    .cb2-zone{font-size:12px;}
-    .cb2-num .cb2-g span{font-size:13.5px;letter-spacing:0;}
+    .cb2-tray.wide .nm{font-size:14px;}
+    .cb2-zone{font-size:12.5px;height:19px;line-height:19px;}
+    .cb2-num .cb2-g span{font-size:14px;letter-spacing:0;}
     .cb2-jars{gap:8px;}
-    .cb2-jar{width:42px;}
+    .cb2-jar{width:44px;}
     .cb2-jar .cap{width:26px;}
     .cb2-jar .neck{width:19px;}
-    .cb2-jar .body{width:38px;height:116px;}
-    .cb2-jar .lb{font-size:13.5px;max-height:100px;}
+    .cb2-jar .body{width:40px;height:120px;}
+    .cb2-jar .lb{font-size:14px;max-height:104px;}
+    .cb2-jar .lb.l6{font-size:12.5px;}
+    .cb2-jar .lb.l9{font-size:11px;}
+  }
+  /* 電腦整頁：格子夠寬，名字改成橫的、大字，最多三行 */
+  @container (min-width:820px){
+    .cb2-cell,.cb2-tray{height:100px;padding:8px 3px 6px;}
+    .cb2-cell .nm,.cb2-tray .nm,.cb2-tray.wide .nm{writing-mode:horizontal-tb;text-orientation:mixed;text-align:center;font-size:17px;font-weight:700;line-height:1.25;letter-spacing:.5px;max-height:none;padding:0 3px;word-break:break-all;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+    .cb2-cell .nm.l4,.cb2-tray .nm.l4{font-size:17px;}
+    .cb2-cell .nm.l6,.cb2-tray .nm.l6{font-size:15.5px;letter-spacing:0;}
+    .cb2-cell .nm.l9,.cb2-tray .nm.l9{font-size:14px;letter-spacing:0;}
+    .cb2-cell .dots{max-width:52px;gap:3px;}
+    .cb2-cell .dots i{width:7px;height:7px;}
+    .cb2-tray .basin{height:9px;}
+    .cb2-zone{font-size:14px;height:22px;line-height:22px;padding:0 8px;}
+    .cb2-num .cb2-g span{font-size:16px;}
+    .cb2-badge{width:28px;height:28px;font-size:18px;}
+    .cb2-side{width:36px;}
+    .cb2-side small{font-size:12px;}
+    .cb2-foot{font-size:13.5px;padding-left:36px;}
+    .cb2-panel{margin-left:36px;}
+    .cb2-ph .t{font-size:14.5px;}
+    .cb2-jar{width:52px;}
+    .cb2-jar .cap{width:30px;height:11px;}
+    .cb2-jar .neck{width:22px;height:6px;}
+    .cb2-jar .body{width:48px;height:140px;}
+    .cb2-jar .lb{font-size:16px;max-height:124px;}
+    .cb2-jar .lb.l6{font-size:14.5px;}
+    .cb2-jar .lb.l9{font-size:12.5px;}
+    .cb2-jar .n{font-size:13px;}
+    .cb2-ti{font-size:14.5px;min-height:38px;}
   }
   .cab-ui{margin-top:4px;}
   #chemCabView,#adminChemCab{scroll-margin-top:84px;}
@@ -1418,7 +1450,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08b · 藥品櫃新外觀＋俗名＋警示＋藥品盆</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08c · 藥品櫃電腦版大字</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
