@@ -4426,6 +4426,19 @@ function makeCabUI(rootId,opts){
   };
   return ui;
 }
+// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
+(function(){
+  function init(){
+    const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
+    let y=0,locked=false;const b=document.body;
+    new MutationObserver(()=>{
+      const on=ov.classList.contains('show');
+      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
+      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
+    }).observe(ov,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 
 let allChemLocs=[],chemLocsReady=false,allChemLabels=[];
 const adminCabUI=makeCabUI('adminChemCab',{
