@@ -4340,7 +4340,7 @@ function makeCabUI(rootId,opts){
     let rows='';
     for(let L=1;L<=5;L++){
       rows+=`<div class="cb2-line cb2-zones"><span class="cb2-side"></span><span class="cb2-doors"><span class="cb2-g">${zoneStrip(L,8,14)}</span><span class="cb2-gap"></span><span class="cb2-g">${zoneStrip(L,1,7)}</span></span></div>
-        <div class="cb2-line"><span class="cb2-side"><b class="cb2-badge">${L}</b><small>層</small></span><span class="cb2-shelf"><span class="cb2-g">${doorHtml(L,[14,13,12,11,10,9,8],ctx)}</span><span class="cb2-seam">${L===3?'<i></i><i></i>':''}</span><span class="cb2-g">${doorHtml(L,[7,6,5,4,3,2,1],ctx)}</span></span></div>${panelHtml(L)}`;
+        <div class="cb2-line"><span class="cb2-side"><b class="cb2-badge">${L}</b><small>層</small></span><span class="cb2-shelf"><span class="cb2-g">${doorHtml(L,[14,13,12,11,10,9,8],ctx)}</span><span class="cb2-seam">${L===3?'<i></i><i></i>':''}</span><span class="cb2-g">${doorHtml(L,[7,6,5,4,3,2,1],ctx)}</span></span></div><div class="cb2-slot">${panelHtml(L)}</div>`;
     }
     return `<div class="cb2" role="group" aria-label="第${CAB_CN[st.cab]}櫃正面">
       <div class="cb2-top">${vent}<span class="cb2-plate">⚠ 化學藥品櫃　${CAB_CN[st.cab]}</span>${vent}</div>
@@ -4378,85 +4378,105 @@ function makeCabUI(rootId,opts){
       const locBtns=hits.slice(0,10).map(l=>{const c=chem(l.chem_id);return `<button type="button" data-hit="${escH(String(l.id))}"><span>${c&&warnLines(c.warning).length?'<b style="color:#c62828">⚠</b> ':''}${escH(c?.name_zh||'?')}${c&&c.alias?`<small>（${escH(c.alias)}）</small>`:''}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`;}).join('');
       res.innerHTML=trayBtns+locBtns+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；櫃子上亮黃色的是這一櫃找到的位置</div>`:'');
     }
-    res.querySelectorAll('[data-hit]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);ui.scrollToPanel();});
-    res.querySelectorAll('[data-htray]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectTray(b.dataset.htray,false);ui.scrollToPanel();});
-    res.querySelectorAll('button').forEach(b=>b.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();(b.nextElementSibling||b).focus();}else if(e.key==='ArrowUp'){e.preventDefault();(b.previousElementSibling||r.querySelector('.cab-q')).focus();}});
     const body=r.querySelector(':scope>.cab-body');
     const cnt={};locs().filter(l=>l.cab===st.cab).forEach(l=>{const n=catName(chem(l.chem_id)?.category);if(n)cnt[n]=(cnt[n]||0)+1;});
     const catNames=CHEM_CATS.map(c=>c.name).filter(n=>cnt[n]);
-    body.innerHTML=`<div class="cab-ui" tabindex="-1">
+    const html=`<div class="cab-ui" tabindex="-1">
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
       ${cabinetHtml()}
       ${catNames.length?`<div class="cab-cats">${catNames.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:''}
       <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　🧺＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
-    // 手機（觸控）不搶焦點：有些手機會無視 preventScroll，把畫面捲回櫃子最上面
-    const focusUi=()=>{if(window.matchMedia&&matchMedia('(hover: none)').matches)return;const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
-    // 直接在下面展開，畫面不捲動。
-    // 只有一種情況要補位置：上面某一層原本展開著、這次收起來，下面的格子會整個往上跑 → 往回捲同樣的距離
-    const openRow=()=>{const s2=ui.state;if(s2.tray!=null){const t=trayById(s2.tray);return t?t.layer:null;}return (s2.col!=null||s2.zone!=null)?s2.L:null;};
-    const keepPos=(el,sel,L,fn)=>{
-      const prev=openRow();
-      if(!(prev!=null&&prev<L)){fn();return;}
-      const t0=el.getBoundingClientRect().top;fn();
-      const fix=()=>{const n=root()&&root().querySelector(sel);if(n)scrollByY(n.getBoundingClientRect().top-t0);};
-      fix();requestAnimationFrame(fix); // iPhone 有時下一格畫面才排好版，再對一次
-    };
-    body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{Object.assign(ui.state,{cab:+b.dataset.cab,L:1,col:null,locId:null,zone:null,tray:null});ui.render();});
-    body.querySelectorAll('.cb2-cell').forEach(c=>c.onclick=()=>{
-      const L=+c.dataset.l,col=+c.dataset.c;
-      const sel=`.cb2-cell[data-l="${L}"][data-c="${col}"]`;
-      if(ui.state.tray==null&&ui.state.L===L&&ui.state.col===col){ui.close();return;} // 再點一次收起來
-      keepPos(c,sel,L,()=>ui.select(st.cab,L,col,null));focusUi();
-    });
-    body.querySelectorAll('.cb2-tray').forEach(b=>b.onclick=()=>{
-      const id=b.dataset.tray,sel=`.cb2-tray[data-tray="${CSS.escape(id)}"]`;
-      if(String(ui.state.tray)===id){ui.close();return;}
-      const t=trayById(id);keepPos(b,sel,t?t.layer:5,()=>ui.selectTray(id));
-    });
-    body.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>ui.close());
-    body.querySelectorAll('[data-jar]').forEach(b=>b.onclick=()=>{
-      const l=locs().find(x=>String(x.id)===b.dataset.jar);if(!l)return;
-      ui.state.locId=l.id;
-      // 只換亮起來的那一罐，不重畫整個櫃子（重畫會讓後面的畫面動一下）
-      body.querySelectorAll('.cb2-jar.on').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-      if(opts.onJar)opts.onJar(l,ui);else if(opts.onChip)opts.onChip(l,ui);
-    });
-    body.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
-      const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
-      if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.selectLoc(l.id,false);
-    });
+    // 不整個重畫：只改有變的地方（格子的顏色、拉出來的那一列）。
+    // 整個換掉的話，手機會在換的瞬間把畫面跳到別的位置。
+    const tmp=document.createElement('div');tmp.innerHTML=html;
+    const oldUi=body.firstElementChild,newUi=tmp.firstElementChild;
+    if(oldUi&&oldUi.nodeName===newUi.nodeName)morphNode(oldUi,newUi);else{body.textContent='';body.appendChild(newUi);}
+    if(!r._cabBound){r._cabBound=true;bindEvents(r);}
+  };
+  // 把新的畫面「套」到舊的畫面上：一樣的就不動，不一樣的才改
+  function morphNode(a,b){
+    if(a.nodeType!==b.nodeType||a.nodeName!==b.nodeName){a.replaceWith(b);return;}
+    if(a.nodeType!==1){if(a.nodeValue!==b.nodeValue)a.nodeValue=b.nodeValue;return;}
+    for(const at of [...a.attributes])if(!b.hasAttribute(at.name))a.removeAttribute(at.name);
+    for(const at of [...b.attributes])if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
+    const ac=[...a.childNodes],bc=[...b.childNodes];
+    for(let i=0;i<bc.length;i++){if(i<ac.length)morphNode(ac[i],bc[i]);else a.appendChild(bc[i]);}
+    for(let i=bc.length;i<ac.length;i++)ac[i].remove();
+  }
+  // 手機（觸控）不搶焦點：有些手機會無視 preventScroll，把畫面捲回櫃子最上面
+  const focusUi=()=>{if(window.matchMedia&&matchMedia('(hover: none)').matches)return;const n=root()&&root().querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
+  // 只有一種情況要補位置：上面某一層原本展開著、這次收起來，下面的格子會整個往上跑 → 往回捲同樣的距離
+  const openRow=()=>{const s2=ui.state;if(s2.tray!=null){const t=trayById(s2.tray);return t?t.layer:null;}return (s2.col!=null||s2.zone!=null)?s2.L:null;};
+  const keepPos=(el,sel,L,fn)=>{
+    const prev=openRow();
+    if(!(prev!=null&&prev<L)){fn();return;}
+    const t0=el.getBoundingClientRect().top;fn();
+    const fix=()=>{const n=root()&&root().querySelector(sel);if(n)scrollByY(n.getBoundingClientRect().top-t0);};
+    fix();requestAnimationFrame(fix);
+  };
+  // 所有按鈕的點擊：只在最外層綁一次（畫面局部更新後不用重新綁）
+  function bindEvents(r){
     const curTray=()=>trayById(ui.state.tray);
-    body.querySelectorAll('[data-traycard]').forEach(b=>b.onclick=()=>{const t=curTray();if(!t)return;if(opts.onTrayCard)opts.onTrayCard(t,ui);else if(opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
-    body.querySelectorAll('[data-titem]').forEach(b=>b.onclick=()=>{const t=curTray();if(!t)return;if(opts.onTrayItem)opts.onTrayItem(t,+b.dataset.titem,ui);else if(opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
-    body.querySelectorAll('[data-trayedit]').forEach(b=>b.onclick=()=>{const t=curTray();if(t&&opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
-    body.querySelectorAll('[data-traynew]').forEach(b=>b.onclick=()=>{if(opts.onTray)opts.onTray(st.cab,st.L,st.col,null,ui);});
-    body.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
-    body.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.ql);if(l&&opts.onQuick)opts.onQuick(l,+b.dataset.qd,ui);});
-    body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
-    // ↑↓←→：手指按的是展開列上的按鈕 → 讓展開列留在原本的位置
-    body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
-      const p=b.closest('.cb2-panel');const t0=p?p.getBoundingClientRect().top:null;
-      ui.move(b.dataset.nav);
-      if(t0!=null){const np=root()&&root().querySelector('.cb2-panel');if(np)scrollByY(np.getBoundingClientRect().top-t0);}
-      focusUi();
+    const L=x=>locs().find(l=>String(l.id)===String(x));
+    r.addEventListener('click',e=>{
+      const t=e.target.closest('button,[data-zone]');if(!t||!r.contains(t)||t.classList.contains('cab-qx'))return;
+      const d=t.dataset,st=ui.state;
+      if(d.hit!=null){st.picked=true;ui.selectLoc(d.hit,false);ui.scrollToPanel();return;}
+      if(d.htray!=null){st.picked=true;ui.selectTray(d.htray,false);ui.scrollToPanel();return;}
+      if(d.cab!=null){Object.assign(st,{cab:+d.cab,L:1,col:null,locId:null,zone:null,tray:null});ui.render();return;}
+      if(t.classList.contains('cb2-cell')){
+        const Lv=+d.l,col=+d.c;
+        if(st.tray==null&&st.L===Lv&&st.col===col){ui.close();return;} // 再點一次收起來
+        keepPos(t,`.cb2-cell[data-l="${Lv}"][data-c="${col}"]`,Lv,()=>ui.select(st.cab,Lv,col,null));focusUi();return;
+      }
+      if(t.classList.contains('cb2-tray')){
+        const id=d.tray;if(String(st.tray)===id){ui.close();return;}
+        const tr=trayById(id);keepPos(t,`.cb2-tray[data-tray="${CSS.escape(id)}"]`,tr?tr.layer:5,()=>ui.selectTray(id));return;
+      }
+      if(d.zone!=null){
+        e.stopPropagation();const id=d.zone;
+        if(String(st.zone)===id&&st.col==null){ui.close();return;}
+        const z=labels().find(x=>String(x.id)===id);
+        if(t.classList.contains('cb2-zone')&&z)keepPos(t,`.cb2-zone[data-zone="${CSS.escape(id)}"]`,z.layer,()=>ui.selectZone(id));else ui.selectZone(id);
+        return;
+      }
+      if(d.close!=null){ui.close();return;}
+      if(d.jar!=null){
+        const l=L(d.jar);if(!l)return;st.locId=l.id;
+        r.querySelectorAll('.cb2-jar.on').forEach(x=>x.classList.remove('on'));t.classList.add('on'); // 只換亮的那一罐
+        if(opts.onJar)opts.onJar(l,ui);else if(opts.onChip)opts.onChip(l,ui);return;
+      }
+      if(d.loc!=null){const l=L(d.loc);if(!l)return;if(opts.onChip&&t.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.selectLoc(l.id,false);return;}
+      if(d.traycard!=null){const tr=curTray();if(!tr)return;if(opts.onTrayCard)opts.onTrayCard(tr,ui);else if(opts.onTray)opts.onTray(tr.cab,tr.layer,trayCols(tr).b,tr,ui);return;}
+      if(d.titem!=null){const tr=curTray();if(!tr)return;if(opts.onTrayItem)opts.onTrayItem(tr,+d.titem,ui);else if(opts.onTray)opts.onTray(tr.cab,tr.layer,trayCols(tr).b,tr,ui);return;}
+      if(d.trayedit!=null){const tr=curTray();if(tr&&opts.onTray)opts.onTray(tr.cab,tr.layer,trayCols(tr).b,tr,ui);return;}
+      if(d.traynew!=null){if(opts.onTray)opts.onTray(st.cab,st.L,st.col,null,ui);return;}
+      if(d.add!=null){if(opts.onAdd)opts.onAdd(st.cab,st.L,+d.add,ui);return;}
+      if(d.qd!=null){const l=L(d.ql);if(l&&opts.onQuick)opts.onQuick(l,+d.qd,ui);return;}
+      if(d.rm!=null){const l=L(d.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);return;}
+      if(d.nav!=null){ // 手指按的是展開列上的按鈕 → 讓展開列留在原本的位置
+        const p=t.closest('.cb2-panel'),t0=p?p.getBoundingClientRect().top:null;
+        ui.move(d.nav);
+        if(t0!=null){const np=r.querySelector('.cb2-panel');if(np)scrollByY(np.getBoundingClientRect().top-t0);}
+        focusUi();return;
+      }
+      if(d.cathi!=null){st.catHi=st.catHi===d.cathi?null:d.cathi;ui.render();return;}
+      if(d.zedit!=null){const z=labels().find(x=>String(x.id)===d.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);return;}
+      if(d.zcell!=null){if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);return;}
     });
-    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{
-      e.stopPropagation();const id=b.dataset.zone;
-      if(String(ui.state.zone)===id&&ui.state.col==null){ui.close();return;}
-      const z=labels().find(x=>String(x.id)===id);
-      if(b.classList.contains('cb2-zone')&&z)keepPos(b,`.cb2-zone[data-zone="${CSS.escape(id)}"]`,z.layer,()=>ui.selectZone(id));else ui.selectZone(id);
-    }));
-    body.querySelectorAll('[data-cathi]').forEach(b=>b.onclick=()=>{ui.state.catHi=ui.state.catHi===b.dataset.cathi?null:b.dataset.cathi;ui.render();});
-    body.querySelectorAll('[data-zedit]').forEach(b=>b.onclick=()=>{const z=labels().find(x=>String(x.id)===b.dataset.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);});
-    body.querySelectorAll('[data-zcell]').forEach(b=>b.onclick=()=>{if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);});
-    // 電腦：選到格子後可以用鍵盤方向鍵移動、Esc 收起來
-    const u=body.querySelector('.cab-ui');
-    if(u)u.onkeydown=e=>{
-      if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+    // 鍵盤：搜尋結果上下鍵、選到格子後方向鍵移動、Esc 收起來
+    r.addEventListener('keydown',e=>{
+      const t=e.target;
+      if(t.closest&&t.closest('.cab-results')&&t.tagName==='BUTTON'){
+        if(e.key==='ArrowDown'){e.preventDefault();(t.nextElementSibling||t).focus();}
+        else if(e.key==='ArrowUp'){e.preventDefault();(t.previousElementSibling||r.querySelector('.cab-q')).focus();}
+        return;
+      }
+      if(!t.closest||!t.closest('.cab-ui')||/INPUT|TEXTAREA|SELECT/.test(t.tagName))return;
       if(e.key==='Escape'&&(ui.state.col!=null||ui.state.tray!=null||ui.state.zone!=null)){e.preventDefault();ui.close();return;}
       const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null)return;e.preventDefault();ui.move(m);focusUi();
-    };
-  };
+    });
+  }
   return ui;
 }
 // ── 視窗（資料卡、表單）打開時，後面的頁面不能捲動 ──
