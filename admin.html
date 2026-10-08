@@ -394,6 +394,110 @@
   .bp-thumb.bp-bad .bp-fallback{display:flex;width:60px;height:60px;align-items:center;justify-content:center;text-align:center;font-size:10.5px;line-height:1.25;color:var(--text2);background:var(--surface2);border:1px dashed var(--border);border-radius:6px;}
   .qa-photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
   /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
+  /* ── 藥品櫃 v2：照實際櫃子畫（深藍鋼櫃、層板、門縫、分區名牌）── */
+  .cb2{--fr:#1f4f7a;--sh:#163a5a;--ink:#1f4f7a;margin:2px 0 6px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.16));}
+  .cb2-top{background:var(--fr);border-radius:9px 9px 0 0;padding:7px 10px 4px;display:flex;align-items:center;justify-content:space-between;gap:6px;}
+  .cb2-vent{display:flex;gap:3px;}
+  .cb2-vent i{width:3px;height:12px;border-radius:2px;background:var(--sh);}
+  .cb2-plate{background:#f2c94c;color:#2b2200;font-size:13px;font-weight:700;letter-spacing:2px;padding:2px 12px;border-radius:3px;white-space:nowrap;}
+  .cb2-frame{background:var(--fr);color:#fff;padding:0 6px 8px;}
+  .cb2-line{display:flex;align-items:stretch;}
+  .cb2-side{width:28px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .cb2-side small{font-size:10px;font-weight:700;opacity:.9;}
+  .cb2-badge{font:700 15px/1 'DM Mono',ui-monospace,monospace;background:#f2c94c;color:#2b2200;width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+  .cb2-doors{flex:1;display:flex;min-width:0;padding:0 3px;}
+  .cb2-g{flex:1;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;min-width:0;}
+  .cb2-gap{width:10px;flex-shrink:0;}
+  .cb2-num{padding:4px 0 2px;}
+  .cb2-num .cb2-g span{text-align:center;font:700 11px 'DM Mono',ui-monospace,monospace;letter-spacing:-.5px;}
+  .cb2-zones{padding:3px 0 2px;min-height:17px;}
+  .cb2-zone{min-width:0;height:17px;border:none;border-left:4px solid var(--zb,transparent);border-radius:3px;background:var(--sh);color:#dbe6f0;font:inherit;font-size:11px;font-weight:700;line-height:17px;padding:0 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;}
+  .cb2-zone.inq{background:#f2c94c;color:#2b2200;border-left-color:#b8860b;}
+  .cb2-zone.on{box-shadow:0 0 0 2px #fff;}
+  .cb2-shelf{flex:1;display:flex;min-width:0;background:#fff;padding:4px 3px 3px;border-bottom:5px solid var(--sh);box-shadow:inset 0 3px 4px rgba(0,0,0,.12);}
+  .cb2-seam{width:10px;flex-shrink:0;margin:-4px 0 -3px;background:var(--fr);display:flex;gap:2px;align-items:center;justify-content:center;}
+  .cb2-seam i{width:2px;height:26px;border-radius:1px;background:#cfdbe6;}
+  .cb2-cell,.cb2-tray{position:relative;height:72px;padding:4px 0 3px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-width:0;box-sizing:border-box;border:1px solid rgba(31,79,122,.55);border-radius:2px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;overflow:hidden;transition:background .15s,opacity .15s;}
+  .cb2-cell.empty{border-color:rgba(31,79,122,.18);}
+  .cb2-cell .nm,.cb2-tray .nm{writing-mode:vertical-rl;text-orientation:upright;font-size:11px;line-height:1;font-weight:600;letter-spacing:0;max-height:50px;overflow:hidden;}
+  .cb2-cell .nm.l4,.cb2-tray .nm.l4{font-size:10px;}
+  .cb2-cell .nm.l6,.cb2-tray .nm.l6{font-size:8.5px;}
+  .cb2-cell .nm.l9,.cb2-tray .nm.l9{font-size:7.5px;}
+  .cb2-cell .dots{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;max-width:20px;}
+  .cb2-cell .dots i{width:4px;height:4px;border-radius:50%;}
+  .cb2-cell .wb,.cb2-tray .wb{position:absolute;left:0;right:0;top:0;height:3px;background:#c62828;}
+  .cb2-cell.inq{background:#fff8e1;border:1.5px dashed #b8860b;}
+  .cb2-cell.same{background:#fdf0c4;border:1.5px dashed #b8860b;}
+  .cb2-cell.hit{background:#fff3c4;border:2px solid #e0a800;}
+  .cb2-cell.sel{background:var(--fr);border-color:var(--fr);color:#fff;}
+  .cb2-cell.dim,.cb2-tray.dim{opacity:.28;}
+  .cb2-cell:hover:not(.sel){background:#eef3f8;}
+  .cb2-tray{border:2.5px solid #b8860b;border-radius:4px 4px 10px 10px;background:#ffe9a8;color:#6b4e00;}
+  .cb2-tray .nm{font-weight:700;}
+  .cb2-tray.wide .nm{writing-mode:horizontal-tb;font-size:11px;line-height:1.25;text-align:center;padding:0 3px;max-height:44px;}
+  .cb2-tray .basin{width:60%;max-width:44px;height:7px;border-radius:0 0 5px 5px;background:#b8860b;flex-shrink:0;}
+  .cb2-tray.ghost{border:2px dashed #d4b45a;border-radius:2px;background:repeating-linear-gradient(0deg,#fff8e1 0 6px,#fff3d0 6px 12px);color:#9a7a2a;justify-content:center;}
+  .cb2-tray.sel{background:#8a6400;color:#fff;}
+  .cb2-tray.hit{background:#fff3c4;border-color:#e0a800;}
+  .cb2-foot{display:flex;font-size:11.5px;font-weight:700;padding:6px 0 0 28px;}
+  .cb2-foot span{flex:1;text-align:center;}
+  .cb2-legs{display:flex;justify-content:space-between;padding:0 14px;}
+  .cb2-legs i{width:26px;height:8px;background:var(--sh);border-radius:0 0 4px 4px;}
+  .cb2-panel{margin:6px 0 8px 28px;background:#edf2f7;color:#1f4f7a;border-radius:8px;padding:9px 10px 10px;animation:cabIn .25s ease-out;}
+  .cb2-ph{display:flex;align-items:center;gap:8px;font-size:12.5px;flex-wrap:wrap;}
+  .cb2-ph .code{background:var(--fr);color:#fff;padding:2px 7px;border-radius:4px;font-family:'DM Mono',ui-monospace,monospace;font-size:13px;}
+  .cb2-ph .code{margin-right:auto;}
+  .cb2-ph .t{order:9;flex:1 1 100%;color:#3d5a73;font-size:13px;}
+  .cb2-x{width:34px;height:34px;border:1.5px solid #1f4f7a;background:#fff;color:#1f4f7a;border-radius:8px;cursor:pointer;font:inherit;font-size:14px;flex-shrink:0;}
+  .cb2-panel .cab-zone-tag{margin-top:8px;}
+  .cb2-jars{display:flex;align-items:flex-end;gap:4px;min-height:150px;margin-top:8px;border-bottom:2px solid #1f4f7a;padding:0 2px;overflow-x:auto;}
+  .cb2-jar{width:33px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;border:none;background:transparent;padding:0;cursor:pointer;font:inherit;}
+  .cb2-jar .cap{width:20px;height:9px;border-radius:3px 3px 1px 1px;background:var(--jc);}
+  .cb2-jar .neck{width:15px;height:5px;box-sizing:border-box;background:var(--jb);border-left:1.5px solid var(--jc);border-right:1.5px solid var(--jc);}
+  .cb2-jar .body{width:31px;height:108px;box-sizing:border-box;border:1.5px solid var(--jc);border-radius:10px 10px 5px 5px;background:var(--jb);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--jc);}
+  .cb2-jar .lb{writing-mode:vertical-rl;text-orientation:upright;font-size:12px;font-weight:700;line-height:1;letter-spacing:1px;max-height:92px;overflow:hidden;}
+  .cb2-jar .lb.l6{font-size:11px;letter-spacing:0;}
+  .cb2-jar .lb.l9{font-size:9.5px;letter-spacing:0;}
+  .cb2-jar .w{font-size:11px;color:#c62828;line-height:1;}
+  .cb2-jar .n{font-size:11.5px;font-weight:700;color:#1f4f7a;min-height:15px;line-height:15px;}
+  .cb2-jar:hover .body{filter:brightness(.96);}
+  .cb2-jar.on .body,.cb2-jar.hit .body{border:2.5px solid #e0a800;background:#fff3c4;}
+  .cb2-dw{display:flex;justify-content:space-between;gap:6px;font-size:11px;color:#6f8ca6;margin-top:4px;}
+  .cb2-empty{font-size:14px;color:#6f8ca6;padding:12px 2px 4px;}
+  .cb2-basin{margin-top:8px;border:2.5px solid #b8860b;border-radius:6px 6px 14px 14px;background:#fff8e1;padding:10px 10px 8px;display:flex;flex-direction:column;gap:8px;color:#6b4e00;}
+  .cb2-basin .hd{display:flex;align-items:center;gap:6px;border:none;background:transparent;padding:0;cursor:pointer;text-align:left;color:#6b4e00;font:inherit;}
+  .cb2-basin .hd b{font-size:15.5px;flex:1;min-width:0;}
+  .cb2-basin .hd span{font-size:12px;border:1.5px solid #b8860b;border-radius:12px;padding:3px 9px;white-space:nowrap;}
+  .cb2-basin .cs{font-size:12px;color:#8a6d1a;}
+  .cb2-titems{display:flex;flex-wrap:wrap;gap:6px;}
+  .cb2-ti{min-height:34px;padding:0 11px;border-radius:17px;cursor:pointer;font:inherit;font-size:13px;font-weight:700;background:var(--tb,#fff);border:1.5px solid var(--tc,#b8a070);color:var(--tc,#6b5a3a);}
+  .cb2-ti.eq{border-style:dashed;background:#fff;}
+  .cb2-ti.hit{background:#fff3c4;border:2.5px solid #e0a800;}
+  .cb2-ti .w{color:#c62828;margin-right:3px;}
+  .cb2-admin{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .cb2-admin .cab-add-here,.cb2-admin .cab-zone-edit{margin:0;}
+  .cb2-legend{font-size:12px;color:var(--text2);padding:6px 4px 0;line-height:1.7;}
+  .cab-results small small{font-size:11.5px;}
+  .chem-warn{background:#fdecea;border:2px solid #c62828;border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;gap:3px;color:#7f1010;font-size:13.5px;line-height:1.55;margin:4px 0 10px;}
+  .chem-warn b{font-size:15px;color:#c62828;}
+  @media (min-width:720px){
+    .cb2-cell,.cb2-tray{height:88px;}
+    .cb2-cell .nm,.cb2-tray .nm{font-size:13.5px;max-height:62px;}
+    .cb2-cell .nm.l4,.cb2-tray .nm.l4{font-size:12.5px;}
+    .cb2-cell .nm.l6,.cb2-tray .nm.l6{font-size:10.5px;}
+    .cb2-cell .nm.l9,.cb2-tray .nm.l9{font-size:9px;}
+    .cb2-cell .dots{max-width:28px;}
+    .cb2-cell .dots i{width:5px;height:5px;}
+    .cb2-tray.wide .nm{font-size:13px;}
+    .cb2-zone{font-size:12px;}
+    .cb2-num .cb2-g span{font-size:13.5px;letter-spacing:0;}
+    .cb2-jars{gap:8px;}
+    .cb2-jar{width:42px;}
+    .cb2-jar .cap{width:26px;}
+    .cb2-jar .neck{width:19px;}
+    .cb2-jar .body{width:38px;height:116px;}
+    .cb2-jar .lb{font-size:13.5px;max-height:100px;}
+  }
   .cab-ui{margin-top:4px;}
   #chemCabView,#adminChemCab{scroll-margin-top:84px;}
   .cab-route{background:#fffbea;border:1.5px solid #f2c94c;border-radius:14px;padding:10px 14px 12px;margin-bottom:12px;animation:cabIn .25s ease-out;}
@@ -999,6 +1103,8 @@
       <div class="form-group" style="grid-column:1/-1"><label>中文名稱 *</label><input type="text" id="chem-name-zh"></div>
       <div class="form-group"><label>英文名稱</label><input type="text" id="chem-name-en"></div>
       <div class="form-group"><label>分子式（選填，直接打 CuSO4·5H2O，數字會自動變下標；電荷用 ^，例如 Fe^3+、SO4^2-）</label><input type="text" id="chem-formula" maxlength="60" autocomplete="off" spellcheck="false" oninput="document.getElementById('chem-formula-pv').innerHTML=fmtFormula(this.value)"><div class="hint" id="chem-formula-pv" style="min-height:1.4em;font-size:15px"></div></div>
+      <div class="form-group"><label>俗名／別名（選填，多個用、分開；搜尋也找得到）</label><input type="text" id="chem-alias" maxlength="100" placeholder="例如：小蘇打、重曹"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>安全警示（選填；第一行是標題，下面每行一條，資料卡上會用紅框顯示）</label><textarea id="chem-warning" rows="3" maxlength="600" placeholder="強酸・強脫水性&#10;稀釋時一定要「酸倒入水」，水倒進硫酸會沸騰噴濺&#10;沾到皮膚立刻用大量清水沖洗 15 分鐘以上"></textarea></div>
       <div class="form-group"><label>位置</label><input type="text" id="chem-location"></div>
       <div class="form-group">
         <label>分類</label>
@@ -3989,7 +4095,7 @@ function fmtFormula(f){
 function formulaKey(f){return String(f??'').replace(/[\u2080-\u2089]/g,d=>String(d.charCodeAt(0)-0x2080)).replace(/[\s·•∙⋅*.^]/g,'').toLowerCase();}
 function chemHit(c,ql){
   if(!ql)return true;
-  if((c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql))return true;
+  if((c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)||(c.alias||'').toLowerCase().includes(ql))return true;
   const k=formulaKey(ql);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
 }
 // 分區顏色（淡底＋深框），同一個名稱永遠同一個顏色
@@ -4022,169 +4128,249 @@ async function loadChemCats(){
 // 分區顏色跟著大類走；舊資料沒有大類的，用名稱猜一個顏色
 function zoneColorOf(z){if(z&&z.category){const c=catInfo(z.category);return [hexMix(c.color,.82,1),c.color];}return zoneColor(z&&z.text);}
 
+// ── 警示文字：第一行是標題，下面每一行是一條注意事項 ──
+function warnLines(w){return String(w??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).slice(0,8).map(s=>s.slice(0,160));}
+function warnBoxHtml(w){const a=warnLines(w);if(!a.length)return '';return `<div class="chem-warn" role="alert"><b>⚠ ${escH(a[0])}</b>${a.slice(1).map(s=>`<span>・${escH(s)}</span>`).join('')}</div>`;}
+// 分區名稱有「探究／專用／★」就用金色名牌
+function isInqZone(z){return /探究|專用|★/.test(String(z&&z.text||''));}
+// ── 藥品盆（chem_trays）：一個盆可以佔好幾排（col_from～col_to）、好幾層（從 layer 往下 tall 層）──
+// items 是陣列：[{label:'0.1M 鹽酸', chem_id:12, note:'500 mL'}]；chem_id 空白＝器材或不在藥品清單的東西
+function trayItems(t){const a=Array.isArray(t&&t.items)?t.items:[];return a.filter(x=>x&&typeof x==='object').slice(0,30).map(x=>({label:String(x.label??'').slice(0,40),chem_id:(x.chem_id!=null&&x.chem_id!=='')?String(x.chem_id):null,note:String(x.note??'').slice(0,40)})).filter(x=>x.label||x.chem_id);}
+function trayCols(t){const f=parseInt(t.col_from)||1,o=parseInt(t.col_to)||f;return {a:Math.min(f,o),b:Math.max(f,o),tall:Math.max(1,Math.min(5,parseInt(t.tall)||1))};}
+function trayCode(t){const {a,b,tall}=trayCols(t);return `第${CAB_CN[t.cab]||t.cab}櫃・${t.layer}${tall>1?'～'+(t.layer+tall-1):''} 層・${b===a?a:b+'～'+a} 排`;}
+
+// ── 藥品櫃元件（前台查詢、後台編輯共用；index.html 和 admin.html 這一段要保持一模一樣）──
+// 畫面照實際的櫃子：左門 14→8、右門 7→1（1 在最右邊），每層上面是分區名牌
+// 點格子 → 在那一層下面拉出「由前（門口）往後（靠牆）」的藥品罐；點藥品罐看資料卡
 function makeCabUI(rootId,opts){
-  const ui={state:{cab:1,L:1,col:null,locId:null},opts};
+  const ui={state:{cab:1,L:1,col:null,locId:null,tray:null,zone:null},opts};
   const root=()=>document.getElementById(rootId);
   const locs=()=>opts.getLocs()||[];
   const chem=id=>opts.getChem(id);
   const labels=()=>(opts.getLabels&&opts.getLabels())||[];
+  const trays=()=>((opts.getTrays&&opts.getTrays())||[]).filter(t=>t&&t.cab>=1&&t.cab<=4&&t.layer>=1&&t.layer<=5);
+  const trayById=id=>trays().find(t=>String(t.id)===String(id));
   const zonesOf=cab=>labels().filter(z=>z.cab===cab).map(z=>({...z,a:Math.min(z.col_from,z.col_to),b:Math.max(z.col_from,z.col_to)})).sort((x,y)=>x.layer-y.layer||y.b-x.b);
   const zoneAt=(cab,L,col)=>zonesOf(cab).find(z=>z.layer===L&&col>=z.a&&col<=z.b);
-  ui.selectZone=id=>{const z=labels().find(x=>String(x.id)===String(id));if(!z)return;Object.assign(ui.state,{cab:z.cab,L:z.layer,col:null,locId:null,zone:z.id});ui.render();};
+  const trayAt=(cab,L,col)=>trays().find(t=>{if(t.cab!==cab)return false;const {a,b,tall}=trayCols(t);return L>=t.layer&&L<t.layer+tall&&col>=a&&col<=b;});
   const cellLocs=(cab,L,col)=>locs().filter(l=>l.cab===cab&&l.layer===L&&l.col===col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));
-  ui.select=(cab,L,col,locId)=>{Object.assign(ui.state,{cab,L,col,locId:locId??null,zone:null});ui.render();};
+  const scrollTo=()=>{const r=root();if(r)r.scrollIntoView({behavior:'smooth',block:'start'});};
+  ui.select=(cab,L,col,locId)=>{
+    const t=col!=null?trayAt(cab,L,col):null;
+    if(t){ui.selectTray(t.id);return;}
+    Object.assign(ui.state,{cab,L,col,locId:locId??null,zone:null,tray:null});ui.render();
+  };
+  ui.selectTray=(id,scroll)=>{const t=trayById(id);if(!t)return;Object.assign(ui.state,{cab:t.cab,L:t.layer,col:null,locId:null,zone:null,tray:t.id});ui.render();if(scroll)scrollTo();};
+  ui.selectZone=id=>{const z=labels().find(x=>String(x.id)===String(id));if(!z)return;Object.assign(ui.state,{cab:z.cab,L:z.layer,col:null,locId:null,tray:null,zone:z.id});ui.render();};
   ui.selectLoc=(locId,scroll)=>{
     const l=locs().find(x=>String(x.id)===String(locId));if(!l)return;
-    ui.select(l.cab,l.layer,l.col,l.id);
-    if(scroll){const r=root();if(r)r.scrollIntoView({behavior:'smooth',block:'start'});}
+    Object.assign(ui.state,{cab:l.cab,L:l.layer,col:l.col,locId:l.id,zone:null,tray:null});ui.render();
+    if(scroll)scrollTo();
   };
+  ui.close=()=>{Object.assign(ui.state,{col:null,locId:null,zone:null,tray:null});ui.render();};
   // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
   const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
   ui.move=dir=>{const st=ui.state;if(st.col==null)return;const [dl,dc]=NAV[dir]||[0,0];const L=st.L+dl,c=st.col+dc;if(L<1||L>5||c<1||c>14)return;ui.select(st.cab,L,c,null);};
+
+  // ── 搜尋：中文名、英文名、俗名、分子式；藥品盆比對盆名、課程、盆裡的東西 ──
+  const qn=v=>String(v||'').toLowerCase().replace(/[\s（）()·．.]/g,'');
+  const aliasList=c=>String(c&&c.alias||'').split(/[、,，;；/／]/).map(qn).filter(Boolean);
+  const chemQ=(c,q)=>{
+    if(!c||!q)return false;
+    if(qn(c.name_zh).includes(q)||qn(c.name_en).includes(q)||qn(c.alias).includes(q))return true;
+    const k=formulaKey(q);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
+  };
+  const exactQ=(c,q)=>!!c&&(qn(c.name_zh)===q||aliasList(c).includes(q)||(c.formula&&formulaKey(c.formula)===formulaKey(q)));
+  const trayItemQ=(x,q)=>qn(x.label).includes(q)||(x.chem_id&&chemQ(chem(x.chem_id),q));
+  const trayQ=(t,q)=>!!q&&(qn(t.name).includes(q)||qn(t.course).includes(q)||trayItems(t).some(x=>trayItemQ(x,q)));
+  const qHits=()=>{
+    const q=qn(ui.state.q);if(!q)return [];
+    return locs().map((l,i)=>({l,i,c:chem(l.chem_id)})).filter(o=>chemQ(o.c,q))
+      .sort((x,y)=>(exactQ(y.c,q)-exactQ(x.c,q))||x.l.cab-y.l.cab||x.l.layer-y.l.layer||y.l.col-x.l.col||x.i-y.i).map(o=>o.l);
+  };
+  const qTrays=()=>{const q=qn(ui.state.q);return q?trays().filter(t=>trayQ(t,q)):[];};
+
   function zoneTag(z,clickable){if(!z)return '';const [bg,fg]=zoneColorOf(z);return `<span class="cab-zone-tag" ${clickable?`data-zone="${escH(String(z.id))}"`:''}><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}</span>`;}
-  function routeHtml(){
-    const st=ui.state;
+  const fsCls=n=>{const k=[...String(n)].length;return k<=3?'':k===4?' l4':k<=6?' l6':' l9';};
+
+  // ── 一格 ──
+  function cellHtml(L,c,ctx){
+    const st=ui.state,here=cellLocs(st.cab,L,c),first=here.length?chem(here[0].chem_id):null;
+    const name=here.length?(first?first.name_zh||'?':'?'):'';
+    const sel=st.tray==null&&st.L===L&&st.col===c;
+    const same=!sel&&ctx.selChem!=null&&here.some(l=>String(l.chem_id)===ctx.selChem);
+    const hit=ctx.qSet.has(L+'-'+c);
+    const cats=[...new Set(here.map(l=>catName(chem(l.chem_id)?.category)).filter(Boolean))];
+    const dim=(ctx.qOn&&!hit)||(st.catHi&&!cats.includes(st.catHi));
+    const danger=here.some(l=>warnLines(chem(l.chem_id)?.warning).length);
+    const inq=isInqZone(zoneAt(st.cab,L,c));
+    const dots=[];here.forEach(l=>{const n=Math.max(1,parseInt(l.bottles)||1),cl=catInfo(chem(l.chem_id)?.category).color;for(let i=0;i<n&&dots.length<12;i++)dots.push(cl);});
+    const tip=`第${L}層 第${c}排`+(here.length?'：'+here.slice(0,5).map(l=>chem(l.chem_id)?.name_zh||'?').join('、')+(here.length>5?'…':''):'（空）');
+    return `<button type="button" class="cb2-cell${sel?' sel':''}${same?' same':''}${hit?' hit':''}${dim?' dim':''}${inq?' inq':''}${here.length?'':' empty'}" data-l="${L}" data-c="${c}" title="${escH(tip)}" aria-label="${escH(tip)}">${danger?'<i class="wb"></i>':''}<span class="nm${fsCls(name)}">${escH(name)}</span><span class="dots">${dots.map(cl=>`<i style="background:${cl}"></i>`).join('')}</span></button>`;
+  }
+  // ── 藥品盆合併格（只畫在這扇門裡的部分；上面那層畫盆、下面幾層畫「同上」）──
+  function trayCellHtml(t,L,span,ctx){
+    const top=L===t.layer,on=String(ui.state.tray)===String(t.id),hit=ctx.tSet.has(String(t.id)),dim=ctx.qOn&&!hit,wide=span>=3;
+    const nm=String(t.name||'藥品盆').slice(0,30);
+    const lab=top?(wide?'🧺 '+nm:nm):(wide?'↑ 同上：'+nm:'↑同上');
+    const tip=`${nm}（${trayCode(t)}）`;
+    return `<button type="button" class="cb2-tray${top?'':' ghost'}${wide?' wide':''}${on?' sel':''}${hit?' hit':''}${dim?' dim':''}" style="grid-column:span ${span}" data-tray="${escH(String(t.id))}" title="${escH(tip)}" aria-label="${escH('藥品盆：'+tip)}">${top&&warnLines(t.warning).length?'<i class="wb"></i>':''}<span class="nm${wide?'':fsCls(lab)}">${escH(lab)}</span>${top?'<span class="basin"></span>':''}</button>`;
+  }
+  function doorHtml(L,cols,ctx){
+    let h='';const done=new Set();
+    cols.forEach(c=>{
+      const t=trayAt(ui.state.cab,L,c);
+      if(!t){h+=cellHtml(L,c,ctx);return;}
+      if(done.has(t.id))return;done.add(t.id);
+      const {a,b}=trayCols(t);h+=trayCellHtml(t,L,cols.filter(x=>x>=a&&x<=b).length,ctx);
+    });
+    return h;
+  }
+  function zoneStrip(L,lo,hi){
+    return zonesOf(ui.state.cab).filter(z=>z.layer===L).map(z=>{
+      const a=Math.max(z.a,lo),b=Math.min(z.b,hi);if(a>b)return '';
+      const s=hi-b+1,e=hi-a+2,[,fg]=zoneColorOf(z),inq=isInqZone(z);
+      return `<button type="button" class="cb2-zone${inq?' inq':''}${String(ui.state.zone)===String(z.id)?' on':''}" style="grid-column:${s} / ${e};--zb:${fg}" data-zone="${escH(String(z.id))}" title="${escH(z.text)}">${escH(z.text)}</button>`;
+    }).join('');
+  }
+  // ── 拉出來的那一列 ──
+  const navHtml=st=>`<span class="cab-nav"><button type="button" data-nav="up" aria-label="上一層" ${st.L<=1?'disabled':''}>↑</button><button type="button" data-nav="down" aria-label="下一層" ${st.L>=5?'disabled':''}>↓</button><button type="button" data-nav="left" aria-label="左邊一排" ${st.col>=14?'disabled':''}>←</button><button type="button" data-nav="right" aria-label="右邊一排" ${st.col<=1?'disabled':''}>→</button></span>`;
+  function jarHtml(l,q){
+    const c=chem(l.chem_id),ci=catInfo(c?.category),n=parseInt(l.bottles)||0,name=c?(c.name_zh||'?'):'?';
+    const on=String(ui.state.locId)===String(l.id),hit=!!q&&chemQ(c,q),warn=c&&warnLines(c.warning).length;
+    return `<button type="button" class="cb2-jar${on?' on':''}${hit?' hit':''}" data-jar="${escH(String(l.id))}" style="--jc:${hexMix(ci.color,.38,0)};--jb:${hexMix(ci.color,.9,1)}" aria-label="${escH(name+(n!==1?'，'+n+' 瓶':''))}"><i class="cap"></i><i class="neck"></i><span class="body">${warn?'<b class="w">⚠</b>':''}<span class="lb${fsCls(name)}">${escH(name)}</span></span><span class="n">${n!==1?'×'+n:''}</span></button>`;
+  }
+  function panelHtml(L){
+    const st=ui.state,q=qn(st.q);
+    if(st.tray!=null){
+      const t=trayById(st.tray);if(!t||t.layer!==L)return '';
+      const {a,b,tall}=trayCols(t),its=trayItems(t);
+      const chip=(x,i)=>{
+        const c=x.chem_id?chem(x.chem_id):null,ci=c?catInfo(c.category):null,hit=!!q&&trayItemQ(x,q);
+        return `<button type="button" class="cb2-ti${c?'':' eq'}${hit?' hit':''}" data-titem="${i}" ${c?`style="--tb:${hexMix(ci.color,.9,1)};--tc:${hexMix(ci.color,.38,0)}"`:''}>${c&&warnLines(c.warning).length?'<span class="w">⚠</span>':''}${escH(x.label||c?.name_zh||'?')}</button>`;
+      };
+      return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${t.layer}-${b===a?a:b+'～'+a}</b><span class="t">藥品盆・佔 ${b-a+1} 排${tall>1?'×'+tall+' 層':''}・整盆借出</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
+        <div class="cb2-basin"><button type="button" class="hd" data-traycard><b>🧺 ${escH(t.name||'藥品盆')}</b><span>整盆資料卡 ›</span></button>
+          ${t.course?`<div class="cs">課程：${escH(t.course)}</div>`:''}
+          ${its.length?`<div class="cb2-titems">${its.map(chip).join('')}</div>`:'<div class="cs">（還沒登記盆裡有什麼）</div>'}
+          <div class="cs">${opts.onTray?'點盆裡任一樣可以修改這個盆':'點盆裡任一樣看它的資料卡・整盆一起借出、一起歸還'}</div></div>
+        ${opts.onTray?`<div class="cb2-admin"><button type="button" class="cab-add-here" data-trayedit>✏️ 修改這個盆</button></div>`:''}</div>`;
+    }
     if(st.zone!=null&&st.col==null){
-      // 點圖例：這一區在哪裡、裡面大概有什麼
-      const z=zonesOf(st.cab).find(x=>String(x.id)===String(st.zone));if(!z)return '';
+      const z=zonesOf(st.cab).find(x=>String(x.id)===String(st.zone));if(!z||z.layer!==L)return '';
       const items=locs().filter(l=>l.cab===z.cab&&l.layer===z.layer&&l.col>=z.a&&l.col<=z.b).sort((x,y)=>y.col-x.col||(x.sort||0)-(y.sort||0));
-      const names=[...new Set(items.map(l=>chem(l.chem_id)?.name_zh||'?'))];
-      return `<div class="cab-route"><div class="cab-pos"><span class="t">📍 第${CAB_CN[z.cab]}櫃・第 ${z.layer} 層・${z.b===z.a?`第 ${z.a} 排`:`${z.b}～${z.a} 排`}</span></div>
-        <div style="margin-top:6px">${zoneTag(z,false)}</div>
-        ${names.length?`<div class="cab-sub">這一區有 ${names.length} 種：</div><div class="cab-here">${items.filter((l,i,arr)=>arr.findIndex(o=>o.chem_id===l.chem_id)===i).map(l=>`<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(chem(l.chem_id)?.name_zh||'?')}</button>`).join('')}</div>`:'<div class="cab-here-empty">這一區目前是空的</div>'}
-        ${opts.onZone?`<button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">🏷️ 修改這個分區</button>`:''}</div>`;
+      const uniq=items.filter((l,i,arr)=>arr.findIndex(o=>o.chem_id===l.chem_id)===i);
+      return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${z.layer}-${z.b===z.a?z.a:z.b+'～'+z.a}</b><span class="t">分區「${escH(z.text)}」${uniq.length?'・'+uniq.length+' 種':''}</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
+        ${uniq.length?`<div class="cab-here">${uniq.map(l=>`<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(chem(l.chem_id)?.name_zh||'?')}</button>`).join('')}</div>`:'<div class="cb2-empty">這一區目前是空的</div>'}
+        ${opts.onZone?`<div class="cb2-admin"><button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">🏷️ 修改這個分區</button></div>`:''}</div>`;
     }
-    if(st.col==null)return '';
-    const nav=`<span class="cab-nav"><button type="button" data-nav="up" aria-label="上一層" ${st.L<=1?'disabled':''}>↑</button><button type="button" data-nav="down" aria-label="下一層" ${st.L>=5?'disabled':''}>↓</button><button type="button" data-nav="left" aria-label="左邊一排" ${st.col>=14?'disabled':''}>←</button><button type="button" data-nav="right" aria-label="右邊一排" ${st.col<=1?'disabled':''}>→</button></span>`;
-    const zHere=zoneAt(st.cab,st.L,st.col);
-    const pos=`<div class="cab-pos"><span class="t">📍 第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${st.L} 層・右數第 ${st.col} 排</span>${nav}</div>${zHere?zoneTag(zHere,true):''}`;
-    const here=cellLocs(st.cab,st.L,st.col);
-    const chip=(l,big)=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip ${big?'cab-big':''}" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
+    if(st.col==null||st.L!==L)return '';
+    const here=cellLocs(st.cab,L,st.col),zHere=zoneAt(st.cab,L,st.col);
     const sel=here.find(l=>String(l.id)===String(st.locId));
-    if(sel){
-      // 從搜尋找過來的：藥品名稱最大，同一格的其他東西放下面
-      const c=chem(sel.chem_id),name=c?c.name_zh:'（已刪除的藥品）';
-      const others=locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id);
-      const mates=here.filter(l=>l.id!==sel.id);
-      return `<div class="cab-route">${pos}<div class="nm">${escH(name)}</div><div class="cnt">這一格 ${parseInt(sel.bottles)||0} 瓶${sel.capacity?'・'+escH(sel.capacity):''}${sel.note?'・'+escH(sel.note):''}</div>
-        ${mates.length?`<div class="cab-sub">同一格還有：</div><div class="cab-here">${mates.map(l=>chip(l,false)).join('')}</div>`:''}
-        ${others.length?`<div class="cab-also">其他位置也有（圖上虛線框）：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}</div>`;
-    }
-    // 點格子進來的：這一格有什麼，大字列出來；後台多了「−／＋ 瓶數、✕ 移除、＋ 在這格加藥品」
-    const item=l=>opts.onQuick?`<span class="cab-item">${chip(l,true)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`:chip(l,true);
-    const addBtn=opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:'';
-    const zBtn=opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">🏷️ ${zHere?'修改分區':'設定分區'}</button>`:'';
-    return `<div class="cab-route">${pos}${here.length?`<div class="cab-sub" style="margin-top:6px">這一格有 ${here.length} 樣${opts.onQuick?'（點名稱可以改容量、搬位置）':''}：</div><div class="cab-here">${here.map(item).join('')}</div>`:'<div class="cab-here-empty">這一格目前是空的</div>'}${addBtn}${zBtn}</div>`;
+    const others=sel?locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id):[];
+    const chipBig=l=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
+    const adminList=opts.onQuick&&here.length?`<div class="cab-sub">改瓶數、移除（點名稱可以改容量、搬到別格）：</div><div class="cab-here">${here.map(l=>`<span class="cab-item">${chipBig(l)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`).join('')}</div>`:'';
+    const adminBtns=(opts.onAdd||opts.onZone||opts.onTray)?`<div class="cb2-admin">${opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:''}${opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">🏷️ ${zHere?'修改分區':'設定分區'}</button>`:''}${opts.onTray?`<button type="button" class="cab-zone-edit" data-traynew="1">🧺 從這格放藥品盆</button>`:''}</div>`:'';
+    return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${L}-${st.col}</b><span class="t">第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${L} 層・第 ${st.col} 排${here.length?`・前 → 後 ${here.length} 樣`:''}</span>${navHtml(st)}<button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
+      ${zHere?zoneTag(zHere,true):''}
+      ${here.length?`<div class="cb2-jars">${here.map(l=>jarHtml(l,q)).join('')}</div><div class="cb2-dw"><span>門口（前）</span><span>${opts.onQuick?'點藥品罐可以修改':'點藥品罐看資料卡'}</span><span>靠牆（後）</span></div>`:'<div class="cb2-empty">這一格目前是空的</div>'}
+      ${others.length?`<div class="cab-also">其他位置也有（圖上虛線框）：<br>${others.map(o=>`<button type="button" data-loc="${escH(String(o.id))}">${escH(cabText(o))} ×${parseInt(o.bottles)||0}</button>`).join('')}</div>`:''}
+      ${adminList}${adminBtns}</div>`;
   }
-  // 搜尋：名稱比對（不分大小寫、忽略空白和括號）
-  const qn=v=>String(v||'').toLowerCase().replace(/[\s（）()]/g,'');
-  const qHits=()=>{const q=qn(ui.state.q);if(!q)return [];return locs().filter(l=>qn(chem(l.chem_id)?.name_zh).includes(q)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);};
-  function frontSvg(){
-    const st=ui.state,top=6,H=40,W=(170-6)/7;let h='';
-    const selLoc=st.locId!=null?locs().find(l=>String(l.id)===String(st.locId)):null,selChem=selLoc?String(selLoc.chem_id):null;
-    const qSet=new Set(qHits().filter(l=>l.cab===st.cab).map(l=>l.layer+'-'+l.col));
-    h+=`<rect x="1" y="1" width="338" height="${top+5*H+2}" rx="8" fill="none" stroke="var(--text2)" stroke-width="1.5"/><line x1="170" y1="1" x2="170" y2="${top+5*H+3}" stroke="var(--text2)" stroke-width="1.5"/>`;
-    const colX=c=>c<=7?(173+(7-c)*W):(3+(14-c)*W);
-    const zs=zonesOf(st.cab);
+  function cabinetHtml(){
+    const st=ui.state,q=qn(st.q);
+    const selLoc=st.locId!=null?locs().find(l=>String(l.id)===String(st.locId)):null;
+    const hits=qHits().filter(l=>l.cab===st.cab),tHits=qTrays().filter(t=>t.cab===st.cab);
+    const ctx={selChem:selLoc?String(selLoc.chem_id):null,qSet:new Set(hits.map(l=>l.layer+'-'+l.col)),tSet:new Set(tHits.map(t=>String(t.id))),qOn:!!q&&(hits.length+tHits.length)>0};
+    const nums=a=>a.map(n=>`<span>${n}</span>`).join('');
+    const vent='<span class="cb2-vent"><i></i><i></i><i></i><i></i><i></i></span>';
+    let rows='';
     for(let L=1;L<=5;L++){
-      const y=top+(L-1)*H;
-      h+=`<line x1="4" y1="${y+H-1}" x2="336" y2="${y+H-1}" stroke="var(--border)"/>`;
-      // 分區色塊：左門、右門分開畫（中間有門縫）
-      zs.filter(z=>z.layer===L).forEach(z=>{
-        const [bg,fg]=zoneColorOf(z),on=String(st.zone)===String(z.id);
-        [[Math.max(z.a,8),z.b],[z.a,Math.min(z.b,7)]].forEach(([lo,hi])=>{
-          if(lo>hi)return;
-          const x1=colX(hi),x2=colX(lo)+W;
-          // 平常只在格子下面畫一條細色線（不吵）；點了圖例才整區框起來
-          h+=on?`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+0.5).toFixed(1)}" y="${y+1.5}" width="${(x2-x1-1).toFixed(1)}" height="${H-5}" rx="5" fill="${bg}" stroke="${fg}" stroke-width="2.2" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`
-               :`<rect class="cab-zone" data-zone="${escH(String(z.id))}" x="${(x1+2).toFixed(1)}" y="${y+H-6}" width="${(x2-x1-4).toFixed(1)}" height="3.5" rx="1.75" fill="${fg}" style="cursor:pointer"><title>${escH(z.text)}</title></rect>`;
-        });
-      });
-      for(let c=1;c<=14;c++){
-        const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);
-        const inCell=cellLocs(st.cab,L,c),has=inCell.length>0,sel=st.L===L&&st.col===c;
-        const same=!sel&&selChem!=null&&inCell.some(l=>String(l.chem_id)===selChem);
-        const qm=!sel&&!same&&qSet.has(L+'-'+c);
-        const tip=has?'：'+inCell.slice(0,4).map(l=>chem(l.chem_id)?.name_zh||'?').join('、')+(inCell.length>4?'…':''):'（空）';
-        // 依藥品大類上色：一種大類就整格淡色；混了幾種就切成直條（最多 3 種）
-        const cats=[...new Set(inCell.map(l=>catName(chem(l.chem_id)?.category)).filter(Boolean))];
-        const dim=st.catHi&&!cats.includes(st.catHi);
-        const cx=x+2,cw=W-4,cy=y+4,ch=H-10;
-        if(!sel&&!same&&!qm&&cats.length){
-          const show=cats.slice(0,3),sw=cw/show.length;
-          h+=`<g pointer-events="none" opacity="${dim?.25:1}"><clipPath id="cc${L}_${c}_${st.cab}"><rect x="${cx.toFixed(1)}" y="${cy}" width="${cw.toFixed(1)}" height="${ch}" rx="3"/></clipPath><g clip-path="url(#cc${L}_${c}_${st.cab})">${show.map((n,k)=>`<rect x="${(cx+k*sw).toFixed(1)}" y="${cy}" width="${(sw+.3).toFixed(1)}" height="${ch}" fill="${hexMix(catInfo(n).color,.45,1)}"/>`).join('')}</g></g>`;
-        }
-        const catTip=cats.length?'\n大類：'+cats.join('、'):'';
-        const baseFill=sel?'#f2c94c':(same?'#f7e4a0':(qm?'#cfe8dc':(cats.length?'#000':(has?'#c9bfa9':'var(--surface2)'))));
-        h+=`<rect class="cab-cell ${sel?'sel':''}" data-l="${L}" data-c="${c}" x="${cx.toFixed(1)}" y="${cy}" width="${cw.toFixed(1)}" height="${ch}" rx="3" fill="${baseFill}" ${(!sel&&!same&&!qm&&cats.length)?'fill-opacity="0"':''} ${dim&&!sel?'opacity=".35"':''} ${sel?'stroke="#3d2f00" stroke-width="1.5"':(same?'stroke="#b8860b" stroke-width="1.5" stroke-dasharray="3 2"':(qm?'stroke="#1f5b4c" stroke-width="1.5"':''))}><title>${escH(`第${L}層 第${c}排${tip}${catTip}`)}</title></rect>`;
-      }
-      h+=`<text x="7" y="${y+16}" font-size="10" fill="var(--text2)" pointer-events="none">${L}</text>`;
+      rows+=`<div class="cb2-line cb2-zones"><span class="cb2-side"></span><span class="cb2-doors"><span class="cb2-g">${zoneStrip(L,8,14)}</span><span class="cb2-gap"></span><span class="cb2-g">${zoneStrip(L,1,7)}</span></span></div>
+        <div class="cb2-line"><span class="cb2-side"><b class="cb2-badge">${L}</b><small>層</small></span><span class="cb2-shelf"><span class="cb2-g">${doorHtml(L,[14,13,12,11,10,9,8],ctx)}</span><span class="cb2-seam">${L===3?'<i></i><i></i>':''}</span><span class="cb2-g">${doorHtml(L,[7,6,5,4,3,2,1],ctx)}</span></span></div>${panelHtml(L)}`;
     }
-    for(let c=1;c<=14;c++){const x=c<=7?(173+(7-c)*W):(3+(14-c)*W);h+=`<text x="${(x+W/2).toFixed(1)}" y="${top+5*H+16}" text-anchor="middle" font-size="10" fill="var(--text2)">${c}</text>`;}
-    return `<svg viewBox="0 0 340 222" role="img" aria-label="第${CAB_CN[st.cab]}櫃正面圖">${h}</svg>`;
-  }
-  function shelfHtml(){
-    const st=ui.state;
-    const row=c=>{
-      const items=cellLocs(st.cab,st.L,c),sel=st.col===c;
-      const chips=items.length?items.map(l=>{const cc=chem(l.chem_id);const n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip ${String(st.locId)===String(l.id)?'hit':''}" data-loc="${escH(String(l.id))}">${escH(cc?cc.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}${l.capacity?`<i>${escH(l.capacity)}</i>`:''}</button>`;}).join(''):'<span class="cab-empty">空</span>';
-      return `<div class="cab-row ${sel?'sel':''}"><span class="no">${c} 排</span><div class="cab-chips">${chips}</div>${opts.onAdd?`<button type="button" class="cab-add" data-add="${c}" aria-label="在第${c}排加藥品">＋</button>`:''}</div>`;
-    };
-    return `<div class="cab-door"><span>右門</span><span>第${CAB_CN[st.cab]}櫃・第 ${st.L} 層</span></div>${[1,2,3,4,5,6,7].map(row).join('')}<div class="cab-door"><span>左門</span></div>${[8,9,10,11,12,13,14].map(row).join('')}`;
+    return `<div class="cb2" role="group" aria-label="第${CAB_CN[st.cab]}櫃正面">
+      <div class="cb2-top">${vent}<span class="cb2-plate">⚠ 化學藥品櫃　${CAB_CN[st.cab]}</span>${vent}</div>
+      <div class="cb2-frame">
+        <div class="cb2-line cb2-num"><span class="cb2-side"><small>排→</small></span><span class="cb2-doors"><span class="cb2-g">${nums([14,13,12,11,10,9,8])}</span><span class="cb2-gap"></span><span class="cb2-g">${nums([7,6,5,4,3,2,1])}</span></span></div>
+        ${rows}
+        <div class="cb2-foot"><span>◀ 左門（14～8）</span><span>右門（7～1）▶</span></div>
+      </div>
+      <div class="cb2-legs"><i></i><i></i></div></div>`;
   }
   ui.render=()=>{
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><input type="search" class="cab-q" placeholder="🔍 在藥品櫃裡找藥品（打幾個字就好）" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      r.innerHTML=`<div class="cab-search"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><div class="cab-results"></div></div><div class="cab-body"></div>`;
       const inp=r.querySelector('.cab-q');
       inp.oninput=()=>{ui.state.q=inp.value.trim();ui.state.picked=false;ui.render();};
       inp.onkeydown=e=>{
-        if(e.key==='Enter'){const f=r.querySelector('.cab-results [data-hit]');if(f){e.preventDefault();f.click();}}
+        if(e.key==='Enter'){const f=r.querySelector('.cab-results [data-hit],.cab-results [data-htray]');if(f){e.preventDefault();f.click();}}
         else if(e.key==='Escape'){inp.value='';ui.state.q='';ui.render();}
-        else if(e.key==='ArrowDown'){const f=r.querySelector('.cab-results [data-hit]');if(f){e.preventDefault();f.focus();}}
+        else if(e.key==='ArrowDown'){const f=r.querySelector('.cab-results button');if(f){e.preventDefault();f.focus();}}
       };
     }
-    const hits=qHits();
-    const qCount=c=>hits.filter(l=>l.cab===c).length;
+    const hits=qHits(),tHits=qTrays();
+    const qCount=c=>hits.filter(l=>l.cab===c).length+tHits.filter(t=>t.cab===c).length;
     const res=r.querySelector(':scope>.cab-search .cab-results');
+    const total=hits.length+tHits.length;
     if(!st.q||st.picked)res.innerHTML='';
-    else if(!hits.length)res.innerHTML=`<div class="none">藥品櫃裡找不到「${escH(st.q)}」</div>`;
-    else res.innerHTML=hits.slice(0,10).map(l=>`<button type="button" data-hit="${escH(String(l.id))}"><span>${escH(chem(l.chem_id)?.name_zh||'?')}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`).join('')+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；圖上綠框是目前這一櫃找到的位置</div>`:'');
-    res.querySelectorAll('[data-hit]').forEach(b=>{
-      b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);};
-      b.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();(b.nextElementSibling||b).focus();}else if(e.key==='ArrowUp'){e.preventDefault();(b.previousElementSibling||r.querySelector('.cab-q')).focus();}};
-    });
+    else if(!total)res.innerHTML=`<div class="none">藥品櫃裡找不到「${escH(st.q)}」</div>`;
+    else{
+      const trayBtns=tHits.slice(0,4).map(t=>`<button type="button" data-htray="${escH(String(t.id))}"><span>🧺 ${escH(t.name||'藥品盆')}${t.course?`<small>　${escH(t.course)}</small>`:''}</span><small>${escH(trayCode(t))}</small></button>`).join('');
+      const locBtns=hits.slice(0,10).map(l=>{const c=chem(l.chem_id);return `<button type="button" data-hit="${escH(String(l.id))}"><span>${c&&warnLines(c.warning).length?'<b style="color:#c62828">⚠</b> ':''}${escH(c?.name_zh||'?')}${c&&c.alias?`<small>（${escH(c.alias)}）</small>`:''}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`;}).join('');
+      res.innerHTML=trayBtns+locBtns+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；櫃子上亮黃色的是這一櫃找到的位置</div>`:'');
+    }
+    res.querySelectorAll('[data-hit]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);});
+    res.querySelectorAll('[data-htray]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectTray(b.dataset.htray,false);});
+    res.querySelectorAll('button').forEach(b=>b.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();(b.nextElementSibling||b).focus();}else if(e.key==='ArrowUp'){e.preventDefault();(b.previousElementSibling||r.querySelector('.cab-q')).focus();}});
     const body=r.querySelector(':scope>.cab-body');
-    body.innerHTML=`<div class="cab-ui" tabindex="-1">${routeHtml()}
+    const cnt={};locs().filter(l=>l.cab===st.cab).forEach(l=>{const n=catName(chem(l.chem_id)?.category);if(n)cnt[n]=(cnt[n]||0)+1;});
+    const catNames=CHEM_CATS.map(c=>c.name).filter(n=>cnt[n]);
+    body.innerHTML=`<div class="cab-ui" tabindex="-1">
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
-      <div class="cab-front">${frontSvg()}<div class="cap"><span>左門　14 → 8</span><span>右門　7 → 1</span></div>${(()=>{
-        // 這一櫃有哪些大類（點了只亮那一類，再點一次取消）
-        const cnt={};locs().filter(l=>l.cab===st.cab).forEach(l=>{const n=catName(chem(l.chem_id)?.category);if(n)cnt[n]=(cnt[n]||0)+1;});
-        const names=CHEM_CATS.map(c=>c.name).filter(n=>cnt[n]);
-        return names.length?`<div class="cab-cats">${names.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:'';
-      })()}${(()=>{const zs=zonesOf(st.cab);return zs.length?`<div class="cab-zones">${zs.map(z=>{const [bg,fg]=zoneColorOf(z);return `<button type="button" class="${String(st.zone)===String(z.id)?'on':''}" data-zone="${escH(String(z.id))}"><i style="background:${bg};border:1.5px solid ${fg}"></i>${escH(z.text)}<small>${z.layer} 層</small></button>`;}).join('')}</div>`:'';})()}</div>
-      <div class="cab-layers"><span>層</span>${[1,2,3,4,5].map(L=>`<button type="button" class="${L===st.L?'on':''}" data-layer="${L}">${L}</button>`).join('')}</div>
-      <div class="cab-shelf">${shelfHtml()}</div></div>`;
+      ${cabinetHtml()}
+      ${catNames.length?`<div class="cab-cats">${catNames.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:''}
+      <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　🧺＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
     const focusUi=()=>{const n=body.querySelector('.cab-ui');if(n)n.focus({preventScroll:true});};
-    body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>ui.select(+b.dataset.cab,1,null,null));
-    body.querySelectorAll('[data-layer]').forEach(b=>b.onclick=()=>ui.select(st.cab,+b.dataset.layer,null,null));
-    body.querySelectorAll('.cab-cell').forEach(c=>c.onclick=()=>{ui.select(st.cab,+c.dataset.l,+c.dataset.c,null);focusUi();});
+    body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{Object.assign(ui.state,{cab:+b.dataset.cab,L:1,col:null,locId:null,zone:null,tray:null});ui.render();});
+    body.querySelectorAll('.cb2-cell').forEach(c=>c.onclick=()=>{
+      const L=+c.dataset.l,col=+c.dataset.c;
+      if(ui.state.tray==null&&ui.state.L===L&&ui.state.col===col){ui.close();return;} // 再點一次收起來
+      ui.select(st.cab,L,col,null);focusUi();
+    });
+    body.querySelectorAll('.cb2-tray').forEach(b=>b.onclick=()=>{if(String(ui.state.tray)===b.dataset.tray){ui.close();return;}ui.selectTray(b.dataset.tray);});
+    body.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>ui.close());
+    body.querySelectorAll('[data-jar]').forEach(b=>b.onclick=()=>{
+      const l=locs().find(x=>String(x.id)===b.dataset.jar);if(!l)return;
+      ui.state.locId=l.id;
+      if(opts.onJar)opts.onJar(l,ui);else if(opts.onChip)opts.onChip(l,ui);else ui.render();
+    });
     body.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
-      if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.select(l.cab,l.layer,l.col,l.id);
+      if(opts.onChip&&b.classList.contains('cab-chip'))opts.onChip(l,ui);else ui.selectLoc(l.id,false);
     });
+    const curTray=()=>trayById(ui.state.tray);
+    body.querySelectorAll('[data-traycard]').forEach(b=>b.onclick=()=>{const t=curTray();if(!t)return;if(opts.onTrayCard)opts.onTrayCard(t,ui);else if(opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
+    body.querySelectorAll('[data-titem]').forEach(b=>b.onclick=()=>{const t=curTray();if(!t)return;if(opts.onTrayItem)opts.onTrayItem(t,+b.dataset.titem,ui);else if(opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
+    body.querySelectorAll('[data-trayedit]').forEach(b=>b.onclick=()=>{const t=curTray();if(t&&opts.onTray)opts.onTray(t.cab,t.layer,trayCols(t).b,t,ui);});
+    body.querySelectorAll('[data-traynew]').forEach(b=>b.onclick=()=>{if(opts.onTray)opts.onTray(st.cab,st.L,st.col,null,ui);});
     body.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
     body.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.ql);if(l&&opts.onQuick)opts.onQuick(l,+b.dataset.qd,ui);});
     body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
     body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);focusUi();});
-    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();ui.selectZone(b.dataset.zone);}));
+    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(String(ui.state.zone)===b.dataset.zone&&ui.state.col==null){ui.close();return;}ui.selectZone(b.dataset.zone);}));
     body.querySelectorAll('[data-cathi]').forEach(b=>b.onclick=()=>{ui.state.catHi=ui.state.catHi===b.dataset.cathi?null:b.dataset.cathi;ui.render();});
     body.querySelectorAll('[data-zedit]').forEach(b=>b.onclick=()=>{const z=labels().find(x=>String(x.id)===b.dataset.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);});
     body.querySelectorAll('[data-zcell]').forEach(b=>b.onclick=()=>{if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);});
-    // 電腦：選到格子後可以用鍵盤方向鍵移動
+    // 電腦：選到格子後可以用鍵盤方向鍵移動、Esc 收起來
     const u=body.querySelector('.cab-ui');
-    if(u)u.onkeydown=e=>{const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;e.preventDefault();ui.move(m);focusUi();};
+    if(u)u.onkeydown=e=>{
+      if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;
+      if(e.key==='Escape'&&(ui.state.col!=null||ui.state.tray!=null||ui.state.zone!=null)){e.preventDefault();ui.close();return;}
+      const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'}[e.key];if(!m||ui.state.col==null)return;e.preventDefault();ui.move(m);focusUi();
+    };
   };
   return ui;
 }
@@ -4196,10 +4382,99 @@ const adminCabUI=makeCabUI('adminChemCab',{
   onChip:(l,ui)=>{ui.select(l.cab,l.layer,l.col,l.id);openCabEdit(l.id);},
   onAdd:(cab,L,col)=>openCabAdd(cab,L,col),
   getLabels:()=>allChemLabels,
+  getTrays:()=>allChemTrays,
+  onTray:(cab,L,col,t)=>openTrayEdit(cab,L,col,t),
   onZone:(cab,L,col,z)=>openZoneEdit(cab,L,col,z),
   onQuick:(l,d)=>cabQuickBottles(l.id,d),
   onRemove:l=>cabQuickRemove(l.id)
 });
+// ── 藥品盆：登記一個盆佔哪幾格、裡面有什麼（資料表 chem_trays）──
+let allChemTrays=[];
+function trayRowHtml(x){
+  return `<div class="tray-row" style="display:grid;grid-template-columns:1.2fr 1.2fr 1fr auto;gap:6px;margin-bottom:6px">
+    <input class="tr-label" maxlength="40" placeholder="顯示名稱，例：0.1M 鹽酸" value="${escH(x.label||'')}" aria-label="顯示名稱">
+    <input class="tr-chem" maxlength="60" list="trayChemNames" placeholder="對應藥品（器材留白）" value="${escH(x.chem||'')}" autocomplete="off" aria-label="對應藥品">
+    <input class="tr-note" maxlength="40" placeholder="規格／數量" value="${escH(x.note||'')}" aria-label="規格或數量">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentNode.remove()" aria-label="刪掉這一樣">✕</button></div>`;
+}
+function trayAddRow(){
+  const box=document.getElementById('tray-rows');if(!box)return;
+  if(box.children.length>=30){showToast('一個盆最多 30 樣','error');return;}
+  box.insertAdjacentHTML('beforeend',trayRowHtml({}));box.lastElementChild.querySelector('input').focus();
+}
+// t＝要修改的盆；沒有 t 就是從 (cab, L, col) 這一格開始放一個新的盆，往右（排號變小）延伸
+function openTrayEdit(cab,L,col,t){
+  if(!window._traysReady){showToast('請先在 Supabase 執行「藥品俗名警示與藥品盆.sql」','error');return;}
+  const tc=t?trayCols(t):null;
+  const layer=t?t.layer:L,start=t?tc.b:col;
+  const lo=start>=8?8:1,maxW=start-lo+1;              // 只能在同一扇門裡
+  const w=t?Math.min(tc.b-tc.a+1,maxW):Math.min(3,maxW),tall=t?tc.tall:1;
+  window._trayEdit={id:t?t.id:null,cab,layer,start};
+  const items=t?trayItems(t).map(x=>({label:x.label,note:x.note,chem:x.chem_id?(allAdminChems.find(c=>String(c.id)===x.chem_id)?.name_zh||''):''})):[{},{},{}];
+  showModal(`🧺 ${t?'修改藥品盆':'放藥品盆'}・第${CAB_CN[cab]}櫃第 ${layer} 層、第 ${start} 排起`,`
+    <div class="form-group"><label>盆名 *</label><input id="tray-name" maxlength="30" value="${escH(t?.name||'')}" placeholder="例如：酸鹼滴定盆"></div>
+    <div class="form-group"><label>課程（選填）</label><input id="tray-course" maxlength="40" value="${escH(t?.course||'')}" placeholder="例如：高二探究・酸鹼滴定"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>寬：往右佔幾排</label><select id="tray-w">${Array.from({length:maxW},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===w?'selected':''}>${n} 排（${start}${n>1?'～'+(start-n+1):''}）</option>`).join('')}</select></div>
+      <div class="form-group"><label>高：往下佔幾層</label><select id="tray-tall">${Array.from({length:6-layer},(_,i)=>i+1).map(n=>`<option value="${n}" ${n===tall?'selected':''}>${n} 層${n>1?`（${layer}～${layer+n-1} 層）`:''}</option>`).join('')}</select></div>
+    </div>
+    <div class="form-group"><label>盆裡有什麼（「對應藥品」打字會跳出藥品清單，選了之後俗名、分子式、警示會自動帶過來；器材留白）</label>
+      <datalist id="trayChemNames">${allAdminChems.map(c=>`<option value="${escH(c.name_zh)}"></option>`).join('')}</datalist>
+      <div id="tray-rows">${items.map(trayRowHtml).join('')}</div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="trayAddRow()">＋ 再加一樣</button></div>
+    <div class="form-group"><label>警示（選填；第一行是標題，下面每行一條）</label><textarea id="tray-warn" rows="3" maxlength="600" placeholder="盆內含強酸、強鹼&#10;濺到眼睛立刻沖眼 15 分鐘">${escH(t?.warning||'')}</textarea></div>
+    <div class="form-group"><label>備註（選填）</label><input id="tray-note" maxlength="200" value="${escH(t?.note||'')}"></div>
+    <p class="hint" style="font-size:12.5px">盆只能放在同一扇門裡（左門 14～8、右門 7～1）。盆蓋住的格子在櫃子圖上會合併成一個金色大格。</p>
+    ${t?`<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteTray()">刪除這個盆</button>`:''}`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:'saveTray()'}]);
+  setTimeout(()=>document.getElementById('tray-name')?.focus(),60);
+}
+async function saveTray(){
+  const ctx=window._trayEdit;if(!ctx||cabBusy)return;
+  const v=id=>(document.getElementById(id)?.value||'').trim();
+  const name=v('tray-name').slice(0,30);
+  if(!name){showToast('請填盆名','error');return;}
+  const w=parseInt(v('tray-w'),10),tall=parseInt(v('tray-tall'),10);
+  const b=ctx.start,a=b-w+1,lo=b>=8?8:1;
+  if(!(w>=1&&a>=lo)){showToast('寬度超出這扇門了','error');return;}
+  if(!(tall>=1&&ctx.layer+tall-1<=5)){showToast('高度超出櫃子了','error');return;}
+  const items=[],bad=[];
+  document.querySelectorAll('#tray-rows .tray-row').forEach(r=>{
+    const label=r.querySelector('.tr-label').value.trim().slice(0,40),cn=r.querySelector('.tr-chem').value.trim(),note=r.querySelector('.tr-note').value.trim().slice(0,40);
+    if(!label&&!cn&&!note)return;
+    let chem_id=null;
+    if(cn){const c=allAdminChems.find(x=>x.name_zh===cn)||matchChemByName(cn);if(!c){bad.push(cn);return;}chem_id=c.id;}
+    items.push({label:label||cn,chem_id,note});
+  });
+  if(bad.length){showToast('藥品清單裡找不到：'+bad.slice(0,3).join('、')+'（器材請把「對應藥品」留白）','error');return;}
+  if(items.length>30){showToast('一個盆最多 30 樣','error');return;}
+  const L2=ctx.layer+tall-1;
+  const clash=allChemTrays.find(o=>{if(String(o.id)===String(ctx.id)||o.cab!==ctx.cab)return false;const oc=trayCols(o);return !(oc.b<a||oc.a>b)&&!(o.layer+oc.tall-1<ctx.layer||o.layer>L2);});
+  if(clash){showToast(`跟「${clash.name}」重疊了，請調整寬度或高度`,'error');return;}
+  const covered=allChemLocs.filter(l=>l.cab===ctx.cab&&l.layer>=ctx.layer&&l.layer<=L2&&l.col>=a&&l.col<=b);
+  if(covered.length){
+    const eg=covered.slice(0,3).map(l=>(allAdminChems.find(c=>String(c.id)===String(l.chem_id))?.name_zh||'?')+'（'+l.layer+'-'+l.col+'）').join('、');
+    if(!confirm(`這個範圍裡登記了 ${covered.length} 個藥品位置，例如 ${eg}。\n放盆之後它們會被盆蓋住，櫃子圖上看不到（搜尋還找得到）。\n\n建議先把它們搬走或移除。仍要繼續嗎？`))return;
+  }
+  const body={cab:ctx.cab,layer:ctx.layer,col_from:b,col_to:a,tall,name,course:v('tray-course').slice(0,40)||null,items,
+    warning:v('tray-warn').slice(0,600)||null,note:v('tray-note').slice(0,200)||null,updated_at:new Date().toISOString()};
+  cabBusy=true;
+  try{
+    if(ctx.id)await sb('PATCH','chem_trays',{filter:'id=eq.'+encodeURIComponent(ctx.id),body,prefer:'return=minimal'});
+    else await sb('POST','chem_trays',{body,prefer:'return=minimal'});
+    closeModal();showToast('已儲存藥品盆','success');
+    await loadAdminChems();
+    const nt=allChemTrays.find(o=>o.cab===ctx.cab&&o.layer===ctx.layer&&o.col_from===b);
+    if(nt)adminCabUI.selectTray(nt.id);
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+  finally{cabBusy=false;}
+}
+async function deleteTray(){
+  const ctx=window._trayEdit;if(!ctx||!ctx.id)return;
+  if(!confirm('刪除這個藥品盆？（盆裡登記的內容會一起刪掉；藥品清單本身不受影響）'))return;
+  try{await sb('DELETE','chem_trays',{filter:'id=eq.'+encodeURIComponent(ctx.id),prefer:'return=minimal'});closeModal();showToast('已刪除藥品盆','success');await loadAdminChems();adminCabUI.select(ctx.cab,ctx.layer,null,null);}
+  catch(e){showToast('刪除失敗：'+e.message,'error');}
+}
 // ── 分區：設定這一格所在的分區（名稱＋從第幾排到第幾排）──
 function openZoneEdit(cab,L,col,z){
   if(!window._zonesReady){showToast('請先在 Supabase 執行「藥品櫃分區標籤.sql」','error');return;}
@@ -4283,8 +4558,9 @@ async function loadChemLocs(){
 async function loadAdminChems() {
   try {
     await loadChemCats();fillAdminCatSelects();
-    const [rows,labs]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),sb('GET','chem_cab_labels',{order:'cab,layer,col_from.desc'}).catch(()=>null),loadChemLocs()]);
+    const [rows,labs,trs]=await Promise.all([sb('GET', 'chemicals', { order: 'category,name_zh' }),sb('GET','chem_cab_labels',{order:'cab,layer,col_from.desc'}).catch(()=>null),sb('GET','chem_trays',{order:'cab,layer,col_from.desc'}).catch(()=>null),loadChemLocs()]);
     allChemLabels=Array.isArray(labs)?labs:[];window._zonesReady=Array.isArray(labs);
+    allChemTrays=Array.isArray(trs)?trs:[];window._traysReady=Array.isArray(trs); // 還沒執行 SQL 時是 null
     allAdminChems = Array.isArray(rows) ? rows : [];
     filterAdminChems();
     renderChemQuickSort();
@@ -5181,7 +5457,7 @@ function filterAdminChems() {
     <div class="record-card" id="chemcard-${safeId(c.id)}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
-          <div style="font-size:15px;font-weight:700">${escH(c.name_zh)} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
+          <div style="font-size:15px;font-weight:700">${warnLines(c.warning).length?'<span style="color:#c62828" title="有安全警示">⚠ </span>':''}${escH(c.name_zh)}${c.alias?`<span style="font-size:12.5px;font-weight:400;color:var(--text2)">（${escH(c.alias)}）</span>`:''} ${c.is_available===false?'<span class="badge badge-rejected">不開放</span>':'<span class="badge badge-approved">可借</span>'}</div>
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
             ${catName(c.category)?catTagHtml(c.category):''}
@@ -5201,6 +5477,8 @@ function filterAdminChems() {
           <div class="form-group"><label>中文名稱 *</label><input id="ci-zh-${c.id}" value="${esc(c.name_zh)}"></div>
           <div class="form-group"><label>英文名稱</label><input id="ci-en-${c.id}" value="${esc(c.name_en||'')}"></div>
           <div class="form-group"><label>分子式（數字自動變下標）</label><input id="ci-fm-${c.id}" data-orig="${escH(c.formula||'')}" maxlength="60" spellcheck="false" autocomplete="off" value="${escH(c.formula||'')}" oninput="document.getElementById('ci-fmpv-${c.id}').innerHTML=fmtFormula(this.value)"><div class="hint" id="ci-fmpv-${c.id}" style="min-height:1.4em;font-size:15px">${fmtFormula(c.formula)}</div></div>
+          <div class="form-group"><label>俗名／別名（用、分開）</label><input id="ci-al-${c.id}" data-orig="${escH(c.alias||'')}" maxlength="100" value="${escH(c.alias||'')}"></div>
+          <div class="form-group" style="grid-column:1/-1"><label>安全警示（第一行標題，下面每行一條）</label><textarea id="ci-wn-${c.id}" data-orig="${escH(c.warning||'')}" rows="3" maxlength="600">${escH(c.warning||'')}</textarea></div>
           <div class="form-group"><label>位置</label><input id="ci-loc-${c.id}" value="${esc(c.location||'')}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，位置請到上面的藥品櫃修改"':''}></div>
           <div class="form-group"><label>分類</label><select id="ci-cat-${c.id}">${catOpts}</select></div>
           <div class="form-group"><label>剩餘瓶數</label><input type="number" id="ci-btl-${c.id}" min="0" value="${c.bottles_left??0}" ${chemLocsOf(c.id).length?'disabled title="這個藥品有放在藥品櫃，瓶數由各位置加總，請到上面的藥品櫃修改"':''}></div>
@@ -5233,6 +5511,8 @@ async function saveChemInline(id) {
     name_zh,
     name_en: document.getElementById(`ci-en-${id}`)?.value.trim() || null,
     ...((el=>{if(!el)return {};const v=(el.value||'').trim().slice(0,60);return v!==(el.dataset.orig||'')?{formula:v||null}:{};})(document.getElementById(`ci-fm-${id}`))), // 有改才送
+    ...((el=>{if(!el)return {};const v=(el.value||'').trim().slice(0,100);return v!==(el.dataset.orig||'')?{alias:v||null}:{};})(document.getElementById(`ci-al-${id}`))),
+    ...((el=>{if(!el)return {};const v=(el.value||'').trim().slice(0,600);return v!==(el.dataset.orig||'').trim()?{warning:v||null}:{};})(document.getElementById(`ci-wn-${id}`))),
     location: document.getElementById(`ci-loc-${id}`)?.value.trim() || null,
     category: document.getElementById(`ci-cat-${id}`)?.value || null,
     bottles_left: parseInt(document.getElementById(`ci-btl-${id}`)?.value) || 0,
@@ -5252,7 +5532,7 @@ async function saveChemInline(id) {
 
 function clearChemForm() {
   editingChemId = null;
-  ['chem-name-zh','chem-name-en','chem-formula','chem-location','chem-recycle','chem-note'].forEach(id => {const el=document.getElementById(id);if(el)el.value='';});
+  ['chem-name-zh','chem-name-en','chem-formula','chem-alias','chem-warning','chem-location','chem-recycle','chem-note'].forEach(id => {const el=document.getElementById(id);if(el)el.value='';});
   const fpv=document.getElementById('chem-formula-pv');if(fpv)fpv.innerHTML='';
   document.getElementById('chem-category').value = '';
   document.getElementById('chem-bottles').value = '0';
@@ -5266,6 +5546,8 @@ async function saveChem() {
     name_zh,
     name_en: document.getElementById('chem-name-en').value.trim() || null,
     ...((v=>v?{formula:v}:{})((document.getElementById('chem-formula')?.value||'').trim().slice(0,60))), // 沒填就不送（資料庫還沒加欄位也不會出錯）
+    ...((v=>v?{alias:v}:{})((document.getElementById('chem-alias')?.value||'').trim().slice(0,100))),
+    ...((v=>v?{warning:v}:{})((document.getElementById('chem-warning')?.value||'').trim().slice(0,600))),
     location: document.getElementById('chem-location').value.trim() || null,
     category: document.getElementById('chem-category').value || null,
     bottles_left: parseInt(document.getElementById('chem-bottles').value) || 0,
