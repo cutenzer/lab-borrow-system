@@ -478,6 +478,12 @@
   .cb2-admin .cab-add-here,.cb2-admin .cab-zone-edit{margin:0;}
   .cb2-legend{font-size:12px;color:var(--text2);padding:6px 4px 0;line-height:1.7;}
   .cab-results small small{font-size:11.5px;}
+  .cab-qwrap{position:relative;}
+  .cab-qwrap .cab-q{padding-right:48px;}
+  .cab-q::-webkit-search-cancel-button{display:none;}
+  .cab-qx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:17px;border:none;background:#e6edf4;color:#1f4f7a;font:inherit;font-size:15px;font-weight:700;cursor:pointer;line-height:1;}
+  .cab-qx:hover{background:#d5e1ec;}
+  .cab-qx[hidden]{display:none;}
   .chem-warn{background:#fdecea;border:2px solid #c62828;border-radius:10px;padding:8px 11px;display:flex;flex-direction:column;gap:3px;color:#7f1010;font-size:13.5px;line-height:1.55;margin:4px 0 10px;}
   .chem-warn b{font-size:15px;color:#c62828;}
   /* 依「櫃子本身有多寬」調整（手機窄、後台側欄中等、電腦整頁很寬），不是看螢幕寬度 */
@@ -4199,6 +4205,17 @@ function makeCabUI(rootId,opts){
     Object.assign(ui.state,{cab:l.cab,L:l.layer,col:l.col,locId:l.id,zone:null,tray:null});ui.render();
     if(scroll)scrollTo();
   };
+  // 搜尋時直接跳到第一個找到的位置（名字完全一樣的優先）；scroll＝要不要把畫面捲過去
+  ui.jumpToFirst=scroll=>{
+    const q=qn(ui.state.q);if(!q)return;
+    const h=qHits(),t=qTrays();
+    const exactT=t.find(x=>qn(x.name)===q),exactL=h.find(l=>exactQ(chem(l.chem_id),q));
+    if(exactL||(!exactT&&h.length)){const l=exactL||h[0];Object.assign(ui.state,{cab:l.cab,L:l.layer,col:l.col,locId:l.id,zone:null,tray:null});}
+    else if(t.length){const x=exactT||t[0];Object.assign(ui.state,{cab:x.cab,L:x.layer,col:null,locId:null,zone:null,tray:x.id});}
+    else return;
+    ui.render();if(scroll)ui.scrollToPanel();
+  };
+  ui.scrollToPanel=()=>{const r=root();const p=r&&r.querySelector('.cb2-panel');if(p)p.scrollIntoView({behavior:'smooth',block:'center'});};
   ui.close=()=>{Object.assign(ui.state,{col:null,locId:null,zone:null,tray:null});ui.render();};
   // 上下左右移一格（左右是照站在櫃子前面看：往左＝排號變大）
   const NAV={up:[-1,0],down:[1,0],left:[0,1],right:[0,-1]};
@@ -4334,12 +4351,15 @@ function makeCabUI(rootId,opts){
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><div class="cab-results"></div></div><div class="cab-body"></div>`;
-      const inp=r.querySelector('.cab-q');
-      inp.oninput=()=>{ui.state.q=inp.value.trim();ui.state.picked=false;ui.render();};
+      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      const inp=r.querySelector('.cab-q'),qx=r.querySelector('.cab-qx');
+      const syncX=()=>{qx.hidden=!inp.value;};
+      // 打字就直接跳到第一個找到的位置（不捲動畫面，免得手機鍵盤擋住）
+      inp.oninput=()=>{ui.state.q=inp.value.trim();ui.state.picked=false;syncX();ui.render();ui.jumpToFirst(false);};
+      qx.onclick=()=>{inp.value='';ui.state.q='';ui.state.picked=false;syncX();ui.render();inp.focus();};
       inp.onkeydown=e=>{
         if(e.key==='Enter'){const f=r.querySelector('.cab-results [data-hit],.cab-results [data-htray]');if(f){e.preventDefault();f.click();}}
-        else if(e.key==='Escape'){inp.value='';ui.state.q='';ui.render();}
+        else if(e.key==='Escape'){inp.value='';ui.state.q='';syncX();ui.render();}
         else if(e.key==='ArrowDown'){const f=r.querySelector('.cab-results button');if(f){e.preventDefault();f.focus();}}
       };
     }
@@ -4354,8 +4374,8 @@ function makeCabUI(rootId,opts){
       const locBtns=hits.slice(0,10).map(l=>{const c=chem(l.chem_id);return `<button type="button" data-hit="${escH(String(l.id))}"><span>${c&&warnLines(c.warning).length?'<b style="color:#c62828">⚠</b> ':''}${escH(c?.name_zh||'?')}${c&&c.alias?`<small>（${escH(c.alias)}）</small>`:''}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`;}).join('');
       res.innerHTML=trayBtns+locBtns+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；櫃子上亮黃色的是這一櫃找到的位置</div>`:'');
     }
-    res.querySelectorAll('[data-hit]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);});
-    res.querySelectorAll('[data-htray]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectTray(b.dataset.htray,false);});
+    res.querySelectorAll('[data-hit]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectLoc(b.dataset.hit,false);ui.scrollToPanel();});
+    res.querySelectorAll('[data-htray]').forEach(b=>b.onclick=()=>{ui.state.picked=true;ui.selectTray(b.dataset.htray,false);ui.scrollToPanel();});
     res.querySelectorAll('button').forEach(b=>b.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();(b.nextElementSibling||b).focus();}else if(e.key==='ArrowUp'){e.preventDefault();(b.previousElementSibling||r.querySelector('.cab-q')).focus();}});
     const body=r.querySelector(':scope>.cab-body');
     const cnt={};locs().filter(l=>l.cab===st.cab).forEach(l=>{const n=catName(chem(l.chem_id)?.category);if(n)cnt[n]=(cnt[n]||0)+1;});
@@ -4712,7 +4732,10 @@ function openCabEdit(locId){
       <div class="form-group"><label>中文名稱</label><input id="cab-ed-zh" maxlength="60" value="${escH(c.name_zh||'')}"></div>
       <div class="form-group"><label>英文名稱／簡寫（選填）</label><input id="cab-ed-en" maxlength="100" value="${escH(c.name_en||'')}" placeholder="例如 EDTA 或 Phenolphthalein"></div>
     </div>
-    <div class="hint" style="margin:-4px 0 10px;font-size:12px">名稱是這個藥品本身的資料，改了之後它在每個位置、藥品清單都會一起變。</div>`:''}
+    <div class="form-group"><label>分子式（數字自動變下標；電荷用 ^，例如 Fe^3+）</label><input id="cab-ed-fm" maxlength="60" spellcheck="false" autocomplete="off" value="${escH(c.formula||'')}" oninput="document.getElementById('cab-ed-fmpv').innerHTML=fmtFormula(this.value)"><div class="hint" id="cab-ed-fmpv" style="min-height:1.4em;font-size:15px">${fmtFormula(c.formula)}</div></div>
+    <div class="form-group"><label>俗名／別名（多個用、分開；搜尋也找得到）</label><input id="cab-ed-al" maxlength="100" value="${escH(c.alias||'')}" placeholder="例如：小蘇打、重曹"></div>
+    <div class="form-group"><label>安全警示（第一行是標題，下面每行一條）</label><textarea id="cab-ed-wn" rows="3" maxlength="600" placeholder="強酸・強脫水性&#10;稀釋時一定要「酸倒入水」">${escH(c.warning||'')}</textarea></div>
+    <div class="hint" style="margin:-4px 0 10px;font-size:12px">名稱、分子式、俗名、警示是這個藥品本身的資料，改了之後它在每個位置、藥品清單都會一起變。</div>`:''}
     <div class="form-group"><label>瓶數</label>
       <div style="display:flex;gap:8px;align-items:center">
         <button type="button" class="btn btn-secondary" onclick="cabBtlStep(-1)">−</button>
@@ -4741,11 +4764,19 @@ async function saveCabEdit(){
   if(c&&zhEl){
     const zh=zhEl.value.trim().slice(0,60),en=(enEl?.value||'').trim().slice(0,100);
     if(!zh){showToast('中文名稱不能空白','error');return;}
-    if(zh!==(c.name_zh||'')||en!==(c.name_en||'')){
-      const dup=chemNameClash(c.id,zh,en);
-      if(dup&&!confirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「🔎 相似名稱」合併）`))return;
-      try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body:{name_zh:zh,name_en:en||null,updated_at:new Date().toISOString()},prefer:'return=minimal'});c.name_zh=zh;c.name_en=en||null;}
-      catch(e){showToast('名稱更新失敗：'+e.message,'error');return;}
+    // 分子式、俗名、警示：有改才送（資料庫還沒加欄位時，沒動到就不會出錯）
+    const extra={},fv=(id,n)=>(document.getElementById(id)?.value||'').trim().slice(0,n);
+    if(document.getElementById('cab-ed-fm')){const v=fv('cab-ed-fm',60);if(v!==(c.formula||''))extra.formula=v||null;}
+    if(document.getElementById('cab-ed-al')){const v=fv('cab-ed-al',100);if(v!==(c.alias||''))extra.alias=v||null;}
+    if(document.getElementById('cab-ed-wn')){const v=fv('cab-ed-wn',600);if(v!==String(c.warning||'').trim())extra.warning=v||null;}
+    const nameChanged=zh!==(c.name_zh||'')||en!==(c.name_en||'');
+    if(nameChanged||Object.keys(extra).length){
+      if(nameChanged){
+        const dup=chemNameClash(c.id,zh,en);
+        if(dup&&!confirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「🔎 相似名稱」合併）`))return;
+      }
+      try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body:{name_zh:zh,name_en:en||null,...extra,updated_at:new Date().toISOString()},prefer:'return=minimal'});Object.assign(c,{name_zh:zh,name_en:en||null},extra);}
+      catch(e){showToast('藥品資料更新失敗：'+e.message,'error');return;}
     }
   }
   const btl=parseInt(document.getElementById('cab-ed-btl')?.value,10);
