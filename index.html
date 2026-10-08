@@ -620,6 +620,20 @@
   .cb2-legend{font-size:12px;color:var(--text2);padding:6px 4px 0;line-height:1.7;}
   .cab-results small small{font-size:11.5px;}
   .cab-qwrap{position:relative;}
+  /* 藥品盆編輯：一樣東西一張小卡（手機好填） */
+  .tray-row{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface2);}
+  .tr-top{display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .tr-kind{display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface);}
+  .tr-kind button{border:none;background:transparent;padding:7px 16px;font:inherit;font-size:14px;cursor:pointer;color:var(--text2);}
+  .tr-kind button.on{background:#1f4f7a;color:#fff;font-weight:700;}
+  .tr-del{width:38px;height:38px;border-radius:9px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font:inherit;font-size:15px;}
+  .tray-row input{width:100%;box-sizing:border-box;font-size:16px;}
+  .tr-sug,.chem-sug{display:flex;flex-direction:column;gap:3px;}
+  .tr-sug:empty,.chem-sug:empty{display:none;}
+  .tr-sug button,.chem-sug button{text-align:left;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:9px;padding:9px 11px;font:inherit;font-size:15px;cursor:pointer;}
+  .tr-sug button small,.chem-sug button small{color:var(--text2);font-size:12.5px;}
+  .tr-hint{font-size:12.5px;color:var(--text2);}
+  .tr-hint:empty{display:none;}
   .cab-qwrap .cab-q{padding-right:48px;}
   .cab-q::-webkit-search-cancel-button{display:none;}
   .cab-qx{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:17px;border:none;background:#e6edf4;color:#1f4f7a;font:inherit;font-size:15px;font-weight:700;cursor:pointer;line-height:1;}
@@ -1464,7 +1478,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08j · 藥品櫃改成局部更新（不再整個重畫）</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08k · 視窗可以捲動＋按鈕固定底部</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5607,9 +5621,12 @@ function makeCabUI(rootId,opts){
     new MutationObserver(()=>set(ov.classList.contains('show'))).observe(ov,{attributes:true,attributeFilter:['class']});
     ov.addEventListener('touchmove',e=>{
       if(!ov.classList.contains('show'))return;
-      const mb=document.getElementById('modalBody');
-      if(mb&&mb.contains(e.target)&&mb.scrollHeight>mb.clientHeight+1)return; // 視窗內容本身可以捲
-      e.preventDefault();
+      // 手指底下只要有「本身可以捲」的區塊（視窗本體、長清單、文字框），就讓它捲
+      for(let n=e.target;n&&n!==ov;n=n.parentElement){
+        if(n.tagName==='TEXTAREA'||n.tagName==='SELECT')return;
+        if(n.scrollHeight>n.clientHeight+1){const oy=getComputedStyle(n).overflowY;if(oy==='auto'||oy==='scroll')return;}
+      }
+      e.preventDefault(); // 視窗外面（灰色底）滑動：擋掉，後面的頁面不會動
     },{passive:false});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
