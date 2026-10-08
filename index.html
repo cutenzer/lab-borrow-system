@@ -527,20 +527,14 @@
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
   .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
   /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
-  /* ── 藥品資料卡：筆記紙 ── */
-  .note-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--surface2);}
-  .note-row .k{flex:0 0 56px;color:var(--text2);font-size:13px;}
+  /* ── 藥品資料卡 ── */
+  .note-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--surface2);}
+  .note-row .k{flex:0 0 64px;color:var(--text2);font-size:13px;}
   .note-row .v{flex:1;min-width:0;}
-  .note-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:'DM Mono',ui-monospace,monospace;font-size:12px;color:#6b665c;margin:0 0 8px;}
-  .note-head .tag{font-family:'Noto Sans TC',sans-serif;font-size:12.5px;font-weight:700;border:1.5px solid #22262a;color:#22262a;padding:1px 9px;white-space:nowrap;}
-  .note-formula{font-size:22px;margin:2px 0 6px;}
-  .note-here{background:rgba(255,236,160,.45);border-left:3px solid #e0a800;padding:6px 10px;font-size:13.5px;margin:4px 0 8px;}
-  .modal.note-card{background-color:#fdfaf0;border-radius:6px;transform:rotate(-.8deg);box-shadow:0 24px 50px rgba(0,0,0,.35);padding-top:0;}
-  .modal.note-card .modal-title{font-size:22px;font-weight:800;margin:0;padding:16px 22px 10px 30px;border-bottom:2px solid #d9534f;}
-  .modal.note-card #modalBody{padding:10px 22px 4px 30px;background-image:linear-gradient(90deg,transparent 17px,rgba(217,83,79,.45) 17px,rgba(217,83,79,.45) 18.5px,transparent 18.5px);}
-  .modal.note-card .note-row{border-bottom:1px solid #c9dcef;}
-  .modal.note-card .modal-actions{background:#fdfaf0;}
-  @media (prefers-reduced-motion:reduce){.modal.note-card{transform:none;}}
+  .note-here{background:#fff8e1;border:1px solid #ecdca0;border-radius:10px;padding:8px 10px;font-size:13.5px;margin:4px 0 8px;}
+  /* 視窗打開時，後面的頁面不能捲動 */
+  .modal-overlay{overscroll-behavior:contain;}
+  #modalBody{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   /* ── 藥品櫃 v2：照實際櫃子畫（深藍鋼櫃、層板、門縫、分區名牌）── */
   .cb2{--fr:#1f4f7a;--sh:#163a5a;--ink:#1f4f7a;margin:2px 0 6px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.16));}
   .cb2-top{background:var(--fr);border-radius:9px 9px 0 0;padding:7px 10px 4px;display:flex;align-items:center;justify-content:space-between;gap:6px;}
@@ -1470,7 +1464,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08e · 資料卡位置不重複</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08f · 資料卡恢復原樣＋開卡片時後面不會捲動</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -4965,7 +4959,6 @@ function ackAllElectiveAndSubmit(){
   closeModal();submitRequest();
 }
 function showModal(title,body,actions){
-  document.querySelector('#modalOverlay .modal')?.classList.remove('note-card'); // 一般視窗不用筆記紙樣式
   document.getElementById('modalTitle').textContent=title;
   document.getElementById('modalBody').innerHTML=body;
   document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');
@@ -5551,6 +5544,19 @@ function makeCabUI(rootId,opts){
   };
   return ui;
 }
+// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
+(function(){
+  function init(){
+    const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
+    let y=0,locked=false;const b=document.body;
+    new MutationObserver(()=>{
+      const on=ov.classList.contains('show');
+      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
+      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
+    }).observe(ov,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
 
 let allChemicals=[],filteredChemicals=[],allChemLocs=[],allChemLabels=[],allChemTrays=[];
 const chemCabUI=makeCabUI('chemCabView',{getLocs:()=>allChemLocs,getLabels:()=>allChemLabels,getTrays:()=>allChemTrays,getChem:id=>allChemicals.find(c=>String(c.id)===String(id)),
@@ -5585,9 +5591,6 @@ async function ensureChemData(){
   }
   const b=document.getElementById('chemViewCabBtn');if(b)b.style.display=(allChemLocs.length||allChemTrays.length)?'':'none';
 }
-// 資料卡用「筆記紙」的樣子（只套在藥品／藥品盆的卡片；其他視窗 showModal 時會自動拿掉）
-function noteCard(){const m=document.querySelector('#modalOverlay .modal');if(m)m.classList.add('note-card');}
-function noteHead(code,tag){return `<div class="note-head"><span>${escH(code)}</span>${tag?`<span class="tag">${escH(tag)}</span>`:''}</div>`;}
 // 點藥品 → 跳出資料卡：名稱、俗名、警示、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
 // ctx.locId：從藥品櫃點某一罐進來的；ctx.tray／ctx.item：從藥品盆裡點進來的
 async function openChemDetail(id,ctx){
@@ -5600,21 +5603,19 @@ async function openChemDetail(id,ctx){
   const showLocs=locs.filter(l=>String(l.id)!==hlId);
   const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
   // 這一罐在哪裡（從櫃子點進來才有）
-  let here='',code='';
+  let here='';
   const hl=ctx.locId!=null?allChemLocs.find(l=>String(l.id)===String(ctx.locId)):null;
   if(hl){const same=allChemLocs.filter(l=>l.cab===hl.cab&&l.layer===hl.layer&&l.col===hl.col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));const k=same.findIndex(l=>l.id===hl.id);
-    code=`NO.${hl.cab} / ${hl.layer}-${hl.col} / #${k<0?1:k+1}`;
     here=`📍 ${escH(cabText(hl))}（${cabDoor(hl.col)}）・${k<=0?'最前面':'由前往後第 '+(k+1)+' 個'}${(parseInt(hl.bottles)||0)!==1?'・這裡有 '+parseInt(hl.bottles)+' 瓶':''}`;}
   const t=ctx.tray!=null?allChemTrays.find(x=>String(x.id)===String(ctx.tray)):null,it=t?trayItems(t)[ctx.item]:null;
-  if(t)code=`NO.${t.cab} / 🧺 ${String(t.name||'藥品盆').slice(0,12)}`;
   if(t)here=`🧺 在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）${it&&it.note?'・盆內規格：'+escH(it.note):''}`;
-  showModal((c.name_zh||'藥品'),`
-    ${noteHead(code||'藥品資料',catName(c.category)||'')}
+  showModal('🧪 '+(c.name_zh||'藥品'),`
     ${c.alias?`<div style="font-size:14.5px;margin-bottom:2px">俗名／別名：<b>${escH(c.alias)}</b></div>`:''}
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
     ${warnBoxHtml(c.warning)}
-    ${c.formula?`<div class="note-formula">${fmtFormula(c.formula)}</div>`:''}
     ${here?`<div class="note-here">${here}</div>`:''}
+    ${row('分子式',c.formula?fmtFormula(c.formula):'')}
+    ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
     ${hlId!=null||ctx.tray!=null?row('其他位置',showLocs.length?locHtml:''):row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
     ${row('回收',c.recycle_type?'♻️ '+escH(c.recycle_type):'')}
@@ -5622,7 +5623,6 @@ async function openChemDetail(id,ctx){
 `,
     avail?[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'申請這個藥品',cls:'btn-primary',fn:`closeModal();openChemRequestModal(${parseInt(c.id)||0})`}]
          :[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
-  noteCard();
 }
 // ── 藥品盆資料卡（整盆）──
 function openTrayCard(id){
@@ -5631,7 +5631,6 @@ function openTrayCard(id){
   const chips=its.map((x,i)=>{const c=x.chem_id?allChemicals.find(o=>String(o.id)===x.chem_id):null;
     return `<button type="button" class="cb2-ti${c?'':' eq'}" style="margin:3px 4px 3px 0" onclick="openTrayItem(${ja(t.id)},${i})">${c&&warnLines(c.warning).length?'<span class="w">⚠</span>':''}${escH(x.label||c?.name_zh||'?')}${x.note?`<small style="font-weight:400;opacity:.8">　${escH(x.note)}</small>`:''}</button>`;}).join('');
   showModal('🧺 '+(t.name||'藥品盆'),`
-    ${noteHead(`NO.${t.cab} / ${t.layer}-${b===a?a:b+'～'+a}`,'藥品盆')}
     ${warnBoxHtml(t.warning)}
     <div class="note-here">📍 ${escH(trayCode(t))}（${cabDoor(a)}）・佔 ${b-a+1} 排寬${tall>1?'、'+tall+' 層高':''}</div>
     ${t.course?`<div style="font-size:14px;margin-bottom:6px">課程：<b>${escH(t.course)}</b></div>`:''}
@@ -5640,7 +5639,6 @@ function openTrayCard(id){
     ${t.note?`<div style="font-size:13px;color:var(--text2);margin-top:8px">📝 ${escH(t.note)}</div>`:''}
     <div class="hint" style="margin-top:10px">整盆一起借出、一起歸還；要借整盆請在借用單備註寫盆名。</div>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
-  noteCard();
 }
 // ── 盆裡的某一樣：是藥品就開藥品資料卡；是器材就開小卡 ──
 function openTrayItem(id,i){
@@ -5648,12 +5646,10 @@ function openTrayItem(id,i){
   const x=trayItems(t)[i];if(!x)return;
   if(x.chem_id&&allChemicals.some(c=>String(c.id)===x.chem_id)){openChemDetail(x.chem_id,{tray:t.id,item:i});return;}
   showModal((x.label||'盆內物品'),`
-    ${noteHead(`NO.${t.cab} / 🧺 ${String(t.name||'藥品盆').slice(0,12)}`,'器材')}
     <div class="note-here">🧺 在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）</div>
     ${x.note?`<div style="font-size:14px">數量／規格：<b>${escH(x.note)}</b></div>`:''}
     <div class="hint" style="margin-top:8px">跟著盆一起借出、一起歸還。</div>`,
     [{label:'看整盆',cls:'btn-secondary',fn:`openTrayCard(${ja(t.id)})`},{label:'關閉',cls:'btn-primary',fn:'closeModal()'}]);
-  noteCard();
 }
 // 點清單上的位置 → 切到藥品櫃，亮出那一格
 function showChemLoc(locId){setChemView('cab');chemCabUI.selectLoc(locId,true);}
