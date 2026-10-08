@@ -4166,6 +4166,7 @@ async function loadChemCats(){
 // 分區顏色跟著大類走；舊資料沒有大類的，用名稱猜一個顏色
 function zoneColorOf(z){if(z&&z.category){const c=catInfo(z.category);return [hexMix(c.color,.82,1),c.color];}return zoneColor(z&&z.text);}
 
+// ==== 藥品櫃元件 開始（index.html 和 admin.html 這一段一模一樣）====
 // ── 警示文字：第一行是標題，下面每一行是一條注意事項 ──
 function warnLines(w){return String(w??'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean).slice(0,8).map(s=>s.slice(0,160));}
 function warnBoxHtml(w){const a=warnLines(w);if(!a.length)return '';return `<div class="chem-warn" role="alert"><b>⚠ ${escH(a[0])}</b>${a.slice(1).map(s=>`<span>・${escH(s)}</span>`).join('')}</div>`;}
@@ -4183,6 +4184,8 @@ function trayCode(t){const {a,b,tall}=trayCols(t);return `第${CAB_CN[t.cab]||t.
 function makeCabUI(rootId,opts){
   const ui={state:{cab:1,L:1,col:null,locId:null,tray:null,zone:null},opts};
   const root=()=>document.getElementById(rootId);
+  // 直接改捲動位置（不用動畫），手機和電腦都適用
+  const scrollByY=d=>{if(!(Math.abs(d)>1))return;const se=document.scrollingElement||document.documentElement;se.scrollTop=Math.max(0,se.scrollTop+d);};
   const locs=()=>opts.getLocs()||[];
   const chem=id=>opts.getChem(id);
   const labels=()=>(opts.getLabels&&opts.getLabels())||[];
@@ -4192,7 +4195,8 @@ function makeCabUI(rootId,opts){
   const zoneAt=(cab,L,col)=>zonesOf(cab).find(z=>z.layer===L&&col>=z.a&&col<=z.b);
   const trayAt=(cab,L,col)=>trays().find(t=>{if(t.cab!==cab)return false;const {a,b,tall}=trayCols(t);return L>=t.layer&&L<t.layer+tall&&col>=a&&col<=b;});
   const cellLocs=(cab,L,col)=>locs().filter(l=>l.cab===cab&&l.layer===L&&l.col===col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));
-  const scrollTo=()=>{const r=root();if(r)r.scrollIntoView({behavior:'smooth',block:'start'});};
+  // 從清單、搜尋結果跳過來時：把拉出來的那一列捲到畫面中間（不是捲到櫃子最上面）
+  const scrollTo=()=>{requestAnimationFrame(()=>ui.scrollToPanel());};
   ui.select=(cab,L,col,locId)=>{
     const t=col!=null?trayAt(cab,L,col):null;
     if(t){ui.selectTray(t.id);return;}
@@ -4394,8 +4398,8 @@ function makeCabUI(rootId,opts){
       const prev=openRow();
       if(!(prev!=null&&prev<L)){fn();return;}
       const t0=el.getBoundingClientRect().top;fn();
-      const n=root()&&root().querySelector(sel);if(!n)return;
-      const d=n.getBoundingClientRect().top-t0;if(Math.abs(d)>1)window.scrollTo(0,Math.max(0,(window.pageYOffset||0)+d));
+      const fix=()=>{const n=root()&&root().querySelector(sel);if(n)scrollByY(n.getBoundingClientRect().top-t0);};
+      fix();requestAnimationFrame(fix); // iPhone 有時下一格畫面才排好版，再對一次
     };
     body.querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{Object.assign(ui.state,{cab:+b.dataset.cab,L:1,col:null,locId:null,zone:null,tray:null});ui.render();});
     body.querySelectorAll('.cb2-cell').forEach(c=>c.onclick=()=>{
@@ -4413,7 +4417,9 @@ function makeCabUI(rootId,opts){
     body.querySelectorAll('[data-jar]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.jar);if(!l)return;
       ui.state.locId=l.id;
-      if(opts.onJar)opts.onJar(l,ui);else if(opts.onChip)opts.onChip(l,ui);else ui.render();
+      // 只換亮起來的那一罐，不重畫整個櫃子（重畫會讓後面的畫面動一下）
+      body.querySelectorAll('.cb2-jar.on').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+      if(opts.onJar)opts.onJar(l,ui);else if(opts.onChip)opts.onChip(l,ui);
     });
     body.querySelectorAll('[data-loc]').forEach(b=>b.onclick=()=>{
       const l=locs().find(x=>String(x.id)===b.dataset.loc);if(!l)return;
@@ -4427,8 +4433,19 @@ function makeCabUI(rootId,opts){
     body.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>opts.onAdd(st.cab,st.L,+b.dataset.add,ui));
     body.querySelectorAll('[data-qd]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.ql);if(l&&opts.onQuick)opts.onQuick(l,+b.dataset.qd,ui);});
     body.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{const l=locs().find(x=>String(x.id)===b.dataset.rm);if(l&&opts.onRemove)opts.onRemove(l,ui);});
-    body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{ui.move(b.dataset.nav);focusUi();});
-    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();if(String(ui.state.zone)===b.dataset.zone&&ui.state.col==null){ui.close();return;}ui.selectZone(b.dataset.zone);}));
+    // ↑↓←→：手指按的是展開列上的按鈕 → 讓展開列留在原本的位置
+    body.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
+      const p=b.closest('.cb2-panel');const t0=p?p.getBoundingClientRect().top:null;
+      ui.move(b.dataset.nav);
+      if(t0!=null){const np=root()&&root().querySelector('.cb2-panel');if(np)scrollByY(np.getBoundingClientRect().top-t0);}
+      focusUi();
+    });
+    body.querySelectorAll('[data-zone]').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();const id=b.dataset.zone;
+      if(String(ui.state.zone)===id&&ui.state.col==null){ui.close();return;}
+      const z=labels().find(x=>String(x.id)===id);
+      if(b.classList.contains('cb2-zone')&&z)keepPos(b,`.cb2-zone[data-zone="${CSS.escape(id)}"]`,z.layer,()=>ui.selectZone(id));else ui.selectZone(id);
+    }));
     body.querySelectorAll('[data-cathi]').forEach(b=>b.onclick=()=>{ui.state.catHi=ui.state.catHi===b.dataset.cathi?null:b.dataset.cathi;ui.render();});
     body.querySelectorAll('[data-zedit]').forEach(b=>b.onclick=()=>{const z=labels().find(x=>String(x.id)===b.dataset.zedit);if(z&&opts.onZone)opts.onZone(z.cab,z.layer,Math.max(z.col_from,z.col_to),z,ui);});
     body.querySelectorAll('[data-zcell]').forEach(b=>b.onclick=()=>{if(opts.onZone)opts.onZone(st.cab,st.L,st.col,zoneAt(st.cab,st.L,st.col)||null,ui);});
@@ -4442,45 +4459,24 @@ function makeCabUI(rootId,opts){
   };
   return ui;
 }
-// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
+// ── 視窗（資料卡、表單）打開時，後面的頁面不能捲動 ──
+// 不用「把整頁固定」的作法（那樣打開、關掉的瞬間畫面會跳一下），改成：
+//   1. 打開時把整頁的捲軸關掉；2. 手指在視窗外面滑動一律擋掉；視窗裡面內容很長時照樣可以捲
 (function(){
   function init(){
     const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
-    let y=0,locked=false;const b=document.body;
-    new MutationObserver(()=>{
-      const on=ov.classList.contains('show');
-      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
-      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
-    }).observe(ov,{attributes:true,attributeFilter:['class']});
+    const set=on=>{const v=on?'hidden':'';document.documentElement.style.overflow=v;document.body.style.overflow=v;};
+    new MutationObserver(()=>set(ov.classList.contains('show'))).observe(ov,{attributes:true,attributeFilter:['class']});
+    ov.addEventListener('touchmove',e=>{
+      if(!ov.classList.contains('show'))return;
+      const mb=document.getElementById('modalBody');
+      if(mb&&mb.contains(e.target)&&mb.scrollHeight>mb.clientHeight+1)return; // 視窗內容本身可以捲
+      e.preventDefault();
+    },{passive:false});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
-// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
-(function(){
-  function init(){
-    const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
-    let y=0,locked=false;const b=document.body;
-    new MutationObserver(()=>{
-      const on=ov.classList.contains('show');
-      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
-      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
-    }).observe(ov,{attributes:true,attributeFilter:['class']});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
-// ── 視窗（資料卡、表單）打開時把後面的頁面固定住，手指滑動不會捲到後面的藥品櫃；關掉後回到原本的位置 ──
-(function(){
-  function init(){
-    const ov=document.getElementById('modalOverlay');if(!ov||ov._scrollLock)return;ov._scrollLock=true;
-    let y=0,locked=false;const b=document.body;
-    new MutationObserver(()=>{
-      const on=ov.classList.contains('show');
-      if(on&&!locked){y=window.scrollY||0;Object.assign(b.style,{position:'fixed',top:(-y)+'px',left:'0',right:'0',width:'100%'});locked=true;}
-      else if(!on&&locked){Object.assign(b.style,{position:'',top:'',left:'',right:'',width:''});window.scrollTo(0,y);locked=false;}
-    }).observe(ov,{attributes:true,attributeFilter:['class']});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
-})();
+// ==== 藥品櫃元件 結束 ====
 
 let allChemLocs=[],chemLocsReady=false,allChemLabels=[];
 const adminCabUI=makeCabUI('adminChemCab',{
