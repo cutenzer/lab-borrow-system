@@ -1668,7 +1668,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09i · 週表一屏＋估計週曆</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09j · 換頁從最上面開始</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5051,7 +5051,7 @@ function showPage(page,opts){
   if(!fromHist)navSaveScroll();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  if(!fromHist){window.scrollTo({top:0,behavior:'smooth'});navPush('');}
+  if(!fromHist){navTop();navPush('');}
   const navKey=page==='equipment'?'borrow':page==='coursebook'?'semester':page; // 找器材、借用單是「器材借用」的兩個分頁；課綱借用算在「學期實驗」底下
   document.querySelectorAll('.nav-menu button,.desk-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===navKey));
   document.querySelectorAll('.bw-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===page));
@@ -5093,6 +5093,11 @@ const NAV_OVERLAYS=[
   ['fpSheet','show',()=>closeFpSheet()],
   ['navMenu','show',()=>closeNavMenu()],
 ];
+// 直接跳到頁面最上面（不用平滑捲動）；畫完新頁面再補一次，避免手機瀏覽器沿用舊位置
+function navTop(){
+  const go=()=>{try{window.scrollTo({top:0,left:0,behavior:'instant'});}catch(_){window.scrollTo(0,0);}const se=document.scrollingElement||document.documentElement;se.scrollTop=0;document.body.scrollTop=0;};
+  go();requestAnimationFrame(()=>{go();setTimeout(go,60);});
+}
 function navCurPage(){return document.querySelector('.page.active')?.id?.replace('page-','')||'home';}
 function navIsOpen(o){const el=document.getElementById(o[0]);return !!(el&&el.classList.contains(o[1]));}
 function navSaveScroll(){
