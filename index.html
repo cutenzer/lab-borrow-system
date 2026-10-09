@@ -631,6 +631,12 @@
     .desk-nav button .ico{display:none;}
     .brand-sub{display:none;}
   }
+  /* ── 器材借用：「找器材」「借用單」兩個分頁 ── */
+  .bw-tabs{display:flex;gap:4px;background:#e4ded2;border-radius:14px;padding:4px;margin-bottom:14px;max-width:480px;}
+  .bw-tabs button{flex:1;border:none;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--text2);padding:10px 8px;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .bw-tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  .bw-n{background:var(--accent);color:#fff;border-radius:999px;font-size:12px;line-height:20px;padding:0 7px;min-width:20px;}
+  .bw-n:empty{display:none;}
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
@@ -1207,10 +1213,9 @@
   </div>
   <nav class="desk-nav" aria-label="主選單">
     <button class="active" data-page="home" onclick="showPage('home')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>首頁</span></button>
-    <button data-page="borrow" onclick="showPage('borrow')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材借用</span></button>
+    <button data-page="borrow" onclick="showPage('equipment')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材借用</span></button>
     <button data-page="semester" onclick="showPage('semester')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M3 15h18"/></svg><span>學期實驗</span></button>
     <button data-page="venue" onclick="showPage('venue')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>場地預約</span></button>
-    <button data-page="equipment" onclick="showPage('equipment')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>器材查詢</span></button>
     <button data-page="floorplan" onclick="showPage('floorplan')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖</span></button>
     <button data-page="chemicals" onclick="showPage('chemicals')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg><span>藥品查詢</span></button>
     <button data-page="myrecords" onclick="showPage('myrecords')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>我的記錄</span></button>
@@ -1221,10 +1226,9 @@
     <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單"><span class="nh-o">☰ 選單</span><span class="nh-c">✕ 收合</span></button>
     <div class="nav-menu" id="navMenu">
       <button class="active" data-page="home" onclick="showPage('home')">🏠 首頁</button>
-      <button data-page="borrow" onclick="showPage('borrow')">🔬 器材借用</button>
+      <button data-page="borrow" onclick="showPage('equipment')">🔬 器材借用</button>
       <button data-page="semester" onclick="showPage('semester')">📅 學期實驗</button>
       <button data-page="venue" onclick="showPage('venue')">🏛️ 場地預約</button>
-      <button data-page="equipment" onclick="showPage('equipment')">📦 器材查詢</button>
       <button data-page="floorplan" onclick="showPage('floorplan')">🏫 平面圖</button>
       <button data-page="chemicals" onclick="showPage('chemicals')">🧪 藥品查詢</button>
       <button data-page="myrecords" onclick="showPage('myrecords')">📋 我的記錄</button>
@@ -1255,7 +1259,7 @@
   </section>
   <div class="hero2-results" id="heroResults" aria-live="polite"></div>
   <div class="entry-cards">
-    <button type="button" class="entry-card" onclick="showPage('borrow')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材</b><span>選器材、填借用單</span></button>
+    <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材</b><span>選器材、填借用單</span></button>
     <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><b>找東西</b><span>器材、藥品在哪一櫃</span></button>
     <button type="button" class="entry-card" onclick="showPage('venue')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>預約場地</b><span>看課表、預約節次</span></button>
     <button type="button" class="entry-card" onclick="showPage('floorplan')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><b>平面圖</b><span>看櫃子在哪裡</span></button>
@@ -1308,6 +1312,7 @@
 
 <div id="page-borrow" class="page">
   <aside id="borrowSidePanel" aria-label="借用清單"></aside>
+  <div class="bw-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')">🔍 找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')">📝 借用單<span class="bw-n"></span></button></div>
   <div class="deposit-banner" id="depositBanner">
     <h3>⚠️ 此借用目的需繳納保證金</h3>
     <ul>
@@ -1418,7 +1423,7 @@
 
   <div class="card">
     <div class="card-title">② 要借什麼：🛒 已選器材</div>
-    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：直接在下面搜尋加入，或到「器材查詢」頁面挑，或上面套用課綱實驗，都會加進這裡。</div>
+    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：直接在下面搜尋加入，或到「找器材」分頁挑，或上面套用課綱實驗，都會加進這裡。</div>
     <div class="search-wrap" style="margin-bottom:8px">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
@@ -1426,7 +1431,7 @@
     <div id="borrowPageSearchResults"></div>
     <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">📦 到器材查詢頁面挑選</button>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">🔍 到「找器材」挑選</button>
       <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
     </div>
   </div>
@@ -1498,6 +1503,7 @@
 
 <!-- 器材查詢 -->
 <div id="page-equipment" class="page">
+  <div class="bw-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')">🔍 找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')">📝 借用單<span class="bw-n"></span></button></div>
   <div class="card">
     <div class="card-title">📦 器材庫存查詢
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
@@ -1591,11 +1597,11 @@
     <aside class="fp-side" id="floorplanSide" aria-label="櫃位內容"><div class="hint" style="padding:30px 6px;text-align:center">點圖上的櫃子，<br>這裡會列出裡面有什麼</div></aside>
     </div>
     <div id="floorplanLocList" style="margin-top:14px"></div>
-    <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「器材查詢」頁的「❓ 找物說明」</div>
+    <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「找器材」分頁的「❓ 找物說明」</div>
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09c · 學期實驗週表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09d · 學期週表＋找器材借用合併</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -3843,7 +3849,7 @@ function renderBorrowSidePanel(){
       <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
       <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button><span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}${i.loose?`<small style="font-weight:400">${escH(itemUnitLabel(i))}</small>`:''}</span><button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
-  }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「器材查詢」挑</div>';
+  }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「找器材」分頁挑</div>';
   box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
     <div class="search-wrap" style="margin:0"><span class="search-icon">🔎</span><input class="search-input" type="text" id="sidePanelSearch" placeholder="搜尋器材，直接加入…" oninput="sidePanelSearch(this.value)" autocomplete="off"></div>
     <div id="sidePanelResults"></div>
@@ -3891,6 +3897,7 @@ function updateCartBadge(){
   setTimeout(renderBorrowSidePanel,0);
   const total=items.reduce((s,i)=>s+itemCount(i),0);
   document.getElementById('cartBadge').textContent=total;
+  document.querySelectorAll('.bw-n').forEach(el=>el.textContent=items.length?String(items.length):'');
   const summaryEl=document.getElementById('cartSummaryText');
   if(summaryEl){
     if(!items.length){summaryEl.textContent='尚未選擇任何器材';}
@@ -4978,7 +4985,9 @@ function showPage(page,opts){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   if(!fromHist){window.scrollTo({top:0,behavior:'smooth'});navPush('');}
-  document.querySelectorAll('.nav-menu button,.desk-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  const navKey=page==='equipment'?'borrow':page; // 找器材、借用單是同一個選單項目的兩個分頁
+  document.querySelectorAll('.nav-menu button,.desk-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===navKey));
+  document.querySelectorAll('.bw-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===page));
   closeNavMenu();
   document.body.classList.toggle('on-home',page==='home');
   if(page!=='home'){const hs=document.getElementById('heroSearch');if(hs&&hs.value){hs.value='';heroSearchLive('');}}
@@ -5137,7 +5146,8 @@ function renderSemTable(){
 }
 // ==== 學期實驗頁 開始 ====
 // 把課綱實驗排到「學期的第幾週」：電腦＝月份 × 週（彩色淡底卡片）；手機＝學期週格子 ＋ 下方該週清單
-// 週次怎麼對：課綱寫的「第 n 週」如果學期第 n 週的星期一剛好在那個月 → 用學期週；不然就當成「那個月的第 n 週」；只有月份 → 放「週次未定」
+// 週次怎麼對：有學期設定 → 課綱寫「第 n 週」就直接放學期第 n 週（只是參考，讓老師大概知道哪週做什麼）
+//            沒有學期設定 → 先當成「那個月的第 n 週」；只有月份 → 放「週次未定」
 const SP_TINT={'物理':'#e9edf4','化學':'#f6ece4','生物':'#e8f1ea','地科':'#e5f0f0','理化':'#efe9f4','其他':'#efede8'};
 const SP_ONE={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理','其他':'其'};
 const SP_KIND={'科學研究':'研','科研':'研','菁英':'菁','探究':'探','選修':'選','資優':'資','實驗班':'實','科學班':'科','先修':'先','專題':'專','加深加廣':'深'};
@@ -5158,7 +5168,8 @@ function spBuild(term){
   if(real){
     getSemesterWeeks(activeSemester).forEach(w=>{const m=spMid(w.date).getMonth()+1;if(months.includes(m))slots.push({week:w.week,date:w.date,m,type:w.type,items:[]});});
   }
-  const pool=allCourseTemplates.filter(t=>{const m=semMonthOf(t);return m&&months.includes(m);});
+  const hasWeek=t=>{const n=semWeekOf(t);return !!(n&&slots.some(x=>x.week===n));};
+  const pool=allCourseTemplates.filter(t=>{const m=semMonthOf(t);return m?months.includes(m):(real&&hasWeek(t));});
   if(!real){ // 沒有學期設定：每個月先排 4 週，有人寫到第 5 週才多一格
     months.forEach(m=>{const max=Math.max(4,...pool.filter(t=>semMonthOf(t)===m).map(t=>{const n=semWeekOf(t);return n&&n<=5?n:0;}));for(let n=1;n<=max;n++)slots.push({week:null,date:null,m,items:[]});});
   }
@@ -5166,8 +5177,8 @@ function spBuild(term){
   const undef={};
   pool.forEach(t=>{
     const m=semMonthOf(t),n=semWeekOf(t);let s=null;
-    if(n&&real)s=slots.find(x=>x.week===n&&x.date.getMonth()+1===m)||null;
-    if(!s&&n)s=slots.filter(x=>x.m===m)[n-1]||null;
+    if(n&&real)s=slots.find(x=>x.week===n)||null;
+    else if(n)s=slots.filter(x=>x.m===m)[n-1]||null;
     if(s)s.items.push(t);else(undef[m]=undef[m]||[]).push(t);
   });
   // 週次未定：放在該月最後一週後面
@@ -5183,7 +5194,7 @@ function spBuild(term){
     s.past=!!(s.date&&!s.now&&(s.date.getTime()+7*864e5)<=today.getTime());
     s.exam=s.week?examLabelForWeek(s.week):'';
   });
-  const noMonth=allCourseTemplates.filter(t=>!semMonthOf(t));
+  const noMonth=allCourseTemplates.filter(t=>!semMonthOf(t)&&!pool.includes(t));
   return {months:shown,real,slots:all,noMonth,maxN:Math.max(1,...all.map(s=>s.n||0)),hasUndef:all.some(s=>s.undef)};
 }
 function spSlotTitle(s,long){
@@ -5247,7 +5258,7 @@ function spRender(){
     h+='</div>';
   }
   h+='</div>';
-  if(B.noMonth.length)h+=`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
+  if(B.noMonth.length)h+=`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份或週次</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
   root.innerHTML=h;
 }
 function spPickWeek(i){
