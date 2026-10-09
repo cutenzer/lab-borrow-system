@@ -25,6 +25,55 @@
   .btn-danger-outline{background:transparent;color:var(--danger);border:1px solid #e8b4ae;}
   .btn-danger-outline:hover{background:#fdf0ee;}
   /* 課綱實驗清單：依學年月份分段、每列一個實驗，健檢結果直接寫在列上 */
+  /* ── 課綱實驗：健檢標籤、快速改日期、編輯面板 ── */
+  .tpl-when{font-size:12.5px;color:var(--text2);margin-top:2px;}
+  .tpl-iss{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;margin-top:6px;}
+  .tpl-iss span{font-size:12px;line-height:1.45;background:#fff4e5;border:1px solid #f0d2a6;color:#8a4b0f;border-radius:8px;padding:2px 8px;}
+  .tpl-iss button{font:inherit;font-size:12.5px;font-weight:700;border:1.5px solid #b45309;background:#fff;color:#b45309;border-radius:8px;padding:3px 10px;cursor:pointer;}
+  .tq-name{font-weight:700;font-size:15px;margin-bottom:10px;}
+  .tq-name small{display:block;font-weight:400;font-size:12.5px;color:var(--text2);}
+  .tq-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .tq-grid label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--text2);}
+  .tq-grid input{width:100%;box-sizing:border-box;font-size:16px;}
+  .tq-prev{margin-top:10px;display:grid;gap:4px;}
+  .tq-ok{font-size:13.5px;font-weight:700;color:#1f5b4c;background:#e8f1ea;border-radius:8px;padding:6px 10px;}
+  .tq-ok small{display:block;font-weight:400;color:var(--text2);font-size:12px;}
+  .tq-bad{font-size:13px;color:#8a4b0f;background:#fff4e5;border-radius:8px;padding:6px 10px;}
+  /* 編輯面板：手機全螢幕、電腦置中；上面分頁、中間自己捲、下面固定按鈕 */
+  #tplFormCard.tpl-sheet{position:fixed;inset:0;z-index:400;margin:0!important;border-radius:0;padding:0;display:flex;flex-direction:column;background:var(--surface);}
+  #tplFormCard.tpl-sheet:not(.open){display:none!important;}
+  .ts-head{display:flex;align-items:center;gap:8px;padding:14px 16px 8px;flex-shrink:0;}
+  .ts-head b{flex:1;font-size:17px;}
+  .ts-x{width:38px;height:38px;border-radius:19px;border:none;background:var(--surface2);font-size:16px;cursor:pointer;}
+  .ts-tabs{display:flex;gap:4px;margin:0 16px 8px;background:var(--surface2);border-radius:12px;padding:4px;flex-shrink:0;}
+  .ts-tabs button{flex:1;border:none;background:none;font:inherit;font-size:14.5px;font-weight:700;color:var(--text2);padding:9px 6px;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;}
+  .ts-tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12);}
+  .ts-tabs span{font-size:12px;background:var(--accent);color:#fff;border-radius:999px;padding:0 7px;line-height:19px;}
+  .ts-tabs span:empty{display:none;}
+  .ts-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 16px 16px;}
+  .ts-pane{display:none;}
+  .ts-pane.on{display:block;}
+  .ts-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;}
+  .ts-grid .form-group{margin:0;}
+  .ts-grid .full{grid-column:1/-1;}
+  .ts-grid input,.ts-grid select{width:100%;box-sizing:border-box;font-size:16px;}
+  .ts-foot{display:flex;gap:8px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .ts-foot .btn{flex:1;justify-content:center;height:46px;}
+  .ts-foot .btn-primary{flex:2;}
+  .ts-note textarea{width:100%;box-sizing:border-box;min-height:55vh;font-size:15px;line-height:1.7;}
+  /* 器材一列兩行：名稱、數量、單位、✕ ／ 規格、科別、備註 */
+  #tplEquipList .period-setting-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 62px 54px 36px;gap:6px;padding:8px;}
+  #tplEquipList .period-setting-row>*{min-width:0!important;width:100%;box-sizing:border-box;}
+  #tplEquipList .period-setting-row>:nth-child(1){grid-column:1/4;grid-row:1;}
+  #tplEquipList .period-setting-row>:nth-child(2){grid-column:1/2;grid-row:2;}
+  #tplEquipList .period-setting-row>:nth-child(3){grid-column:4/5;grid-row:1;}
+  #tplEquipList .period-setting-row>:nth-child(4){grid-column:5/6;grid-row:1;}
+  #tplEquipList .period-setting-row>:nth-child(5){grid-column:2/4;grid-row:2;}
+  #tplEquipList .period-setting-row>:nth-child(6){grid-column:4/7;grid-row:2;}
+  #tplEquipList .period-setting-row>:nth-child(7){grid-column:6/7;grid-row:1;}
+  @media(min-width:760px){
+    #tplFormCard.tpl-sheet{inset:5vh auto auto 50%;transform:translateX(-50%);width:min(760px,94vw);height:90vh;border-radius:18px;box-shadow:0 0 0 100vmax rgba(20,22,24,.4),0 20px 50px rgba(0,0,0,.3);}
+  }
   .tpl-tools{display:flex;flex-direction:column;gap:8px;margin:6px 0 10px;}
   .tpl-tools input{width:100%;box-sizing:border-box;}
   .tpl-filter{display:flex;gap:6px;flex-wrap:wrap;}
@@ -998,43 +1047,44 @@
   <input type="file" id="tpl-file" accept=".xlsx" style="display:none" onchange="handleTemplateFile(this)">
   <input type="file" id="tpl-import-file" accept=".xlsx" style="display:none" onchange="handleTemplateImport(this)">
 
-  <div class="card" id="tplFormCard" style="margin-bottom:16px;display:none">
-    <div class="card-title">📚 新增 / 編輯課綱實驗</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
-      <div class="form-group" style="grid-column:1/-1"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
-      <div class="form-group"><label>分類</label><input type="text" id="tpl-category"></div>
-      <div class="form-group"><label>年級</label><input type="text" id="tpl-grade"></div>
-      <div class="form-group"><label>教師</label><input type="text" id="tpl-teacher"></div>
-      <div class="form-group"><label>月份</label><input type="text" id="tpl-month"></div>
-      <div class="form-group"><label>週次</label><input type="text" id="tpl-week"></div>
-      <div class="form-group"><label>班數</label><input type="number" id="tpl-classcount" min="0"></div>
-      <div class="form-group"><label>組數</label><input type="number" id="tpl-groupcount" min="0"></div>
-      <div class="form-group">
-        <label>預設實驗室（科別）</label>
-        <select id="tpl-defaultroom">
-          <option value="">不指定</option>
-          <option value="Physics">物理</option>
-          <option value="Chemistry">化學</option>
-          <option value="Biology">生物</option>
-          <option value="Geoscience">地科</option>
-          <option value="Physics Chemistry">理化</option>
-          <option value="TeachingMaterialRoom">教具室</option>
-        </select>
+  <div class="card tpl-sheet" id="tplFormCard" style="display:none" role="dialog" aria-label="編輯課綱實驗">
+    <div class="ts-head"><b>📚 新增 / 編輯課綱實驗</b><button type="button" class="ts-x" onclick="clearTemplateForm()" aria-label="關閉">✕</button></div>
+    <div class="ts-tabs"><button type="button" data-tab="basic" class="on" onclick="tplTab('basic')">基本資料</button><button type="button" data-tab="equip" onclick="tplTab('equip')">器材<span id="tsEqN"></span></button><button type="button" data-tab="note" onclick="tplTab('note')">備註</button></div>
+    <div class="ts-body">
+      <div class="ts-pane on" data-pane="basic"><div class="ts-grid">
+        <div class="form-group full"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
+        <div class="form-group"><label>分類</label><input type="text" id="tpl-category"></div>
+        <div class="form-group"><label>年級</label><input type="text" id="tpl-grade"></div>
+        <div class="form-group full"><label>教師</label><input type="text" id="tpl-teacher"></div>
+        <div class="form-group"><label>月份</label><input type="text" id="tpl-month" oninput="tplFormDatePrev()" placeholder="例如 5"></div>
+        <div class="form-group"><label>週次（學期第幾週）</label><input type="text" id="tpl-week" oninput="tplFormDatePrev()" placeholder="例如 13～14"></div>
+        <div class="full tq-prev" id="tpl-date-prev"></div>
+        <div class="form-group"><label>班數</label><input type="number" id="tpl-classcount" min="0" inputmode="numeric"></div>
+        <div class="form-group"><label>組數</label><input type="number" id="tpl-groupcount" min="0" inputmode="numeric"></div>
+        <div class="form-group full">
+          <label>預設實驗室（科別）</label>
+          <select id="tpl-defaultroom">
+            <option value="">不指定</option>
+            <option value="Physics">物理</option>
+            <option value="Chemistry">化學</option>
+            <option value="Biology">生物</option>
+            <option value="Geoscience">地科</option>
+            <option value="Physics Chemistry">理化</option>
+            <option value="TeachingMaterialRoom">教具室</option>
+          </select>
+        </div>
+      </div></div>
+      <div class="ts-pane" data-pane="equip">
+        <div class="hint" style="margin-bottom:8px">會出現在借用申請中，數量＝總共要借的量。每一樣兩行：上面名稱、數量、單位；下面規格、科別、備註。</div>
+        <div id="tplEquipList"></div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addTplEquipRow()">＋ 新增器材項目</button>
+      </div>
+      <div class="ts-pane ts-note" data-pane="note">
+        <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">📝 參考備註（藥品／共用品項／注意事項，老師借用時會看到）</label>
+        <textarea id="tpl-note" rows="10"></textarea>
       </div>
     </div>
-    <div style="margin-top:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔬 器材清單（會出現在借用申請中，數量＝總共要借的量）</div>
-      <div id="tplEquipList"></div>
-      <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addTplEquipRow()">＋ 新增器材項目</button>
-    </div>
-    <div class="form-group" style="margin-top:14px">
-      <label>📝 參考備註（藥品／共用品項／注意事項，老師套用時會看到，可自行修改）</label>
-      <textarea id="tpl-note" rows="6"></textarea>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
-      <button class="btn btn-secondary" onclick="clearTemplateForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課綱實驗</button>
-    </div>
+    <div class="ts-foot"><button class="btn btn-secondary" onclick="clearTemplateForm()">取消</button><button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課綱實驗</button></div>
   </div>
 
   <div class="card" style="margin-bottom:0">
@@ -1668,7 +1718,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-09a';
+const ADMIN_VERSION='2026-10-09b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3860,7 +3910,7 @@ async function handleTemplateFile(input){
 
 function loadTemplateIntoForm(r){
   editingTemplateId=null;
-  document.getElementById('tplFormCard').style.display='block';
+  tplSheet(true);
   document.getElementById('tpl-name').value=r.name||'';
   document.getElementById('tpl-category').value=r.category||'';
   document.getElementById('tpl-grade').value=r.grade||'';
@@ -3879,7 +3929,7 @@ function loadTemplateIntoForm(r){
   });
   renderTplEquipList(items);
   document.getElementById('tpl-note').value=buildReferenceNote(r.other_items,r.chemicals,r.recycling);
-  document.getElementById('tplFormCard').scrollIntoView({behavior:'smooth'});
+  tplSheet(true);
 }
 
 function renderTplEquipList(items){
@@ -3904,11 +3954,11 @@ function addTplEquipRow(data){
     <select id="te-room-${id}" style="flex:1;min-width:80px">${TPL_ROOM_OPTIONS.map(([v,l])=>`<option value="${escH(v)}" ${v===data.room?'selected':''}>${escH(l)}</option>`).join('')}</select>
     <input type="text" id="te-note-${id}" placeholder="備註" style="flex:1;min-width:80px" value="${escH(data.note||'')}">
     <button class="period-setting-remove" onclick="removeTplEquipRow(${id})">✕</button>`;
-  list.appendChild(div);
+  list.appendChild(div);tplEqCount();
 }
 function removeTplEquipRow(id){
   tplEquipRows=tplEquipRows.filter(r=>r!==id);
-  document.getElementById('ter-'+id)?.remove();
+  document.getElementById('ter-'+id)?.remove();tplEqCount();
 }
 function collectTplEquipItems(){
   return tplEquipRows.map(id=>({
@@ -3923,12 +3973,11 @@ function collectTplEquipItems(){
 
 function newTemplate(){
   clearTemplateForm();
-  const card=document.getElementById('tplFormCard');card.style.display='block';
-  card.scrollIntoView({behavior:'smooth'});setTimeout(()=>document.getElementById('tpl-name')?.focus(),300);
+  tplSheet(true);setTimeout(()=>document.getElementById('tpl-name')?.focus(),300);
 }
 function clearTemplateForm(){
   editingTemplateId=null;
-  document.getElementById('tplFormCard').style.display='none';
+  tplSheet(false);
   ['tpl-name','tpl-category','tpl-grade','tpl-teacher','tpl-month','tpl-week','tpl-classcount','tpl-groupcount','tpl-note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('tpl-defaultroom').value='';
   renderTplEquipList([]);
@@ -3966,6 +4015,143 @@ async function saveTemplate(){
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
 }
 
+// ==== 學期週曆（前台、後台共用）開始 ====
+// 1) 讀「月份」「週次」欄：全形數字、國字（十三）、範圍（13～14、第13週～第16週）都看得懂
+// 2) 學期週曆：後台有設定這學期 → 用設定的日期；沒設定 → 先估（上學期 8/28 後第一個星期一開學、下學期 2/10 後第一個星期一）
+// 3) 一個課綱實驗該放第幾週，順便找出可能填錯的地方（給後台提醒修正）
+const SEMW_MONTHS={1:[8,9,10,11,12,1],2:[2,3,4,5,6,7]};
+const SEM_CN={'〇':0,'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+function semNums(v){
+  let s=String(v??'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+  s=s.replace(/[〇零一二兩三四五六七八九十]+/g,m=>{
+    if(!/^[一二兩三四五六七八九]?十?[〇零一二三四五六七八九]?$/.test(m))return m;
+    if(!m.includes('十'))return String(SEM_CN[m]);
+    const [a,b]=m.split('十');return String((a?SEM_CN[a]:1)*10+(b?SEM_CN[b]:0));
+  });
+  const out=[];
+  s=s.replace(/(\d+)\s*(?:週|周)?\s*(?:~|～|〜|-|－|—|–|至|到)\s*(?:第\s*)?(\d+)/g,(_,a,b)=>{a=+a;b=+b;if(b>=a&&b-a<=25)for(let i=a;i<=b;i++)out.push(i);else out.push(a,b);return ' ';});
+  (s.match(/\d+/g)||[]).forEach(x=>out.push(+x));
+  return [...new Set(out)].sort((a,b)=>a-b);
+}
+function semMonthOf(t){const n=semNums(t.month).find(x=>x>=1&&x<=12);return n||null;}
+function semWeeksOf(t){return semNums(t.week).filter(x=>x>=1&&x<=30);}
+function semWeekOf(t){return semWeeksOf(t)[0]||null;}
+function semTermOfMonth(m){return SEMW_MONTHS[1].includes(m)?1:2;}
+function semThu(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // 用週四判斷這週算哪個月
+// 這學期的每一週：[{week, date(星期一), m(月份)}]；real＝後台有設定，false＝估計的
+function semCalendar(term,sem){
+  const sw=sem?getSemesterWeeks(sem):[];
+  if(sw.length&&semTermOfMonth(semThu(sw[0].date).getMonth()+1)===term)
+    return {real:true,weeks:sw.map(w=>({week:w.week,date:w.date,m:semThu(w.date).getMonth()+1}))};
+  // 估計：學年從 8 月算起
+  const base=sw.length?sw[0].date:new Date();
+  let Y=base.getFullYear();if(base.getMonth()+1<8)Y--;
+  const d=term===1?new Date(Y,7,28):new Date(Y+1,1,10);
+  while(d.getDay()!==1)d.setDate(d.getDate()+1);
+  const weeks=[];
+  for(let i=0;i<(term===1?21:20);i++){const w=new Date(d);w.setDate(d.getDate()+i*7);weeks.push({week:i+1,date:w,m:semThu(w).getMonth()+1});}
+  return {real:false,weeks};
+}
+// 兩個月份在學期裡差幾個月（8 月→1 月算 5）
+function semMonthGap(a,b){const o=[8,9,10,11,12,1,2,3,4,5,6,7];return Math.abs(o.indexOf(a)-o.indexOf(b));}
+// 這個實驗放哪幾週＋可能的問題
+// 回傳 {weeks:[週次], issues:[文字]}；weeks 空的＝放不進週表（放「未定」）
+function semPlace(t,cal){
+  const m=semMonthOf(t),ws=semWeeksOf(t),raw=String(t.week??'').trim(),issues=[];
+  if(!m&&!String(t.month??'').trim())issues.push('沒填月份');
+  else if(!m)issues.push(`月份看不懂（${String(t.month).slice(0,10)}）`);
+  if(!ws.length){issues.push(raw?`週次看不懂（${raw.slice(0,10)}）`:'沒填週次');return {weeks:[],issues};}
+  const out=[];
+  ws.forEach(n=>{
+    const w=cal.weeks.find(x=>x.week===n);
+    if(!w){issues.push(`第 ${n} 週超出學期（只有 ${cal.weeks.length} 週）`);return;}
+    if(m&&semMonthGap(w.m,m)>1){
+      // 寫的可能是「那個月的第 n 週」
+      const alt=n<=5?cal.weeks.filter(x=>x.m===m)[n-1]:null;
+      if(alt){out.push(alt.week);issues.push(`學期第 ${n} 週${cal.real?'':'大約'}在 ${w.m} 月，跟「${m} 月」對不上，先當成 ${m} 月第 ${n} 週（W${alt.week}）`);}
+      else{out.push(w.week);issues.push(`學期第 ${n} 週${cal.real?'':'大約'}在 ${w.m} 月，跟「${m} 月」對不上`);}
+      return;
+    }
+    out.push(w.week);
+  });
+  return {weeks:[...new Set(out)],issues};
+}
+// ==== 學期週曆（前台、後台共用）結束 ====
+// ==== 課綱實驗：健檢＋快速改日期＋編輯面板 開始 ====
+// 健檢：每一筆課綱實驗找出「可能填錯」的地方，清單上直接標出來，點「改日期」就能修
+//   日期：沒填月份／週次、看不懂、週次跟月份對不上、超出學期、同一週擠太多
+//   名稱：同名的有好幾筆（可能重複匯入）
+const TPL_CROWD=10; // 同一週超過這麼多個實驗，多半是日期填錯
+function tplIssuesAll(){
+  const cal={1:semCalendar(1,activeSemester),2:semCalendar(2,activeSemester)};
+  const actTerm=cal[1].real?1:cal[2].real?2:semTermOfMonth(new Date().getMonth()+1);
+  const norm=s=>String(s||'').replace(/\s+/g,'');
+  const names={},byWeek={},map=new Map();
+  allTemplates.forEach(t=>{const k=norm(t.name);if(k)(names[k]=names[k]||[]).push(t);});
+  allTemplates.forEach(t=>{
+    const m=semMonthOf(t),term=m?semTermOfMonth(m):actTerm,p=semPlace(t,cal[term]);
+    const same=names[norm(t.name)]||[];
+    const info={date:p.issues.slice(),name:same.length>1?`同名 ${same.length} 筆（${[...new Set(same.map(x=>String(x.grade||'沒填年級')))].join('、')}）`:'',term,weeks:p.weeks,cal:cal[term]};
+    p.weeks.forEach(w=>{const k=term+'-'+w;(byWeek[k]=byWeek[k]||[]).push(t);});
+    map.set(t,info);
+  });
+  Object.entries(byWeek).forEach(([k,arr])=>{
+    if(arr.length<TPL_CROWD)return;
+    const [term,w]=k.split('-');
+    arr.forEach(t=>map.get(t).date.push(`${term==='1'?'上':'下'}學期第 ${w} 週有 ${arr.length} 個實驗，太擠了，日期可能填錯`));
+  });
+  return map;
+}
+// 「13～14 週」→「學期第 13～14 週（約 5/10～5/22）」
+function tplWhenText(weeks,cal){
+  if(!weeks.length)return '';
+  const md=d=>(d.getMonth()+1)+'/'+d.getDate();
+  const a=Math.min(...weeks),b=Math.max(...weeks),wa=cal.weeks.find(x=>x.week===a),wb=cal.weeks.find(x=>x.week===b);
+  const end=new Date(wb.date);end.setDate(end.getDate()+4);
+  return `學期第 ${a===b?a:a+'～'+b} 週（${cal.real?'':'約 '}${md(wa.date)}～${md(end)}）`;
+}
+// 打月份、週次時即時告訴你會排到哪一週、有沒有問題
+function tplDatePreviewHtml(month,week){
+  const t={month,week},m=semMonthOf(t),term=m?semTermOfMonth(m):(semCalendar(1,activeSemester).real?1:2);
+  const cal=semCalendar(term,activeSemester),p=semPlace(t,cal);
+  const when=tplWhenText(p.weeks,cal);
+  return (when?`<div class="tq-ok">→ ${escH(when)}${cal.real?'':'<small>（這學期還沒設定週次，日期是估計的）</small>'}</div>`:'')+
+    p.issues.map(x=>`<div class="tq-bad">⚠ ${escH(x)}</div>`).join('');
+}
+function tplQuickDate(id){
+  const t=allTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+  showModal('📅 改日期',`<div class="tq-name">${escH(t.name||'（未命名）')}<small>${escH([t.grade,t.teacher].filter(Boolean).join('・'))}</small></div>
+    <div class="tq-grid"><label>月份<input id="tq-month" value="${escH(t.month||'')}" placeholder="例如 5" maxlength="20" autocomplete="off"></label>
+    <label>週次（學期第幾週）<input id="tq-week" value="${escH(t.week||'')}" placeholder="例如 13～14" maxlength="30" autocomplete="off"></label></div>
+    <div id="tq-prev" class="tq-prev"></div>
+    <div class="hint" style="margin-top:6px">週次寫「學期第幾週」；跨週寫 13～14。</div>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:`tplQuickSave(${ja(t.id)})`}]);
+  const upd=()=>{document.getElementById('tq-prev').innerHTML=tplDatePreviewHtml(document.getElementById('tq-month').value,document.getElementById('tq-week').value);};
+  ['tq-month','tq-week'].forEach(k=>document.getElementById(k).addEventListener('input',upd));upd();
+}
+async function tplQuickSave(id){
+  const t=allTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+  const month=document.getElementById('tq-month').value.trim(),week=document.getElementById('tq-week').value.trim();
+  try{
+    await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(t.id),body:{month,week,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    t.month=month;t.week=week;closeModal();renderTemplateList();showToast('日期已更新','success');
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+// ── 編輯面板：手機全螢幕、電腦置中；分「基本資料／器材／備註」三頁，不用一直往下拉 ──
+function tplSheet(open){
+  const c=document.getElementById('tplFormCard');if(!c)return;
+  c.classList.toggle('open',open);c.style.display=open?'':'none';
+  document.documentElement.style.overflow=open?'hidden':'';document.body.style.overflow=open?'hidden':'';
+  if(open){tplTab('basic');tplFormDatePrev();tplEqCount();c.querySelector('.ts-body').scrollTop=0;}
+}
+function tplTab(name){
+  document.querySelectorAll('#tplFormCard .ts-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  document.querySelectorAll('#tplFormCard .ts-pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===name));
+  const b=document.querySelector('#tplFormCard .ts-body');if(b)b.scrollTop=0;
+}
+function tplEqCount(){const el=document.getElementById('tsEqN');if(el)el.textContent=tplEquipRows.length?String(tplEquipRows.length):'';}
+function tplFormDatePrev(){const el=document.getElementById('tpl-date-prev');if(el)el.innerHTML=tplDatePreviewHtml(document.getElementById('tpl-month').value,document.getElementById('tpl-week').value);}
+// ==== 課綱實驗：健檢＋快速改日期＋編輯面板 結束 ====
 // ── 課綱實驗清單 ──
 // 依「學年月份」排（8 月開學 → 隔年 7 月），同月再依週次；每列直接寫健檢結果（對不到庫存品名的器材）
 let tplEqIndex=null,tplFilterMode='all';
@@ -3992,6 +4178,7 @@ async function loadTemplates(){
       (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null)
     ]);
     allTemplates=Array.isArray(rows)?rows:[];
+    if(!activeSemester)await loadActiveSemester();
     tplEqIndex=Array.isArray(eqs)?tplBuildEqIndex(eqs):null;
     renderTemplateList();
   }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${escH(e.message)}</p></div>`;}
@@ -4000,15 +4187,21 @@ function renderTemplateList(){
   const list=document.getElementById('templateList');if(!list)return;
   const q=(document.getElementById('tplSearch')?.value||'').trim().toLowerCase();
   const withMiss=allTemplates.map(t=>({t,miss:tplMissItems(t)}));
+  const iss=tplIssuesAll();
+  const dateN=allTemplates.filter(t=>iss.get(t).date.length).length,nameN=allTemplates.filter(t=>iss.get(t).name).length;
   const badN=withMiss.filter(x=>x.miss.length).length;
   // 篩選籤：全部／對不到器材（健檢）
   const fb=document.getElementById('tplFilter');
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';renderTemplateList()">全部 ${allTemplates.length}</button>`+
-    (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'');
+    (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
+    (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 同名 ${nameN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
     if(tplFilterMode==='bad'&&!miss.length)return false;
+    if(tplFilterMode==='date'&&!iss.get(t).date.length)return false;
+    if(tplFilterMode==='name'&&!iss.get(t).name)return false;
     if(!q)return true;
     return [t.name,t.grade,t.teacher,t.category].some(v=>String(v||'').toLowerCase().includes(q));
   });
@@ -4021,6 +4214,8 @@ function renderTemplateList(){
     const roomLabel=(TPL_ROOM_OPTIONS.find(([v])=>v===t.default_room)||['',''])[1];
     const n=(Array.isArray(t.equipment_items)?t.equipment_items:[]).length;
     const wk=String(t.week??'').trim();
+    const I=iss.get(t),when=tplWhenText(I.weeks,I.cal);
+    const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>📅 ${escH(x)}</span>`).join('')}${I.name?`<span>👯 ${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
     const sub=[t.grade,t.teacher,t.class_count?t.class_count+' 班':'',t.group_count?t.group_count+' 組':'',`器材 ${n} 項`].filter(Boolean).map(escH).join('・');
     const health=!tplEqIndex?'':(miss.length
       ?`<div class="tpl-health bad">⚠ 對不到庫存品名 ${miss.length} 項：${miss.slice(0,4).map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}${miss.length>4?'…':''}</div>`
@@ -4028,7 +4223,7 @@ function renderTemplateList(){
     html+=`<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
       <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${roomLabel?`<span class="badge badge-approved">${escH(roomLabel)}</span>`:''}</div>
-        <div class="sub">${sub}</div>${health}</div>
+        <div class="sub">${sub}</div>${when?`<div class="tpl-when">🗓️ ${escH(when)}</div>`:''}${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
     </div>`;
   });
@@ -4165,7 +4360,6 @@ async function confirmTemplateImport(){
 function editTemplate(id){
   const t=allTemplates.find(x=>x.id===id);if(!t)return;
   editingTemplateId=id;
-  document.getElementById('tplFormCard').style.display='block';
   document.getElementById('tpl-name').value=t.name||'';
   document.getElementById('tpl-category').value=t.category||'';
   document.getElementById('tpl-grade').value=t.grade||'';
@@ -4178,7 +4372,7 @@ function editTemplate(id){
   renderTplEquipList(t.equipment_items||[]);
   document.getElementById('tpl-note').value=t.reference_note||'';
   document.getElementById('tplParseMsg').textContent='';
-  document.getElementById('tplFormCard').scrollIntoView({behavior:'smooth'});
+  tplSheet(true);
 }
 function deleteTemplate(id){
   const t=allTemplates.find(x=>String(x.id)===String(id));if(!t)return;
