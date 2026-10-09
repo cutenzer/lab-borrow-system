@@ -637,6 +637,73 @@
   .bw-tabs button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.12);}
   .bw-n{background:var(--accent);color:#fff;border-radius:999px;font-size:12px;line-height:20px;padding:0 7px;min-width:20px;}
   .bw-n:empty{display:none;}
+  /* ── 課綱借用頁：左邊實驗＋器材，右邊借用資訊（日期、教室、申請人）＋送出 ── */
+  .cb-wrap{display:grid;gap:12px;}
+  .cb-main,.cb-side{display:grid;gap:12px;align-content:start;min-width:0;}
+  .cb-crumb{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text2);}
+  .cb-crumb button{border:none;background:none;font:inherit;font-weight:700;color:var(--accent);cursor:pointer;padding:4px 0;}
+  .cb-hero{background:var(--t);border:1px solid var(--border);border-left:6px solid var(--c);border-radius:16px;padding:12px 16px;}
+  .cb-ht{display:flex;align-items:center;}
+  .cb-tag{font-size:12.5px;font-weight:700;color:var(--c);background:#fff;border-radius:7px;padding:2px 9px;}
+  .cb-x{margin-left:auto;width:32px;height:32px;border-radius:16px;border:none;background:rgba(255,255,255,.7);cursor:pointer;font-size:14px;}
+  .cb-hero h2{margin:6px 0 4px;font-size:21px;line-height:1.35;overflow-wrap:anywhere;}
+  .cb-meta{display:flex;flex-wrap:wrap;gap:3px 14px;font-size:13.5px;color:#4a463f;}
+  .cb-mates{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--text2);}
+  .cb-mates>span{width:100%;}
+  .cb-mates button{border:1.5px dashed var(--border);background:var(--surface);border-radius:10px;padding:7px 11px;font:inherit;font-size:13.5px;color:var(--text);cursor:pointer;}
+  .cb-mates button:hover{border-style:solid;background:#fff8e1;}
+  .cb-card{margin:0!important;}
+  .cb-ct{font-size:16px;font-weight:700;margin-bottom:10px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+  .cb-ct small{font-weight:400;color:var(--text2);font-size:12.5px;margin-left:auto;}
+  .cb-grp{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:12px;padding:8px 12px;margin-bottom:6px;}
+  .cb-grp span{flex:1;font-size:14.5px;}
+  .cb-grp button,.cb-q button{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;color:var(--text);}
+  .cb-grp b{font-family:'DM Mono',monospace;font-size:20px;min-width:30px;text-align:center;}
+  .cb-eq{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--surface2);font-size:15px;}
+  .cb-eq .n{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .cb-eq small{display:block;color:var(--text2);font-size:12px;}
+  .cb-eq em{font-style:normal;color:#b3261e;font-weight:700;}
+  .cb-eq .tg{font-style:normal;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 7px;white-space:nowrap;}
+  .cb-eq .tg.pg{background:#e8f1ea;color:#2e7d4f;}
+  .cb-eq .tg.sh{background:var(--surface2);color:var(--text2);}
+  .cb-eq .tg.ex{background:#e9edf4;color:#3b5b8a;}
+  .cb-q{display:flex;align-items:center;gap:4px;}
+  .cb-q button{width:32px;height:32px;font-size:16px;}
+  .cb-q b{font-family:'DM Mono',monospace;min-width:34px;text-align:center;}
+  .cb-warn{background:#fff4e5;border:1px solid #f0d2a6;border-radius:10px;padding:8px 10px;font-size:13px;color:#8a4b0f;margin-top:10px;line-height:1.6;}
+  .cb-add{margin-top:10px;}
+  .cb-add input{width:100%;height:44px;border:1.5px dashed var(--border);border-radius:10px;padding:0 12px;font:inherit;font-size:14.5px;background:var(--surface);}
+  .cb-hit{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;border-bottom:1px solid var(--surface2);background:none;padding:9px 4px;font:inherit;color:var(--text);cursor:pointer;}
+  .cb-hit span{flex:1;min-width:0;}
+  .cb-hit small{display:block;font-size:12px;color:var(--text2);}
+  .cb-hit i{font-style:normal;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;}
+  .cb-none{font-size:13px;color:var(--text2);padding:6px 0;}
+  .cb-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .cb-dates label,.cb-f{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--text2);}
+  .cb-dates input,.cb-f input,.cb-f textarea,.cb-venue select,.cb-venue input{width:100%;min-height:44px;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px;color:var(--text);background:#fff;}
+  .cb-f{margin-top:8px;}
+  .cb-chips,.cb-days,.cb-pers,.cb-picked{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .cb-chips button,.cb-days button,.cb-picked button{border:1.5px solid var(--border);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;background:#fff;color:var(--text2);cursor:pointer;}
+  .cb-chips button.on,.cb-days button.on{border-color:var(--text);color:var(--text);font-weight:700;background:var(--surface2);}
+  .cb-pers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));}
+  .cb-pers button{height:44px;border:1.5px solid var(--border);border-radius:10px;background:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer;color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;}
+  .cb-pers button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .cb-pers button.tk{background:var(--surface2);color:#b5ae9f;cursor:not-allowed;}
+  .cb-pers small{font-size:10px;font-weight:400;}
+  .cb-picked button{background:#e8f1ea;border-color:#bfd8c6;color:#1f5b4c;}
+  .cb-sep{height:1px;background:var(--surface2);margin:14px 0 10px;}
+  .cb-tog{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:700;cursor:pointer;}
+  .cb-tog input{width:22px;height:22px;accent-color:var(--accent);}
+  .cb-venue{display:grid;gap:4px;margin-top:8px;}
+  .cb-sum{display:flex;justify-content:space-between;font-size:13.5px;color:var(--text2);padding:4px 0;}
+  .cb-sum b{color:var(--text);}
+  .cb-go{width:100%;height:52px;font-size:16.5px;justify-content:center;margin-top:10px;}
+  .cb-foot{text-align:center;font-size:13px;color:var(--text2);margin-top:10px;}
+  .cb-foot button{border:none;background:none;font:inherit;font-weight:700;color:var(--accent);cursor:pointer;padding:0;}
+  @media(min-width:1000px){
+    .cb-wrap{grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start;}
+    .cb-side{position:sticky;top:24px;}
+  }
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
@@ -1303,6 +1370,11 @@
   </div>
 </div>
 
+<!-- 課綱借用（從學期週表點實驗進來）-->
+<div id="page-coursebook" class="page">
+  <div id="cbRoot"></div>
+</div>
+
 <!-- 學期實驗週表（老師）-->
 <div id="page-semester" class="page">
   <div class="sp-head"><h2>📅 學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
@@ -1391,38 +1463,12 @@
   </div>
 
   <div class="card" id="courseTemplateCard" style="display:none">
-    <div class="card-title">② 要借什麼：📚 套用課綱實驗（老師專用）</div>
-    <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始的課綱實驗。</div>
-   <div id="tplSemTable" class="sem-wrap"></div>
-   <details class="sem-search" open><summary>🔍 用搜尋選課程</summary>
-   <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap">
-  <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
-    <option value="">全部科別</option>
-    <option value="Physics">物理</option>
-    <option value="Chemistry">化學</option>
-    <option value="Biology">生物</option>
-    <option value="Geoscience">地科</option>
-    <option value="Physics Chemistry">理化</option>
-  </select>
-  <select id="tplFilterGrade" onchange="renderTemplatePicker()" style="flex:0 0 100px">
-    <option value="">全部年級</option>
-  </select>
-  <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
-      <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
-      <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
-    </div></details>
-    <div id="appliedTemplateBox" style="display:none;margin-top:14px">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-        <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
-        <button class="btn btn-secondary btn-sm" onclick="clearAppliedTemplate(true)">✕ 移除並清掉帶入器材</button>
-      </div>
-      <div id="appliedTemplateSummary"></div>
-    </div>
+    <div id="tplSemTable"></div>
   </div>
 
   <div class="card">
     <div class="card-title">② 要借什麼：🛒 已選器材</div>
-    <div class="hint" style="margin-bottom:8px">先想這堂課要用什麼：直接在下面搜尋加入，或到「找器材」分頁挑，或上面套用課綱實驗，都會加進這裡。</div>
+    <div class="hint" style="margin-bottom:8px">直接在下面搜尋加入，或到「找器材」分頁挑，都會加進這裡。</div>
     <div class="search-wrap" style="margin-bottom:8px">
       <span class="search-icon">🔎</span>
       <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
@@ -1600,7 +1646,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09f · 週次可跨週（13～14）</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09g · 課綱借用獨立一頁</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -3889,7 +3935,7 @@ function sidePanelSearch(q,now){
 }
 function openCart(){document.getElementById('cartDrawer').classList.add('open');document.getElementById('cartOverlay').classList.add('show');renderCart();renderCartFormSummary();}
 function closeCart(){document.getElementById('cartDrawer').classList.remove('open');document.getElementById('cartOverlay').classList.remove('show');const si=document.getElementById('cartSearchInput');if(si)si.value='';const sr=document.getElementById('cartSearchResults');if(sr)sr.innerHTML='';}
-function clearCart(){selectedItems={};updateCartBadge();renderEquipList();renderCart();calcDeposit();}
+function clearCart(){selectedItems={};if(appliedTemplate)clearAppliedTemplate();updateCartBadge();renderEquipList();renderCart();calcDeposit();if(typeof filterEquipBrowse==='function')filterEquipBrowse();}
 function updateCartBadge(){
   const items=Object.values(selectedItems);
   setTimeout(updateBorrowDraftBar,0);
@@ -4984,7 +5030,7 @@ function showPage(page,opts){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   if(!fromHist){window.scrollTo({top:0,behavior:'smooth'});navPush('');}
-  const navKey=page==='equipment'?'borrow':page; // 找器材、借用單是同一個選單項目的兩個分頁
+  const navKey=page==='equipment'?'borrow':page==='coursebook'?'semester':page; // 找器材、借用單是「器材借用」的兩個分頁；課綱借用算在「學期實驗」底下
   document.querySelectorAll('.nav-menu button,.desk-nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===navKey));
   document.querySelectorAll('.bw-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===page));
   closeNavMenu();
@@ -5000,6 +5046,7 @@ function showPage(page,opts){
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
   if(page==='semester')spRender();
+  if(page==='coursebook')cbRender();
   if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
   if(page==='myrecords')autoLoadMyRecords();
   if(page==='borrow')prefillBorrowIdentity();
@@ -5155,7 +5202,7 @@ function semWeeksOf(t){return semNums(t.week).filter(x=>x>=1&&x<=30);}
 function semWeekOf(t){return semWeeksOf(t)[0]||null;}
 function renderSemTable(){
   const box=document.getElementById('tplSemTable');
-  if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span>📅</span><span><b>打開學期實驗週表</b><small>看每一週做什麼實驗，點一下就帶入器材</small></span><span>›</span></button>`:'';
+  if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span>📅</span><span><b>上課要用的實驗？到「學期實驗」借</b><small>點實驗就帶入器材和日期，這裡留給臨時要借的東西</small></span><span>›</span></button>`:'';
   spRender();
 }
 // ==== 學期實驗頁 開始 ====
@@ -5297,22 +5344,238 @@ function spOpen(id){
     <div class="sp-dmeta"><span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
     <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
     ${t.reference_note?`<div class="sp-ref">📝 ${escH(t.reference_note)}</div>`:''}
-    <div class="hint" style="margin-top:10px">按「用這個申請」會切到借用單、自動帶入器材，日期和組數到借用單再調。</div>`,
+    <div class="hint" style="margin-top:10px">按「用這個申請」會帶入器材、日期先放課綱那一週，下一頁都可以再改。</div>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'用這個申請 ›',cls:'btn-primary',fn:`spApply(${ja(t.id)})`}]);
 }
-function spApply(id){
-  const t=allCourseTemplates.find(x=>String(x.id)===String(id));if(!t)return;
-  closeModal();
-  showPage('borrow');
-  if(typeof setRole==='function')setRole('老師');
-  if(!(appliedTemplate&&String(appliedTemplate.id)===String(t.id)))applyTemplate(t.id);
-  setTimeout(()=>{const b=document.getElementById('appliedTemplateBox');if(b)b.scrollIntoView({behavior:'smooth',block:'start'});},350);
-}
+// 用這個申請 → 開「課綱借用」頁（日期先帶課綱那一週）
+function spApply(id){closeModal();cbOpen(id);}
 // ==== 學期實驗頁 結束 ====
+// ==== 課綱借用頁 開始 ====
+// 從學期週表點實驗 →「用這個申請」→ 這一頁。
+// 左邊：要上的實驗（同一週的可以多勾幾個，合成一張單）＋器材（依組數自動算，可再加減）
+// 右邊：借用資訊（日期、要不要順便借教室、申請人）＋送出
+// 跟「器材借用」分開，但寫進資料庫的格式一樣（目的＝課程、身分＝老師），後台審核、印單都不用改。
+const CB_ROOM={'Chemistry':'化學實驗室','Physics Chemistry':'理化實驗室','Physics':'物理實驗室','Biology':'生物實驗室','Geoscience':'地科實驗室'};
+const CB_DAY='日一二三四五六';
+const CB_PERIODS=PERIODS.filter(p=>p.startsWith('第')); // 教室只借上課節次
+let cb=null,cbBusy=false;
+function cbTpl(id){return allCourseTemplates.find(x=>String(x.id)===String(id));}
+function cbAddDays(ds,n){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtDate(d);}
+function cbMonday(ds){return fmtDate(getMondayOf(new Date(ds+'T00:00:00')));}
+function cbMD(ds){const d=new Date(ds+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${CB_DAY[d.getDay()]}）`;}
+// 一週＝星期一借、星期五還；已經過去的日子不能借，所以從今天開始；整週都過了就回傳 null
+function cbWeekRange(mon){const t=todayStr();let bd=mon,rd=cbAddDays(mon,4);if(rd<t)return null;if(bd<t)bd=t;return {bd,rd};}
+function cbThisWeek(){const t=todayStr(),dow=new Date(t+'T00:00:00').getDay();return cbWeekRange(cbMonday(dow===6||dow===0?cbAddDays(t,2):t));}
+function cbNextWeek(){const r=cbThisWeek();return cbWeekRange(cbAddDays(cbMonday(r?r.rd:todayStr()),7));}
+// 這個實驗在週表上的那一格（找不到就是 null）
+function cbSlotOf(t){
+  const term=spActiveTerm();if(!term)return null;
+  return spBuild(term).slots.find(s=>s.date&&s.items.includes(t))||null;
+}
+function cbCourseWeek(){const t=cbTpl(cb.ids[0]),s=t&&cbSlotOf(t);return s?cbWeekRange(fmtDate(s.date)):null;}
+// 從週表進來：開一張新的課綱借用單
+function cbOpen(id){
+  const t=cbTpl(id);if(!t)return;
+  if(cb&&cb.ids.includes(t.id)){showPage('coursebook');cbRender();return;}
+  const v=getSavedIdentity();
+  cb={ids:[t.id],groups:parseInt(t.group_count)||0,over:{},extra:{},mode:'course',bd:'',rd:'',
+      venueOn:false,room:CB_ROOM[t.default_room]||VENUES[0],pDate:'',periods:[],bookings:null,grade:'',
+      name:(v&&v.n)||lastSubmittedName||'',note:'',ack:false,q:''};
+  cbSetMode(cbCourseWeek()?'course':'this',true);
+  showPage('coursebook');cbRender();
+}
+function cbSetMode(mode,silent){
+  const r=mode==='course'?cbCourseWeek():mode==='this'?cbThisWeek():mode==='next'?cbNextWeek():null;
+  if(mode==='course'&&!r&&!silent)showToast('課綱那一週已經過了，改用這週','error');
+  const use=r||(mode==='course'?cbThisWeek():null);
+  cb.mode=r?mode:(mode==='course'?'this':mode);
+  if(use){cb.bd=use.bd;cb.rd=use.rd;}
+  cb.pDate=cb.bd;cb.periods=cb.periods.filter(p=>p.split('|')[0]>=cb.bd&&p.split('|')[0]<=cb.rd);
+  if(!silent)cbRender();
+}
+function cbSetDate(which,v){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v||''))return;
+  cb[which]=v;cb.mode='custom';
+  if(cb.rd<cb.bd)cb.rd=cb.bd;
+  cb.pDate=cb.bd;cb.periods=cb.periods.filter(p=>p.split('|')[0]>=cb.bd&&p.split('|')[0]<=cb.rd);
+  cbRender();
+}
+// ── 器材：每個實驗的清單合起來；「每組」的數量跟著組數變，「全班共用」的不變 ──
+function cbItems(){
+  const map={},norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
+  const groupsUsed=cb.ids.some(id=>{const t=cbTpl(id),gc=parseInt(t&&t.group_count)||0;return gc>1;});
+  cb.ids.map(cbTpl).filter(Boolean).forEach(t=>{
+    const gc=parseInt(t.group_count)||0;
+    (Array.isArray(t.equipment_items)?t.equipment_items:[]).forEach(it=>{
+      const want=parseInt(it.quantity)||0;if(want<=0)return;
+      const per=(gc>1&&want>=gc&&want%gc===0)?want/gc:0;
+      const q=per&&cb.groups>0?per*cb.groups:want;
+      const m=tplPickEquip(it,t,q);
+      const key=m?m.pick.room+'__'+m.pick.name:'miss:'+norm(it.name)+'|'+norm(it.spec);
+      const o=map[key]||(map[key]={key,miss:!m,room:m?m.pick.room:'',name:m?m.pick.name:String(it.name||''),spec:(m&&m.pick.spec)||it.spec||'',unit:it.unit||(m&&m.pick.unit)||'個',auto:0,per:0,avail:m?(parseInt(m.pick.available)||0):0});
+      o.auto+=q;o.per+=per;
+    });
+  });
+  Object.values(cb.extra).forEach(e=>{if(!map[e.key])map[e.key]=Object.assign({miss:false,auto:0,per:0,extra:true},e);});
+  const list=Object.values(map).map(o=>Object.assign(o,{qty:cb.over[o.key]!=null?cb.over[o.key]:(o.auto||1)})).filter(o=>o.qty>0);
+  return {list,groupsUsed};
+}
+function cbGroups(d){cb.groups=Math.max(1,Math.min(30,(cb.groups||1)+d));
+  // 改組數：「每組」的器材重新算，手動改過的數量也一起重算
+  const {list}=cbItems();list.forEach(o=>{if(o.per)delete cb.over[o.key];});cbRender();}
+function cbQty(key,d){const {list}=cbItems(),o=list.find(x=>x.key===key);if(!o)return;
+  const n=Math.max(0,Math.min(999,o.qty+d));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
+function cbSearch(q){
+  cb.q=q;const box=document.getElementById('cbSearchRes');if(!box)return;
+  const k=q.trim().toLowerCase();if(!k){box.innerHTML='';return;}
+  const hits=allEquipment.filter(e=>`${e.name||''} ${e.spec||''}`.toLowerCase().includes(k)).slice(0,8);
+  box.innerHTML=hits.length?hits.map(e=>`<button type="button" class="cb-hit" onclick="cbAddExtra(${ja(e.room)},${ja(e.name)})"><span><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}・可借 ${parseInt(e.available)||0}</small></span><i>＋ 加入</i></button>`).join(''):'<div class="cb-none">找不到，可以在備註寫給管理員</div>';
+}
+function cbAddExtra(room,name){
+  const e=allEquipment.find(x=>x.room===room&&x.name===name);if(!e)return;
+  const key=e.room+'__'+e.name;
+  if(!cb.extra[key])cb.extra[key]={key,room:e.room,name:e.name,spec:e.spec||'',unit:e.unit||'個',avail:parseInt(e.available)||0};
+  cb.over[key]=(cb.over[key]||0)+1;cb.q='';cbRender();showToast('已加入：'+e.name,'success');
+}
+// ── 同一週的其他實驗：勾起來就合成一張單 ──
+function cbToggleTpl(id){
+  const t=cbTpl(id);if(!t)return;
+  const i=cb.ids.findIndex(x=>String(x)===String(t.id));
+  if(i>=0){if(cb.ids.length>1)cb.ids.splice(i,1);}
+  else{cb.ids.push(t.id);cb.groups=Math.max(cb.groups||0,parseInt(t.group_count)||0);}
+  cbRender();
+}
+// ── 教室：選日期、點節次；別人已預約（含待審核）的節次不能點 ──
+async function cbVenue(on){
+  cb.venueOn=on;cbRender();
+  if(on&&!cb.bookings){
+    try{const r=await sb('GET','venue_bookings',{});cb.bookings=Array.isArray(r)?r:[];}catch(e){cb.bookings=[];}
+    if(cb)cbRender();
+  }
+}
+function cbTaken(date,period,venue){
+  return (cb.bookings||[]).some(b=>!isShareablePurpose(b.purpose)&&(b.periods||[]).some(x=>x.date===date&&x.period===period&&x.venue===venue&&(b.is_fixed||x.status==='已核准'||x.status==='待審核')));
+}
+function cbTogglePeriod(date,period){
+  const k=date+'|'+period,i=cb.periods.indexOf(k);
+  if(i>=0)cb.periods.splice(i,1);else if(!cbTaken(date,period,cb.room))cb.periods.push(k);
+  cb.periods.sort();cbRender();
+}
+function cbDays(){const out=[];for(let d=cb.bd;d&&d<=cb.rd&&out.length<14;d=cbAddDays(d,1)){const w=new Date(d+'T00:00:00').getDay();if(w!==0&&w!==6)out.push(d);}return out;}
+function cbRender(){
+  const root=document.getElementById('cbRoot');if(!root)return;
+  if(!cb||!cb.ids.map(cbTpl).filter(Boolean).length){cb=null;root.innerHTML=`<div class="sp-empty">還沒選實驗。<br><button type="button" class="btn btn-primary" style="margin-top:12px" onclick="showPage('semester')">到學期週表選實驗</button></div>`;return;}
+  const tpls=cb.ids.map(cbTpl).filter(Boolean),first=tpls[0],slot=cbSlotOf(first);
+  const {list,groupsUsed}=cbItems(),got=list.filter(o=>!o.miss),miss=list.filter(o=>o.miss);
+  let h='<div class="cb-wrap"><div class="cb-main">';
+  h+=`<div class="cb-crumb"><button type="button" onclick="showPage('semester')">‹ 學期週表</button><span>／ 課綱借用</span></div>`;
+  // 實驗
+  h+=tpls.map(t=>{const sj=semSubjectOf(t),s=cbSlotOf(t);return `<div class="cb-hero" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}">
+    <div class="cb-ht"><span class="cb-tag">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</span>${tpls.length>1?`<button type="button" class="cb-x" onclick="cbToggleTpl(${ja(t.id)})" aria-label="這個實驗不借">✕</button>`:''}</div>
+    <h2>${escH(formatTemplateName(t))}</h2>
+    <div class="cb-meta">${s?`<span>🗓️ ${escH(spSlotTitle(s,true))}</span>`:''}${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}${t.default_room?`<span>📍 ${escH(rn(t.default_room))}</span>`:''}</div></div>`;}).join('');
+  const mates=slot?slot.items.filter(t=>!cb.ids.some(x=>String(x)===String(t.id))):[];
+  if(mates.length)h+=`<div class="cb-mates"><span>同一週還有，要一起借就點：</span>${mates.map(t=>`<button type="button" onclick="cbToggleTpl(${ja(t.id)})"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b> ${escH(templateNameParts(t).pure||formatTemplateName(t))}　＋</button>`).join('')}</div>`;
+  // 器材
+  h+=`<div class="card cb-card"><div class="cb-ct">🧪 要借的器材${groupsUsed?'<small>「每組」的數量跟著組數變</small>':''}</div>`;
+  if(groupsUsed)h+=`<div class="cb-grp"><span>👥 組數</span><button type="button" onclick="cbGroups(-1)" aria-label="少一組">−</button><b>${cb.groups}</b><button type="button" onclick="cbGroups(1)" aria-label="多一組">＋</button></div>`;
+  h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button><b>${o.qty}</b><button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
+  if(miss.length)h+=`<div class="cb-warn">⚠️ 庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
+  h+=`<div class="cb-add"><input type="search" id="cbSearch" placeholder="＋ 這次還要加借別的器材（輸入名稱）" value="${escH(cb.q)}" oninput="cbSearch(this.value)" autocomplete="off" maxlength="40"><div id="cbSearchRes"></div></div></div>`;
+  h+='</div><div class="cb-side"><div class="card cb-card">';
+  // 借用資訊：日期、教室、申請人放在一起
+  h+=`<div class="cb-ct">📋 借用資訊</div>
+    <div class="cb-dates"><label>借用日<input type="date" value="${escH(cb.bd)}" min="${todayStr()}" onchange="cbSetDate('bd',this.value)"></label><label>歸還日<input type="date" value="${escH(cb.rd)}" min="${escH(cb.bd||todayStr())}" onchange="cbSetDate('rd',this.value)"></label></div>
+    <div class="cb-chips">${[['course','課綱那週'],['this','這週'],['next','下週']].map(([k,l])=>`<button type="button" class="${cb.mode===k?'on':''}" onclick="cbSetMode('${k}')">${l}</button>`).join('')}${cb.mode==='custom'?'<button type="button" class="on">自己選</button>':''}</div>
+    <div class="cb-sep"></div>
+    <label class="cb-tog"><input type="checkbox" ${cb.venueOn?'checked':''} onchange="cbVenue(this.checked)"><span>順便預約教室</span></label>`;
+  if(cb.venueOn){
+    const days=cbDays();if(!days.includes(cb.pDate))cb.pDate=days[0]||'';
+    h+=`<div class="cb-venue"><select onchange="cb.room=this.value;cb.periods=[];cbRender()" aria-label="教室">${VENUES.map(v=>`<option value="${escH(v)}" ${v===cb.room?'selected':''}>${escH(v)}</option>`).join('')}</select>
+      <div class="cb-days">${days.map(d=>`<button type="button" class="${d===cb.pDate?'on':''}" onclick="cb.pDate='${d}';cbRender()">${escH(cbMD(d))}${cb.periods.some(p=>p.startsWith(d+'|'))?' •':''}</button>`).join('')||'<span class="cb-none">借用期間沒有上課日</span>'}</div>
+      ${cb.pDate?`<div class="cb-pers">${cb.bookings?CB_PERIODS.map(p=>{const k=cb.pDate+'|'+p,on=cb.periods.includes(k),tk=!on&&cbTaken(cb.pDate,p,cb.room);return `<button type="button" class="${on?'on':''}${tk?' tk':''}" ${tk?'disabled title="已有人預約"':''} onclick="cbTogglePeriod('${cb.pDate}','${p}')">${p.replace('第','').replace('節','')}${tk?'<small>已約</small>':''}</button>`;}).join(''):'<span class="cb-none">讀取課表中…</span>'}</div>`:''}
+      ${cb.periods.length?`<div class="cb-picked">已選：${cb.periods.map(k=>{const [d,p]=k.split('|');return `<button type="button" onclick="cbTogglePeriod('${d}','${p}')">${escH(cbMD(d))} ${escH(p)} ✕</button>`;}).join('')}</div>`:'<div class="cb-none">點上面的節次（1～8 節）</div>'}
+      <input type="text" placeholder="班級（例如：高一戊，可不填）" value="${escH(cb.grade)}" oninput="cb.grade=this.value" maxlength="20"></div>`;
+  }
+  h+=`<div class="cb-sep"></div>
+    <label class="cb-f">姓名<input type="text" value="${escH(cb.name)}" oninput="cb.name=this.value" maxlength="30" autocomplete="name" placeholder="例如：陳老師"></label>
+    <label class="cb-f">備註（可不填）<textarea rows="2" maxlength="500" oninput="cb.note=this.value" placeholder="例如：要多一組備用">${escH(cb.note)}</textarea></label>
+    <div class="cb-sum"><span>器材</span><b>${got.length} 項・${got.reduce((s,o)=>s+o.qty,0)} 件${miss.length?`＋待確認 ${miss.length} 項`:''}</b></div>
+    ${cb.venueOn?`<div class="cb-sum"><span>教室</span><b>${cb.periods.length?escH(cb.room)+' '+cb.periods.length+' 節':'還沒選節次'}</b></div>`:''}
+    <div class="cb-sum"><span>保證金</span><b>老師免</b></div>
+    <button type="button" class="btn btn-primary cb-go" id="cbSubmitBtn" onclick="cbSubmit()">送出借用申請</button>
+    <div class="cb-foot">不是課綱的實驗？到 <button type="button" onclick="showPage('equipment')">器材借用</button> 自己挑</div>`;
+  h+='</div></div></div>';
+  root.innerHTML=h;
+  if(cb.q)cbSearch(cb.q);
+}
+function cbAck(){if(!cb)return;cb.ack=true;closeModal();cbSubmit();}
+async function cbSubmit(){
+  if(!cb||cbBusy)return;
+  const tpls=cb.ids.map(cbTpl).filter(Boolean),{list}=cbItems(),got=list.filter(o=>!o.miss),miss=list.filter(o=>o.miss);
+  const name=(cb.name||'').trim();
+  const errs=[];
+  if(!name)errs.push('請填寫姓名');else if(name.length>30)errs.push('姓名太長（最多 30 字）');
+  errs.push(...checkBorrowDates(cb.bd,cb.rd).map(e=>e.msg));
+  if(!got.length&&!miss.length)errs.push('沒有要借的器材');
+  let periods=[];
+  if(cb.venueOn){
+    if(!cb.periods.length)errs.push('勾了「順便預約教室」，但還沒選節次');
+    periods=cb.periods.map(k=>{const [date,period]=k.split('|');return {date,period,venue:cb.room,status:'待審核'};});
+    const pe=periods.length?checkPeriodList(periods):'';if(pe)errs.push(pe);
+  }
+  if(errs.length){showToast(errs[0],'error');return;}
+  // 選修課專用器材：先提醒要問負責老師
+  const elective=got.filter(o=>equipRestrictNote(o.room,o.name));
+  if(elective.length&&!cb.ack){
+    showModal('🎓 清單裡有選修課專用器材',`<p style="font-size:13.5px;line-height:1.7;margin-bottom:8px">下列器材是選修課專用，借用前請先詢問負責的老師：</p>${elective.map(o=>`<div class="elective-box" style="margin-top:6px"><strong>${escH(o.name)}</strong>（${escH(rn(o.room))}）<br>${escH(equipRestrictNote(o.room,o.name))}</div>`).join('')}`,
+      [{label:'回去修改',cls:'btn-secondary',fn:'closeModal()'},{label:'已詢問過，繼續送出',cls:'btn-primary',fn:'cbAck()'}]);
+    return;
+  }
+  cbBusy=true;const btn=document.getElementById('cbSubmitBtn');if(btn){btn.disabled=true;btn.textContent='送出中…';}
+  try{
+    if(periods.length){
+      const c=await findPeriodConflicts(periods);
+      if(c===null)throw new Error('無法確認教室是否已被預約，請稍後再試');
+      if(c.length){showConflictModal(c);return;}
+    }
+    // 備註：老師寫的＋課綱的注意事項＋找不到的器材（後台會把 [COURSE_NOTE] 那段另外顯示）
+    let note=(cb.note||'').trim();
+    const cn=[];
+    tpls.forEach(t=>{if(t.reference_note)cn.push((tpls.length>1?`【${formatTemplateName(t)}】`:'')+t.reference_note);});
+    if(miss.length)cn.push(['⚠️ 系統未登記，請確認（可能需採購或補登庫存）：',...miss.map(o=>`- ${o.name}${o.spec?'（'+o.spec+'）':''} × ${o.qty}${o.unit||''}`)].join('\n'));
+    if(cn.length)note=(note?note+'\n':'')+'[COURSE_NOTE]'+cn.join('\n\n')+'[/COURSE_NOTE]';
+    if(elective.length)note=(note?note+'\n':'')+'🎓 含選修課專用器材（申請人已確認先詢問負責老師）：'+elective.map(o=>`${o.name}【${equipRestrictNote(o.room,o.name)}】`).join('、');
+    if(note.length>2000)throw new Error('備註太長');
+    const items=got.map(o=>({room:o.room,name:o.name,spec:o.spec,unit:o.unit,quantity:o.qty}));
+    const id='REQ-'+Date.now();
+    const recBody={id,borrower_name:name,student_id:null,role:'老師',purpose:'課程',items,borrow_date:cb.bd,return_date:cb.rd,status:'待審核',deposit_type:'無',deposit_amount:0,deposit_status:'不需要',note,
+      course_name:tpls.map(t=>(t.name||'').trim()).join('、').slice(0,200)};
+    try{await sb('POST','borrow_records',{body:recBody,prefer:'return=minimal'});}
+    catch(err){if(/column|schema cache|PGRST/i.test(err.message||'')){delete recBody.course_name;await sb('POST','borrow_records',{body:recBody,prefer:'return=minimal'});}else throw err;}
+    let venueId='',venueFail='';
+    if(periods.length){
+      venueId='VEN-'+Date.now();
+      try{await sb('POST','venue_bookings',{body:{id:venueId,borrower_name:name,student_id:null,role:'老師',purpose:'課程',periods,status:'待審核',note:`[關聯借用申請 ${id}]${cb.note?' '+cb.note.trim():''}`,grade:(cb.grade||'').trim()||null},prefer:'return=minimal'});}
+      catch(ve){venueFail=ve.message||'未知錯誤';venueId='';}
+      renderHomeVenuePreview();
+    }
+    const mono=`style="font-family:'DM Mono',monospace"`;
+    let html=`<div class="result-box ok"><div class="rb-title">✅ 課綱借用申請已送出</div>編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(cb.bd)} 借 → ${escH(cb.rd)} 還<br>📚 ${tpls.map(t=>escH(formatTemplateName(t))).join('、')}</div>`;
+    if(venueId)html+=`<div class="result-box ok"><div class="rb-title">✅ 教室也預約了（待審核）</div>編號 <strong ${mono}>${escH(venueId)}</strong><ul>${periods.map(p=>`<li>${fmtPeriodShort(p)}　${escH(p.venue)}</li>`).join('')}</ul></div>`;
+    else if(venueFail)html+=`<div class="result-box fail"><div class="rb-title">❌ 教室沒有預約成功</div>器材已經送出，但教室還沒借到（${escH(venueFail)}），請到「場地預約」再借一次。</div>`;
+    lastSubmittedName=name;cb=null;
+    showModal(venueFail?'⚠️ 部分完成':'✅ 申請成功',html,[...(venueFail?[{label:'📅 到場地預約',cls:'btn-warn',fn:"closeModal();showPage('venue')"}]:[]),{label:'回學期週表',cls:'btn-primary',fn:"closeModal();showPage('semester')"}]);
+    cbRender();
+  }catch(e){showToast('送出失敗：'+e.message,'error');}
+  finally{cbBusy=false;const b=document.getElementById('cbSubmitBtn');if(b){b.disabled=false;b.textContent='送出借用申請';}}
+}
+// ==== 課綱借用頁 結束 ====
 async function loadCourseTemplates(){
   try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();renderSemTable();}catch(e){}
 }
 function renderTemplatePicker(){
+  if(!document.getElementById('tplPickerSelect'))return; // 借用單已經不放課綱選單（改到學期實驗）
   const room=document.getElementById('tplFilterRoom').value;
   const q=document.getElementById('tplFilterSearch').value.trim();
   const gradeEl=document.getElementById('tplFilterGrade');
@@ -5349,6 +5612,27 @@ function renderTemplatePicker(){
   sel.innerHTML='<option value="">— 選擇課程 —</option>'+items.map(t=>`<option value="${escH(t.id)}">${escH(formatTemplateName(t))}</option>`).join('');
 }
 function applySelectedTemplate(){const id=document.getElementById('tplPickerSelect').value;if(!id){showToast('請先選擇課程','error');return;}applyTemplate(id);}
+// 課綱的一樣器材 → 庫存裡挑哪一筆：先同名，再模糊比對名稱＋規格；優先本科、數量夠的
+// 回傳 {pick, info}；完全找不到回傳 null
+function tplPickEquip(it,t,want){
+  const av=e=>parseInt(e.available)||0;
+  const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
+  const itName=norm(it.name),itSpec=norm(it.spec);
+  let allCands=allEquipment.filter(e=>e.name===it.name);
+  if(!allCands.length&&itName){allCands=allEquipment.filter(e=>{const ct=norm(e.name)+norm(e.spec);const en=norm(e.name);const nameOk=ct.includes(itName)||(en&&itName.includes(en));if(!nameOk)return false;if(itSpec&&!ct.includes(itSpec))return false;return true;});}
+  const specCands=itSpec?allCands.filter(e=>{const es=norm(e.spec);return es&&(es.includes(itSpec)||itSpec.includes(es));}):[];
+  const cands=specCands.length?specCands:allCands;
+  if(!cands.length)return null;
+  const totalAvail=cands.reduce((s,e)=>s+av(e),0);
+  let pick=null;
+  for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r&&av(e)>=want);if(c){pick=c;break;}}}
+  if(!pick){const sat=cands.filter(e=>av(e)>=want).sort((a,b)=>av(b)-av(a));if(sat.length)pick=sat[0];}
+  if(!pick){for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r);if(c){pick=c;break;}}}}
+  if(!pick)pick=[...cands].sort((a,b)=>av(b)-av(a))[0];
+  let info='';
+  if(av(pick)<want){if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別合計尚有`;else info=`全校目前可借約 ${totalAvail}（原需 ${want}），請向辦公室確認`;}
+  return {pick,info};
+}
 function applyTemplate(id){
   const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
   const av=e=>parseInt(e.available)||0;const added=[];const unmatched=[];
@@ -5357,22 +5641,10 @@ function applyTemplate(id){
   const perOf=q=>(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
   (t.equipment_items||[]).forEach(it=>{
     const want=parseInt(it.quantity)||0;if(want<=0)return;
-    const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
-    const itName=norm(it.name),itSpec=norm(it.spec);
-    let allCands=allEquipment.filter(e=>e.name===it.name);
-    if(!allCands.length&&itName){allCands=allEquipment.filter(e=>{const ct=norm(e.name)+norm(e.spec);const en=norm(e.name);const nameOk=ct.includes(itName)||(en&&itName.includes(en));if(!nameOk)return false;if(itSpec&&!ct.includes(itSpec))return false;return true;});}
-    const specCands=itSpec?allCands.filter(e=>{const es=norm(e.spec);return es&&(es.includes(itSpec)||itSpec.includes(es));}):[];
-    const cands=specCands.length?specCands:allCands;
-    if(cands.length){
-      const totalAvail=cands.reduce((s,e)=>s+av(e),0);
-      let pick=null;
-      for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r&&av(e)>=want);if(c){pick=c;break;}}}
-      if(!pick){const sat=cands.filter(e=>av(e)>=want).sort((a,b)=>av(b)-av(a));if(sat.length)pick=sat[0];}
-      if(!pick){for(const r of [it.room,t.default_room]){if(r){const c=cands.find(e=>e.room===r);if(c){pick=c;break;}}}}
-      if(!pick)pick=[...cands].sort((a,b)=>av(b)-av(a))[0];
+    const m=tplPickEquip(it,t,want);
+    if(m){
+      const pick=m.pick,info=m.info;
       const room=pick.room,name=pick.name,spec=pick.spec||it.spec||'',unit=it.unit||pick.unit||'個';
-      let info='';
-      if(av(pick)<want){if(totalAvail>=want)info=`此處可借 ${av(pick)}，其他科別合計尚有`;else info=`全校目前可借約 ${totalAvail}（原需 ${want}），請向辦公室確認`;}
       selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
       added.push({room,name,unit,spec,qty:want,info,base:want,per:perOf(want)});
     }else{
