@@ -1478,7 +1478,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-08k · 視窗可以捲動＋按鈕固定底部</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09a · 課綱年級選單跳脫</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5029,7 +5029,7 @@ function renderTemplatePicker(){
     const gradeSet=new Set(candidatesForGrade.map(t=>extractPureGrade(t.grade||'')).filter(Boolean));
     // 依固定順序排列
     const orderedGrades=GRADE_LABELS.filter(g=>gradeSet.has(g));
-    gradeEl.innerHTML='<option value="">全部年級</option>'+orderedGrades.map(g=>`<option value="${g}">${g}</option>`).join('');
+    gradeEl.innerHTML='<option value="">全部年級</option>'+orderedGrades.map(g=>`<option value="${escH(g)}">${escH(g)}</option>`).join('');
     // 若之前選的年級還存在就保留，否則清掉
     if(currentGrade&&orderedGrades.includes(currentGrade))gradeEl.value=currentGrade;
   }
