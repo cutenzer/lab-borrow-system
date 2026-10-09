@@ -726,6 +726,8 @@
     #page-semester .sp-note{font-size:12px;padding:6px 10px;margin-bottom:8px;}
     .sp-w{min-height:72px;}
   }
+  /* 手機週表剛好一個螢幕：底下的版本字先藏起來 */
+  @media(max-width:900px){body:has(#page-semester.active) .app-ver{display:none;}}
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
@@ -1668,7 +1670,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09j · 換頁從最上面開始</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09k · 學期實驗從最上面開始</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5395,8 +5397,12 @@ function spRender(){
 // 手機：整個週表剛好一個螢幕高；格子區佔一半多，下面清單用剩下的，各自捲動
 function spFit(prevTop){
   const ph=document.querySelector('#spRoot .sp-phone');if(!ph||!ph.offsetParent)return;
+  // 高度剛好填滿螢幕、整頁不會再多出可以捲的地方（不然手機會停在半途，看不到最上面）
   const top=ph.getBoundingClientRect().top+window.scrollY;
-  ph.style.height=Math.max(460,window.innerHeight-top-10)+'px';
+  let h=Math.max(300,window.innerHeight-top-22);ph.style.height=h+'px';
+  const over=document.documentElement.scrollHeight-window.innerHeight;
+  if(over>0&&h-over>=300)ph.style.height=(h-over)+'px';
+  if(prevTop==null)navTop(); // 剛進這一頁：從最上面開始
   const box=ph.querySelector('.sp-wkbox'),sel=box&&box.querySelector('.sp-w.sel');if(!box)return;
   if(prevTop!=null)box.scrollTop=prevTop;
   if(sel&&(prevTop==null||sel.offsetTop<box.scrollTop||sel.offsetTop+sel.offsetHeight>box.scrollTop+box.clientHeight))box.scrollTop=Math.max(0,sel.offsetTop-box.clientHeight/3);
