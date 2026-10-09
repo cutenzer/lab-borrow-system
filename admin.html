@@ -5122,6 +5122,7 @@ function chemLocsOf(id){return allChemLocs.filter(l=>String(l.chem_id)===String(
 
 // ==== 結構式（前台、後台共用）開始 ====
 // 資料格式（存在 chemicals.structure）：{v:1, a:[[元素,x,y,電荷],…], b:[[原子i,原子j,鍵級],…]}
+// 鍵級：1 單鍵、2 雙鍵、3 參鍵、0 離子鍵（畫虛線，例如 Na⁺…O⁻）
 // 座標來自 PubChem 的 2D 資料；這裡自己用線條＋元素符號畫成 SVG（黑白、課本風格），不載入外部圖片
 const CHEM_ELEM=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am'];
 // 檢查資料格式，不對就當作沒有（避免奇怪的資料把畫面弄壞）
@@ -5130,7 +5131,7 @@ function chemStructOk(st){
   if(!st.a.length||st.a.length>400||st.b.length>600)return false;
   const n=st.a.length;
   return st.a.every(a=>Array.isArray(a)&&typeof a[0]==='string'&&/^[A-Z][a-z]?$/.test(a[0])&&Number.isFinite(a[1])&&Number.isFinite(a[2])&&(a[3]==null||(Number.isInteger(a[3])&&Math.abs(a[3])<10)))
-    &&st.b.every(b=>Array.isArray(b)&&Number.isInteger(b[0])&&Number.isInteger(b[1])&&b[0]>=0&&b[1]>=0&&b[0]<n&&b[1]<n&&b[0]!==b[1]&&[1,2,3].includes(b[2]));
+    &&st.b.every(b=>Array.isArray(b)&&Number.isInteger(b[0])&&Number.isInteger(b[1])&&b[0]>=0&&b[1]>=0&&b[0]<n&&b[1]<n&&b[0]!==b[1]&&[0,1,2,3].includes(b[2]));
 }
 // opts.mini：小縮圖（不畫氫、不寫碳，只看骨架形狀）
 function chemStructSvg(st,opts){
@@ -5154,15 +5155,20 @@ function chemStructSvg(st,opts){
   const lab=i=>!(opts.mini&&A[i][0]==='C')&&!(A[i][0]==='C'&&opts.skeleton);
   const sw=opts.mini?Math.max(2.4,W/40):2;
   let s=`<svg class="chem-st${opts.mini?' mini':''}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="結構式">`;
+  // 舊資料的離子鍵曾被誤存成參鍵：金屬離子、或兩端電荷一正一負的「參鍵」一律當離子鍵畫
+  const ION=/^(Li|Na|K|Rb|Cs|Be|Mg|Ca|Sr|Ba|Al|Zn|Fe|Cu|Ag|Mn|Co|Ni|Pb|Sn|Cr|Hg|Cd|NH4)$/;
+  const ionic=(i,j)=>ION.test(A[i][0])||ION.test(A[j][0])||((A[i][3]||0)*(A[j][3]||0)<0);
   B.forEach(([i,j,o])=>{
     if(!show[i]||!show[j])return;
+    if(o===3&&ionic(i,j))o=0;
     let x1=X(A[i][1]),y1=Y(A[i][2]),x2=X(A[j][1]),y2=Y(A[j][2]);
     const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
     const r1=lab(i)?(A[i][0].length>1?R+4:R):0,r2=lab(j)?(A[j][0].length>1?R+4:R):0;
     if(L<=r1+r2+2)return;
     x1+=ux*r1;y1+=uy*r1;x2-=ux*r2;y2-=uy*r2;
     const g=opts.mini?sw*1.4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
-    offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`;});
+    const dash=o===0?` stroke-dasharray="${opts.mini?'3 4':'2 5'}"`:'';
+    offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${(o===0?sw*0.8:sw).toFixed(1)}" stroke-linecap="round"${dash}/>`;});
   });
   idx.forEach(i=>{
     if(!lab(i))return;
@@ -5249,6 +5255,8 @@ function formulaDiffNote(ours,theirs){
   if(others&&dH&&dH===2*dO)return dO>0?`你的多了 ${dO} 個 H₂O（可能是含水的，PubChem 查到無水的）`:`PubChem 的多了 ${-dO} 個 H₂O（可能 PubChem 查到含水的）`;
   return '';
 }
+// PubChem 的鍵種類：1 單、2 雙、3 參、4 四重、5 配位、6 錯合、7 離子、255 未知 → 我們只分單、雙、參、離子（虛線）
+const PC_BOND={1:1,2:2,3:3,4:3,5:1,6:0,7:0,255:1};
 // PubChem 的 2D 座標 → 我們的結構式格式
 function pcToStructure(json){
   const c=json&&json.PC_Compounds&&json.PC_Compounds[0];if(!c||!c.atoms||!c.coords)return null;
@@ -5259,7 +5267,7 @@ function pcToStructure(json){
   const index={},a=[];
   for(let k=0;k<aid.length;k++){const sym=CHEM_ELEM[el[k]]||null,p=pos[aid[k]];if(!sym||!p||!Number.isFinite(p[0])||!Number.isFinite(p[1]))return null;index[aid[k]]=a.length;a.push([sym,Math.round(p[0]*100)/100,Math.round(p[1]*100)/100,chg[aid[k]]||0]);}
   const bd=c.bonds||{},b=[];
-  (bd.aid1||[]).forEach((x,k)=>{const i=index[x],j=index[bd.aid2[k]];if(i==null||j==null)return;const o=Math.min(3,Math.max(1,parseInt(bd.order[k])||1));b.push([i,j,o]);});
+  (bd.aid1||[]).forEach((x,k)=>{const i=index[x],j=index[bd.aid2[k]];if(i==null||j==null)return;const o=PC_BOND[parseInt(bd.order[k])]??1;b.push([i,j,o]);});
   const st={v:1,a:a.map(r=>r[3]?r:r.slice(0,3)),b};
   return chemStructOk(st)?st:null;
 }
