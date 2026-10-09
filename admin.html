@@ -176,8 +176,14 @@
   }
 
   /* ── 藥品頁版面：電腦兩欄（左：藥品櫃｜右：分頁），手機一次一個區塊 ── */
-  .chem-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0 10px;background:var(--bg);}
-  .chem-tabs::-webkit-scrollbar{display:none;}
+  .chem-tabs{padding:2px 0 10px;background:var(--bg);}
+  .chem-tabs .ct-row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+  .chem-tabs .ct-row::-webkit-scrollbar{display:none;}
+  .chem-tabs .ct-sub{margin-top:8px;padding:6px;background:var(--surface2);border-radius:14px;}
+  .chem-tabs .ct-sub[hidden],.chem-tabs .ct-sub button[hidden]{display:none;}
+  .chem-tabs .ct-sub button{font-size:13.5px;padding:6px 12px;}
+  @media(max-width:1099px){.chem-tabs .ct-row:not(.ct-sub){display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;}.chem-tabs .ct-row:not(.ct-sub) button{white-space:normal;padding:6px 2px;font-size:12.5px;line-height:1.35;border-radius:12px;text-align:center;position:relative;}.chem-tabs .ct-row:not(.ct-sub) .ct-n{position:absolute;top:-6px;right:-2px;margin:0;}}
+  .chem-tabs button.grp-on{border-color:var(--accent);color:var(--accent);font-weight:700;}
   .chem-tabs button{flex:0 0 auto;border:1.5px solid var(--border);background:var(--surface);color:var(--text2);font:inherit;font-size:14px;padding:7px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;}
   .chem-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
   .chem-tabs .ct-n{display:inline-block;min-width:18px;margin-left:5px;padding:0 6px;border-radius:9px;background:#c2410c;color:#fff;font-size:11.5px;line-height:18px;font-weight:700;}
@@ -1231,15 +1237,21 @@
     </div>
     <div class="chem-right">
       <div class="chem-tabs" id="chemTabs" role="tablist">
-        <button type="button" data-ct="cab" class="ct-cab">🗄️ 藥品櫃</button>
-        <button type="button" data-ct="list">📋 清單</button>
-        <button type="button" data-ct="add">➕ 新增</button>
-        <button type="button" data-ct="cats">🏷️ 大類</button>
-        <button type="button" data-ct="sort">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
-          <button type="button" data-ct="zero">0️⃣ 0 瓶<span class="ct-n" id="chemZeroN" style="background:#b45309"></span></button>
-          <button type="button" data-ct="noloc">📭 沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
-        <button type="button" data-ct="csv">📥 匯入</button>
-        <button type="button" data-ct="pubchem">🔬 PubChem</button>
+        <div class="ct-row">
+          <button type="button" data-ct="cab" class="ct-cab">🗄️ 藥品櫃</button>
+          <button type="button" data-ct="list">📋 清單</button>
+          <button type="button" data-ct="add">➕ 新增</button>
+          <button type="button" data-cg="todo">🧹 待整理<span class="ct-n" id="chemTodoN"></span></button>
+          <button type="button" data-cg="tools">🧰 工具</button>
+        </div>
+        <div class="ct-row ct-sub" id="chemSubTabs" hidden>
+          <button type="button" data-ct="sort" data-g="todo">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
+          <button type="button" data-ct="zero" data-g="todo">0️⃣ 0 瓶<span class="ct-n" id="chemZeroN" style="background:#b45309"></span></button>
+          <button type="button" data-ct="noloc" data-g="todo">📭 沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
+          <button type="button" data-ct="pubchem" data-g="tools">🔬 PubChem 比對</button>
+          <button type="button" data-ct="cats" data-g="tools">🏷️ 大類</button>
+          <button type="button" data-ct="csv" data-g="tools">📥 匯入</button>
+        </div>
       </div>
       <div class="chem-sec" data-sec="list">
   <div class="card">
@@ -1778,7 +1790,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-09d';
+const ADMIN_VERSION='2026-10-09e';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -5179,6 +5191,8 @@ function chemStructSvg(st,opts){
   });
   return s+'</svg>';
 }
+// 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
+function chemThumb(c){return chemStructOk(c&&c.structure)?chemStructSvg(c.structure,{mini:true}):'🧪';}
 // ==== 結構式（前台、後台共用）結束 ====
 // ==== PubChem 比對 開始 ====
 // 用藥品的 CAS（沒有就用英文名）去 PubChem 查：PubChem 名稱、分子式、CAS、結構式座標
@@ -5520,22 +5534,37 @@ function exportZeroXlsx(){
 // ==== 0 瓶的藥品 結束 ====
 // ── 藥品頁分頁 ──
 const isWideChem=()=>window.matchMedia('(min-width:1100px)').matches;
+// 小分頁屬於哪一組（待整理／工具）
+const CHEM_GROUP={sort:'todo',zero:'todo',noloc:'todo',pubchem:'tools',cats:'tools',csv:'tools'};
+const chemGroupLast={todo:'sort',tools:'pubchem'};
 function setChemTab(t,save=true){
   const tabs=document.getElementById('chemTabs');if(!tabs)return;
   if(isWideChem()&&t==='cab')t='list';      // 電腦版藥品櫃一直顯示在左邊
+  const g=CHEM_GROUP[t]||'';if(g)chemGroupLast[g]=t;
   tabs.querySelectorAll('[data-ct]').forEach(b=>b.classList.toggle('on',b.dataset.ct===t));
+  tabs.querySelectorAll('[data-cg]').forEach(b=>b.classList.toggle('on',b.dataset.cg===g));
+  const sub=document.getElementById('chemSubTabs');
+  if(sub){sub.hidden=!g;sub.querySelectorAll('[data-g]').forEach(b=>b.hidden=b.dataset.g!==g);}
   document.querySelectorAll('#panel-chemicals .chem-sec').forEach(sec=>sec.classList.toggle('on',sec.dataset.sec===t));
   if(save){try{localStorage.setItem('chemTab',t);}catch(_){}}
   if(t==='cab'&&typeof adminCabUI!=='undefined')adminCabUI.render();
   if(t==='pubchem')pcOpen();
   if(t==='zero')renderZero();
 }
+// 「待整理」上的數字＝未分類＋0 瓶＋沒位置
+function chemTodoCount(){
+  const n=['chemSortN','chemZeroN','chemNoLocN'].reduce((s,id)=>s+(parseInt(document.getElementById(id)?.textContent)||0),0);
+  const el=document.getElementById('chemTodoN');if(el)el.textContent=n?String(n):'';
+}
 function initChemTabs(){
   const tabs=document.getElementById('chemTabs');if(!tabs||tabs._init)return;tabs._init=true;
-  tabs.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{setChemTab(b.dataset.ct);const ws=document.querySelector('#panel-chemicals .chem-ws');if(!isWideChem()&&ws)window.scrollTo({top:Math.max(0,ws.getBoundingClientRect().top+window.scrollY-120),behavior:'smooth'});});
+  const jump=()=>{const ws=document.querySelector('#panel-chemicals .chem-ws');if(!isWideChem()&&ws)window.scrollTo({top:Math.max(0,ws.getBoundingClientRect().top+window.scrollY-120),behavior:'smooth'});};
+  tabs.querySelectorAll('[data-ct]').forEach(b=>b.onclick=()=>{setChemTab(b.dataset.ct);jump();});
+  tabs.querySelectorAll('[data-cg]').forEach(b=>b.onclick=()=>{setChemTab(chemGroupLast[b.dataset.cg]);jump();});
+  ['chemSortN','chemZeroN','chemNoLocN'].forEach(id=>{const el=document.getElementById(id);if(el)new MutationObserver(chemTodoCount).observe(el,{childList:true,characterData:true,subtree:true});});
   let t='cab';try{t=localStorage.getItem('chemTab')||'cab';}catch(_){}
-  setChemTab(t,false);
-  window.matchMedia('(min-width:1100px)').addEventListener?.('change',()=>{const cur=tabs.querySelector('.on')?.dataset.ct||'list';setChemTab(cur,false);});
+  setChemTab(t,false);chemTodoCount();
+  window.matchMedia('(min-width:1100px)').addEventListener?.('change',()=>{const cur=tabs.querySelector('[data-ct].on')?.dataset.ct||'list';setChemTab(cur,false);});
 }
 (function(){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initChemTabs);else initChemTabs();})();
 function goChemLoc(locId){if(!isWideChem())setChemTab('cab');adminCabUI.selectLoc(locId,true);}
