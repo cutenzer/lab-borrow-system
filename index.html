@@ -527,6 +527,112 @@
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
   .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
   /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
+  /* ── 學期實驗週表：老師看「這學期每一週做什麼實驗」，點實驗直接申請 ── */
+  .sem-seg{display:inline-flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+  .sem-seg button{border:none;background:var(--surface);color:var(--text2);font:inherit;font-size:14px;padding:7px 14px;cursor:pointer;}
+  .sem-seg button.on{background:var(--accent);color:#fff;font-weight:700;}
+  .sp-link{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1.5px solid var(--border);background:var(--surface);border-radius:12px;padding:12px 14px;font:inherit;color:var(--text);cursor:pointer;margin-bottom:6px;}
+  .sp-link:hover{background:#fff8e1;}
+  .sp-link>span:first-child{font-size:24px;}
+  .sp-link>span:nth-child(2){flex:1;min-width:0;}
+  .sp-link b{display:block;font-size:15.5px;}
+  .sp-link small{display:block;font-size:12.5px;color:var(--text2);}
+  .sp-link>span:last-child{font-size:22px;color:var(--text2);}
+  .sp-head{display:flex;align-items:baseline;gap:6px 12px;flex-wrap:wrap;margin:4px 0 12px;}
+  .sp-head h2{margin:0;font-size:24px;}
+  .sp-head span{font-size:13.5px;color:var(--text2);}
+  .sp-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px;}
+  .sp-legend{display:flex;gap:6px;flex-wrap:wrap;}
+  .sp-legend button{border:1.5px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;font:inherit;font-size:13.5px;padding:6px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+  .sp-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .sp-legend button.on{border-color:var(--text);color:var(--text);font-weight:700;background:var(--surface2);}
+  .sp-note{font-size:13px;color:var(--text2);background:var(--surface2);border-radius:10px;padding:8px 12px;margin-bottom:10px;}
+  .sp-empty{padding:30px 10px;text-align:center;color:var(--text2);}
+  /* 電腦：直的是「第幾週」、橫的是月份；格子裡一張淡底卡片＝一個實驗 */
+  .sp-desk{display:none;}
+  .sp-grid{display:grid;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+  .sp-gh{background:var(--surface2);font-size:14px;font-weight:700;color:var(--text2);padding:9px 8px;text-align:center;border-left:1px solid var(--border);}
+  .sp-gh:first-child{border-left:none;}
+  .sp-gh.now{color:var(--text);background:#f3e6bf;}
+  .sp-rh{background:var(--surface2);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);text-align:center;padding:4px;}
+  .sp-c{border-top:1px solid var(--border);border-left:1px solid var(--border);padding:6px;display:flex;flex-direction:column;gap:5px;min-width:0;min-height:78px;}
+  .sp-c.none{background:repeating-linear-gradient(45deg,transparent 0 6px,rgba(0,0,0,.03) 6px 12px);}
+  .sp-c.now{background:#fff6d6;}
+  .sp-c.past .sp-chip{opacity:.55;}
+  .sp-ch{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);font-family:'DM Mono',monospace;min-height:16px;}
+  .sp-ch b{color:var(--text);}
+  .sp-nowb{margin-left:auto;font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:700;background:#e0a800;color:#fff;border-radius:6px;padding:1px 6px;}
+  .sp-exam{font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:500;color:#a23b2a;border:1px solid #e6b8ae;border-radius:6px;padding:0 5px;margin-left:4px;}
+  .sp-chip{display:block;width:100%;text-align:left;border:none;border-left:4px solid var(--c);background:var(--t);border-radius:7px;padding:6px 8px;font:inherit;color:var(--text);cursor:pointer;}
+  .sp-chip b{display:block;font-size:13.5px;line-height:1.3;overflow-wrap:anywhere;}
+  .sp-chip small{display:block;font-size:11.5px;color:var(--text2);margin-top:1px;overflow-wrap:anywhere;}
+  .sp-chip:hover{box-shadow:0 0 0 2px var(--c) inset;}
+  .sp-chip.dim,.sp-c.past .sp-chip.dim{opacity:.2;}
+  /* 手機：學期週一格一格（3 欄），只有科目字有顏色；點一格，下面列出那週的實驗 */
+  .sp-wk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
+  .sp-w{display:flex;flex-direction:column;gap:2px;align-items:stretch;text-align:left;min-height:84px;padding:6px 7px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;color:var(--text);cursor:pointer;min-width:0;}
+  .sp-w.past{background:#f4f1ea;}
+  .sp-w.past .sp-ln{opacity:.6;}
+  .sp-w.now{background:#fff6d6;border-color:#e0c060;}
+  .sp-w.undef{border-style:dashed;}
+  .sp-w.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink);}
+  .sp-wh{display:flex;align-items:baseline;gap:4px;margin-bottom:1px;}
+  .sp-wh b{font-family:'DM Mono',monospace;font-size:12.5px;}
+  .sp-wh small{font-size:10.5px;color:var(--text2);}
+  .sp-wh i{margin-left:auto;font-style:normal;font-size:10px;font-weight:700;color:var(--text2);background:var(--surface2);border-radius:5px;padding:0 4px;}
+  .sp-wh i+i{margin-left:2px;}
+  .sp-wh i.nw{background:#e0a800;color:#fff;}
+  .sp-ln{display:flex;gap:4px;align-items:baseline;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;}
+  .sp-ln b{flex-shrink:0;font-size:11.5px;}
+  .sp-ln span{overflow:hidden;text-overflow:ellipsis;}
+  .sp-more{font-size:11px;color:var(--text2);}
+  .sp-panel{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:grid;gap:8px;}
+  .sp-ph{display:flex;align-items:center;gap:6px;}
+  .sp-ph b{flex:1;text-align:center;font-size:15.5px;}
+  .sp-ph button{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-size:20px;cursor:pointer;color:var(--text);}
+  .sp-ph button:disabled{opacity:.3;cursor:default;}
+  .sp-pc{font-size:12.5px;color:var(--text2);text-align:center;}
+  .sp-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:10px 12px;font:inherit;color:var(--text);cursor:pointer;}
+  .sp-row:hover{background:#fff8e1;}
+  .sp-lt{flex-shrink:0;min-width:38px;height:38px;padding:0 6px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+  .sp-rt{flex:1;min-width:0;}
+  .sp-rt b{display:block;font-size:15px;}
+  .sp-rt small{display:block;font-size:12px;color:var(--text2);}
+  .sp-go{color:var(--text2);font-size:20px;}
+  .sp-nomonth{display:grid;gap:6px;margin-top:6px;}
+  @media(min-width:901px){.sp-desk{display:block;}.sp-phone{display:none;}}
+  /* 點實驗跳出來的卡片 */
+  .sp-dtag{display:inline-block;font-size:13px;font-weight:700;border-radius:8px;padding:3px 10px;margin-bottom:8px;}
+  .sp-dmeta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--text2);margin-bottom:10px;}
+  .sp-eqs{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .sp-eq{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--surface2);font-size:14.5px;}
+  .sp-eq:last-child{border-bottom:none;}
+  .sp-eq>span{flex:1;min-width:0;overflow-wrap:anywhere;}
+  .sp-eq small{color:var(--text2);font-size:12.5px;}
+  .sp-eq i{font-style:normal;font-size:11.5px;font-weight:700;border-radius:6px;padding:1px 7px;white-space:nowrap;}
+  .sp-eq i.pg{background:#e8f1ea;color:#2e7d4f;}
+  .sp-eq i.sh{background:var(--surface2);color:var(--text2);}
+  .sp-eq b{font-family:'DM Mono',monospace;min-width:48px;text-align:right;white-space:nowrap;}
+  .sp-ref{margin-top:10px;font-size:13.5px;color:var(--text2);white-space:pre-wrap;}
+  /* 手機選單：右上角「☰ 選單」，點開往下展開成一列一列 */
+  .nav-hamburger .nh-c{display:none;}
+  @media(max-width:900px){
+    header .nav-wrap{display:block;}
+    header .nav-home-btn,body:not(.on-home) header .nav-home-btn{display:none!important;}
+    .nav-hamburger{width:auto;height:40px;padding:0 13px;font-size:14.5px;font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+    .nav-hamburger.open .nh-o{display:none;}
+    .nav-hamburger.open .nh-c{display:inline;}
+    .nav-menu{left:0!important;right:0!important;top:56px!important;border:none;border-radius:0 0 16px 16px;padding:8px 12px 14px;max-height:calc(100vh - 56px);overflow-y:auto;box-shadow:0 0 0 100vmax rgba(20,22,24,.4);}
+    .nav-menu button{font-size:16.5px;padding:14px;border-radius:10px;}
+  }
+  /* 平板橫放：選單變 8 個，拿掉小圖示、字不換行，才排得下 */
+  @media(min-width:901px) and (max-width:1099px){
+    .desk-nav button{white-space:nowrap;padding:8px 9px!important;}
+    .desk-nav button .ico{display:none;}
+    .brand-sub{display:none;}
+  }
+  .sem-search{margin:4px 0 2px;}
+  .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
   .note-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--surface2);}
   .note-row .k{flex:0 0 64px;color:var(--text2);font-size:13px;}
@@ -910,7 +1016,7 @@
   .entry-card span{font-size:12.5px;color:var(--text2);}
   .entry-card:hover{transform:translateY(-2px);box-shadow:0 12px 26px rgba(31,35,38,.14);}
   .entry-card:active{transform:scale(.98);}
-  .entry-minor{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 12px 0;}
+  .entry-minor{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 12px 0;}
   .entry-minor button{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;border:none;border-radius:12px;background:#e4ded2;color:var(--text);font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;}
   .today-labs{margin:22px 0 6px;display:flex;flex-direction:column;gap:10px;}
   .tl-head{display:flex;align-items:baseline;gap:10px;}
@@ -1102,6 +1208,7 @@
   <nav class="desk-nav" aria-label="主選單">
     <button class="active" data-page="home" onclick="showPage('home')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>首頁</span></button>
     <button data-page="borrow" onclick="showPage('borrow')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材借用</span></button>
+    <button data-page="semester" onclick="showPage('semester')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M3 15h18"/></svg><span>學期實驗</span></button>
     <button data-page="venue" onclick="showPage('venue')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>場地預約</span></button>
     <button data-page="equipment" onclick="showPage('equipment')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>器材查詢</span></button>
     <button data-page="floorplan" onclick="showPage('floorplan')"><svg class="ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖</span></button>
@@ -1111,10 +1218,11 @@
   </nav>
   <button class="nav-home-btn" onclick="showPage('home')" aria-label="回首頁"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>首頁</button>
   <div class="nav-wrap">
-    <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單">☰</button>
+    <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單"><span class="nh-o">☰ 選單</span><span class="nh-c">✕ 收合</span></button>
     <div class="nav-menu" id="navMenu">
       <button class="active" data-page="home" onclick="showPage('home')">🏠 首頁</button>
       <button data-page="borrow" onclick="showPage('borrow')">🔬 器材借用</button>
+      <button data-page="semester" onclick="showPage('semester')">📅 學期實驗</button>
       <button data-page="venue" onclick="showPage('venue')">🏛️ 場地預約</button>
       <button data-page="equipment" onclick="showPage('equipment')">📦 器材查詢</button>
       <button data-page="floorplan" onclick="showPage('floorplan')">🏫 平面圖</button>
@@ -1153,6 +1261,7 @@
     <button type="button" class="entry-card" onclick="showPage('floorplan')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><b>平面圖</b><span>看櫃子在哪裡</span></button>
   </div>
   <div class="entry-minor">
+    <button type="button" onclick="showPage('semester')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M3 15h18"/></svg>學期實驗</button>
     <button type="button" onclick="showPage('chemicals')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg>藥品查詢</button>
     <button type="button" onclick="showPage('myrecords')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>我的記錄</button>
   </div>
@@ -1189,6 +1298,12 @@
 
   </div>
   </div>
+</div>
+
+<!-- 學期實驗週表（老師）-->
+<div id="page-semester" class="page">
+  <div class="sp-head"><h2>📅 學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
+  <div id="spRoot"></div>
 </div>
 
 <div id="page-borrow" class="page">
@@ -1274,7 +1389,9 @@
   <div class="card" id="courseTemplateCard" style="display:none">
     <div class="card-title">② 要借什麼：📚 套用課綱實驗（老師專用）</div>
     <div class="info-box">選擇要上的課程，系統會自動把器材清單加入購物車🛒，可再點下方「查看已選器材」微調數量。藥品／注意事項僅供參考顯示，不會修改原始的課綱實驗。</div>
-   <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+   <div id="tplSemTable" class="sem-wrap"></div>
+   <details class="sem-search" open><summary>🔍 用搜尋選課程</summary>
+   <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap">
   <select id="tplFilterRoom" onchange="renderTemplatePicker()" style="flex:0 0 100px">
     <option value="">全部科別</option>
     <option value="Physics">物理</option>
@@ -1289,7 +1406,7 @@
   <input type="text" id="tplFilterSearch" placeholder="搜尋課程名稱…" oninput="renderTemplatePicker()" style="flex:1;min-width:110px">
       <select id="tplPickerSelect" style="flex:2;min-width:160px"><option value="">— 選擇課程 —</option></select>
       <button class="btn btn-primary btn-sm" onclick="applySelectedTemplate()">套用</button>
-    </div>
+    </div></details>
     <div id="appliedTemplateBox" style="display:none;margin-top:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
         <div style="font-size:14px;font-weight:700">📚 已套用：<span id="appliedTemplateName"></span></div>
@@ -1478,7 +1595,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09a · 課綱年級選單跳脫</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09c · 學期實驗週表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2962,7 +3079,7 @@ function goThisWeek(){venueWeekOffset=0;loadVenue();}
 async function loadActiveSemester(){
   try{
     const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
-    activeSemester=rows.length?rows[0]:null;buildWeekSelector();
+    activeSemester=rows.length?rows[0]:null;buildWeekSelector();spTerm=null;spSel=null;spRender();
   }catch(e){activeSemester=null;}
 }
 function getMondayOfOffset(offset){
@@ -4840,13 +4957,14 @@ function toggleNavMenu(e){
     const rect=btn.getBoundingClientRect();
     menu.style.top=(rect.bottom+6)+'px';
     menu.style.right=(window.innerWidth-rect.right)+'px';
-    menu.classList.add('show');
+    menu.classList.add('show');btn.classList.add('open');
     setTimeout(()=>document.addEventListener('click',closeNavMenu,{once:true}),0);
   }
 }
 function closeNavMenu(){
   const menu=document.getElementById('navMenu');
   if(menu)menu.classList.remove('show');
+  document.querySelector('.nav-hamburger')?.classList.remove('open');
 }
 function showPage(page,opts){
   const fromHist=!!(opts&&opts.fromHistory);
@@ -4873,6 +4991,7 @@ function showPage(page,opts){
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
+  if(page==='semester')spRender();
   if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
   if(page==='myrecords')autoLoadMyRecords();
   if(page==='borrow')prefillBorrowIdentity();
@@ -4986,12 +5105,12 @@ function showToast(msg,type){const t=document.getElementById('toast');t.textCont
 let allCourseTemplates=[],appliedTemplate=null;
 const SUBJECT_FROM_ROOM={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具'};
 const SUBJECTS=['地球科學','物理','化學','生物','地科','理化','數學','資訊','生活科技','國文','英文','歷史','地理','公民'];
-const SPECIAL_TAGS=['探究','菁英','選修','資優','實驗班','科學班','先修','專題','加深加廣'];
+const SPECIAL_TAGS=['科學研究','科研','探究','菁英','選修','資優','實驗班','科學班','先修','專題','加深加廣'];
 function detectSpecialTag(t){const hay=`${t.category||''} ${t.name||''} ${t.week||''} ${t.month||''} ${t.grade||''}`;for(const tag of SPECIAL_TAGS){if(hay.includes(tag))return tag;}return '';}
 function detectSubject(t){if(SUBJECT_FROM_ROOM[t.default_room])return SUBJECT_FROM_ROOM[t.default_room];const hay=`${t.category||''} ${t.name||''}`;for(const s of SUBJECTS){if(hay.includes(s))return s==='地球科學'?'地科':s;}return '';}
 function stripLeadingTokens(name,tokens){let s=(name||'').trim();const seps=['-','－','—','～','~','｜','|','/','／','：',':','　',' ','．','.','、'];let changed=true;while(changed){changed=false;for(const sep of seps){while(s.startsWith(sep)){s=s.slice(sep.length);changed=true;}}for(const tk of tokens){if(tk&&s.startsWith(tk)){s=s.slice(tk.length);changed=true;break;}}}return s.trim();}
 function cleanGrade(grade,subject,special){let g=(grade||'').trim().replace(/[（(][^）)]*[）)]/g,'');if(subject)g=g.split(subject).join('');if(special)g=g.split(special).join('');return g.replace(/[-－—～~｜|\/／：:．.、，,\s（）()]/g,'').trim();}
-function formatTemplateName(t){
+function templateNameParts(t){
   const rawGrade=(t.grade||'').trim();const subject=detectSubject(t);const special=detectSpecialTag(t);
   const pureGrade=cleanGrade(rawGrade,subject,special);let head=pureGrade;
   if(subject&&!head.includes(subject))head+=subject;if(special&&!head.includes(special))head+=special;
@@ -5001,10 +5120,168 @@ function formatTemplateName(t){
   if(rawGrade)tokens.push(rawGrade);if(pureGrade)tokens.push(pureGrade);
   tokens.sort((a,b)=>b.length-a.length);
   const pure=stripLeadingTokens(t.name,tokens);
-  if(head&&pure)return `${head}-${pure}`;return head||pure||(t.name||'').trim()||'（未命名課程）';
+  return {head,pure:pure||(head?'':((t.name||'').trim()||'（未命名課程）'))};
 }
+function formatTemplateName(t){const p=templateNameParts(t);return p.head&&p.pure?`${p.head}-${p.pure}`:(p.head||p.pure);}
+// ── 學期：上學期 8～1 月、下學期 2～7 月；5 個科目各一個顏色（菁英、探究等不另外配色）──
+const SEM_MONTHS={1:[8,9,10,11,12,1],2:[2,3,4,5,6,7]};
+const SEM_SUBJ=[['物理','#3b5b8a'],['化學','#b35c1e'],['生物','#2e7d4f'],['地科','#1f7a7a'],['理化','#7b4fa0'],['其他','#7a7a7a']];
+function semSubjectOf(t){const s=detectSubject(t);return SEM_SUBJ.some(x=>x[0]===s)?s:'其他';}
+function semColor(s){return (SEM_SUBJ.find(x=>x[0]===s)||SEM_SUBJ[5])[1];}
+function semMonthOf(t){const m=String(t.month??'').match(/\d+/);const n=m?parseInt(m[0],10):NaN;return n>=1&&n<=12?n:null;}
+function semWeekOf(t){const m=String(t.week??'').match(/\d+/);return m?parseInt(m[0],10):null;}
+function renderSemTable(){
+  const box=document.getElementById('tplSemTable');
+  if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span>📅</span><span><b>打開學期實驗週表</b><small>看每一週做什麼實驗，點一下就帶入器材</small></span><span>›</span></button>`:'';
+  spRender();
+}
+// ==== 學期實驗頁 開始 ====
+// 把課綱實驗排到「學期的第幾週」：電腦＝月份 × 週（彩色淡底卡片）；手機＝學期週格子 ＋ 下方該週清單
+// 週次怎麼對：課綱寫的「第 n 週」如果學期第 n 週的星期一剛好在那個月 → 用學期週；不然就當成「那個月的第 n 週」；只有月份 → 放「週次未定」
+const SP_TINT={'物理':'#e9edf4','化學':'#f6ece4','生物':'#e8f1ea','地科':'#e5f0f0','理化':'#efe9f4','其他':'#efede8'};
+const SP_ONE={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理','其他':'其'};
+const SP_KIND={'科學研究':'研','科研':'研','菁英':'菁','探究':'探','選修':'選','資優':'資','實驗班':'實','科學班':'科','先修':'先','專題':'專','加深加廣':'深'};
+let spTerm=null,spSubj='全部',spSel=null;
+function spKindOf(t){return SP_KIND[detectSpecialTag(t)]||'';}
+function spLetter(t){return SP_ONE[semSubjectOf(t)]+spKindOf(t);}
+function spMid(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // 用週四判斷這週算哪個月
+function spMD(d){return (d.getMonth()+1)+'/'+d.getDate();}
+// 目前設定的學期（後台「學期設定」）是上學期還是下學期
+function spActiveTerm(){
+  const sw=activeSemester?getSemesterWeeks(activeSemester):[];
+  if(!sw.length)return null;
+  return SEM_MONTHS[1].includes(spMid(sw[0].date).getMonth()+1)?1:2;
+}
+function spBuild(term){
+  const months=SEM_MONTHS[term],real=spActiveTerm()===term;
+  const slots=[];
+  if(real){
+    getSemesterWeeks(activeSemester).forEach(w=>{const m=spMid(w.date).getMonth()+1;if(months.includes(m))slots.push({week:w.week,date:w.date,m,type:w.type,items:[]});});
+  }
+  const pool=allCourseTemplates.filter(t=>{const m=semMonthOf(t);return m&&months.includes(m);});
+  if(!real){ // 沒有學期設定：每個月先排 4 週，有人寫到第 5 週才多一格
+    months.forEach(m=>{const max=Math.max(4,...pool.filter(t=>semMonthOf(t)===m).map(t=>{const n=semWeekOf(t);return n&&n<=5?n:0;}));for(let n=1;n<=max;n++)slots.push({week:null,date:null,m,items:[]});});
+  }
+  months.forEach(m=>{let n=0;slots.forEach(s=>{if(s.m===m)s.n=++n;});});
+  const undef={};
+  pool.forEach(t=>{
+    const m=semMonthOf(t),n=semWeekOf(t);let s=null;
+    if(n&&real)s=slots.find(x=>x.week===n&&x.date.getMonth()+1===m)||null;
+    if(!s&&n)s=slots.filter(x=>x.m===m)[n-1]||null;
+    if(s)s.items.push(t);else(undef[m]=undef[m]||[]).push(t);
+  });
+  // 週次未定：放在該月最後一週後面
+  const all=[];
+  const shown=real?months.filter(m=>slots.some(x=>x.m===m)||undef[m]):months; // 有設定學期：沒有任何一週的月份（例如 8 月）就不顯示
+  shown.forEach(m=>{slots.filter(s=>s.m===m).forEach(s=>all.push(s));if(undef[m])all.push({week:null,date:null,m,n:0,undef:true,items:undef[m]});});
+  const ord=s=>SEM_SUBJ.findIndex(x=>x[0]===s);
+  all.forEach(s=>s.items.sort((a,b)=>ord(semSubjectOf(a))-ord(semSubjectOf(b))||formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant')));
+  const today=new Date();today.setHours(0,0,0,0);
+  const nowW=real?getWeekInfo(today,activeSemester):null;
+  all.forEach(s=>{
+    s.now=!!(nowW&&s.week===nowW.week);
+    s.past=!!(s.date&&!s.now&&(s.date.getTime()+7*864e5)<=today.getTime());
+    s.exam=s.week?examLabelForWeek(s.week):'';
+  });
+  const noMonth=allCourseTemplates.filter(t=>!semMonthOf(t));
+  return {months:shown,real,slots:all,noMonth,maxN:Math.max(1,...all.map(s=>s.n||0)),hasUndef:all.some(s=>s.undef)};
+}
+function spSlotTitle(s,long){
+  if(s.undef)return `${s.m} 月・週次未定`;
+  if(s.week){const e=new Date(s.date);e.setDate(e.getDate()+4);return long?`第 ${s.week} 週・${spMD(s.date)}～${spMD(e)}`:`W${s.week}`;}
+  return `${s.m} 月第 ${s.n} 週`;
+}
+function spSub(t){const p=templateNameParts(t);return [p.head,t.teacher].filter(Boolean).join('・');}
+function spRender(){
+  const root=document.getElementById('spRoot');if(!root)return;
+  if(spTerm==null){const a=spActiveTerm();spTerm=a||(((new Date().getMonth()+1)>=2&&(new Date().getMonth()+1)<=7)?2:1);}
+  if(!allCourseTemplates.length){root.innerHTML='<div class="sp-empty">還沒有課綱實驗。請管理員在後台「課綱實驗」新增。</div>';return;}
+  const B=spBuild(spTerm),nowM=new Date().getMonth()+1;
+  const subjHave=new Set(allCourseTemplates.map(semSubjectOf));
+  const subjList=SEM_SUBJ.filter(x=>subjHave.has(x[0]));
+  if(spSubj!=='全部'&&!subjHave.has(spSubj))spSubj='全部';
+  const want=t=>spSubj==='全部'||semSubjectOf(t)===spSubj;
+  const termName=n=>n===1?'上學期':'下學期';
+  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div>
+    <div class="sp-legend" role="group" aria-label="只看哪一科">${['全部',...subjList.map(x=>x[0])].map(s=>`<button type="button" class="${spSubj===s?'on':''}" onclick="spSubj=${ja(s)};spRender()">${s==='全部'?'':`<i style="background:${semColor(s)}"></i>`}${escH(s)}</button>`).join('')}</div></div>`;
+  if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，先用「幾月第幾週」排。</div>`;
+  // ── 電腦：月份 × 週 ──
+  h+=`<div class="sp-desk"><div class="sp-grid" style="grid-template-columns:60px repeat(${B.months.length},minmax(0,1fr))"><div class="sp-gh"></div>`;
+  h+=B.months.map(m=>`<div class="sp-gh${m===nowM?' now':''}">${m} 月</div>`).join('');
+  const rowsN=[];for(let n=1;n<=B.maxN;n++)rowsN.push(n);if(B.hasUndef)rowsN.push(0);
+  rowsN.forEach(n=>{
+    h+=`<div class="sp-rh">${n?`第 ${n} 週`:'未定'}</div>`;
+    B.months.forEach(m=>{
+      const s=B.slots.find(x=>x.m===m&&(n?x.n===n&&!x.undef:x.undef));
+      if(!s){h+='<div class="sp-c none"></div>';return;}
+      h+=`<div class="sp-c${s.now?' now':''}${s.past?' past':''}"><div class="sp-ch">${s.week?`<b>W${s.week}</b> ${spMD(s.date)}`:''}${s.exam?`<span class="sp-exam">${escH(s.exam)}</span>`:''}${s.now?'<span class="sp-nowb">本週</span>':''}</div>`;
+      h+=s.items.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip${want(t)?'':' dim'}" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
+      h+='</div>';
+    });
+  });
+  h+='</div></div>';
+  // ── 手機：學期週格子 ＋ 該週清單 ──
+  if(spSel==null||spSel>=B.slots.length){
+    let k=B.slots.findIndex(s=>s.now);
+    if(k<0)k=B.slots.findIndex(s=>s.m===nowM&&s.items.length);
+    if(k<0)k=B.slots.findIndex(s=>s.items.length);
+    spSel=Math.max(0,k);
+  }
+  h+='<div class="sp-phone"><div class="sp-wk">';
+  let lastM=null;
+  B.slots.forEach((s,i)=>{
+    const its=s.items.filter(want),first=s.m!==lastM;lastM=s.m;
+    h+=`<button type="button" class="sp-w${i===spSel?' sel':''}${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}" onclick="spPickWeek(${i})">`;
+    h+=`<span class="sp-wh">${s.undef?`<b>${s.m}月</b><small>未定</small>`:s.week?`<b>W${s.week}</b><small>${spMD(s.date)}</small>`:`<b>${s.m}月</b><small>第${s.n}週</small>`}${s.week&&first?`<i>${s.m}月</i>`:''}${s.now?'<i class="nw">本週</i>':''}</span>`;
+    h+=its.slice(0,4).map(t=>`<span class="sp-ln"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b><span>${escH(templateNameParts(t).pure||templateNameParts(t).head)}</span></span>`).join('');
+    if(its.length>4)h+=`<span class="sp-more">＋${its.length-4}</span>`;
+    h+='</button>';
+  });
+  h+='</div>';
+  const S=B.slots[spSel];
+  if(S){
+    const its=S.items.filter(want);
+    h+=`<div class="sp-panel" id="spPanel"><div class="sp-ph"><button type="button" onclick="spPickWeek(${spSel-1})" ${spSel<=0?'disabled':''} aria-label="上一週">‹</button><b>${escH(spSlotTitle(S,true))}${S.exam?`<span class="sp-exam">${escH(S.exam)}</span>`:''}</b><button type="button" onclick="spPickWeek(${spSel+1})" ${spSel>=B.slots.length-1?'disabled':''} aria-label="下一週">›</button></div>`;
+    h+=`<div class="sp-pc">${its.length?`這週有 ${its.length} 個實驗，點一下看器材、申請`:'這週沒有課綱實驗'}</div>`;
+    h+=its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join('');
+    h+='</div>';
+  }
+  h+='</div>';
+  if(B.noMonth.length)h+=`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
+  root.innerHTML=h;
+}
+function spPickWeek(i){
+  const n=document.querySelectorAll('#spRoot .sp-w').length;if(i<0||i>=n)return;
+  spSel=i;spRender();
+}
+// 點實驗：看器材、直接申請
+function spOpen(id){
+  const t=allCourseTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+  const sj=semSubjectOf(t),gc=parseInt(t.group_count)||0;
+  const B=spBuild(spTerm||1),s=B.slots.find(x=>x.items.includes(t));
+  const when=s?spSlotTitle(s,true).replace(/^第 (\d+) 週/,(_,w)=>`學期第 ${w} 週`):(semMonthOf(t)?`${semMonthOf(t)} 月`:'沒有填月份');
+  const items=Array.isArray(t.equipment_items)?t.equipment_items:[];
+  const eq=items.map(it=>{const q=parseInt(it.quantity)||0,per=(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
+    return `<div class="sp-eq"><span>${escH(it.name||'')}${it.spec?`<small> ${escH(it.spec)}</small>`:''}</span>${q?`<i class="${per?'pg':'sh'}">${per?`每組 ${per}`:'全班共用'}</i><b>${q} ${escH(it.unit||'')}</b>`:''}</div>`;}).join('');
+  showModal('📅 '+formatTemplateName(t),`
+    <div class="sp-dtag" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</div>
+    <div class="sp-dmeta"><span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
+    <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
+    ${t.reference_note?`<div class="sp-ref">📝 ${escH(t.reference_note)}</div>`:''}
+    <div class="hint" style="margin-top:10px">按「用這個申請」會切到借用單、自動帶入器材，日期和組數到借用單再調。</div>`,
+    [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'用這個申請 ›',cls:'btn-primary',fn:`spApply(${ja(t.id)})`}]);
+}
+function spApply(id){
+  const t=allCourseTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+  closeModal();
+  showPage('borrow');
+  if(typeof setRole==='function')setRole('老師');
+  if(!(appliedTemplate&&String(appliedTemplate.id)===String(t.id)))applyTemplate(t.id);
+  setTimeout(()=>{const b=document.getElementById('appliedTemplateBox');if(b)b.scrollIntoView({behavior:'smooth',block:'start'});},350);
+}
+// ==== 學期實驗頁 結束 ====
 async function loadCourseTemplates(){
-  try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();}catch(e){}
+  try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();renderSemTable();}catch(e){}
 }
 function renderTemplatePicker(){
   const room=document.getElementById('tplFilterRoom').value;
@@ -5079,6 +5356,7 @@ function applyTemplate(id){
   document.getElementById('appliedTemplateName').textContent=appliedTemplate.name;
   document.getElementById('appliedTemplateBox').style.display='block';
   showToast('已套用：'+appliedTemplate.name+'（已帶入 '+(added.length+unmatched.length)+' 項器材）','success');
+  renderSemTable();
 }
 function renderAppliedTemplate(){
   const box=document.getElementById('appliedTemplateSummary');if(!box)return;if(!appliedTemplate){box.innerHTML='';return;}
@@ -5237,6 +5515,7 @@ function clearAppliedTemplate(removeItems){
   const sum=document.getElementById('appliedTemplateSummary');if(sum)sum.innerHTML='';
   const sel=document.getElementById('tplPickerSelect');if(sel)sel.value='';
   calcDeposit();
+  renderSemTable();
 }
 
 // ── 藥品查詢（維持原有邏輯）──────────────────────────────
@@ -5676,7 +5955,7 @@ async function openChemDetail(id,ctx){
   const row=(k,v)=>v?`<div class="note-row"><span class="k">${k}</span><span class="v">${v}</span></div>`:'';
   const hlId=ctx.locId!=null?String(ctx.locId):null;
   const showLocs=locs.filter(l=>String(l.id)!==hlId);
-  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(currentPage!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
+  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
   // 這一罐在哪裡（從櫃子點進來才有）
   let here='';
   const hl=ctx.locId!=null?allChemLocs.find(l=>String(l.id)===String(ctx.locId)):null;
