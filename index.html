@@ -568,29 +568,32 @@
   .sp-chip small{display:block;font-size:11.5px;color:var(--text2);margin-top:1px;overflow-wrap:anywhere;}
   .sp-chip:hover{box-shadow:0 0 0 2px var(--c) inset;}
   .sp-chip.dim,.sp-c.past .sp-chip.dim{opacity:.2;}
-  /* 手機：學期週一格一格（3 欄），只有科目字有顏色；點一格，下面列出那週的實驗 */
-  .sp-wk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;}
-  .sp-w{display:flex;flex-direction:column;gap:2px;align-items:stretch;text-align:left;min-height:84px;padding:6px 7px;border:1px solid var(--border);border-radius:10px;background:var(--surface);font:inherit;color:var(--text);cursor:pointer;min-width:0;}
-  .sp-w.past{background:#f4f1ea;}
-  .sp-w.past .sp-ln{opacity:.6;}
+  /* 手機：學期週一格一格（4 欄，只有週次、日期、幾個實驗）；點一格，下面跳出那週的實驗 */
+  .sp-wk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+  .sp-w{display:flex;flex-direction:column;gap:1px;align-items:stretch;text-align:left;min-height:66px;padding:7px 8px;border:1px solid var(--border);border-radius:11px;background:var(--surface);font:inherit;color:var(--text);cursor:pointer;min-width:0;}
+  .sp-w.past{background:#f4f1ea;color:#7d786e;}
   .sp-w.now{background:#fff6d6;border-color:#e0c060;}
   .sp-w.undef{border-style:dashed;}
   .sp-w.sel{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink);}
-  .sp-wh{display:flex;align-items:baseline;gap:4px;margin-bottom:1px;}
-  .sp-wh b{font-family:'DM Mono',monospace;font-size:12.5px;}
-  .sp-wh small{font-size:10.5px;color:var(--text2);}
+  .sp-wh{display:flex;align-items:center;gap:4px;}
+  .sp-wh b{font-family:'DM Mono',monospace;font-size:14px;}
   .sp-wh i{margin-left:auto;font-style:normal;font-size:10px;font-weight:700;color:var(--text2);background:var(--surface2);border-radius:5px;padding:0 4px;}
-  .sp-wh i+i{margin-left:2px;}
-  .sp-wh i.nw{background:#e0a800;color:#fff;}
-  .sp-ln{display:flex;gap:4px;align-items:baseline;font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;}
-  .sp-ln b{flex-shrink:0;font-size:11.5px;}
-  .sp-ln span{overflow:hidden;text-overflow:ellipsis;}
-  .sp-more{font-size:11px;color:var(--text2);}
-  .sp-panel{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;display:grid;gap:8px;}
-  .sp-ph{display:flex;align-items:center;gap:6px;}
-  .sp-ph b{flex:1;text-align:center;font-size:15.5px;}
-  .sp-ph button{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-size:20px;cursor:pointer;color:var(--text);}
-  .sp-ph button:disabled{opacity:.3;cursor:default;}
+  .sp-wd{font-size:11px;color:var(--text2);}
+  .sp-wc{display:flex;align-items:center;gap:4px;margin-top:auto;min-height:18px;}
+  .sp-wc em{font-style:normal;font-size:10px;font-weight:700;background:#e0a800;color:#fff;border-radius:5px;padding:0 4px;}
+  .sp-dots{display:flex;gap:2px;}
+  .sp-dots i{width:7px;height:7px;border-radius:50%;display:block;}
+  .sp-wc b{margin-left:auto;font-size:13px;font-family:'DM Mono',monospace;}
+  .sp-phone .sem-search{margin-top:10px;}
+  /* 下方面板（跟平面圖的一樣，從下面滑上來） */
+  .sp-sheet .fp-sheet-title{display:flex;align-items:center;gap:6px;white-space:normal;}
+  .sp-sheet .fp-sheet-title>span{flex:1;text-align:center;}
+  .sp-nav{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);font-size:18px;cursor:pointer;color:var(--text);flex-shrink:0;}
+  .sp-nav:disabled{opacity:.3;cursor:default;}
+  .sp-sheet .fp-sheet-body{display:grid;gap:8px;align-content:start;padding-top:8px;}
+  body.sp-sheet-open #page-semester{padding-bottom:var(--spSheetH,45vh);}
+  body.sp-sheet-open .app-ver{display:none;}
+  @media(min-width:901px){.sp-sheet{display:none!important;}}
   .sp-pc{font-size:12.5px;color:var(--text2);text-align:center;}
   .sp-row{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:10px 12px;font:inherit;color:var(--text);cursor:pointer;}
   .sp-row:hover{background:#fff8e1;}
@@ -709,11 +712,6 @@
   .cb-ref-t small{font-weight:400;font-size:12px;color:var(--text2);margin-left:auto;}
   .cb-ref-n{font-size:13px;font-weight:700;margin-top:8px;}
   .cb-ref-b{font-size:14px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);}
-  /* 手機週表：一個螢幕放得下——上面格子（約一半多）、下面清單，各自捲動 */
-  .sp-phone{display:flex;flex-direction:column;gap:10px;min-height:0;}
-  .sp-wkbox{flex:0 0 56%;min-height:0;overflow-y:auto;overscroll-behavior:contain;position:relative;border-radius:12px;padding:2px;}
-  .sp-phone .sp-panel{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin-top:0;align-content:start;padding-top:0;}
-  .sp-phone .sp-ph{position:sticky;top:0;z-index:1;background:var(--surface);padding-top:10px;}
   @media(max-width:900px){
     #page-semester .sp-head{margin:0 0 8px;}
     #page-semester .sp-head h2{font-size:20px;}
@@ -724,10 +722,7 @@
     #page-semester .sp-bar>*{flex-shrink:0;}
     #page-semester .sp-legend button,#page-semester .sem-seg button{white-space:nowrap;padding:6px 10px;}
     #page-semester .sp-note{font-size:12px;padding:6px 10px;margin-bottom:8px;}
-    .sp-w{min-height:72px;}
   }
-  /* 手機週表剛好一個螢幕：底下的版本字先藏起來 */
-  @media(max-width:900px){body:has(#page-semester.active) .app-ver{display:none;}}
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
@@ -1403,6 +1398,11 @@
 <div id="page-semester" class="page">
   <div class="sp-head"><h2>📅 學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
   <div id="spRoot"></div>
+  <section class="fp-sheet sp-sheet" id="spSheet" role="region" aria-labelledby="spSheetTitle">
+    <div class="fp-sheet-grip" aria-hidden="true"></div>
+    <div class="fp-sheet-head"><div class="fp-sheet-title" id="spSheetTitle"></div><button type="button" class="fp-sheet-close" onclick="spCloseSheet()" aria-label="關閉">✕</button></div>
+    <div class="fp-sheet-body" id="spSheetBody"></div>
+  </section>
 </div>
 
 <div id="page-borrow" class="page">
@@ -1670,7 +1670,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09k · 學期實驗從最上面開始</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09l · 週表點週次跳出面板</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5069,6 +5069,7 @@ function showPage(page,opts){
   document.getElementById('cartFab').style.display=showCart?'flex':'none';
   if(!showCart){closeCart();}
   if(page==='venue')loadVenue();
+  if(page!=='semester')spCloseSheet();
   if(page==='semester')spRender();
   if(page==='coursebook')cbRender();
   if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
@@ -5093,6 +5094,7 @@ const NAV_OVERLAYS=[
   ['venueFsOverlay','show',()=>closeVenueFullscreen()],
   ['cartDrawer','open',()=>closeCart()],
   ['fpSheet','show',()=>closeFpSheet()],
+  ['spSheet','show',()=>spCloseSheet()],
   ['navMenu','show',()=>closeNavMenu()],
 ];
 // 直接跳到頁面最上面（不用平滑捲動）；畫完新頁面再補一次，避免手機瀏覽器沿用舊位置
@@ -5370,47 +5372,47 @@ function spRender(){
     if(k<0)k=B.slots.findIndex(s=>s.items.length);
     spSel=Math.max(0,k);
   }
-  h+='<div class="sp-phone"><div class="sp-wkbox"><div class="sp-wk">';
+  // 手機：只列學期週（像月曆，每格只有週次、日期、幾個實驗）；點一週 → 下面跳出那週的實驗（跟平面圖一樣）
+  h+='<div class="sp-phone"><div class="sp-wk">';
   let lastM=null;
   B.slots.forEach((s,i)=>{
     const its=s.items.filter(want),first=s.m!==lastM;lastM=s.m;
-    h+=`<button type="button" class="sp-w${i===spSel?' sel':''}${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}" onclick="spPickWeek(${i})">`;
-    h+=`<span class="sp-wh">${s.undef?`<b>${s.m}月</b><small>未定</small>`:s.week?`<b>W${s.week}</b><small>${spMD(s.date)}</small>`:`<b>${s.m}月</b><small>第${s.n}週</small>`}${s.week&&first?`<i>${s.m}月</i>`:''}${s.now?'<i class="nw">本週</i>':''}</span>`;
-    h+=its.slice(0,3).map(t=>`<span class="sp-ln"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b><span>${escH(templateNameParts(t).pure||templateNameParts(t).head)}</span></span>`).join('');
-    if(its.length>3)h+=`<span class="sp-more">＋${its.length-3}</span>`;
-    h+='</button>';
+    const subs=[...new Set(its.map(semSubjectOf))];
+    h+=`<button type="button" class="sp-w${spSheetOn&&i===spSel?' sel':''}${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}${its.length?'':' empty'}" onclick="spPickWeek(${i})" aria-label="${escH(spSlotTitle(s,true))}，${its.length} 個實驗">
+      <span class="sp-wh"><b>${s.undef?s.m+'月':'W'+s.week}</b>${first&&!s.undef?`<i>${s.m}月</i>`:''}</span>
+      <small class="sp-wd">${s.undef?'週次未定':spMD(s.date)}</small>
+      <span class="sp-wc">${s.now?'<em>本週</em>':''}${its.length?`<span class="sp-dots">${subs.slice(0,5).map(x=>`<i style="background:${semColor(x)}"></i>`).join('')}</span><b>${its.length}</b>`:''}</span>
+    </button>`;
   });
-  h+='</div></div>';
-  const S=B.slots[spSel];
-  if(S){
-    const its=S.items.filter(want);
-    h+=`<div class="sp-panel" id="spPanel"><div class="sp-ph"><button type="button" onclick="spPickWeek(${spSel-1})" ${spSel<=0?'disabled':''} aria-label="上一週">‹</button><b>${escH(spSlotTitle(S,true))}${S.exam?`<span class="sp-exam">${escH(S.exam)}</span>`:''}</b><button type="button" onclick="spPickWeek(${spSel+1})" ${spSel>=B.slots.length-1?'disabled':''} aria-label="下一週">›</button></div>`;
-    h+=`<div class="sp-pc">${its.length?`這週有 ${its.length} 個實驗，點一下看器材、申請`:'這週沒有課綱實驗'}</div>`;
-    h+=its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join('');
-    h+=noMonthHtml+'</div>';
-  }
-  h+='</div>';
-  const prevTop=root.querySelector('.sp-wkbox')?.scrollTop;
+  h+='</div>'+noMonthHtml+'</div>';
   root.innerHTML=h;
-  spFit(prevTop);
+  spSheetRender(B,want);
 }
-// 手機：整個週表剛好一個螢幕高；格子區佔一半多，下面清單用剩下的，各自捲動
-function spFit(prevTop){
-  const ph=document.querySelector('#spRoot .sp-phone');if(!ph||!ph.offsetParent)return;
-  // 高度剛好填滿螢幕、整頁不會再多出可以捲的地方（不然手機會停在半途，看不到最上面）
-  const top=ph.getBoundingClientRect().top+window.scrollY;
-  let h=Math.max(300,window.innerHeight-top-22);ph.style.height=h+'px';
-  const over=document.documentElement.scrollHeight-window.innerHeight;
-  if(over>0&&h-over>=300)ph.style.height=(h-over)+'px';
-  if(prevTop==null)navTop(); // 剛進這一頁：從最上面開始
-  const box=ph.querySelector('.sp-wkbox'),sel=box&&box.querySelector('.sp-w.sel');if(!box)return;
-  if(prevTop!=null)box.scrollTop=prevTop;
-  if(sel&&(prevTop==null||sel.offsetTop<box.scrollTop||sel.offsetTop+sel.offsetHeight>box.scrollTop+box.clientHeight))box.scrollTop=Math.max(0,sel.offsetTop-box.clientHeight/3);
+// ── 手機下方的「這一週」面板 ──
+let spSheetOn=false;
+function spSheetRender(B,want){
+  const sh=document.getElementById('spSheet');if(!sh)return;
+  const S=spSheetOn&&B.slots[spSel];
+  sh.classList.toggle('show',!!S);document.body.classList.toggle('sp-sheet-open',!!S);
+  if(!S)return;
+  const its=S.items.filter(want);
+  document.getElementById('spSheetTitle').innerHTML=`<button type="button" class="sp-nav" onclick="spPickWeek(${spSel-1})" ${spSel<=0?'disabled':''} aria-label="上一週">‹</button><span>${escH(spSlotTitle(S,true))}${S.exam?`<span class="sp-exam">${escH(S.exam)}</span>`:''}</span><button type="button" class="sp-nav" onclick="spPickWeek(${spSel+1})" ${spSel>=B.slots.length-1?'disabled':''} aria-label="下一週">›</button>`;
+  document.getElementById('spSheetBody').innerHTML=`<div class="sp-pc">${its.length?`這週有 ${its.length} 個實驗，點一下看器材、申請`:'這週沒有課綱實驗'}</div>`+
+    its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join('');
+  document.getElementById('spSheetBody').scrollTop=0;
+  // 選到的那一格如果被面板蓋住，往上捲一點讓它露出來
+  requestAnimationFrame(()=>{
+    document.documentElement.style.setProperty('--spSheetH',sh.offsetHeight+'px');
+    const c=document.querySelector('#spRoot .sp-w.sel');if(!c)return;
+    const r=c.getBoundingClientRect(),limit=window.innerHeight-sh.offsetHeight-8;
+    if(r.bottom>limit)window.scrollBy({top:r.bottom-limit,behavior:'smooth'});
+    else if(r.top<70)window.scrollBy({top:r.top-70,behavior:'smooth'});
+  });
 }
-window.addEventListener('resize',()=>{if(document.getElementById('page-semester')?.classList.contains('active'))spFit(document.querySelector('#spRoot .sp-wkbox')?.scrollTop);});
+function spCloseSheet(){if(!spSheetOn)return;spSheetOn=false;const sh=document.getElementById('spSheet');if(sh)sh.classList.remove('show');document.body.classList.remove('sp-sheet-open');document.querySelectorAll('#spRoot .sp-w.sel').forEach(x=>x.classList.remove('sel'));}
 function spPickWeek(i){
   const n=document.querySelectorAll('#spRoot .sp-w').length;if(i<0||i>=n)return;
-  spSel=i;spRender();
+  spSel=i;spSheetOn=true;spRender();
 }
 // 點實驗：看器材、直接申請
 function spOpen(id){
