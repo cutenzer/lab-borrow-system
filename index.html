@@ -1677,7 +1677,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09m · 藥品結構式</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09n · 週表科目只顯示該科</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5367,7 +5367,8 @@ function spRender(){
       const s=B.slots.find(x=>x.m===m&&(n?x.n===n&&!x.undef:x.undef));
       if(!s){h+='<div class="sp-c none"></div>';return;}
       h+=`<div class="sp-c${s.now?' now':''}${s.past?' past':''}"><div class="sp-ch">${s.week?`<b>W${s.week}</b> ${spMD(s.date)}`:''}${s.exam?`<span class="sp-exam">${escH(s.exam)}</span>`:''}${s.now?'<span class="sp-nowb">本週</span>':''}</div>`;
-      h+=s.items.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip${want(t)?'':' dim'}" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
+      // 選了某一科：只顯示那一科（跟課表一樣），其他科不出現
+      h+=s.items.filter(want).map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
       h+='</div>';
     });
   });
