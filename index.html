@@ -725,6 +725,13 @@
   }
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
+  /* ── 結構式 ── */
+  .chem-st{display:block;width:100%;height:auto;max-height:200px;color:var(--text);}
+  .chem-st-box{background:#fff;border:1px solid var(--surface2);border-radius:12px;padding:8px 10px 6px;margin:4px 0 8px;}
+  .chem-st-src{font-size:11.5px;color:var(--text2);text-align:right;margin-top:2px;}
+  .chem-st-src a{color:var(--accent);}
+  .home-chem-row .hc-icon.hc-st{background:#fff;border:1px solid var(--surface2);padding:3px;color:var(--text);}
+  .hc-st .chem-st{max-height:100%;}
   /* ── 藥品資料卡 ── */
   .note-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--surface2);}
   .note-row .k{flex:0 0 64px;color:var(--text2);font-size:13px;}
@@ -1670,7 +1677,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09l · 週表點週次跳出面板</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09m · 藥品結構式</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2161,7 +2168,7 @@ async function renderHomeChem(){
     const ci=catInfo(c.category),avail=c.is_available!==false,left=c.bottles_left;
     const low=left!=null&&Number(left)<=2;
     return `<div class="home-chem-row chem-clickable ${avail?'':'chem-unavail'}" onclick="openChemDetail(window._homeChemItems[${i}].id)">
-      <div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>
+      ${chemStructOk(c.structure)?`<div class="hc-icon hc-st">${chemStructSvg(c.structure,{mini:true})}</div>`:`<div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>`}
       <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
         <div class="hc-sub">${c.formula?fmtFormula(c.formula)+'　':''}${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
         <div class="hc-sub">${catName(c.category)?catTagHtml(c.category):''}　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
@@ -6333,6 +6340,60 @@ async function ensureChemData(){
   }
   const b=document.getElementById('chemViewCabBtn');if(b)b.style.display=(allChemLocs.length||allChemTrays.length)?'':'none';
 }
+// ==== 結構式（前台、後台共用）開始 ====
+// 資料格式（存在 chemicals.structure）：{v:1, a:[[元素,x,y,電荷],…], b:[[原子i,原子j,鍵級],…]}
+// 座標來自 PubChem 的 2D 資料；這裡自己用線條＋元素符號畫成 SVG（黑白、課本風格），不載入外部圖片
+const CHEM_ELEM=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am'];
+// 檢查資料格式，不對就當作沒有（避免奇怪的資料把畫面弄壞）
+function chemStructOk(st){
+  if(!st||typeof st!=='object'||!Array.isArray(st.a)||!Array.isArray(st.b))return false;
+  if(!st.a.length||st.a.length>400||st.b.length>600)return false;
+  const n=st.a.length;
+  return st.a.every(a=>Array.isArray(a)&&typeof a[0]==='string'&&/^[A-Z][a-z]?$/.test(a[0])&&Number.isFinite(a[1])&&Number.isFinite(a[2])&&(a[3]==null||(Number.isInteger(a[3])&&Math.abs(a[3])<10)))
+    &&st.b.every(b=>Array.isArray(b)&&Number.isInteger(b[0])&&Number.isInteger(b[1])&&b[0]>=0&&b[1]>=0&&b[0]<n&&b[1]<n&&b[0]!==b[1]&&[1,2,3].includes(b[2]));
+}
+// opts.mini：小縮圖（不畫氫、不寫碳，只看骨架形狀）
+function chemStructSvg(st,opts){
+  if(!chemStructOk(st))return '';
+  opts=opts||{};
+  const A=st.a,B=st.b,heavy=A.filter(a=>a[0]!=='H').length;
+  // 分子大的時候，碳上的氫不畫（課本的簡化畫法），不然會擠成一團
+  const hideCH=opts.mini||heavy>14;
+  const nb=A.map(()=>[]);B.forEach(([i,j])=>{nb[i].push(j);nb[j].push(i);});
+  const show=A.map((a,i)=>!(a[0]==='H'&&(opts.mini||(hideCH&&nb[i].some(k=>A[k][0]==='C')))));
+  const idx=A.map((_,i)=>i).filter(i=>show[i]);
+  if(!idx.length)return '';
+  // 以重原子之間的鍵長當作 1 個單位
+  const lens=B.filter(([i,j])=>A[i][0]!=='H'&&A[j][0]!=='H').map(([i,j])=>Math.hypot(A[i][1]-A[j][1],A[i][2]-A[j][2])).sort((a,b)=>a-b);
+  const unit=lens.length?lens[Math.floor(lens.length/2)]||1:1;
+  const S=46/unit,P=opts.mini?10:26,R=opts.mini?0:11;
+  const xs=idx.map(i=>A[i][1]),ys=idx.map(i=>A[i][2]);
+  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const W=Math.max((maxx-minx)*S+P*2,P*2+24),H=Math.max((maxy-miny)*S+P*2,P*2+24);
+  const X=x=>(x-minx)*S+P+(W-((maxx-minx)*S+P*2))/2,Y=y=>(maxy-y)*S+P+(H-((maxy-miny)*S+P*2))/2;
+  const lab=i=>!(opts.mini&&A[i][0]==='C')&&!(A[i][0]==='C'&&opts.skeleton);
+  const sw=opts.mini?Math.max(2.4,W/40):2;
+  let s=`<svg class="chem-st${opts.mini?' mini':''}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="結構式">`;
+  B.forEach(([i,j,o])=>{
+    if(!show[i]||!show[j])return;
+    let x1=X(A[i][1]),y1=Y(A[i][2]),x2=X(A[j][1]),y2=Y(A[j][2]);
+    const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
+    const r1=lab(i)?(A[i][0].length>1?R+4:R):0,r2=lab(j)?(A[j][0].length>1?R+4:R):0;
+    if(L<=r1+r2+2)return;
+    x1+=ux*r1;y1+=uy*r1;x2-=ux*r2;y2-=uy*r2;
+    const g=opts.mini?sw*1.4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
+    offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`;});
+  });
+  idx.forEach(i=>{
+    if(!lab(i))return;
+    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?Math.max(20,W/6):19;
+    s+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs.toFixed(0)}" text-anchor="middle" dominant-baseline="central" fill="currentColor">${escH(a[0])}</text>`;
+    const c=a[3]||0;
+    if(c&&!opts.mini)s+=`<text x="${(x+(a[0].length>1?15:11)).toFixed(1)}" y="${(y-11).toFixed(1)}" font-size="12" fill="currentColor">${Math.abs(c)>1?Math.abs(c):''}${c>0?'+':'−'}</text>`;
+  });
+  return s+'</svg>';
+}
+// ==== 結構式（前台、後台共用）結束 ====
 // 點藥品 → 跳出資料卡：名稱、俗名、警示、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
 // ctx.locId：從藥品櫃點某一罐進來的；ctx.tray／ctx.item：從藥品盆裡點進來的
 async function openChemDetail(id,ctx){
@@ -6356,7 +6417,9 @@ async function openChemDetail(id,ctx){
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
     ${warnBoxHtml(c.warning)}
     ${here?`<div class="note-here">${here}</div>`:''}
+    ${chemStructOk(c.structure)?`<div class="chem-st-box">${chemStructSvg(c.structure)}<div class="chem-st-src">結構式資料：PubChem${parseInt(c.pubchem_cid)>0?`・<a href="https://pubchem.ncbi.nlm.nih.gov/compound/${parseInt(c.pubchem_cid)}" target="_blank" rel="noopener noreferrer">看詳細</a>`:''}</div></div>`:''}
     ${row('分子式',c.formula?fmtFormula(c.formula):'')}
+    ${row('CAS',c.cas?escH(c.cas):'')}
     ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
     ${hlId!=null||ctx.tray!=null?row('其他位置',showLocs.length?locHtml:''):row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
