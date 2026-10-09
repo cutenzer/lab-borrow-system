@@ -182,6 +182,39 @@
   .chem-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;}
   .chem-tabs .ct-n{display:inline-block;min-width:18px;margin-left:5px;padding:0 6px;border-radius:9px;background:#c2410c;color:#fff;font-size:11.5px;line-height:18px;font-weight:700;}
   .chem-tabs .ct-n:empty{display:none;}
+  /* ── 結構式、PubChem 比對 ── */
+  .chem-st{display:block;width:100%;height:auto;max-height:220px;color:var(--text);}
+  .pc-intro{font-size:13px;line-height:1.7;}
+  .pc-ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0;}
+  .pc-ctl select{width:auto;}
+  .pc-prog{font-size:13px;color:var(--text2);min-height:18px;margin-bottom:6px;}
+  .pc-log{font-size:12px;margin-bottom:10px;}
+  .pc-log summary{cursor:pointer;color:var(--text2);}
+  #pcLog{max-height:200px;overflow:auto;font-family:'DM Mono',monospace;background:var(--surface2);border-radius:8px;padding:6px 8px;margin-top:6px;}
+  #pcLog div{display:flex;gap:8px;white-space:nowrap;}
+  #pcLog b{min-width:36px;}
+  #pcLog code{overflow:hidden;text-overflow:ellipsis;}
+  .pc-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .pc-filter button{border:1.5px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:5px 11px;font:inherit;font-size:13px;cursor:pointer;}
+  .pc-filter button.on{background:var(--text);border-color:var(--text);color:var(--surface);font-weight:700;}
+  .pc-filter .pc-all{border-color:#1f5b4c;color:#1f5b4c;font-weight:700;}
+  .pc-row{border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:10px;background:var(--surface);}
+  .pc-tag{font-size:12px;font-weight:700;border-radius:6px;padding:2px 8px;background:var(--surface2);}
+  .pc-tag.s-match,.pc-tag.s-done{background:#e8f1ea;color:#2e7d4f;}
+  .pc-tag.s-diff,.pc-tag.s-multi,.pc-tag.s-error{background:#fff4e5;color:#8a4b0f;}
+  .pc-cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;}
+  .pc-side{font-size:13px;line-height:1.6;min-width:0;overflow-wrap:anywhere;}
+  .pc-side i{color:var(--text2);}
+  .pc-h{font-size:11.5px;font-weight:700;color:var(--text2);margin-bottom:2px;}
+  .pc-ok{color:#2e7d4f;font-weight:700;}.pc-bad{color:#b3261e;font-weight:700;}
+  .pc-note{font-size:12px;color:#8a4b0f;background:#fff4e5;border-radius:6px;padding:3px 6px;margin-top:3px;}
+  .pc-st{margin-top:6px;background:#fff;border:1px solid var(--surface2);border-radius:8px;padding:4px;}
+  .pc-st .chem-st{max-height:160px;}
+  .pc-side a{font-size:12px;color:var(--accent);}
+  .pc-cands{font-size:12.5px;margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .pc-cands button{border:1.5px dashed var(--border);background:var(--surface);border-radius:8px;padding:4px 8px;font:inherit;font-size:12.5px;cursor:pointer;}
+  .pc-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  @media(max-width:560px){.pc-cmp{grid-template-columns:1fr;}}
   .chem-sec{display:none;}
   /* 藥品清單：搜尋列往下捲也看得到 */
   .chem-list-tools{display:flex;gap:8px;margin:0 -4px 12px;padding:8px 4px;flex-wrap:wrap;position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border);}
@@ -1205,6 +1238,7 @@
         <button type="button" data-ct="sort">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
           <button type="button" data-ct="noloc">📭 沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
         <button type="button" data-ct="csv">📥 匯入</button>
+        <button type="button" data-ct="pubchem">🔬 PubChem</button>
       </div>
       <div class="chem-sec" data-sec="list">
   <div class="card">
@@ -1289,6 +1323,23 @@
       <button class="btn btn-primary" onclick="importChemCsv()">🔍 比對並匯入</button>
     </div>
     <div id="chemCsvPreview" style="margin-top:10px"></div>
+  </div>
+      </div>
+      <div class="chem-sec" data-sec="pubchem">
+  <div class="card">
+    <div class="card-title">🔬 PubChem 比對（結構式、CAS、檢查分子式）</div>
+    <div class="info-box pc-intro">用藥品的 <b>CAS</b>（沒有就用<b>英文名</b>）到 PubChem 查，拿回正式名稱、分子式、CAS 和結構式。<br>
+      ・一秒最多查一次、一次只查一個；PubChem 很忙會自動停下來等。<br>
+      ・查到的先放在這裡給你看，按「✔ 就是這個」才會存進藥品資料，前台才看得到結構式。</div>
+    <div class="pc-ctl">
+      <select id="pcScope" aria-label="要查哪些"><option value="new">還沒查過的</option><option value="retry">有出入／查不到的重查</option><option value="all">全部（已確認、不適用的除外）</option></select>
+      <select id="pcLimit" aria-label="這次查幾個"><option value="10">這次先查 10 個</option><option value="50">50 個</option><option value="200">200 個</option><option value="2000">全部</option></select>
+      <button type="button" class="btn btn-primary" id="pcRunBtn" onclick="pcRun()">▶ 開始比對</button>
+    </div>
+    <div class="pc-prog" id="pcProgress"></div>
+    <details class="pc-log" ontoggle="pcRenderLog()"><summary>查詢紀錄（每一次送給 PubChem 的內容）</summary><div id="pcLog"></div></details>
+    <div class="pc-filter" id="pcFilter"></div>
+    <div id="pcList"><div class="empty"><p>載入中…</p></div></div>
   </div>
       </div>
     </div>
@@ -1718,7 +1769,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-09b';
+const ADMIN_VERSION='2026-10-09c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -5060,6 +5111,332 @@ async function deleteChemLocsOf(id){
 }
 function chemLocsOf(id){return allChemLocs.filter(l=>String(l.chem_id)===String(id)).sort((a,b)=>a.cab-b.cab||a.layer-b.layer||a.col-b.col);}
 
+// ==== 結構式（前台、後台共用）開始 ====
+// 資料格式（存在 chemicals.structure）：{v:1, a:[[元素,x,y,電荷],…], b:[[原子i,原子j,鍵級],…]}
+// 座標來自 PubChem 的 2D 資料；這裡自己用線條＋元素符號畫成 SVG（黑白、課本風格），不載入外部圖片
+const CHEM_ELEM=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am'];
+// 檢查資料格式，不對就當作沒有（避免奇怪的資料把畫面弄壞）
+function chemStructOk(st){
+  if(!st||typeof st!=='object'||!Array.isArray(st.a)||!Array.isArray(st.b))return false;
+  if(!st.a.length||st.a.length>400||st.b.length>600)return false;
+  const n=st.a.length;
+  return st.a.every(a=>Array.isArray(a)&&typeof a[0]==='string'&&/^[A-Z][a-z]?$/.test(a[0])&&Number.isFinite(a[1])&&Number.isFinite(a[2])&&(a[3]==null||(Number.isInteger(a[3])&&Math.abs(a[3])<10)))
+    &&st.b.every(b=>Array.isArray(b)&&Number.isInteger(b[0])&&Number.isInteger(b[1])&&b[0]>=0&&b[1]>=0&&b[0]<n&&b[1]<n&&b[0]!==b[1]&&[1,2,3].includes(b[2]));
+}
+// opts.mini：小縮圖（不畫氫、不寫碳，只看骨架形狀）
+function chemStructSvg(st,opts){
+  if(!chemStructOk(st))return '';
+  opts=opts||{};
+  const A=st.a,B=st.b,heavy=A.filter(a=>a[0]!=='H').length;
+  // 分子大的時候，碳上的氫不畫（課本的簡化畫法），不然會擠成一團
+  const hideCH=opts.mini||heavy>14;
+  const nb=A.map(()=>[]);B.forEach(([i,j])=>{nb[i].push(j);nb[j].push(i);});
+  const show=A.map((a,i)=>!(a[0]==='H'&&(opts.mini||(hideCH&&nb[i].some(k=>A[k][0]==='C')))));
+  const idx=A.map((_,i)=>i).filter(i=>show[i]);
+  if(!idx.length)return '';
+  // 以重原子之間的鍵長當作 1 個單位
+  const lens=B.filter(([i,j])=>A[i][0]!=='H'&&A[j][0]!=='H').map(([i,j])=>Math.hypot(A[i][1]-A[j][1],A[i][2]-A[j][2])).sort((a,b)=>a-b);
+  const unit=lens.length?lens[Math.floor(lens.length/2)]||1:1;
+  const S=46/unit,P=opts.mini?10:26,R=opts.mini?0:11;
+  const xs=idx.map(i=>A[i][1]),ys=idx.map(i=>A[i][2]);
+  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const W=Math.max((maxx-minx)*S+P*2,P*2+24),H=Math.max((maxy-miny)*S+P*2,P*2+24);
+  const X=x=>(x-minx)*S+P+(W-((maxx-minx)*S+P*2))/2,Y=y=>(maxy-y)*S+P+(H-((maxy-miny)*S+P*2))/2;
+  const lab=i=>!(opts.mini&&A[i][0]==='C')&&!(A[i][0]==='C'&&opts.skeleton);
+  const sw=opts.mini?Math.max(2.4,W/40):2;
+  let s=`<svg class="chem-st${opts.mini?' mini':''}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="結構式">`;
+  B.forEach(([i,j,o])=>{
+    if(!show[i]||!show[j])return;
+    let x1=X(A[i][1]),y1=Y(A[i][2]),x2=X(A[j][1]),y2=Y(A[j][2]);
+    const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
+    const r1=lab(i)?(A[i][0].length>1?R+4:R):0,r2=lab(j)?(A[j][0].length>1?R+4:R):0;
+    if(L<=r1+r2+2)return;
+    x1+=ux*r1;y1+=uy*r1;x2-=ux*r2;y2-=uy*r2;
+    const g=opts.mini?sw*1.4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
+    offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${sw.toFixed(1)}" stroke-linecap="round"/>`;});
+  });
+  idx.forEach(i=>{
+    if(!lab(i))return;
+    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?Math.max(20,W/6):19;
+    s+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs.toFixed(0)}" text-anchor="middle" dominant-baseline="central" fill="currentColor">${escH(a[0])}</text>`;
+    const c=a[3]||0;
+    if(c&&!opts.mini)s+=`<text x="${(x+(a[0].length>1?15:11)).toFixed(1)}" y="${(y-11).toFixed(1)}" font-size="12" fill="currentColor">${Math.abs(c)>1?Math.abs(c):''}${c>0?'+':'−'}</text>`;
+  });
+  return s+'</svg>';
+}
+// ==== 結構式（前台、後台共用）結束 ====
+// ==== PubChem 比對 開始 ====
+// 用藥品的 CAS（沒有就用英文名）去 PubChem 查：PubChem 名稱、分子式、CAS、結構式座標
+// 安全設計（不給 PubChem 添麻煩、也不讓奇怪的資料進來）：
+//   ・同時只有 1 個請求；每次請求之間至少隔 1.2 秒（PubChem 上限是每秒 5 次）
+//   ・PubChem 說太忙（503／429）→ 停下來等，越等越久；連續出錯 3 次就整個停止
+//   ・每次執行最多 1500 個請求，到了自動停
+//   ・只用 GET 讀資料；送出去的只有英文名或 CAS（先編碼）；網址固定是 PubChem
+//   ・查回來的東西一律當文字處理；編號只收數字；結構式要通過格式檢查才會存
+//   ・查到的結果先放「比對結果」（前台看不到），你按「就是這個」才寫進藥品資料
+const PC_BASE='https://pubchem.ncbi.nlm.nih.gov/rest/pug';
+const PC_GAP=1200,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
+const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0};
+const PC_STATUS={match:'✅ 對得上',diff:'⚠️ 有出入',multi:'❓ 好幾個候選',notfound:'❓ 查不到',noname:'➖ 沒有英文名／CAS',skip:'➖ 不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
+const pcSleep=ms=>new Promise(r=>setTimeout(r,ms));
+// CAS：最後一碼是檢查碼（前面數字由右往左乘 1、2、3…加總，除以 10 的餘數）
+function casValid(s){
+  const m=/^(\d{2,7})-(\d{2})-(\d)$/.exec(String(s||'').trim());if(!m)return false;
+  const d=(m[1]+m[2]).split('').reverse();let sum=0;d.forEach((x,i)=>sum+=(+x)*(i+1));
+  return sum%10===+m[3];
+}
+// 一次請求：排隊、計時、記錄；回傳 JSON；查不到回傳 null；太忙丟 {busy:true}
+async function pcGet(path){
+  if(PC.reqs>=PC_MAX_REQ)throw new Error(`這次已經查了 ${PC_MAX_REQ} 次，先停下來（保護 PubChem）`);
+  const wait=PC.last+PC_GAP-Date.now();if(wait>0)await pcSleep(wait);
+  PC.last=Date.now();PC.reqs++;
+  const url=PC_BASE+path;
+  const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),PC_TIMEOUT);
+  const rec={t:new Date().toLocaleTimeString('zh-TW',{hour12:false}),p:path,s:'…'};PC.log.unshift(rec);if(PC.log.length>200)PC.log.pop();
+  try{
+    const r=await fetch(url,{method:'GET',signal:ctl.signal,credentials:'omit',referrerPolicy:'no-referrer'});
+    rec.s=r.status;pcRenderLog();
+    if(r.status===404)return null;
+    if(r.status===503||r.status===429){const e=new Error('PubChem 現在很忙');e.busy=true;throw e;}
+    if(!r.ok)throw new Error('PubChem 回應 '+r.status);
+    const txt=await r.text();if(txt.length>2e6)throw new Error('回應太大，略過');
+    return JSON.parse(txt);
+  }catch(e){
+    if(e.name==='AbortError'){rec.s='逾時';pcRenderLog();throw new Error('PubChem 太久沒回應');}
+    // 連線本身就失敗（不是 PubChem 回答錯誤）：多半是這個網路擋住了 PubChem，例如學校網路
+    if(e instanceof TypeError){rec.s='連不到';pcRenderLog();const n=new Error('連不到 PubChem：可能是這個網路把 PubChem 擋住了（例如學校網路）。可以改用手機網路、或在家裡的網路再試。');n.net=true;throw n;}
+    if(rec.s==='…'){rec.s='失敗';pcRenderLog();}throw e;}
+  finally{clearTimeout(tm);}
+}
+const pcEnc=s=>encodeURIComponent(String(s).trim().slice(0,150));
+// 分子式 → 各元素個數（CuSO4·5H2O、Ca(OH)2、CH3COOH、全形／下標數字都可以）
+function formulaCount(f){
+  let s=String(f||'').replace(/[₀-₉]/g,c=>String(c.charCodeAt(0)-0x2080)).replace(/\^[0-9]*[+\-−]/g,'').replace(/[+\-−]/g,'').replace(/\s/g,'');
+  if(!s)return null;
+  const total={};
+  for(const part of s.split(/[·.*•]/)){
+    const m=/^(\d+)(.*)$/.exec(part),k=m?+m[1]:1,body=m?m[2]:part;
+    const stack=[{}];let i=0,ok=true;
+    while(i<body.length){
+      const ch=body[i];
+      if(ch==='('||ch==='['){stack.push({});i++;continue;}
+      if(ch===')'||ch===']'){i++;let n='';while(/\d/.test(body[i]||''))n+=body[i++];const g=stack.pop(),top=stack[stack.length-1];if(!top){ok=false;break;}for(const e in g)top[e]=(top[e]||0)+g[e]*(+n||1);continue;}
+      const em=/^[A-Z][a-z]?/.exec(body.slice(i));
+      if(!em){ok=false;break;}
+      i+=em[0].length;let n='';while(/\d/.test(body[i]||''))n+=body[i++];
+      const top=stack[stack.length-1];top[em[0]]=(top[em[0]]||0)+(+n||1);
+    }
+    if(!ok||stack.length!==1)return null;
+    for(const e in stack[0])total[e]=(total[e]||0)+stack[0][e]*k;
+  }
+  return Object.keys(total).length?total:null;
+}
+function formulaSame(a,b){const x=formulaCount(a),y=formulaCount(b);if(!x||!y)return null;const ks=new Set([...Object.keys(x),...Object.keys(y)]);for(const k of ks)if((x[k]||0)!==(y[k]||0))return false;return true;}
+// 差別剛好是幾個 H2O → 多半是「含水／無水」的差別
+function formulaDiffNote(ours,theirs){
+  const x=formulaCount(ours),y=formulaCount(theirs);if(!x||!y)return '';
+  const dH=(x.H||0)-(y.H||0),dO=(x.O||0)-(y.O||0);
+  const others=[...new Set([...Object.keys(x),...Object.keys(y)])].filter(k=>k!=='H'&&k!=='O').every(k=>(x[k]||0)===(y[k]||0));
+  if(others&&dH&&dH===2*dO)return dO>0?`你的多了 ${dO} 個 H₂O（可能是含水的，PubChem 查到無水的）`:`PubChem 的多了 ${-dO} 個 H₂O（可能 PubChem 查到含水的）`;
+  return '';
+}
+// PubChem 的 2D 座標 → 我們的結構式格式
+function pcToStructure(json){
+  const c=json&&json.PC_Compounds&&json.PC_Compounds[0];if(!c||!c.atoms||!c.coords)return null;
+  const aid=c.atoms.aid||[],el=c.atoms.element||[],co=(c.coords[0]||{}),conf=(co.conformers||[])[0]||{};
+  if(!aid.length||aid.length>400)return null;
+  const pos={};(co.aid||[]).forEach((id,k)=>{pos[id]=[+conf.x[k],+conf.y[k]];});
+  const chg={};(c.atoms.charge||[]).forEach(q=>{chg[q.aid]=parseInt(q.value)||0;});
+  const index={},a=[];
+  for(let k=0;k<aid.length;k++){const sym=CHEM_ELEM[el[k]]||null,p=pos[aid[k]];if(!sym||!p||!Number.isFinite(p[0])||!Number.isFinite(p[1]))return null;index[aid[k]]=a.length;a.push([sym,Math.round(p[0]*100)/100,Math.round(p[1]*100)/100,chg[aid[k]]||0]);}
+  const bd=c.bonds||{},b=[];
+  (bd.aid1||[]).forEach((x,k)=>{const i=index[x],j=index[bd.aid2[k]];if(i==null||j==null)return;const o=Math.min(3,Math.max(1,parseInt(bd.order[k])||1));b.push([i,j,o]);});
+  const st={v:1,a:a.map(r=>r[3]?r:r.slice(0,3)),b};
+  return chemStructOk(st)?st:null;
+}
+// 從 PubChem 的別名裡挑出 CAS（要通過檢查碼）
+function pcPickCas(json){
+  const syn=(((json||{}).InformationList||{}).Information||[])[0];
+  const list=(syn&&syn.Synonym)||[];
+  for(const s of list.slice(0,80)){if(/^\d{2,7}-\d{2}-\d$/.test(s)&&casValid(s))return s;}
+  return '';
+}
+// 英文名常有「98%」「0.1M」「(AR)」「solution」這些，查不到時拿掉再試一次
+function pcCleanName(n){
+  return String(n||'').replace(/\([^)]*\)|\[[^\]]*\]/g,' ').replace(/\b\d+(\.\d+)?\s*(%|M|N|mol\/L|g\/L)\b/gi,' ').replace(/\b(solution|soln|reagent|AR|GR|CP|ACS|extra pure|pure)\b/gi,' ').replace(/\s+/g,' ').trim();
+}
+// 查一個藥品
+async function pcLookup(c){
+  const cas=String(c.cas||'').trim(),en=String(c.name_en||'').trim();
+  if(!cas&&!en)return {status:'noname',query:'',data:null};
+  const tries=cas?[cas]:[];if(en){tries.push(en);const cl=pcCleanName(en);if(cl&&cl.toLowerCase()!==en.toLowerCase())tries.push(cl);}
+  let cids=null,query='';
+  for(const q of tries){
+    const j=await pcGet(`/compound/name/${pcEnc(q)}/cids/JSON`);
+    const list=((j||{}).IdentifierList||{}).CID||[];
+    cids=list.filter(x=>Number.isInteger(x)&&x>0).slice(0,3);query=q;
+    if(cids.length)break;
+  }
+  if(!cids||!cids.length)return {status:'notfound',query:tries.join(' / ').slice(0,200),data:null};
+  const pj=await pcGet(`/compound/cid/${cids.join(',')}/property/MolecularFormula,Title,IUPACName/JSON`);
+  const props=(((pj||{}).PropertyTable||{}).Properties||[]).map(p=>({cid:+p.CID,title:String(p.Title||'').slice(0,150),formula:String(p.MolecularFormula||'').slice(0,60),iupac:String(p.IUPACName||'').slice(0,200)})).filter(p=>p.cid>0);
+  if(!props.length)return {status:'notfound',query,data:null};
+  const top=props[0];
+  const sj=await pcGet(`/compound/cid/${top.cid}/record/JSON?record_type=2d`);
+  const st=pcToStructure(sj);
+  let casSug='';
+  if(!cas){const cj=await pcGet(`/compound/cid/${top.cid}/synonyms/JSON`);casSug=pcPickCas(cj);}
+  const same=formulaSame(c.formula,top.formula);
+  const status=props.length>1?'multi':(same===true?'match':'diff');
+  return {status,query,data:{cid:top.cid,title:top.title,formula:top.formula,iupac:top.iupac,cas:casSug,st,cands:props}};
+}
+async function pcSave(chemId,r){
+  const row={chem_id:chemId,status:r.status,query:r.query||null,data:r.data,checked_at:new Date().toISOString()};
+  await sb('POST','chem_pubchem',{body:row,filter:'on_conflict=chem_id',prefer:'resolution=merge-duplicates,return=minimal'});
+  PC.results.set(String(chemId),row);
+}
+async function pcLoad(){
+  try{const rows=await sb('GET','chem_pubchem',{});PC.results=new Map((Array.isArray(rows)?rows:[]).map(r=>[String(r.chem_id),r]));PC.loaded=true;}
+  catch(e){PC.loaded=false;showToast('讀不到比對結果（請先在 Supabase 執行「藥品CAS與結構式.sql」）','error');}
+  pcRender();
+}
+// ── 執行：一個接一個查 ──
+async function pcRun(){
+  if(PC.running){PC.stop=true;pcRenderCtl();return;}
+  const scope=document.getElementById('pcScope')?.value||'new',lim=parseInt(document.getElementById('pcLimit')?.value)||10;
+  let list=allAdminChems.filter(c=>{const r=PC.results.get(String(c.id));
+    if(scope==='new')return !r;
+    if(scope==='retry')return r&&['diff','multi','notfound','error','noname'].includes(r.status);
+    return !r||r.status!=='done'&&r.status!=='skip';});
+  list=list.slice(0,lim);
+  if(!list.length){showToast('沒有要查的藥品','success');return;}
+  PC.running=true;PC.stop=false;PC.reqs=0;let errs=0,done=0,backoff=0;pcRenderCtl();
+  for(let k=0;k<list.length&&!PC.stop;){
+    const c=list[k];
+    PC.progress=`查第 ${k+1}／${list.length} 個：${c.name_zh||''}`;pcRenderCtl();
+    try{
+      const r=await pcLookup(c);
+      await pcSave(c.id,r);errs=0;backoff=0;done++;k++;pcRender();
+    }catch(e){
+      if(e.busy){backoff++;if(backoff>4){PC.progress='PubChem 一直很忙，先停下來，晚一點再試';break;}
+        const w=30000*Math.pow(2,backoff-1);PC.progress=`PubChem 很忙，等 ${w/1000} 秒再繼續…`;pcRenderCtl();
+        for(let t=0;t<w&&!PC.stop;t+=500)await pcSleep(500);continue;}
+      if(e.net){PC.progress=e.message;break;} // 網路不通：直接停，不要一直試
+      errs++;PC.progress=`第 ${k+1} 個查詢失敗：${e.message}`;pcRenderCtl();
+      if(/1500|保護/.test(e.message))break;
+      if(errs>=3){PC.progress=`連續 ${errs} 次失敗，已停止：${e.message}`;break;}
+      try{await pcSave(c.id,{status:'error',query:'',data:{msg:String(e.message).slice(0,200)}});}catch(_){}
+      k++;
+    }
+  }
+  PC.running=false;if(PC.stop)PC.progress=`已暫停（這次查了 ${done} 個）`;else if(!/停|失敗|連不到|很忙/.test(PC.progress||''))PC.progress=`完成，這次查了 ${done} 個（共送出 ${PC.reqs} 次查詢）`;
+  pcRenderCtl();pcRender();
+}
+// ── 確認／不適用／換候選／改英文名 ──
+async function pcConfirm(id,useCas){
+  const c=allAdminChems.find(x=>String(x.id)===String(id)),r=PC.results.get(String(id));if(!c||!r||!r.data)return;
+  const d=r.data,body={pubchem_cid:parseInt(d.cid)||null,structure:chemStructOk(d.st)?d.st:null,updated_at:new Date().toISOString()};
+  if(useCas&&d.cas&&casValid(d.cas)&&!c.cas)body.cas=d.cas;
+  try{
+    await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body,prefer:'return=minimal'});
+    Object.assign(c,body);await pcSave(c.id,Object.assign({},r,{status:'done'}));pcRender();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+}
+async function pcConfirmAllMatch(){
+  const ids=[...PC.results.values()].filter(r=>r.status==='match').map(r=>r.chem_id);
+  if(!ids.length)return;
+  if(!confirm(`把 ${ids.length} 個「對得上」的藥品全部確認？（會存入結構式和 PubChem 附的 CAS）`))return;
+  for(const id of ids)await pcConfirm(id,true);
+  showToast('已確認 '+ids.length+' 個','success');
+}
+async function pcSkip(id){const r=PC.results.get(String(id))||{};try{await pcSave(id,{status:'skip',query:r.query||null,data:r.data||null});pcRender();}catch(e){showToast('儲存失敗：'+e.message,'error');}}
+// 改成另一個候選：再查那個編號的結構式
+async function pcPick(id,cid){
+  if(PC.running){showToast('正在比對中，請先暫停','error');return;}
+  const c=allAdminChems.find(x=>String(x.id)===String(id)),r=PC.results.get(String(id));if(!c||!r||!r.data)return;
+  const cand=(r.data.cands||[]).find(x=>x.cid===cid);if(!cand)return;
+  PC.running=true;PC.progress='查候選的結構式…';pcRenderCtl();
+  try{
+    const st=pcToStructure(await pcGet(`/compound/cid/${cid}/record/JSON?record_type=2d`));
+    let casSug='';if(!c.cas)casSug=pcPickCas(await pcGet(`/compound/cid/${cid}/synonyms/JSON`));
+    const same=formulaSame(c.formula,cand.formula);
+    await pcSave(c.id,{status:same===true?'match':'diff',query:r.query,data:Object.assign({},r.data,{cid,title:cand.title,formula:cand.formula,iupac:cand.iupac,cas:casSug,st,picked:true})});
+    PC.progress='';
+  }catch(e){PC.progress='查詢失敗：'+e.message;}
+  PC.running=false;pcRenderCtl();pcRender();
+}
+function pcEditName(id){
+  const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
+  showModal('✏️ 改英文名／CAS',`<div style="font-weight:700;margin-bottom:8px">${escH(c.name_zh||'')}</div>
+    <div class="form-group"><label>英文名稱</label><input id="pc-en" maxlength="100" value="${escH(c.name_en||'')}" autocomplete="off"></div>
+    <div class="form-group"><label>CAS 號碼（例如 7664-93-9）</label><input id="pc-cas" maxlength="20" value="${escH(c.cas||'')}" autocomplete="off" inputmode="numeric"></div>
+    <div class="hint">存好會用新的名稱／CAS 再查一次。</div>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 存好再查',cls:'btn-primary',fn:`pcEditSave(${ja(c.id)})`}]);
+}
+async function pcEditSave(id){
+  const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
+  const en=document.getElementById('pc-en').value.trim().slice(0,100),cas=document.getElementById('pc-cas').value.trim();
+  if(cas&&!casValid(cas)){showToast('CAS 號碼不正確（格式或最後一碼檢查碼不對）','error');return;}
+  try{
+    await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body:{name_en:en||null,cas:cas||null,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    c.name_en=en||null;c.cas=cas||null;closeModal();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');return;}
+  if(PC.running){showToast('已存好；比對結束後再按「重查」','success');pcRender();return;}
+  PC.running=true;PC.reqs=0;PC.progress='重新查詢：'+(c.name_zh||'');pcRenderCtl();
+  try{await pcSave(c.id,await pcLookup(c));PC.progress='';}catch(e){PC.progress='查詢失敗：'+e.message;}
+  PC.running=false;pcRenderCtl();pcRender();
+}
+// ── 畫面 ──
+function pcRenderCtl(){
+  const b=document.getElementById('pcRunBtn');if(b){b.textContent=PC.running?'⏸ 暫停':'▶ 開始比對';b.classList.toggle('btn-warn',PC.running);}
+  const p=document.getElementById('pcProgress');if(p)p.textContent=PC.progress||'';
+}
+function pcRenderLog(){
+  const el=document.getElementById('pcLog');if(!el||!el.closest('details')?.open)return;
+  el.innerHTML=PC.log.slice(0,60).map(l=>`<div><span>${escH(l.t)}</span><b>${escH(String(l.s))}</b><code>${escH(l.p)}</code></div>`).join('')||'<div>還沒有查詢</div>';
+}
+function pcRender(){
+  const box=document.getElementById('pcList');if(!box)return;
+  const rows=allAdminChems.map(c=>({c,r:PC.results.get(String(c.id))}));
+  const cnt={todo:0,match:0,todo2:0,notfound:0,noname:0,skip:0,done:0,none:0};
+  rows.forEach(({r})=>{if(!r)cnt.none++;else if(r.status==='match')cnt.match++;else if(['diff','multi','error'].includes(r.status))cnt.todo2++;else if(r.status==='notfound')cnt.notfound++;else if(r.status==='noname')cnt.noname++;else if(r.status==='skip')cnt.skip++;else if(r.status==='done')cnt.done++;});
+  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['match','✅ 對得上',cnt.match],['notfound','❓ 查不到',cnt.notfound],['noname','➖ 沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','➖ 不適用',cnt.skip],['none','還沒查',cnt.none]];
+  if(PC.filter==='todo')PC.filter=cnt.todo2?'todo2':cnt.match?'match':'none';
+  document.getElementById('pcFilter').innerHTML=F.map(([k,l,n])=>`<button type="button" class="${PC.filter===k?'on':''}" onclick="PC.filter='${k}';PC.shown=60;pcRender()">${l} ${n}</button>`).join('')+
+    (cnt.match?`<button type="button" class="pc-all" onclick="pcConfirmAllMatch()">✔ 對得上的全部確認</button>`:'');
+  const pick=rows.filter(({r})=>PC.filter==='none'?!r:PC.filter==='todo2'?r&&['diff','multi','error'].includes(r.status):r&&r.status===PC.filter);
+  box.innerHTML=pick.slice(0,PC.shown).map(({c,r})=>pcRowHtml(c,r)).join('')+(pick.length>PC.shown?`<button type="button" class="btn btn-secondary btn-sm" style="width:100%" onclick="PC.shown+=60;pcRender()">再顯示 ${Math.min(60,pick.length-PC.shown)} 個（共 ${pick.length}）</button>`:'')||'<div class="empty"><p>這一類沒有藥品</p></div>';
+}
+function pcRowHtml(c,r){
+  const d=r&&r.data,st=d&&d.st;
+  const same=d&&d.formula?formulaSame(c.formula,d.formula):null,note=d&&same===false?formulaDiffNote(c.formula,d.formula):'';
+  const ours=`<div class="pc-side"><div class="pc-h">我們的資料</div><b>${escH(c.name_zh||'')}</b>
+    <div>${c.name_en?escH(c.name_en):'<i>沒有英文名</i>'}</div>
+    <div>分子式：${c.formula?fmtFormula(c.formula):'<i>沒填</i>'}</div>
+    <div>CAS：${c.cas?escH(c.cas):'<i>沒填</i>'}</div></div>`;
+  let theirs='';
+  if(d&&d.cid){
+    theirs=`<div class="pc-side"><div class="pc-h">PubChem 查到</div><b>${escH(d.title||'')}</b>
+      <div>分子式：<span class="${same===false?'pc-bad':same?'pc-ok':''}">${escH(d.formula||'')}</span>${same===false?' ≠':same?' ✓':''}</div>
+      <div>CAS：${d.cas?escH(d.cas):c.cas?'（用你的）':'<i>沒找到</i>'}</div>
+      ${note?`<div class="pc-note">${escH(note)}</div>`:''}
+      <div class="pc-st">${st?chemStructSvg(st):'<i>沒有結構資料</i>'}</div>
+      <a href="https://pubchem.ncbi.nlm.nih.gov/compound/${parseInt(d.cid)||0}" target="_blank" rel="noopener noreferrer">在 PubChem 看 ›</a></div>`;
+  }else if(r){
+    theirs=`<div class="pc-side"><div class="pc-h">PubChem</div><div>${r.status==='noname'?'沒有英文名也沒有 CAS，沒辦法查':r.status==='error'?escH((d&&d.msg)||'查詢失敗'):`查不到「${escH(r.query||'')}」`}</div></div>`;
+  }else theirs='<div class="pc-side"><div class="pc-h">PubChem</div><div>還沒查</div></div>';
+  const cands=d&&d.cands&&d.cands.length>1?`<div class="pc-cands">其他候選：${d.cands.filter(x=>x.cid!==d.cid).map(x=>`<button type="button" onclick="pcPick(${ja(c.id)},${parseInt(x.cid)||0})">${escH(x.title||'')}（${escH(x.formula||'')}）</button>`).join('')}</div>`:'';
+  const act=[];
+  if(d&&d.cid&&r.status!=='done')act.push(`<button type="button" class="btn btn-primary btn-sm" onclick="pcConfirm(${ja(c.id)},true)">✔ 就是這個${d.cas&&!c.cas?'（含 CAS）':''}</button>`);
+  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcEditName(${ja(c.id)})">✏️ 改英文名／CAS 再查</button>`);
+  if(!r||r.status!=='skip')act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcSkip(${ja(c.id)})">➖ 不適用</button>`);
+  return `<div class="pc-row"><div class="pc-st-line">${r?`<span class="pc-tag s-${escH(r.status)}">${escH(PC_STATUS[r.status]||r.status)}</span>`:''}</div><div class="pc-cmp">${ours}${theirs}</div>${cands}<div class="pc-act">${act.join('')}</div></div>`;
+}
+async function pcOpen(){
+  if(!allAdminChems.length&&typeof loadAdminChems==='function'){try{await loadAdminChems();}catch(_){}}
+  if(!PC.loaded)await pcLoad();else pcRender();pcRenderCtl();
+}
+// ==== PubChem 比對 結束 ====
 // ── 藥品頁分頁 ──
 const isWideChem=()=>window.matchMedia('(min-width:1100px)').matches;
 function setChemTab(t,save=true){
@@ -5069,6 +5446,7 @@ function setChemTab(t,save=true){
   document.querySelectorAll('#panel-chemicals .chem-sec').forEach(sec=>sec.classList.toggle('on',sec.dataset.sec===t));
   if(save){try{localStorage.setItem('chemTab',t);}catch(_){}}
   if(t==='cab'&&typeof adminCabUI!=='undefined')adminCabUI.render();
+  if(t==='pubchem')pcOpen();
 }
 function initChemTabs(){
   const tabs=document.getElementById('chemTabs');if(!tabs||tabs._init)return;tabs._init=true;
@@ -5138,6 +5516,7 @@ function openCabEdit(locId){
       <div class="form-group"><label>英文名稱／簡寫（選填）</label><input id="cab-ed-en" maxlength="100" value="${escH(c.name_en||'')}" placeholder="例如 EDTA 或 Phenolphthalein"></div>
     </div>
     <div class="form-group"><label>分子式（數字自動變下標；電荷用 ^，例如 Fe^3+）</label><input id="cab-ed-fm" maxlength="60" spellcheck="false" autocomplete="off" value="${escH(c.formula||'')}" oninput="document.getElementById('cab-ed-fmpv').innerHTML=fmtFormula(this.value)"><div class="hint" id="cab-ed-fmpv" style="min-height:1.4em;font-size:15px">${fmtFormula(c.formula)}</div></div>
+    <div class="form-group"><label>CAS 號碼（選填，例如 7664-93-9；查 PubChem 會優先用它）</label><input id="cab-ed-cas" maxlength="20" inputmode="numeric" autocomplete="off" value="${escH(c.cas||'')}"></div>
     <div class="form-group"><label>俗名／別名（多個用、分開；搜尋也找得到）</label><input id="cab-ed-al" maxlength="100" value="${escH(c.alias||'')}" placeholder="例如：小蘇打、重曹"></div>
     <div class="form-group"><label>安全警示（第一行是標題，下面每行一條）</label><textarea id="cab-ed-wn" rows="3" maxlength="600" placeholder="強酸・強脫水性&#10;稀釋時一定要「酸倒入水」">${escH(c.warning||'')}</textarea></div>
     <div class="hint" style="margin:-4px 0 10px;font-size:12px">名稱、分子式、俗名、警示是這個藥品本身的資料，改了之後它在每個位置、藥品清單都會一起變。</div>`:''}
@@ -5173,6 +5552,7 @@ async function saveCabEdit(){
     const extra={},fv=(id,n)=>(document.getElementById(id)?.value||'').trim().slice(0,n);
     if(document.getElementById('cab-ed-fm')){const v=fv('cab-ed-fm',60);if(v!==(c.formula||''))extra.formula=v||null;}
     if(document.getElementById('cab-ed-al')){const v=fv('cab-ed-al',100);if(v!==(c.alias||''))extra.alias=v||null;}
+    if(document.getElementById('cab-ed-cas')){const v=fv('cab-ed-cas',20);if(v&&!casValid(v)){showToast('CAS 號碼不正確（格式或最後一碼檢查碼不對）','error');return;}if(v!==(c.cas||''))extra.cas=v||null;}
     if(document.getElementById('cab-ed-wn')){const v=fv('cab-ed-wn',600);if(v!==String(c.warning||'').trim())extra.warning=v||null;}
     const nameChanged=zh!==(c.name_zh||'')||en!==(c.name_en||'');
     if(nameChanged||Object.keys(extra).length){
