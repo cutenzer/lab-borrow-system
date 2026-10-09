@@ -704,6 +704,28 @@
     .cb-wrap{grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start;}
     .cb-side{position:sticky;top:24px;}
   }
+  .cb-ref{background:#fff8ec;border:1px solid #f0dcb4;border-radius:16px;padding:12px 16px;}
+  .cb-ref-t{font-size:15px;font-weight:700;color:#8a4b0f;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+  .cb-ref-t small{font-weight:400;font-size:12px;color:var(--text2);margin-left:auto;}
+  .cb-ref-n{font-size:13px;font-weight:700;margin-top:8px;}
+  .cb-ref-b{font-size:14px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--text);}
+  /* 手機週表：一個螢幕放得下——上面格子（約一半多）、下面清單，各自捲動 */
+  .sp-phone{display:flex;flex-direction:column;gap:10px;min-height:0;}
+  .sp-wkbox{flex:0 0 56%;min-height:0;overflow-y:auto;overscroll-behavior:contain;position:relative;border-radius:12px;padding:2px;}
+  .sp-phone .sp-panel{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;margin-top:0;align-content:start;padding-top:0;}
+  .sp-phone .sp-ph{position:sticky;top:0;z-index:1;background:var(--surface);padding-top:10px;}
+  @media(max-width:900px){
+    #page-semester .sp-head{margin:0 0 8px;}
+    #page-semester .sp-head h2{font-size:20px;}
+    #page-semester .sp-head span{display:none;}
+    #page-semester .sp-bar{flex-wrap:nowrap;overflow-x:auto;margin-bottom:8px;scrollbar-width:none;}
+    #page-semester .sp-bar::-webkit-scrollbar{display:none;}
+    #page-semester .sp-legend{flex-wrap:nowrap;}
+    #page-semester .sp-bar>*{flex-shrink:0;}
+    #page-semester .sp-legend button,#page-semester .sem-seg button{white-space:nowrap;padding:6px 10px;}
+    #page-semester .sp-note{font-size:12px;padding:6px 10px;margin-bottom:8px;}
+    .sp-w{min-height:72px;}
+  }
   .sem-search{margin:4px 0 2px;}
   .sem-search>summary{cursor:pointer;font-size:13.5px;color:var(--text2);padding:6px 2px;}
   /* ── 藥品資料卡 ── */
@@ -1646,7 +1668,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09g · 課綱借用獨立一頁</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09i · 週表一屏＋估計週曆</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5178,12 +5200,11 @@ function templateNameParts(t){
   return {head,pure:pure||(head?'':((t.name||'').trim()||'（未命名課程）'))};
 }
 function formatTemplateName(t){const p=templateNameParts(t);return p.head&&p.pure?`${p.head}-${p.pure}`:(p.head||p.pure);}
-// ── 學期：上學期 8～1 月、下學期 2～7 月；5 個科目各一個顏色（菁英、探究等不另外配色）──
-const SEM_MONTHS={1:[8,9,10,11,12,1],2:[2,3,4,5,6,7]};
-const SEM_SUBJ=[['物理','#3b5b8a'],['化學','#b35c1e'],['生物','#2e7d4f'],['地科','#1f7a7a'],['理化','#7b4fa0'],['其他','#7a7a7a']];
-function semSubjectOf(t){const s=detectSubject(t);return SEM_SUBJ.some(x=>x[0]===s)?s:'其他';}
-function semColor(s){return (SEM_SUBJ.find(x=>x[0]===s)||SEM_SUBJ[5])[1];}
-// 把文字裡的數字都找出來：全形數字、國字（十三、二十一）都換成阿拉伯數字；「13～14」「13-14」「13至14」算成 13、14 兩週
+// ==== 學期週曆（前台、後台共用）開始 ====
+// 1) 讀「月份」「週次」欄：全形數字、國字（十三）、範圍（13～14、第13週～第16週）都看得懂
+// 2) 學期週曆：後台有設定這學期 → 用設定的日期；沒設定 → 先估（上學期 8/28 後第一個星期一開學、下學期 2/10 後第一個星期一）
+// 3) 一個課綱實驗該放第幾週，順便找出可能填錯的地方（給後台提醒修正）
+const SEMW_MONTHS={1:[8,9,10,11,12,1],2:[2,3,4,5,6,7]};
 const SEM_CN={'〇':0,'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
 function semNums(v){
   let s=String(v??'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
@@ -5200,6 +5221,52 @@ function semNums(v){
 function semMonthOf(t){const n=semNums(t.month).find(x=>x>=1&&x<=12);return n||null;}
 function semWeeksOf(t){return semNums(t.week).filter(x=>x>=1&&x<=30);}
 function semWeekOf(t){return semWeeksOf(t)[0]||null;}
+function semTermOfMonth(m){return SEMW_MONTHS[1].includes(m)?1:2;}
+function semThu(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // 用週四判斷這週算哪個月
+// 這學期的每一週：[{week, date(星期一), m(月份)}]；real＝後台有設定，false＝估計的
+function semCalendar(term,sem){
+  const sw=sem?getSemesterWeeks(sem):[];
+  if(sw.length&&semTermOfMonth(semThu(sw[0].date).getMonth()+1)===term)
+    return {real:true,weeks:sw.map(w=>({week:w.week,date:w.date,m:semThu(w.date).getMonth()+1}))};
+  // 估計：學年從 8 月算起
+  const base=sw.length?sw[0].date:new Date();
+  let Y=base.getFullYear();if(base.getMonth()+1<8)Y--;
+  const d=term===1?new Date(Y,7,28):new Date(Y+1,1,10);
+  while(d.getDay()!==1)d.setDate(d.getDate()+1);
+  const weeks=[];
+  for(let i=0;i<(term===1?21:20);i++){const w=new Date(d);w.setDate(d.getDate()+i*7);weeks.push({week:i+1,date:w,m:semThu(w).getMonth()+1});}
+  return {real:false,weeks};
+}
+// 兩個月份在學期裡差幾個月（8 月→1 月算 5）
+function semMonthGap(a,b){const o=[8,9,10,11,12,1,2,3,4,5,6,7];return Math.abs(o.indexOf(a)-o.indexOf(b));}
+// 這個實驗放哪幾週＋可能的問題
+// 回傳 {weeks:[週次], issues:[文字]}；weeks 空的＝放不進週表（放「未定」）
+function semPlace(t,cal){
+  const m=semMonthOf(t),ws=semWeeksOf(t),raw=String(t.week??'').trim(),issues=[];
+  if(!m&&!String(t.month??'').trim())issues.push('沒填月份');
+  else if(!m)issues.push(`月份看不懂（${String(t.month).slice(0,10)}）`);
+  if(!ws.length){issues.push(raw?`週次看不懂（${raw.slice(0,10)}）`:'沒填週次');return {weeks:[],issues};}
+  const out=[];
+  ws.forEach(n=>{
+    const w=cal.weeks.find(x=>x.week===n);
+    if(!w){issues.push(`第 ${n} 週超出學期（只有 ${cal.weeks.length} 週）`);return;}
+    if(m&&semMonthGap(w.m,m)>1){
+      // 寫的可能是「那個月的第 n 週」
+      const alt=n<=5?cal.weeks.filter(x=>x.m===m)[n-1]:null;
+      if(alt){out.push(alt.week);issues.push(`學期第 ${n} 週${cal.real?'':'大約'}在 ${w.m} 月，跟「${m} 月」對不上，先當成 ${m} 月第 ${n} 週（W${alt.week}）`);}
+      else{out.push(w.week);issues.push(`學期第 ${n} 週${cal.real?'':'大約'}在 ${w.m} 月，跟「${m} 月」對不上`);}
+      return;
+    }
+    out.push(w.week);
+  });
+  return {weeks:[...new Set(out)],issues};
+}
+// ==== 學期週曆（前台、後台共用）結束 ====
+// ── 學期：上學期 8～1 月、下學期 2～7 月；5 個科目各一個顏色（菁英、探究等不另外配色）──
+const SEM_MONTHS={1:[8,9,10,11,12,1],2:[2,3,4,5,6,7]};
+const SEM_SUBJ=[['物理','#3b5b8a'],['化學','#b35c1e'],['生物','#2e7d4f'],['地科','#1f7a7a'],['理化','#7b4fa0'],['其他','#7a7a7a']];
+function semSubjectOf(t){const s=detectSubject(t);return SEM_SUBJ.some(x=>x[0]===s)?s:'其他';}
+function semColor(s){return (SEM_SUBJ.find(x=>x[0]===s)||SEM_SUBJ[5])[1];}
 function renderSemTable(){
   const box=document.getElementById('tplSemTable');
   if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span>📅</span><span><b>上課要用的實驗？到「學期實驗」借</b><small>點實驗就帶入器材和日期，這裡留給臨時要借的東西</small></span><span>›</span></button>`:'';
@@ -5223,42 +5290,33 @@ function spActiveTerm(){
   if(!sw.length)return null;
   return SEM_MONTHS[1].includes(spMid(sw[0].date).getMonth()+1)?1:2;
 }
+// 預設看哪個學期：後台設定的那一學期；沒設定就看現在的月份
+function spHomeTerm(){return spActiveTerm()||semTermOfMonth(new Date().getMonth()+1);}
 function spBuild(term){
-  const months=SEM_MONTHS[term],real=spActiveTerm()===term;
-  const slots=[];
-  if(real){
-    getSemesterWeeks(activeSemester).forEach(w=>{const m=spMid(w.date).getMonth()+1;if(months.includes(m))slots.push({week:w.week,date:w.date,m,type:w.type,items:[]});});
-  }
-  const hasWeek=t=>semWeeksOf(t).some(n=>slots.some(x=>x.week===n));
-  const pool=allCourseTemplates.filter(t=>{const m=semMonthOf(t);return m?months.includes(m):(real&&hasWeek(t));});
-  if(!real){ // 沒有學期設定：每個月先排 4 週，有人寫到第 5 週才多一格
-    months.forEach(m=>{const max=Math.max(4,...pool.filter(t=>semMonthOf(t)===m).map(t=>{const n=semWeekOf(t);return n&&n<=5?n:0;}));for(let n=1;n<=max;n++)slots.push({week:null,date:null,m,items:[]});});
-  }
-  months.forEach(m=>{let n=0;slots.forEach(s=>{if(s.m===m)s.n=++n;});});
-  const undef={};
-  // 一個實驗可以跨好幾週（例如「13～14 週」）→ 每一週的格子都放
-  pool.forEach(t=>{
-    const m=semMonthOf(t);let hit=[];
-    semWeeksOf(t).forEach(n=>{
-      const s=real?slots.find(x=>x.week===n):slots.filter(x=>x.m===m)[n-1];
-      if(s&&!hit.includes(s))hit.push(s);
-    });
-    if(hit.length)hit.forEach(s=>s.items.push(t));else(undef[m]=undef[m]||[]).push(t);
+  const months=SEM_MONTHS[term],cal=semCalendar(term,activeSemester),real=cal.real;
+  const slots=cal.weeks.filter(w=>months.includes(w.m)).map(w=>({week:w.week,date:w.date,m:w.m,items:[]}));
+  const placed=new Set(),undef={};
+  allCourseTemplates.forEach(t=>{
+    const m=semMonthOf(t);
+    if(m?!months.includes(m):term!==spHomeTerm())return; // 別的學期的；沒填月份的只放在預設學期
+    const p=semPlace(t,cal);
+    if(p.weeks.length){p.weeks.forEach(n=>{const s=slots.find(x=>x.week===n);if(s)s.items.push(t);});placed.add(t);}
+    else if(m){(undef[m]=undef[m]||[]).push(t);placed.add(t);}
   });
-  // 週次未定：放在該月最後一週後面
-  const all=[];
-  const shown=real?months.filter(m=>slots.some(x=>x.m===m)||undef[m]):months; // 有設定學期：沒有任何一週的月份（例如 8 月）就不顯示
+  months.forEach(m=>{let n=0;slots.forEach(s=>{if(s.m===m)s.n=++n;});});
+  // 週次未定：放在該月最後一週後面；沒有任何一週的月份（例如 8 月）就不顯示
+  const all=[],shown=months.filter(m=>slots.some(x=>x.m===m)||undef[m]);
   shown.forEach(m=>{slots.filter(s=>s.m===m).forEach(s=>all.push(s));if(undef[m])all.push({week:null,date:null,m,n:0,undef:true,items:undef[m]});});
   const ord=s=>SEM_SUBJ.findIndex(x=>x[0]===s);
   all.forEach(s=>s.items.sort((a,b)=>ord(semSubjectOf(a))-ord(semSubjectOf(b))||formatTemplateName(a).localeCompare(formatTemplateName(b),'zh-Hant')));
-  const today=new Date();today.setHours(0,0,0,0);
-  const nowW=real?getWeekInfo(today,activeSemester):null;
+  const today=new Date();today.setHours(0,0,0,0);const tt=today.getTime();
   all.forEach(s=>{
-    s.now=!!(nowW&&s.week===nowW.week);
-    s.past=!!(s.date&&!s.now&&(s.date.getTime()+7*864e5)<=today.getTime());
-    s.exam=s.week?examLabelForWeek(s.week):'';
+    const st=s.date?new Date(s.date).setHours(0,0,0,0):null;
+    s.now=!!(st!=null&&tt>=st&&tt<st+7*864e5);
+    s.past=!!(st!=null&&!s.now&&st+7*864e5<=tt);
+    s.exam=s.week&&real?examLabelForWeek(s.week):'';
   });
-  const noMonth=allCourseTemplates.filter(t=>!semMonthOf(t)&&!pool.includes(t));
+  const noMonth=term===spHomeTerm()?allCourseTemplates.filter(t=>!semMonthOf(t)&&!placed.has(t)):[];
   return {months:shown,real,slots:all,noMonth,maxN:Math.max(1,...all.map(s=>s.n||0)),hasUndef:all.some(s=>s.undef)};
 }
 function spSlotTitle(s,long){
@@ -5270,7 +5328,7 @@ function spWeekRange(t){const w=semWeeksOf(t);if(w.length<2)return '';const a=Ma
 function spSub(t){const p=templateNameParts(t);return [p.head,t.teacher,spWeekRange(t)].filter(Boolean).join('・');}
 function spRender(){
   const root=document.getElementById('spRoot');if(!root)return;
-  if(spTerm==null){const a=spActiveTerm();spTerm=a||(((new Date().getMonth()+1)>=2&&(new Date().getMonth()+1)<=7)?2:1);}
+  if(spTerm==null)spTerm=spHomeTerm();
   if(!allCourseTemplates.length){root.innerHTML='<div class="sp-empty">還沒有課綱實驗。請管理員在後台「課綱實驗」新增。</div>';return;}
   const B=spBuild(spTerm),nowM=new Date().getMonth()+1;
   const subjHave=new Set(allCourseTemplates.map(semSubjectOf));
@@ -5280,7 +5338,9 @@ function spRender(){
   const termName=n=>n===1?'上學期':'下學期';
   let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div>
     <div class="sp-legend" role="group" aria-label="只看哪一科">${['全部',...subjList.map(x=>x[0])].map(s=>`<button type="button" class="${spSubj===s?'on':''}" onclick="spSubj=${ja(s)};spRender()">${s==='全部'?'':`<i style="background:${semColor(s)}"></i>`}${escH(s)}</button>`).join('')}</div></div>`;
-  if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，先用「幾月第幾週」排。</div>`;
+  if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，日期是估計的（${spTerm===1?'8 月底':'2 月中'}開學），週次照課綱寫的放。</div>`;
+  // 沒填月份／週次、排不進表的
+  const noMonthHtml=!B.noMonth.length?'':`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份或週次</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
   // ── 電腦：月份 × 週 ──
   h+=`<div class="sp-desk"><div class="sp-grid" style="grid-template-columns:60px repeat(${B.months.length},minmax(0,1fr))"><div class="sp-gh"></div>`;
   h+=B.months.map(m=>`<div class="sp-gh${m===nowM?' now':''}">${m} 月</div>`).join('');
@@ -5295,37 +5355,48 @@ function spRender(){
       h+='</div>';
     });
   });
-  h+='</div></div>';
-  // ── 手機：學期週格子 ＋ 該週清單 ──
+  h+='</div>'+noMonthHtml+'</div>';
+  // ── 手機：上面學期週格子（約佔畫面一半，自己捲）＋ 下面那一週的清單（自己捲）──
   if(spSel==null||spSel>=B.slots.length){
     let k=B.slots.findIndex(s=>s.now);
     if(k<0)k=B.slots.findIndex(s=>s.m===nowM&&s.items.length);
     if(k<0)k=B.slots.findIndex(s=>s.items.length);
     spSel=Math.max(0,k);
   }
-  h+='<div class="sp-phone"><div class="sp-wk">';
+  h+='<div class="sp-phone"><div class="sp-wkbox"><div class="sp-wk">';
   let lastM=null;
   B.slots.forEach((s,i)=>{
     const its=s.items.filter(want),first=s.m!==lastM;lastM=s.m;
     h+=`<button type="button" class="sp-w${i===spSel?' sel':''}${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}" onclick="spPickWeek(${i})">`;
     h+=`<span class="sp-wh">${s.undef?`<b>${s.m}月</b><small>未定</small>`:s.week?`<b>W${s.week}</b><small>${spMD(s.date)}</small>`:`<b>${s.m}月</b><small>第${s.n}週</small>`}${s.week&&first?`<i>${s.m}月</i>`:''}${s.now?'<i class="nw">本週</i>':''}</span>`;
-    h+=its.slice(0,4).map(t=>`<span class="sp-ln"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b><span>${escH(templateNameParts(t).pure||templateNameParts(t).head)}</span></span>`).join('');
-    if(its.length>4)h+=`<span class="sp-more">＋${its.length-4}</span>`;
+    h+=its.slice(0,3).map(t=>`<span class="sp-ln"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b><span>${escH(templateNameParts(t).pure||templateNameParts(t).head)}</span></span>`).join('');
+    if(its.length>3)h+=`<span class="sp-more">＋${its.length-3}</span>`;
     h+='</button>';
   });
-  h+='</div>';
+  h+='</div></div>';
   const S=B.slots[spSel];
   if(S){
     const its=S.items.filter(want);
     h+=`<div class="sp-panel" id="spPanel"><div class="sp-ph"><button type="button" onclick="spPickWeek(${spSel-1})" ${spSel<=0?'disabled':''} aria-label="上一週">‹</button><b>${escH(spSlotTitle(S,true))}${S.exam?`<span class="sp-exam">${escH(S.exam)}</span>`:''}</b><button type="button" onclick="spPickWeek(${spSel+1})" ${spSel>=B.slots.length-1?'disabled':''} aria-label="下一週">›</button></div>`;
     h+=`<div class="sp-pc">${its.length?`這週有 ${its.length} 個實驗，點一下看器材、申請`:'這週沒有課綱實驗'}</div>`;
     h+=its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join('');
-    h+='</div>';
+    h+=noMonthHtml+'</div>';
   }
   h+='</div>';
-  if(B.noMonth.length)h+=`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份或週次</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
+  const prevTop=root.querySelector('.sp-wkbox')?.scrollTop;
   root.innerHTML=h;
+  spFit(prevTop);
 }
+// 手機：整個週表剛好一個螢幕高；格子區佔一半多，下面清單用剩下的，各自捲動
+function spFit(prevTop){
+  const ph=document.querySelector('#spRoot .sp-phone');if(!ph||!ph.offsetParent)return;
+  const top=ph.getBoundingClientRect().top+window.scrollY;
+  ph.style.height=Math.max(460,window.innerHeight-top-10)+'px';
+  const box=ph.querySelector('.sp-wkbox'),sel=box&&box.querySelector('.sp-w.sel');if(!box)return;
+  if(prevTop!=null)box.scrollTop=prevTop;
+  if(sel&&(prevTop==null||sel.offsetTop<box.scrollTop||sel.offsetTop+sel.offsetHeight>box.scrollTop+box.clientHeight))box.scrollTop=Math.max(0,sel.offsetTop-box.clientHeight/3);
+}
+window.addEventListener('resize',()=>{if(document.getElementById('page-semester')?.classList.contains('active'))spFit(document.querySelector('#spRoot .sp-wkbox')?.scrollTop);});
 function spPickWeek(i){
   const n=document.querySelectorAll('#spRoot .sp-w').length;if(i<0||i>=n)return;
   spSel=i;spRender();
@@ -5369,7 +5440,7 @@ function cbThisWeek(){const t=todayStr(),dow=new Date(t+'T00:00:00').getDay();re
 function cbNextWeek(){const r=cbThisWeek();return cbWeekRange(cbAddDays(cbMonday(r?r.rd:todayStr()),7));}
 // 這個實驗在週表上的那一格（找不到就是 null）
 function cbSlotOf(t){
-  const term=spActiveTerm();if(!term)return null;
+  const m=semMonthOf(t),term=m?semTermOfMonth(m):spHomeTerm();
   return spBuild(term).slots.find(s=>s.date&&s.items.includes(t))||null;
 }
 function cbCourseWeek(){const t=cbTpl(cb.ids[0]),s=t&&cbSlotOf(t);return s?cbWeekRange(fmtDate(s.date)):null;}
@@ -5482,6 +5553,9 @@ function cbRender(){
   h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button><b>${o.qty}</b><button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
   if(miss.length)h+=`<div class="cb-warn">⚠️ 庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
   h+=`<div class="cb-add"><input type="search" id="cbSearch" placeholder="＋ 這次還要加借別的器材（輸入名稱）" value="${escH(cb.q)}" oninput="cbSearch(this.value)" autocomplete="off" maxlength="40"><div id="cbSearchRes"></div></div></div>`;
+  // 課綱備註（數量待確認、怎麼擺放…）：借的人送出前也要看得到
+  const refs=tpls.filter(t=>String(t.reference_note||'').trim());
+  if(refs.length)h+=`<div class="cb-ref"><div class="cb-ref-t">📝 課綱備註<small>送出時會一起附在申請單</small></div>${refs.map(t=>`${refs.length>1||tpls.length>1?`<div class="cb-ref-n">${escH(formatTemplateName(t))}</div>`:''}<div class="cb-ref-b">${escH(String(t.reference_note).trim())}</div>`).join('')}</div>`;
   h+='</div><div class="cb-side"><div class="card cb-card">';
   // 借用資訊：日期、教室、申請人放在一起
   h+=`<div class="cb-ct">📋 借用資訊</div>
