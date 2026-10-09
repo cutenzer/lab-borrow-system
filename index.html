@@ -732,6 +732,8 @@
   .chem-st-src a{color:var(--accent);}
   .home-chem-row .hc-icon.hc-st{background:#fff;border:1px solid var(--surface2);padding:3px;color:var(--text);}
   .hc-st .chem-st{max-height:100%;}
+  .sr-thumb-ph.st,.home-eq-thumb.st{background:#fff;border:1px solid var(--surface2);padding:3px;color:var(--text);box-sizing:border-box;}
+  .sr-thumb-ph.st .chem-st,.home-eq-thumb.st .chem-st{max-height:100%;}
   /* ── 藥品資料卡 ── */
   .note-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--surface2);}
   .note-row .k{flex:0 0 64px;color:var(--text2);font-size:13px;}
@@ -1677,7 +1679,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09n · 週表科目只顯示該科</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09o · 搜尋結果也顯示結構式</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2234,7 +2236,7 @@ function heroSearchLive(q){
     let html='';
     if(locs.length)html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" onclick="heroLoc(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項</span></button>`).join('')}</div>`;
     if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
-    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph">🧪</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
+    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
     if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
     else if(eq.length>5)html+=`<button type="button" class="hr-more" onclick="heroSearchGo()">看全部 ${eq.length} 項器材 ›</button>`;
     box.innerHTML=html;
@@ -4910,7 +4912,7 @@ async function renderChemSearchSection(){
   if(!list.length){box.innerHTML=equipSearchType==='chem'?'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>':'<div class="hint" style="margin-top:14px">🧪 藥品：沒有符合的結果</div>';return;}
   box.innerHTML=`<div class="chem-sec-title">🧪 藥品（${list.length} 筆）</div><div class="home-eq-list chem-sec-list">${list.slice(0,limit).map(c=>{
     const avail=c.is_available!==false;
-    return `<div class="home-eq-row chem-clickable" onclick="openChemDetail(${parseInt(c.id)})" title="看藥品資料與位置"><div class="home-eq-thumb">🧪</div><div class="home-eq-info">
+    return `<div class="home-eq-row chem-clickable" onclick="openChemDetail(${parseInt(c.id)})" title="看藥品資料與位置"><div class="home-eq-thumb${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div class="home-eq-info">
       <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en||c.formula?`<div class="home-eq-spec">${c.formula?fmtFormula(c.formula)+(c.name_en?'　':''):''}${escH(c.name_en||'')}</div>`:''}
       <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?`<span class="eq-tag">📍${escH(c.location)}</span>`:''}</div>
     </div>${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(${parseInt(c.id)})">申請</button>`:`<button type="button" class="home-eq-add" disabled>暫不開放</button>`}</div>`;
@@ -6400,6 +6402,8 @@ function chemStructSvg(st,opts){
   });
   return s+'</svg>';
 }
+// 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
+function chemThumb(c){return chemStructOk(c&&c.structure)?chemStructSvg(c.structure,{mini:true}):'🧪';}
 // ==== 結構式（前台、後台共用）結束 ====
 // 點藥品 → 跳出資料卡：名稱、俗名、警示、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
 // ctx.locId：從藥品櫃點某一罐進來的；ctx.tray／ctx.item：從藥品盆裡點進來的
