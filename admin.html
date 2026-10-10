@@ -1350,7 +1350,7 @@
   <div class="card">
     <div class="card-title">🔬 PubChem 比對（結構式、CAS、檢查分子式）</div>
     <div class="info-box pc-intro">用藥品的 <b>CAS</b>（沒有就用<b>英文名</b>）到 PubChem 查，拿回正式名稱、分子式、CAS 和結構式。<br>
-      ・一秒最多查一次、一次只查一個；PubChem 很忙會自動停下來等。<br>
+      ・每 3 秒最多查一次、一次只查一個；PubChem 很忙會自動放慢或停下來等。<br>
       ・查到的先放在這裡給你看，按「✔ 就是這個」才會存進藥品資料，前台才看得到結構式。</div>
     <div class="pc-ctl">
       <select id="pcScope" aria-label="要查哪些"><option value="new">還沒查過的</option><option value="retry">有出入／查不到的重查</option><option value="all">全部（已確認、不適用的除外）</option></select>
@@ -5154,18 +5154,28 @@ function chemStructSvg(st,opts){
   const hideCH=opts.mini||heavy>14;
   const nb=A.map(()=>[]);B.forEach(([i,j])=>{nb[i].push(j);nb[j].push(i);});
   const show=A.map((a,i)=>!(a[0]==='H'&&(opts.mini||(hideCH&&nb[i].some(k=>A[k][0]==='C')))));
+  // 小縮圖：鹽類、含水的會分成好幾塊（例如 Al₂(SO₄)₃ 有 5 塊），全畫會縮成一團 → 只畫最大的那一塊
+  if(opts.mini){
+    const comp=A.map(()=>-1);let best=-1,bestN=0;
+    A.forEach((_,i)=>{if(comp[i]>=0||!show[i])return;const id=i,st=[i];comp[i]=id;let n=0;
+      while(st.length){const k=st.pop();n++;nb[k].forEach(m=>{if(comp[m]<0&&show[m]){comp[m]=id;st.push(m);}});}
+      if(n>bestN){bestN=n;best=id;}});
+    A.forEach((_,i)=>{if(comp[i]!==best)show[i]=false;});
+    if(bestN<2)return '';   // 只剩單一原子（例如 NaCl）就不畫縮圖
+  }
   const idx=A.map((_,i)=>i).filter(i=>show[i]);
   if(!idx.length)return '';
   // 以重原子之間的鍵長當作 1 個單位
   const lens=B.filter(([i,j])=>A[i][0]!=='H'&&A[j][0]!=='H').map(([i,j])=>Math.hypot(A[i][1]-A[j][1],A[i][2]-A[j][2])).sort((a,b)=>a-b);
   const unit=lens.length?lens[Math.floor(lens.length/2)]||1:1;
-  const S=46/unit,P=opts.mini?10:26,R=opts.mini?0:11;
+  const S=46/unit,P=opts.mini?16:26,R=opts.mini?13:11;
   const xs=idx.map(i=>A[i][1]),ys=idx.map(i=>A[i][2]);
   const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
   const W=Math.max((maxx-minx)*S+P*2,P*2+24),H=Math.max((maxy-miny)*S+P*2,P*2+24);
   const X=x=>(x-minx)*S+P+(W-((maxx-minx)*S+P*2))/2,Y=y=>(maxy-y)*S+P+(H-((maxy-miny)*S+P*2))/2;
   const lab=i=>!(opts.mini&&A[i][0]==='C')&&!(A[i][0]==='C'&&opts.skeleton);
-  const sw=opts.mini?Math.max(2.4,W/40):2;
+  const lw=i=>A[i][0].length>1?R+6:R; // 兩個字母的元素（Na、Cl）留寬一點
+  const sw=opts.mini?3.2:2;
   let s=`<svg class="chem-st${opts.mini?' mini':''}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="結構式">`;
   // 舊資料的離子鍵曾被誤存成參鍵：金屬離子、或兩端電荷一正一負的「參鍵」一律當離子鍵畫
   const ION=/^(Li|Na|K|Rb|Cs|Be|Mg|Ca|Sr|Ba|Al|Zn|Fe|Cu|Ag|Mn|Co|Ni|Pb|Sn|Cr|Hg|Cd|NH4)$/;
@@ -5175,16 +5185,16 @@ function chemStructSvg(st,opts){
     if(o===3&&ionic(i,j))o=0;
     let x1=X(A[i][1]),y1=Y(A[i][2]),x2=X(A[j][1]),y2=Y(A[j][2]);
     const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
-    const r1=lab(i)?(A[i][0].length>1?R+4:R):0,r2=lab(j)?(A[j][0].length>1?R+4:R):0;
+    const r1=lab(i)?lw(i):0,r2=lab(j)?lw(j):0;
     if(L<=r1+r2+2)return;
     x1+=ux*r1;y1+=uy*r1;x2-=ux*r2;y2-=uy*r2;
-    const g=opts.mini?sw*1.4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
+    const g=opts.mini?4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
     const dash=o===0?` stroke-dasharray="${opts.mini?'3 4':'2 5'}"`:'';
     offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${(o===0?sw*0.8:sw).toFixed(1)}" stroke-linecap="round"${dash}/>`;});
   });
   idx.forEach(i=>{
     if(!lab(i))return;
-    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?Math.max(20,W/6):19;
+    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?24:19;
     s+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs.toFixed(0)}" text-anchor="middle" dominant-baseline="central" fill="currentColor">${escH(a[0])}</text>`;
     const c=a[3]||0;
     if(c&&!opts.mini)s+=`<text x="${(x+(a[0].length>1?15:11)).toFixed(1)}" y="${(y-11).toFixed(1)}" font-size="12" fill="currentColor">${Math.abs(c)>1?Math.abs(c):''}${c>0?'+':'−'}</text>`;
@@ -5192,19 +5202,19 @@ function chemStructSvg(st,opts){
   return s+'</svg>';
 }
 // 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
-function chemThumb(c){return chemStructOk(c&&c.structure)?chemStructSvg(c.structure,{mini:true}):'🧪';}
+function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'🧪';}
 // ==== 結構式（前台、後台共用）結束 ====
 // ==== PubChem 比對 開始 ====
 // 用藥品的 CAS（沒有就用英文名）去 PubChem 查：PubChem 名稱、分子式、CAS、結構式座標
 // 安全設計（不給 PubChem 添麻煩、也不讓奇怪的資料進來）：
-//   ・同時只有 1 個請求；每次請求之間至少隔 1.2 秒（PubChem 上限是每秒 5 次）
+//   ・同時只有 1 個請求；每次請求之間至少隔 3 秒（PubChem 上限是每秒 5 次）
 //   ・PubChem 說太忙（503／429）→ 停下來等，越等越久；連續出錯 3 次就整個停止
 //   ・每次執行最多 1500 個請求，到了自動停
 //   ・只用 GET 讀資料；送出去的只有英文名或 CAS（先編碼）；網址固定是 PubChem
 //   ・查回來的東西一律當文字處理；編號只收數字；結構式要通過格式檢查才會存
 //   ・查到的結果先放「比對結果」（前台看不到），你按「就是這個」才寫進藥品資料
 const PC_BASE='https://pubchem.ncbi.nlm.nih.gov/rest/pug';
-const PC_GAP=1200,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
+const PC_GAP=3000,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
 const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0};
 const PC_STATUS={match:'✅ 對得上',diff:'⚠️ 有出入',multi:'❓ 好幾個候選',notfound:'❓ 查不到',noname:'➖ 沒有英文名／CAS',skip:'➖ 不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
 const pcSleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -5217,7 +5227,7 @@ function casValid(s){
 // 一次請求：排隊、計時、記錄；回傳 JSON；查不到回傳 null；太忙丟 {busy:true}
 async function pcGet(path){
   if(PC.reqs>=PC_MAX_REQ)throw new Error(`這次已經查了 ${PC_MAX_REQ} 次，先停下來（保護 PubChem）`);
-  const wait=PC.last+PC_GAP-Date.now();if(wait>0)await pcSleep(wait);
+  const wait=PC.last+PC_GAP+(PC.slow||0)-Date.now();if(wait>0)await pcSleep(wait);
   PC.last=Date.now();PC.reqs++;
   const url=PC_BASE+path;
   const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),PC_TIMEOUT);
@@ -5225,6 +5235,9 @@ async function pcGet(path){
   try{
     const r=await fetch(url,{method:'GET',signal:ctl.signal,credentials:'omit',referrerPolicy:'no-referrer'});
     rec.s=r.status;pcRenderLog();
+    // PubChem 會在回應裡附「負載燈號」（Green／Yellow／Red／Black）；看得到的話，黃燈放慢、紅燈先休息
+    const th=String(r.headers.get('X-Throttling-Control')||'');
+    if(/Black|Red/.test(th))PC.slow=60000;else if(/Yellow/.test(th))PC.slow=8000;else PC.slow=0;
     if(r.status===404)return null;
     if(r.status===503||r.status===429){const e=new Error('PubChem 現在很忙');e.busy=true;throw e;}
     if(!r.ok)throw new Error('PubChem 回應 '+r.status);
@@ -5350,7 +5363,7 @@ async function pcRun(){
       await pcSave(c.id,r);errs=0;backoff=0;done++;k++;pcRender();
     }catch(e){
       if(e.busy){backoff++;if(backoff>4){PC.progress='PubChem 一直很忙，先停下來，晚一點再試';break;}
-        const w=30000*Math.pow(2,backoff-1);PC.progress=`PubChem 很忙，等 ${w/1000} 秒再繼續…`;pcRenderCtl();
+        const w=60000*Math.pow(2,backoff-1);PC.progress=`PubChem 很忙，等 ${w/1000} 秒再繼續…`;pcRenderCtl();
         for(let t=0;t<w&&!PC.stop;t+=500)await pcSleep(500);continue;}
       if(e.net){PC.progress=e.message;break;} // 網路不通：直接停，不要一直試
       errs++;PC.progress=`第 ${k+1} 個查詢失敗：${e.message}`;pcRenderCtl();
