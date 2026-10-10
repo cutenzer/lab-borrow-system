@@ -527,6 +527,17 @@
   .cart-form-summary .cfs-venue{margin-top:4px;padding:6px 8px;border-radius:8px;background:#e3efec;color:var(--accent-dim);font-weight:600;}
   .cart-form-summary .cfs-venue.none{background:transparent;color:var(--text2);font-weight:400;padding:6px 0 0;}
   /* ── 藥品櫃元件（前台查詢、後台編輯共用）── */
+  /* ── 器材借用單：兩張卡片（要借什麼／借用資訊）── */
+  .bf-card .role-tabs{margin-bottom:12px!important;}
+  .bf-or{display:flex;align-items:center;gap:10px;margin:14px 0 10px;color:var(--text2);font-size:13px;}
+  .bf-or::before,.bf-or::after{content:'';flex:1;height:1px;background:var(--border);}
+  .bf-sep{height:1px;background:var(--surface2);margin:14px 0 12px;}
+  .bf-submit{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
+  .bf-submit.bf-submit-stu{margin-top:4px;padding-bottom:16px;flex-direction:row!important;}
+  .bf-submit.bf-submit-stu .btn{width:auto!important;height:auto!important;}
+  #bfStudent .role-tabs{margin-bottom:0!important;}
+  #bfTeacher[hidden],#bfStudent[hidden]{display:none!important;}
+  @media(max-width:900px){.bf-submit{flex-direction:column-reverse;}.bf-submit .btn{width:100%;justify-content:center;height:48px;}}
   /* ── 學期實驗週表：老師看「這學期每一週做什麼實驗」，點實驗直接申請 ── */
   .sem-seg{display:inline-flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
   .sem-seg button{border:none;background:var(--surface);color:var(--text2);font:inherit;font-size:14px;padding:7px 14px;cursor:pointer;}
@@ -1428,16 +1439,48 @@
   </div>
   <div class="proxy-notice" id="proxyNotice" style="display:none"></div>
 
-  <div class="card">
-    <div class="card-title">👤 身份</div>
+  <!-- 借用單：老師用兩張卡片（要借什麼／借用資訊）；學生維持原本的四張卡片
+       兩種版面用的是同一組欄位，切換身分時把下面這些區塊（bfg-…）搬到對應的位置，所以 id、檢查、送出都只有一份 -->
+  <div id="bfTeacher">
+    <div class="card bf-card">
+      <div class="card-title">🧪 要借什麼</div>
+      <div data-slot="items"><div class="bf-g" id="bfg-items">
+    <div class="hint" style="margin-bottom:8px">直接在下面搜尋加入，或到「找器材」分頁挑，都會加進這裡。</div>
+    <div class="search-wrap" style="margin-bottom:8px">
+      <span class="search-icon">🔎</span>
+      <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
+    </div>
+    <div id="borrowPageSearchResults"></div>
+    <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">🔍 到「找器材」挑選</button>
+      <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
+    </div>
+      </div></div>
+      <div class="bf-or"><span>或</span></div>
+      <div data-slot="photo"><div class="bf-g" id="bfg-photo">
+<div class="form-group full">
+  <label><span id="bfPhotoLabel">📷 或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）</span> <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()">📷 拍照</button>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()">🖼️ 從相簿選</button>
+  </div>
+  <input type="file" id="f-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
+  <input type="file" id="f-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
+  <div class="hint">可拍攝器材現況、損壞處等，每張會自動壓縮；用購物車快速送出時也會帶著走</div>
+  <div id="f-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
+</div>
+      </div></div>
+    </div>
+    <div class="card bf-card">
+      <div class="card-title">📋 借用資訊</div>
+      <div data-slot="role"><div class="bf-g" id="bfg-role">
     <div class="role-tabs" style="margin-bottom:0">
       <div class="role-tab" id="roleTabStudent" onclick="setRole('學生')">🎓 學生</div>
       <div class="role-tab active" id="roleTabTeacher" onclick="setRole('老師')">👨‍🏫 老師</div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">① 什麼時候、為了什麼、在哪裡</div>
+      </div></div>
+      <div data-slot="when"><div class="bf-g" id="bfg-when">
     <div class="form-grid">
       <div class="form-group">
         <label>借用目的 *</label>
@@ -1493,30 +1536,9 @@
         </div>
       </div>
     </div>
-  </div>
-
-  <div class="card" id="courseTemplateCard" style="display:none">
-    <div id="tplSemTable"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">② 要借什麼：🛒 已選器材</div>
-    <div class="hint" style="margin-bottom:8px">直接在下面搜尋加入，或到「找器材」分頁挑，都會加進這裡。</div>
-    <div class="search-wrap" style="margin-bottom:8px">
-      <span class="search-icon">🔎</span>
-      <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
-    </div>
-    <div id="borrowPageSearchResults"></div>
-    <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">🔍 到「找器材」挑選</button>
-      <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">③ 申請人資料</div>
-    <div class="form-grid">
+      </div></div>
+      <div class="bf-sep"></div>
+      <div data-slot="who"><div class="bf-g" id="bfg-who"><div class="form-grid">
       <div class="form-group"><label>姓名 *</label><input type="text" id="f-name" maxlength="30" placeholder="輸入姓名" oninput="this.classList.remove('field-error')"></div>
       <div class="form-group" id="studentIdGroup"><label>學號 *</label><input type="text" id="f-student-id" maxlength="20" inputmode="text" placeholder="輸入學號" oninput="this.classList.remove('field-error')"></div>
       <div class="form-group" id="supervisorGroup">
@@ -1524,22 +1546,21 @@
         <input type="text" id="f-supervisor" maxlength="30" placeholder="輸入指導老師姓名（選填）">
       </div>
 <div class="form-group full"><label>備註說明</label><textarea id="f-note" maxlength="500" placeholder="其他說明、特殊需求…"></textarea></div>
-<div class="form-group full">
-  <label>📷 上傳照片（最多3張；<b>找不到器材時，只傳照片也可以送出</b>） <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()">📷 拍照</button>
-    <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()">🖼️ 從相簿選</button>
-  </div>
-  <input type="file" id="f-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
-  <input type="file" id="f-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
-  <div class="hint">可拍攝器材現況、損壞處等，每張會自動壓縮；用購物車快速送出時也會帶著走</div>
-  <div id="f-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
-</div>
-    </div>
-  </div>
-  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;padding-bottom:16px">
+      </div></div></div>
+      <div data-slot="submit"><div class="bf-g" id="bfg-submit">
+  <div class="bf-submit">
     <button class="btn btn-secondary" onclick="resetForm()">清除重填</button>
     <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">📋 提交借用申請</button>
+  </div>
+      </div></div>
+    </div>
+  </div>
+  <div id="bfStudent" hidden>
+    <div class="card"><div class="card-title">👤 身份</div><div data-slot="role"></div></div>
+    <div class="card"><div class="card-title">① 什麼時候、為了什麼、在哪裡</div><div data-slot="when"></div></div>
+    <div class="card"><div class="card-title">② 要借什麼：🛒 已選器材</div><div data-slot="items"></div></div>
+    <div class="card"><div class="card-title">③ 申請人資料</div><div data-slot="who"></div><div data-slot="photo" style="margin-top:12px"></div></div>
+    <div data-slot="submit"></div>
   </div>
 </div>
 
@@ -1679,7 +1700,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-09o · 搜尋結果也顯示結構式</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-10b · 老師借用單兩張卡片</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2170,7 +2191,7 @@ async function renderHomeChem(){
     const ci=catInfo(c.category),avail=c.is_available!==false,left=c.bottles_left;
     const low=left!=null&&Number(left)<=2;
     return `<div class="home-chem-row chem-clickable ${avail?'':'chem-unavail'}" onclick="openChemDetail(window._homeChemItems[${i}].id)">
-      ${chemStructOk(c.structure)?`<div class="hc-icon hc-st">${chemStructSvg(c.structure,{mini:true})}</div>`:`<div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>`}
+      ${chemThumb(c)!=='🧪'?`<div class="hc-icon hc-st">${chemThumb(c)}</div>`:`<div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>`}
       <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
         <div class="hc-sub">${c.formula?fmtFormula(c.formula)+'　':''}${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
         <div class="hc-sub">${catName(c.category)?catTagHtml(c.category):''}　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
@@ -2895,8 +2916,19 @@ function setPurposeOptions(role){
   if(!sel.value&&role==='老師'){const first=opts.find(o=>!purposeNeedsDeposit(o.value,'老師'));if(first)sel.value=first.value;} // 老師預設第一個免保證金的目的，減少誤選
   onPurposeChange();
 }
+// 借用單版面：老師兩張卡片、學生原本四張卡片（把同一組欄位搬過去）
+function bfLayout(role){
+  const stu=role==='學生',box=document.getElementById(stu?'bfStudent':'bfTeacher'),other=document.getElementById(stu?'bfTeacher':'bfStudent');
+  if(!box||!other)return;
+  ['items','photo','role','when','who','submit'].forEach(k=>{const g=document.getElementById('bfg-'+k),slot=box.querySelector(`[data-slot="${k}"]`);if(g&&slot&&g.parentNode!==slot)slot.appendChild(g);});
+  box.hidden=false;other.hidden=true;
+  const lb=document.getElementById('bfPhotoLabel');
+  if(lb)lb.innerHTML=stu?'📷 上傳照片（最多3張；<b>找不到器材時，只傳照片也可以送出</b>）':'📷 或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）';
+  const sb=document.querySelector('#bfg-submit .bf-submit');if(sb)sb.classList.toggle('bf-submit-stu',stu);
+}
 function setRole(role){
   currentRole=role;
+  bfLayout(role);
   document.getElementById('roleTabStudent').classList.toggle('active',role==='學生');
   document.getElementById('roleTabTeacher').classList.toggle('active',role==='老師');
   document.getElementById('studentIdGroup').style.display=role==='學生'?'flex':'none';
@@ -6365,18 +6397,28 @@ function chemStructSvg(st,opts){
   const hideCH=opts.mini||heavy>14;
   const nb=A.map(()=>[]);B.forEach(([i,j])=>{nb[i].push(j);nb[j].push(i);});
   const show=A.map((a,i)=>!(a[0]==='H'&&(opts.mini||(hideCH&&nb[i].some(k=>A[k][0]==='C')))));
+  // 小縮圖：鹽類、含水的會分成好幾塊（例如 Al₂(SO₄)₃ 有 5 塊），全畫會縮成一團 → 只畫最大的那一塊
+  if(opts.mini){
+    const comp=A.map(()=>-1);let best=-1,bestN=0;
+    A.forEach((_,i)=>{if(comp[i]>=0||!show[i])return;const id=i,st=[i];comp[i]=id;let n=0;
+      while(st.length){const k=st.pop();n++;nb[k].forEach(m=>{if(comp[m]<0&&show[m]){comp[m]=id;st.push(m);}});}
+      if(n>bestN){bestN=n;best=id;}});
+    A.forEach((_,i)=>{if(comp[i]!==best)show[i]=false;});
+    if(bestN<2)return '';   // 只剩單一原子（例如 NaCl）就不畫縮圖
+  }
   const idx=A.map((_,i)=>i).filter(i=>show[i]);
   if(!idx.length)return '';
   // 以重原子之間的鍵長當作 1 個單位
   const lens=B.filter(([i,j])=>A[i][0]!=='H'&&A[j][0]!=='H').map(([i,j])=>Math.hypot(A[i][1]-A[j][1],A[i][2]-A[j][2])).sort((a,b)=>a-b);
   const unit=lens.length?lens[Math.floor(lens.length/2)]||1:1;
-  const S=46/unit,P=opts.mini?10:26,R=opts.mini?0:11;
+  const S=46/unit,P=opts.mini?16:26,R=opts.mini?13:11;
   const xs=idx.map(i=>A[i][1]),ys=idx.map(i=>A[i][2]);
   const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
   const W=Math.max((maxx-minx)*S+P*2,P*2+24),H=Math.max((maxy-miny)*S+P*2,P*2+24);
   const X=x=>(x-minx)*S+P+(W-((maxx-minx)*S+P*2))/2,Y=y=>(maxy-y)*S+P+(H-((maxy-miny)*S+P*2))/2;
   const lab=i=>!(opts.mini&&A[i][0]==='C')&&!(A[i][0]==='C'&&opts.skeleton);
-  const sw=opts.mini?Math.max(2.4,W/40):2;
+  const lw=i=>A[i][0].length>1?R+6:R; // 兩個字母的元素（Na、Cl）留寬一點
+  const sw=opts.mini?3.2:2;
   let s=`<svg class="chem-st${opts.mini?' mini':''}" viewBox="0 0 ${W.toFixed(1)} ${H.toFixed(1)}" role="img" aria-label="結構式">`;
   // 舊資料的離子鍵曾被誤存成參鍵：金屬離子、或兩端電荷一正一負的「參鍵」一律當離子鍵畫
   const ION=/^(Li|Na|K|Rb|Cs|Be|Mg|Ca|Sr|Ba|Al|Zn|Fe|Cu|Ag|Mn|Co|Ni|Pb|Sn|Cr|Hg|Cd|NH4)$/;
@@ -6386,16 +6428,16 @@ function chemStructSvg(st,opts){
     if(o===3&&ionic(i,j))o=0;
     let x1=X(A[i][1]),y1=Y(A[i][2]),x2=X(A[j][1]),y2=Y(A[j][2]);
     const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L;
-    const r1=lab(i)?(A[i][0].length>1?R+4:R):0,r2=lab(j)?(A[j][0].length>1?R+4:R):0;
+    const r1=lab(i)?lw(i):0,r2=lab(j)?lw(j):0;
     if(L<=r1+r2+2)return;
     x1+=ux*r1;y1+=uy*r1;x2-=ux*r2;y2-=uy*r2;
-    const g=opts.mini?sw*1.4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
+    const g=opts.mini?4:3,offs=o===2?[-g,g]:o===3?[-g*1.7,0,g*1.7]:[0];
     const dash=o===0?` stroke-dasharray="${opts.mini?'3 4':'2 5'}"`:'';
     offs.forEach(d=>{s+=`<line x1="${(x1-uy*d).toFixed(1)}" y1="${(y1+ux*d).toFixed(1)}" x2="${(x2-uy*d).toFixed(1)}" y2="${(y2+ux*d).toFixed(1)}" stroke="currentColor" stroke-width="${(o===0?sw*0.8:sw).toFixed(1)}" stroke-linecap="round"${dash}/>`;});
   });
   idx.forEach(i=>{
     if(!lab(i))return;
-    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?Math.max(20,W/6):19;
+    const a=A[i],x=X(a[1]),y=Y(a[2]),fs=opts.mini?24:19;
     s+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${fs.toFixed(0)}" text-anchor="middle" dominant-baseline="central" fill="currentColor">${escH(a[0])}</text>`;
     const c=a[3]||0;
     if(c&&!opts.mini)s+=`<text x="${(x+(a[0].length>1?15:11)).toFixed(1)}" y="${(y-11).toFixed(1)}" font-size="12" fill="currentColor">${Math.abs(c)>1?Math.abs(c):''}${c>0?'+':'−'}</text>`;
@@ -6403,7 +6445,7 @@ function chemStructSvg(st,opts){
   return s+'</svg>';
 }
 // 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
-function chemThumb(c){return chemStructOk(c&&c.structure)?chemStructSvg(c.structure,{mini:true}):'🧪';}
+function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'🧪';}
 // ==== 結構式（前台、後台共用）結束 ====
 // 點藥品 → 跳出資料卡：名稱、俗名、警示、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
 // ctx.locId：從藥品櫃點某一罐進來的；ctx.tray／ctx.item：從藥品盆裡點進來的
