@@ -74,6 +74,8 @@
   @media(min-width:760px){
     #tplFormCard.tpl-sheet{inset:5vh auto auto 50%;transform:translateX(-50%);width:min(760px,94vw);height:90vh;border-radius:18px;box-shadow:0 0 0 100vmax rgba(20,22,24,.4),0 20px 50px rgba(0,0,0,.3);}
   }
+  .sheet-stamp{font-size:11px;font-weight:700;color:#8a5a00;border:1.5px solid #d9b25c;border-radius:6px;padding:1px 6px;white-space:nowrap;}
+  .sheet-stamp.ok{color:#2e7d4f;border-color:#8cc3a0;}
   .tpl-tools{display:flex;flex-direction:column;gap:8px;margin:6px 0 10px;}
   .tpl-tools input{width:100%;box-sizing:border-box;}
   .tpl-filter{display:flex;gap:6px;flex-wrap:wrap;}
@@ -1671,7 +1673,7 @@ async function loadAll(){
       role:r.role,purpose:r.purpose,items:r.items||[],
       borrowDate:r.borrow_date,returnDate:r.return_date,actualReturn:r.actual_return,
       status:r.status,depositType:r.deposit_type,depositAmount:r.deposit_amount,
-      depositStatus:r.deposit_status,note:r.note,adminNote:r.admin_note||'',courseName:r.course_name||'',damageNote:r.damage_note||'',finalRefund:r.final_refund,
+      depositStatus:r.deposit_status,note:r.note,adminNote:r.admin_note||'',courseName:r.course_name||'',sheetPrintedAt:r.sheet_printed_at||null,sheetSignedAt:r.sheet_signed_at||null,damageNote:r.damage_note||'',finalRefund:r.final_refund,
       photos:Array.isArray(r.photos)?r.photos:[]
     }));
     // ── 自動標記逾期 ──
@@ -1790,7 +1792,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-09e';
+const ADMIN_VERSION='2026-10-10a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2281,8 +2283,11 @@ function renderRecord(r,mode){
   const more=[];
   if(items.length){
     const exp=`openExportModal(${ja(r.id)})`;
-    if(actions)more.push({label:'📄 匯出表單',fn:exp});
-    else actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">匯出表單</button>`;
+    const sheetOut=['已核准','逾期','已歸還','已歸還-損壞'].includes(r.status);
+    if(sheetOut||!actions)actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">📄 ${r.sheetPrintedAt?'重印紀錄表':'匯出紀錄表'}</button>`;
+    else more.push({label:'📄 匯出紀錄表',fn:exp});
+    if(r.sheetPrintedAt&&!r.sheetSignedAt)more.push({label:'✍️ 紀錄表已簽回',fn:`markSheetSigned(${ja(r.id)},true)`});
+    if(r.sheetSignedAt)more.push({label:'↩️ 取消「已簽回」',fn:`markSheetSigned(${ja(r.id)},false)`});
   }
   if(r.status==='已核准'||r.status==='逾期')more.push({label:'📅 延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
   more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
@@ -2300,6 +2305,7 @@ function renderRecord(r,mode){
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="badge ${sc}">${escH(r.status)}</span>
         ${overdueDays>0?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
+        ${r.sheetSignedAt?`<span class="sheet-stamp ok">✍️ 已簽回 ${escH(sheetMD(r.sheetSignedAt))}</span>`:r.sheetPrintedAt?`<span class="sheet-stamp">🖨️ 已印 ${escH(sheetMD(r.sheetPrintedAt))}・待簽回</span>`:''}
       </div>
     </div>
     <div class="record-meta">
@@ -3413,12 +3419,12 @@ async function openExportModal(id){
   const items=Array.isArray(rec.items)?rec.items:[];
   if(!items.length){showToast('這筆紀錄沒有器材可匯出','error');return;}
   if(!activeSemester){try{await loadActiveSemester();}catch(e){}}
-  const esc=s=>(s==null?'':String(s)).replace(/"/g,'&quot;');
+  const esc=escH; // 一律用 escH（以前只換 "，名字裡有 < 會壞版）
   // 週次：有啟用學期就用下拉（顯示日期範圍），否則退回手填
   const weeks=getSemesterWeeks(activeSemester);
   let weekField;
   if(weeks.length){
-    const opts=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
+    const opts=weeks.map(w=>`<option value="${escH(w.week)}">${escH(weekDisplayLabel(w))}</option>`).join('');
     weekField=`<select id="exp-week-sel" onchange="expWeekSel()"><option value="">— 選擇週次 —</option>${opts}<option value="__other__">其他（自填）</option></select><input id="exp-week-other" placeholder="自填週次" style="display:none;margin-top:6px">`;
   }else{
     weekField=`<input id="exp-week-other" placeholder="例如：1"><input type="hidden" id="exp-week-sel" value="__other__">`;
@@ -3427,8 +3433,8 @@ async function openExportModal(id){
   const itemRows=items.map((it,i)=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="exp-item" data-idx="${i}" checked style="width:auto;flex-shrink:0">
-      <span style="flex:1"><strong>${it.name}</strong>${it.spec?'　<span style="color:var(--text2)">'+it.spec+'</span>':''}</span>
-      <span style="font-family:'DM Mono',monospace;color:var(--text2)">總量 ${it.quantity}${it.unit||''}</span>
+      <span style="flex:1"><strong>${escH(it.name)}</strong>${it.spec?'　<span style="color:var(--text2)">'+escH(it.spec)+'</span>':''}</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--text2)">總量 ${escH(it.quantity)}${escH(it.unit||'')}</span>
     </label>`).join('');
   showModal('📄 匯出實驗紀錄表',`
     <div class="info-box" style="margin-bottom:12px">勾選要放進這張表單的器材，並填寫表頭欄位（可留白由老師手寫）。每組數量會在「借用數量 ÷ 組數」能整除時自動算好，否則留空。</div>
@@ -3468,7 +3474,7 @@ async function openExportModal(id){
     </div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'⬇️ 下載 Excel',cls:'btn-primary',fn:`doExport('${id}')`}
+    {label:'⬇️ 下載 Excel',cls:'btn-primary',fn:`doExport(${ja(id)})`}
   ]);
 }
 
@@ -3495,10 +3501,10 @@ function expBuildClassTeachers(){
   for(let t=0;t<nT;t++){const want=base+(t<rem?1:0);for(let k=0;k<want&&idx<classes.length;k++){assign[idx++]=teachers[t];}}
   box.innerHTML=classes.map((c,i)=>`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-      <span style="min-width:70px;font-size:13px;font-weight:600">${c||('班級'+(i+1))}</span>
+      <span style="min-width:70px;font-size:13px;font-weight:600">${escH(c||('班級'+(i+1)))}</span>
       <select class="exp-ct" data-idx="${i}" style="flex:1">
         <option value="">（不指定）</option>
-        ${teachers.map(t=>`<option ${t===assign[i]?'selected':''}>${t}</option>`).join('')}
+        ${teachers.map(t=>`<option value="${escH(t)}" ${t===assign[i]?'selected':''}>${escH(t)}</option>`).join('')}
       </select>
     </div>`).join('');
 }
@@ -3561,11 +3567,14 @@ async function doExport(id){
   try{
     await buildReportXlsx(meta,chosen,rec);
     showToast('已產生 Excel，請查看下載','success');
+    markSheetPrinted(rec);
   }catch(e){showToast('匯出失敗：'+e.message,'error');}
 }
 
+// 紀錄表表頭文字（要改校名、科別，只改這裡）
+const SHEET_TITLE_LEFT='曉明女中　自然與生活科技';
 async function buildReportXlsx(meta,items,rec){
-  const FONT='Times New Roman';
+  const FONT='標楷體';
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('實驗紀錄表');
   const widths=[9,29.9,11.6,7.4,9,23.4];
@@ -3583,7 +3592,7 @@ async function buildReportXlsx(meta,items,rec){
   const borderRange=(r1,r2)=>{for(let r=r1;r<=r2;r++)for(let col=1;col<=6;col++){ws.getCell(r,col).border=allBorder;}};
 
   // ── 表頭 1~6 列 ──
-  setCell('A1','曉明女中　自然與生活科技',{size:16,bold:true});
+  setCell('A1',SHEET_TITLE_LEFT,{size:16,bold:true});
   setCell('C1',meta.category||'',{size:16,bold:true});
   setCell('E1','實驗紀錄表',{size:16,bold:true});
   setCell('A2','實驗名稱',{size:12});setCell('B2',meta.name||'',{size:12});
@@ -3691,6 +3700,12 @@ async function buildReportXlsx(meta,items,rec){
     addSection('🧪 藥品項目',meta.courseChemicals,'FFE0F2FE');
     addSection('♻️ 回收用具',meta.courseRecycling,'FFD1FAE5');
   }
+  // 列印設定：A4 直式、寬度縮成一頁、器材表頭每頁重複；頁尾左邊單號、中間頁碼、右邊列印日期
+  const ftr=`&L單號 ${String(rec.id||'').replace(/&/g,'&&')}&C第 &P 頁，共 &N 頁&R列印 ${fmtDate(new Date())}`;
+  ws.pageSetup={paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,horizontalCentered:true,
+    margins:{left:0.5,right:0.5,top:0.6,bottom:0.7,header:0.3,footer:0.3},printTitlesRow:`${headerRow}:${headerRow}`};
+  ws.headerFooter={oddFooter:ftr,evenFooter:ftr};
+  wb.worksheets.slice(1).forEach(w=>{w.pageSetup={paperSize:9,orientation:'portrait',fitToPage:true,fitToWidth:1,fitToHeight:0,margins:{left:0.5,right:0.5,top:0.6,bottom:0.7,header:0.3,footer:0.3}};w.headerFooter={oddFooter:ftr,evenFooter:ftr};});
   const buf=await wb.xlsx.writeBuffer();
   const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const base=`實驗紀錄表_${meta.name||rec.id}${meta.grade?'_'+meta.grade:''}`.replace(/[\\/:*?"<>|\s]+/g,'_');
@@ -3700,6 +3715,19 @@ async function buildReportXlsx(meta,items,rec){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
 }
 
+// ── 紀錄表的「已印」「已簽回」時間（borrow_records.sheet_printed_at／sheet_signed_at）──
+function sheetMD(t){const d=new Date(t);return isNaN(d)?'':(d.getMonth()+1)+'/'+d.getDate();}
+async function markSheetPrinted(rec){
+  const now=new Date().toISOString();
+  try{await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(rec.id),body:{sheet_printed_at:now},prefer:'return=minimal'});rec.sheetPrintedAt=now;loadAll();}
+  catch(e){if(/sheet_printed_at|column|schema cache/i.test(e.message||''))showToast('Excel 已下載；要記錄「已印」請先執行「紀錄表簽回欄位.sql」','error');}
+}
+async function markSheetSigned(id,on){
+  const rec=allRecords.find(r=>String(r.id)===String(id));if(!rec)return;
+  const v=on?new Date().toISOString():null;
+  try{await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(rec.id),body:{sheet_signed_at:v},prefer:'return=minimal'});rec.sheetSignedAt=v;showToast(on?'已標記：紀錄表簽回':'已取消簽回標記','success');loadAll();}
+  catch(e){showToast('更新失敗：'+e.message,'error');}
+}
 // ── 借用記錄刪除 ──────────────────────────────────────────
 function deleteBorrowRecord(id){
   showModal('確認刪除',`<p>確定要永久刪除這筆記錄嗎？</p><p style="font-size:13px;color:var(--text2);margin-top:6px">${id}</p><p style="font-size:13px;color:var(--danger);margin-top:6px">此操作無法復原。</p>`,[
@@ -5250,6 +5278,17 @@ async function pcGet(path){
     if(rec.s==='…'){rec.s='失敗';pcRenderLog();}throw e;}
   finally{clearTimeout(tm);}
 }
+// 附加資料用：忙碌或逾時就等 30 秒再試一次；還是不行就放棄這一項（回傳 {_failed:true}），不影響整批
+async function pcGetSoft(path){
+  for(let k=0;k<2;k++){
+    try{return await pcGet(path);}
+    catch(e){
+      if(e.net||/1500|保護/.test(e.message))throw e;
+      if(k===0){PC.progress=`PubChem 這一項沒回應，30 秒後再試一次…`;pcRenderCtl();for(let t=0;t<30000&&!PC.stop;t+=500)await pcSleep(500);}
+    }
+  }
+  return {_failed:true};
+}
 const pcEnc=s=>encodeURIComponent(String(s).trim().slice(0,150));
 // 分子式 → 各元素個數（CuSO4·5H2O、Ca(OH)2、CH3COOH、全形／下標數字都可以）
 function formulaCount(f){
@@ -5326,13 +5365,15 @@ async function pcLookup(c){
   const props=(((pj||{}).PropertyTable||{}).Properties||[]).map(p=>({cid:+p.CID,title:String(p.Title||'').slice(0,150),formula:String(p.MolecularFormula||'').slice(0,60),iupac:String(p.IUPACName||'').slice(0,200)})).filter(p=>p.cid>0);
   if(!props.length)return {status:'notfound',query,data:null};
   const top=props[0];
-  const sj=await pcGet(`/compound/cid/${top.cid}/record/JSON?record_type=2d`);
-  const st=pcToStructure(sj);
-  let casSug='';
-  if(!cas){const cj=await pcGet(`/compound/cid/${top.cid}/synonyms/JSON`);casSug=pcPickCas(cj);}
+  // 結構式、CAS 是「附加資料」：拿不到就算了，不要為了它一直重試（有些像矽油這類聚合物，PubChem 每次都回忙碌）
+  const sj=await pcGetSoft(`/compound/cid/${top.cid}/record/JSON?record_type=2d`);
+  const st=sj&&!sj._failed?pcToStructure(sj):null;
+  let casSug='',cj=null;
+  if(!cas){cj=await pcGetSoft(`/compound/cid/${top.cid}/synonyms/JSON`);if(cj&&!cj._failed)casSug=pcPickCas(cj);}
   const same=formulaSame(c.formula,top.formula);
   const status=props.length>1?'multi':(same===true?'match':'diff');
-  return {status,query,data:{cid:top.cid,title:top.title,formula:top.formula,iupac:top.iupac,cas:casSug,st,cands:props}};
+  const miss=[sj&&sj._failed?'結構式':'',cj&&cj._failed?'CAS':''].filter(Boolean);
+  return {status,query,data:{cid:top.cid,title:top.title,formula:top.formula,iupac:top.iupac,cas:casSug,st,cands:props,note:miss.length?`PubChem 這次拿不到${miss.join('、')}，可以之後再重查`:''}};
 }
 async function pcSave(chemId,r){
   const row={chem_id:chemId,status:r.status,query:r.query||null,data:r.data,checked_at:new Date().toISOString()};
@@ -5463,7 +5504,7 @@ function pcRowHtml(c,r){
     theirs=`<div class="pc-side"><div class="pc-h">PubChem 查到</div><b>${escH(d.title||'')}</b>
       <div>分子式：<span class="${same===false?'pc-bad':same?'pc-ok':''}">${escH(d.formula||'')}</span>${same===false?' ≠':same?' ✓':''}</div>
       <div>CAS：${d.cas?escH(d.cas):c.cas?'（用你的）':'<i>沒找到</i>'}</div>
-      ${note?`<div class="pc-note">${escH(note)}</div>`:''}
+      ${note?`<div class="pc-note">${escH(note)}</div>`:''}${d.note?`<div class="pc-note">${escH(d.note)}</div>`:''}
       <div class="pc-st">${st?chemStructSvg(st):'<i>沒有結構資料</i>'}</div>
       <a href="https://pubchem.ncbi.nlm.nih.gov/compound/${parseInt(d.cid)||0}" target="_blank" rel="noopener noreferrer">在 PubChem 看 ›</a></div>`;
   }else if(r){
