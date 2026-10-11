@@ -1259,7 +1259,7 @@
   <div class="card">
     <div class="card-title">📋 藥品清單</div>
     <div class="chem-list-tools">
-  <input type="search" id="adminChemSearch" placeholder="🔍 搜尋中文、英文、分子式…" oninput="filterAdminChems()" style="flex:1 1 180px">
+  <input type="search" id="adminChemSearch" placeholder="🔍 搜尋中文、英文、分子式、CAS…" oninput="filterAdminChems()" style="flex:1 1 180px">
   <select id="adminChemCat" onchange="filterAdminChems()">
     <option value="">全部分類</option>
   </select>
@@ -1792,7 +1792,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-10a';
+const ADMIN_VERSION='2026-10-11a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4515,8 +4515,13 @@ function fmtFormula(f){
 }
 // 搜尋用：分子式去掉空白、點、下標字，不分大小寫（打 cuso4、CuSO₄、CuSO4·5H2O 都找得到）
 function formulaKey(f){return String(f??'').replace(/[\u2080-\u2089]/g,d=>String(d.charCodeAt(0)-0x2080)).replace(/[\s·•∙⋅*.^]/g,'').toLowerCase();}
+// CAS 搜尋：只比數字，打 7664-93-9、7664 93 9、7664939 都找得到（全形數字也行）
+// 至少要 4 個數字才比，避免打「2」就整排藥品都中
+function casDigits(q){const s=String(q??'').replace(/[０-９]/g,d=>String.fromCharCode(d.charCodeAt(0)-0xFEE0)).trim();return /^[\d\s\-－‐–]+$/.test(s)?s.replace(/\D/g,''):'';}
+function casHit(c,q){const d=casDigits(q);return d.length>=4&&!!c&&String(c.cas||'').replace(/\D/g,'').includes(d);}
 function chemHit(c,ql){
   if(!ql)return true;
+  if(casHit(c,ql))return true;
   if((c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)||(c.alias||'').toLowerCase().includes(ql))return true;
   const k=formulaKey(ql);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
 }
@@ -4614,6 +4619,7 @@ function makeCabUI(rootId,opts){
   const aliasList=c=>String(c&&c.alias||'').split(/[、,，;；/／]/).map(qn).filter(Boolean);
   const chemQ=(c,q)=>{
     if(!c||!q)return false;
+    if(casHit(c,q))return true;
     if(qn(c.name_zh).includes(q)||qn(c.name_en).includes(q)||qn(c.alias).includes(q))return true;
     const k=formulaKey(q);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
   };
@@ -4739,7 +4745,7 @@ function makeCabUI(rootId,opts){
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
       const inp=r.querySelector('.cab-q'),qx=r.querySelector('.cab-qx');
       const syncX=()=>{qx.hidden=!inp.value;};
       // 打字就直接跳到第一個找到的位置（不捲動畫面，免得手機鍵盤擋住）
@@ -5803,6 +5809,8 @@ function chemSimilarGroups(){
   const find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
   const join=(a,b,r)=>{const x=find(a),y=find(b);if(x!==y){parent[y]=x;}const k=find(a);(why[k]=why[k]||new Set()).add(r);};
   const idx=(keyFn,reason)=>{const m=new Map();list.forEach((c,i)=>{const ks=keyFn(c);(Array.isArray(ks)?ks:[ks]).forEach(k=>{if(!k)return;if(m.has(k))join(m.get(k),i,reason);else m.set(k,i);});});};
+  // CAS 一樣＝同一種化合物（不管名字差多遠，例如 醋酸 ↔ 乙酸 ↔ 冰醋酸）；只用通過檢查碼的 CAS，打錯的不算
+  idx(c=>{const v=String(c.cas||'').trim();return casValid(v)?v:null;},'CAS 相同');
   idx(c=>nzName(c.name_zh),'名稱寫法');
   idx(c=>nzName(fixChars(c.name_zh)),'異體字／錯字');
   idx(c=>baseName(fixChars(c.name_zh)),'括號外名稱相同');
