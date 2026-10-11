@@ -1349,12 +1349,19 @@
   #equipBrowseGrid .home-eq-row{position:relative;border-radius:14px;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
   #equipBrowseGrid .home-eq-row:hover{transform:translateY(-2px);box-shadow:0 8px 20px -10px rgba(31,35,38,.35)}
   #equipBrowseGrid .home-eq-info{padding:10px 14px 14px}
-  #equipBrowseGrid .home-eq-add{position:absolute;top:129px;right:12px;width:42px;height:42px;margin:0;padding:0;border-radius:50%;font-size:0;box-shadow:0 4px 10px -4px rgba(31,91,76,.6)}
-  #equipBrowseGrid .home-eq-add::before{content:"";display:block;width:18px;height:18px;margin:auto;background:currentColor;
-    -webkit-mask:linear-gradient(#000,#000) center/18px 2.5px no-repeat,linear-gradient(#000,#000) center/2.5px 18px no-repeat;mask:linear-gradient(#000,#000) center/18px 2.5px no-repeat,linear-gradient(#000,#000) center/2.5px 18px no-repeat}
-  #equipBrowseGrid .home-eq-add:disabled{box-shadow:none}
-  #equipBrowseGrid .equip-row-qty{position:absolute;top:131px;right:12px;margin:0;background:var(--surface);border-radius:20px;padding:2px;box-shadow:0 4px 12px -4px rgba(0,0,0,.25)}
-  #equipBrowseGrid .home-eq-row .qty-btn{width:30px;height:30px;min-width:30px;border-radius:50%}
+  /* 卡片底部固定一條「− 數量 ＋」：同一排一定對齊在最下面 */
+  #equipBrowseGrid .home-eq-info{flex:1 1 auto}
+  .eq-step{display:flex;align-items:center;justify-content:space-between;gap:6px;height:46px;margin:0 14px 14px;padding:0 5px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);transition:background .15s,border-color .15s,color .15s}
+  .eq-step button{width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:var(--accent);font-family:inherit;font-size:24px;font-weight:600;line-height:1;cursor:pointer;display:grid;place-items:center;transition:background .15s}
+  .eq-step button:hover:not(:disabled){background:var(--surface2)}
+  .eq-step button:disabled{color:#c4bcad;cursor:default}
+  .eq-step button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .eq-step .n{font:500 18px 'DM Mono',monospace;min-width:2ch;text-align:center;color:var(--text2)}
+  .eq-step.on{background:var(--accent);border-color:var(--accent)}
+  .eq-step.on .n,.eq-step.on button{color:#fff}
+  .eq-step.on button:hover:not(:disabled){background:rgba(255,255,255,.15)}
+  .eq-step.on button:disabled{color:rgba(255,255,255,.4)}
+  .eq-step.out{justify-content:center;border-style:dashed;color:#9a8f7e;font-size:14px;font-weight:700;background:transparent}
   #equipBrowseGrid .home-eq-row.added{border-left:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent)}
 }
 </style>
@@ -1757,7 +1764,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11a · 器材頁改版、CAS 搜尋</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11b · 器材卡片加減數量、CAS 搜尋</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -6710,13 +6717,37 @@ if ('serviceWorker' in navigator) {
 <script id="eq-upgrade-js">
 (()=>{
 const PIN='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>';
+// 電腦版（寬 1100 以上）：卡片底部改成固定的「− 數量 ＋」；手機維持原本的「加入」按鈕
+const wide=window.matchMedia('(min-width:1100px)');
+function stepper(row,i,e){
+  row.querySelectorAll('.home-eq-add,.equip-row-qty').forEach(el=>el.remove());
+  const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
+  const qty=(selectedItems[e.room+'__'+e.name]||{}).quantity||0;
+  const box=document.createElement('div');
+  if(avail<=0){box.className='eq-step out';box.textContent=total>0?'借出中':'無庫存';row.appendChild(box);return;}
+  box.className='eq-step'+(qty>0?' on':'');
+  const minus=document.createElement('button'),n=document.createElement('span'),plus=document.createElement('button');
+  minus.type=plus.type='button';minus.textContent='−';plus.textContent='+';n.className='n';n.textContent=qty;
+  minus.setAttribute('aria-label','減少 '+(e.name||''));plus.setAttribute('aria-label','增加 '+(e.name||''));
+  minus.disabled=qty<=0;
+  // 散裝（盒、包…）可以拆開借，數量上限另外算，交給原本的程式判斷；其他的到可借數量就不能再加
+  plus.disabled=qty>=avail&&!(typeof isPackUnit==='function'&&isPackUnit(e.unit));
+  minus.addEventListener('click',()=>browseQty(i,-1));
+  plus.addEventListener('click',()=>browseQty(i,1));
+  box.append(minus,n,plus);row.appendChild(box);
+}
 const orig=window.renderEquipBrowse;
 window.renderEquipBrowse=function(items){
   orig(items);
-  document.querySelectorAll('#equipBrowseGrid .home-eq-row').forEach(row=>{
+  const list=window._browseItems||[];
+  document.querySelectorAll('#equipBrowseGrid .home-eq-row').forEach((row,i)=>{
     row.querySelectorAll('.eq-loc').forEach(el=>{const t=el.textContent.replace(/^📍\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
+    if(wide.matches&&list[i])stepper(row,i,list[i]);
   });
 };
+// 視窗在手機寬度和電腦寬度之間切換時，重畫一次卡片
+const redraw=()=>{if(!document.getElementById('equipBrowseGrid'))return;if(typeof applyEquipBrowseFilter==='function')applyEquipBrowseFilter();else if(typeof filterEquipBrowse==='function')filterEquipBrowse();};
+if(wide.addEventListener)wide.addEventListener('change',redraw);else if(wide.addListener)wide.addListener(redraw);
 })();
 </script>
 
