@@ -1366,6 +1366,33 @@
 }
 </style>
 
+<style id="bw-upgrade">
+/* ── 借用單改版（2026-10-11）：跟器材頁同一個深色主視覺 ── */
+.bw-hero .bw-hero-sub{position:relative;color:#c9c4b8;font-size:14.5px;margin-top:-4px}
+.card-title .ti,.btn .ti,.role-tab .ti,.search-icon .ti{flex:none;vertical-align:-3px}
+.btn .ti{margin-right:5px}
+#page-borrow .card-title .ti{color:var(--accent)}
+#page-borrow .search-icon{display:flex;align-items:center;color:var(--text2)}
+#borrowSidePanel .search-icon{display:flex;align-items:center;color:var(--text2)}
+/* 身分切換：跟器材頁同款的分段按鈕，拿掉舊的淡藍色 */
+.role-tab{font-family:inherit}
+#page-borrow .role-tabs{background:var(--surface2);padding:4px;border-radius:14px;gap:4px}
+#page-borrow .role-tab{display:flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:11px;background:transparent;padding:11px;font-size:16px}
+#page-borrow .role-tab:hover{color:var(--text)}
+#page-borrow .role-tab.active{background:var(--surface);color:var(--accent);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+#page-borrow .role-tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* 頁內提示：舊的淡藍色 → 跟網站同色系 */
+#page-borrow .info-box,#page-borrow .proxy-notice{background:var(--surface2);border:0;border-left:3px solid var(--accent);color:var(--text2)}
+/* 保證金提示：拿掉漸層 */
+#page-borrow .deposit-banner{background:#fbf3e4;border:0;border-left:4px solid var(--accent2)}
+@media(min-width:1100px){
+  #page-borrow>.page-hero:not(#borrowSidePanel){grid-column:1/-1}
+  #borrowSidePanel{grid-row:2/span 40}
+  /* 右邊已經有借用清單，電腦版就不需要「查看／管理已選清單」 */
+  #page-borrow .bw-cartbtn{display:none}
+}
+</style>
+
 </head>
 <body class="on-home">
 <header>
@@ -1483,12 +1510,23 @@
 
 <div id="page-borrow" class="page">
   <aside id="borrowSidePanel" aria-label="借用清單"></aside>
-  <div class="bw-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')">🔍 找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')">📝 借用單<span class="bw-n"></span></button></div>
+  <section class="hero2 page-hero bw-hero" aria-label="借用單">
+    <svg class="hero2-art" viewBox="0 0 520 300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M150 40h120l30 30v190H150z"/><path d="M270 40v30h30"/><path d="M180 110h90M180 140h90M180 170h60M180 210h40"/><path d="M228 22h44v24h-44z"/>
+      <path d="M360 120h70M366 120v50l-34 76a10 10 0 0 0 9 14h106a10 10 0 0 0 9-14l-34-76v-50"/><path d="M346 210h96"/>
+      <path d="M470 60v130a12 12 0 0 0 24 0V60M464 60h36"/><path d="M40 270h480"/>
+    </svg>
+    <div class="hero2-date">器材借用</div>
+    <h2 class="hero2-title">填借用單</h2>
+    <div class="hero2-line" aria-hidden="true"></div>
+    <div class="bw-hero-sub">選好器材、填日期和姓名，送出後等老師或管理員核准。</div>
+    <div class="bw-tabs ph-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8l2 2v14H6V6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>借用單<span class="bw-n"></span></button></div>
+  </section>
   <div class="deposit-banner" id="depositBanner">
-    <h3>⚠️ 此借用目的需繳納保證金</h3>
+    <h3>此借用目的需繳納保證金</h3>
     <ul>
-      <li>🏛️ 僅借用場地：NT$<span class="dep-venue">500</span></li><li>🔬 僅借用器材：NT$<span class="dep-equip">1,000</span></li>
-      <li>📦 場地＋器材皆借：NT$<span class="dep-both">1,500</span></li><li>✅ 完整歸還後全額退還；如有損壞，照價賠償</li>
+      <li>僅借用場地：NT$<span class="dep-venue">500</span></li><li>僅借用器材：NT$<span class="dep-equip">1,000</span></li>
+      <li>場地＋器材皆借：NT$<span class="dep-both">1,500</span></li><li>完整歸還後全額退還；如有損壞，照價賠償</li>
     </ul>
     <div class="deposit-amount" id="depositCalc">NT$ 0</div>
     <div style="font-size:12px;color:#b8650f">預估保證金（請於借用前至辦公室繳納）</div>
@@ -1499,27 +1537,27 @@
        兩種版面用的是同一組欄位，切換身分時把下面這些區塊（bfg-…）搬到對應的位置，所以 id、檢查、送出都只有一份 -->
   <div id="bfTeacher">
     <div class="card bf-card">
-      <div class="card-title">🧪 要借什麼</div>
+      <div class="card-title"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg>要借什麼</div>
       <div data-slot="items"><div class="bf-g" id="bfg-items">
     <div class="hint" style="margin-bottom:8px">直接在下面搜尋加入，或到「找器材」分頁挑，都會加進這裡。</div>
     <div class="search-wrap" style="margin-bottom:8px">
-      <span class="search-icon">🔎</span>
+      <span class="search-icon"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
       <input class="search-input" type="text" id="borrowPageSearchInput" placeholder="搜尋器材名稱，直接加入清單…" oninput="doBorrowPageSearch(this.value)" autocomplete="off">
     </div>
     <div id="borrowPageSearchResults"></div>
     <div id="cartSummaryText" style="font-size:14px;color:var(--text2)">尚未選擇任何器材</div>
     <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')">🔍 到「找器材」挑選</button>
-      <button class="btn btn-secondary btn-sm" onclick="openCart()">🛒 查看／管理已選清單</button>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('equipment')"><svg class="ti" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>去找器材</button>
+      <button class="btn btn-secondary btn-sm bw-cartbtn" onclick="openCart()"><svg class="ti" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>看已選清單</button>
     </div>
       </div></div>
       <div class="bf-or"><span>或</span></div>
       <div data-slot="photo"><div class="bf-g" id="bfg-photo">
 <div class="form-group full">
-  <label><span id="bfPhotoLabel">📷 或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）</span> <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+  <label><span id="bfPhotoLabel">或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）</span> <span id="f-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()">📷 拍照</button>
-    <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()">🖼️ 從相簿選</button>
+    <button type="button" class="btn btn-primary" onclick="document.getElementById('f-photos-camera').click()"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>拍照</button>
+    <button type="button" class="btn btn-secondary" onclick="document.getElementById('f-photos-gallery').click()"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 8"/></svg>從相簿選</button>
   </div>
   <input type="file" id="f-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
   <input type="file" id="f-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
@@ -1529,11 +1567,11 @@
       </div></div>
     </div>
     <div class="card bf-card">
-      <div class="card-title">📋 借用資訊</div>
+      <div class="card-title"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8l2 2v14H6V6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>借用資訊</div>
       <div data-slot="role"><div class="bf-g" id="bfg-role">
     <div class="role-tabs" style="margin-bottom:0">
-      <div class="role-tab" id="roleTabStudent" onclick="setRole('學生')">🎓 學生</div>
-      <div class="role-tab active" id="roleTabTeacher" onclick="setRole('老師')">👨‍🏫 老師</div>
+      <button type="button" class="role-tab" id="roleTabStudent" onclick="setRole('學生')"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>學生</button>
+      <button type="button" class="role-tab active" id="roleTabTeacher" onclick="setRole('老師')"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg>老師</button>
     </div>
       </div></div>
       <div data-slot="when"><div class="bf-g" id="bfg-when">
@@ -1575,7 +1613,7 @@
     <div id="inlineVenueBlock" style="display:none;margin-top:4px">
       <div class="venue-inline-box">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
-          <div style="font-size:14px;font-weight:700;color:var(--accent)">📅 同步預約場地時段（老師課程用）</div>
+          <div style="font-size:14px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>同步預約場地時段（老師課程用）</div>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;color:var(--text)">
             <input type="checkbox" id="inlineVenueEnabled" onchange="toggleInlineVenue()" style="width:auto;cursor:pointer">
             一起送出場地預約
@@ -1606,15 +1644,15 @@
       <div data-slot="submit"><div class="bf-g" id="bfg-submit">
   <div class="bf-submit">
     <button class="btn btn-secondary" onclick="resetForm()">清除重填</button>
-    <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">📋 提交借用申請</button>
+    <button class="btn btn-primary" id="submitBtn" onclick="submitRequest()">送出借用申請</button>
   </div>
       </div></div>
     </div>
   </div>
   <div id="bfStudent" hidden>
-    <div class="card"><div class="card-title">👤 身份</div><div data-slot="role"></div></div>
+    <div class="card"><div class="card-title"><svg class="ti" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>身分</div><div data-slot="role"></div></div>
     <div class="card"><div class="card-title">① 什麼時候、為了什麼、在哪裡</div><div data-slot="when"></div></div>
-    <div class="card"><div class="card-title">② 要借什麼：🛒 已選器材</div><div data-slot="items"></div></div>
+    <div class="card"><div class="card-title">② 要借什麼</div><div data-slot="items"></div></div>
     <div class="card"><div class="card-title">③ 申請人資料</div><div data-slot="who"></div><div data-slot="photo" style="margin-top:12px"></div></div>
     <div data-slot="submit"></div>
   </div>
@@ -1764,7 +1802,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11b · 器材卡片加減數量、CAS 搜尋</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11c · 借用單改版、器材卡片加減數量、CAS 搜尋</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2987,7 +3025,7 @@ function bfLayout(role){
   ['items','photo','role','when','who','submit'].forEach(k=>{const g=document.getElementById('bfg-'+k),slot=box.querySelector(`[data-slot="${k}"]`);if(g&&slot&&g.parentNode!==slot)slot.appendChild(g);});
   box.hidden=false;other.hidden=true;
   const lb=document.getElementById('bfPhotoLabel');
-  if(lb)lb.innerHTML=stu?'📷 上傳照片（最多3張；<b>找不到器材時，只傳照片也可以送出</b>）':'📷 或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）';
+  if(lb)lb.innerHTML=stu?'上傳照片（最多 3 張；<b>找不到器材時，只傳照片也可以送出</b>）':'或拍照給管理員看（最多 3 張；<b>找不到品名時，只傳照片也可以送出</b>）';
   const sb=document.querySelector('#bfg-submit .bf-submit');if(sb)sb.classList.toggle('bf-submit-stu',stu);
 }
 function setRole(role){
@@ -4025,7 +4063,7 @@ function renderBorrowSidePanel(){
     </div>`;
   }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「找器材」分頁挑</div>';
   box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
-    <div class="search-wrap" style="margin:0"><span class="search-icon">🔎</span><input class="search-input" type="text" id="sidePanelSearch" placeholder="搜尋器材，直接加入…" oninput="sidePanelSearch(this.value)" autocomplete="off"></div>
+    <div class="search-wrap" style="margin:0"><span class="search-icon"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span><input class="search-input" type="text" id="sidePanelSearch" placeholder="搜尋器材，直接加入…" oninput="sidePanelSearch(this.value)" autocomplete="off"></div>
     <div id="sidePanelResults"></div>
     <div>${list}</div>
     <div class="bsp-sum">
@@ -4034,7 +4072,7 @@ function renderBorrowSidePanel(){
       <div><span>保證金</span><span>${dep.amount>0?'NT$'+Number(dep.amount).toLocaleString():'免'}</span></div>
     </div>
     ${warn?`<div style="font-size:12.5px;color:var(--danger)">${warn}</div>`:''}
-    <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;height:48px;font-size:15.5px" onclick="submitRequest()">${venue&&venue.length?'📋 送出器材＋場地申請':'📋 送出借用申請'}</button>`;
+    <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;height:48px;font-size:15.5px" onclick="submitRequest()">${venue&&venue.length?'送出器材＋場地申請':'送出借用申請'}</button>`;
   const q=window._sidePanelQ||'';
   if(q){const inp=document.getElementById('sidePanelSearch');inp.value=q;sidePanelSearch(q,true);}
 }
@@ -4716,7 +4754,7 @@ if(courseNoteBody){
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
   submittingBorrow=false;
-  btn.disabled=false;btn.textContent='📋 提交借用申請';
+  btn.disabled=false;btn.textContent='送出借用申請';
 }
 function resetForm(){
   ['f-name','f-student-id','f-supervisor','f-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
