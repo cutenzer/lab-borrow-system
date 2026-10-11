@@ -222,6 +222,18 @@
   .pc-cands{font-size:12.5px;margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
   .pc-cands button{border:1.5px dashed var(--border);background:var(--surface);border-radius:8px;padding:4px 8px;font:inherit;font-size:12.5px;cursor:pointer;}
   .pc-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .pc-search{display:flex;gap:6px;align-items:center;margin-bottom:8px;}
+  .pc-search input{flex:1 1 200px;}
+  .pc-selbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;margin-bottom:10px;padding:6px 8px;border-radius:10px;background:var(--surface2);}
+  .pc-selbar b{margin-right:4px;}
+  .pc-st-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .pc-pick{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--text2);cursor:pointer;}
+  .pc-pick input{width:16px;height:16px;margin:0;}
+  .pc-casl{margin-top:4px;display:flex;flex-direction:column;gap:4px;}
+  .pc-casl div{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .pc-casl code{font-family:'DM Mono',monospace;font-size:12.5px;}
+  .pc-casl button{border:1.5px dashed var(--border);background:var(--surface);border-radius:8px;padding:2px 8px;font:inherit;font-size:12px;cursor:pointer;}
+  .pc-casl button.on{border-style:solid;border-color:#1f5b4c;color:#1f5b4c;font-weight:700;}
   @media(max-width:560px){.pc-cmp{grid-template-columns:1fr;}}
   .chem-sec{display:none;}
   /* 藥品清單：搜尋列往下捲也看得到 */
@@ -1355,13 +1367,15 @@
       ・每 3 秒最多查一次、一次只查一個；PubChem 很忙會自動放慢或停下來等。<br>
       ・查到的先放在這裡給你看，按「✔ 就是這個」才會存進藥品資料，前台才看得到結構式。</div>
     <div class="pc-ctl">
-      <select id="pcScope" aria-label="要查哪些"><option value="new">還沒查過的</option><option value="retry">有出入／查不到的重查</option><option value="all">全部（已確認、不適用的除外）</option></select>
+      <select id="pcScope" aria-label="要查哪些"><option value="new">還沒查過的</option><option value="retry">有出入／查不到的重查</option><option value="all">全部（已確認、不適用的除外）</option><option value="sel">只查我勾選的</option></select>
       <select id="pcLimit" aria-label="這次查幾個"><option value="10">這次先查 10 個</option><option value="50">50 個</option><option value="200">200 個</option><option value="2000">全部</option></select>
       <button type="button" class="btn btn-primary" id="pcRunBtn" onclick="pcRun()">▶ 開始比對</button>
     </div>
     <div class="pc-prog" id="pcProgress"></div>
     <details class="pc-log" ontoggle="pcRenderLog()"><summary>查詢紀錄（每一次送給 PubChem 的內容）</summary><div id="pcLog"></div></details>
+    <div class="pc-search"><input type="search" id="pcQ" maxlength="40" placeholder="🔍 找某一筆：中文、英文、分子式、CAS…" autocomplete="off" oninput="PC.q=this.value;PC.shown=60;pcRender()" aria-label="在比對結果裡找藥品"></div>
     <div class="pc-filter" id="pcFilter"></div>
+    <div class="pc-selbar" id="pcSelBar" hidden></div>
     <div id="pcList"><div class="empty"><p>載入中…</p></div></div>
   </div>
       </div>
@@ -1792,7 +1806,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-11a';
+const ADMIN_VERSION='2026-10-11b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -5249,7 +5263,7 @@ function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.stru
 //   ・查到的結果先放「比對結果」（前台看不到），你按「就是這個」才寫進藥品資料
 const PC_BASE='https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const PC_GAP=3000,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
-const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0};
+const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0,q:'',sel:new Set()};
 const PC_STATUS={match:'✅ 對得上',diff:'⚠️ 有出入',multi:'❓ 好幾個候選',notfound:'❓ 查不到',noname:'➖ 沒有英文名／CAS',skip:'➖ 不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
 const pcSleep=ms=>new Promise(r=>setTimeout(r,ms));
 // CAS：最後一碼是檢查碼（前面數字由右往左乘 1、2、3…加總，除以 10 的餘數）
@@ -5344,10 +5358,23 @@ function pcToStructure(json){
   return chemStructOk(st)?st:null;
 }
 // 從 PubChem 的別名裡挑出 CAS（要通過檢查碼）
-function pcPickCas(json){
+// PubChem 的別名是各家投稿合在一起的，同一個化合物常掛好幾個 CAS（現行號、已作廢的舊號、別的形式）
+// 所以全部挑出來（最多 6 個），不要只拿第一個
+function pcCasList(json){
   const syn=(((json||{}).InformationList||{}).Information||[])[0];
-  const list=(syn&&syn.Synonym)||[];
-  for(const s of list.slice(0,80)){if(/^\d{2,7}-\d{2}-\d$/.test(s)&&casValid(s))return s;}
+  const list=(syn&&syn.Synonym)||[],out=[];
+  for(const s of list.slice(0,200)){const v=String(s).trim();if(/^\d{2,7}-\d{2}-\d$/.test(v)&&casValid(v)&&!out.includes(v)){out.push(v);if(out.length>=6)break;}}
+  return out;
+}
+// 只有一個 CAS 才自動建議；好幾個就留給人選
+function pcPickCas(json){const l=pcCasList(json);return l.length===1?l[0]:'';}
+// CAS 官方查詢頁（只接受通過檢查碼的號碼，網址固定）
+const casOfficialUrl=v=>casValid(v)?'https://commonchemistry.cas.org/detail?cas_rn='+encodeURIComponent(v):'';
+// 比對 PubChem 的 CAS 清單和我們存的 CAS，給一句提醒
+function pcCasNote(mine,list){
+  if(!list||!list.length)return '';
+  if(mine&&!list.includes(mine))return `你存的 CAS ${mine} 不在 PubChem 的清單裡，可能是舊號或打錯，請到 CAS 官方確認`;
+  if(list.length>1)return `PubChem 列了 ${list.length} 個 CAS（可能含舊號），請到 CAS 官方確認後再選`;
   return '';
 }
 // 英文名常有「98%」「0.1M」「(AR)」「solution」這些，查不到時拿掉再試一次
@@ -5374,12 +5401,13 @@ async function pcLookup(c){
   // 結構式、CAS 是「附加資料」：拿不到就算了，不要為了它一直重試（有些像矽油這類聚合物，PubChem 每次都回忙碌）
   const sj=await pcGetSoft(`/compound/cid/${top.cid}/record/JSON?record_type=2d`);
   const st=sj&&!sj._failed?pcToStructure(sj):null;
-  let casSug='',cj=null;
-  if(!cas){cj=await pcGetSoft(`/compound/cid/${top.cid}/synonyms/JSON`);if(cj&&!cj._failed)casSug=pcPickCas(cj);}
+  // 不管我們有沒有 CAS 都抓別名：沒有的話拿來建議；有的話拿來檢查是不是舊號
+  let casSug='',casList=[];const cj=await pcGetSoft(`/compound/cid/${top.cid}/synonyms/JSON`);
+  if(cj&&!cj._failed){casList=pcCasList(cj);if(!cas&&casList.length===1)casSug=casList[0];}
   const same=formulaSame(c.formula,top.formula);
   const status=props.length>1?'multi':(same===true?'match':'diff');
   const miss=[sj&&sj._failed?'結構式':'',cj&&cj._failed?'CAS':''].filter(Boolean);
-  return {status,query,data:{cid:top.cid,title:top.title,formula:top.formula,iupac:top.iupac,cas:casSug,st,cands:props,note:miss.length?`PubChem 這次拿不到${miss.join('、')}，可以之後再重查`:''}};
+  return {status,query,data:{cid:top.cid,title:top.title,formula:top.formula,iupac:top.iupac,cas:casSug,casList,st,cands:props,note:miss.length?`PubChem 這次拿不到${miss.join('、')}，可以之後再重查`:''}};
 }
 async function pcSave(chemId,r){
   const row={chem_id:chemId,status:r.status,query:r.query||null,data:r.data,checked_at:new Date().toISOString()};
@@ -5396,18 +5424,31 @@ async function pcRun(){
   if(PC.running){PC.stop=true;pcRenderCtl();return;}
   const scope=document.getElementById('pcScope')?.value||'new',lim=parseInt(document.getElementById('pcLimit')?.value)||10;
   let list=allAdminChems.filter(c=>{const r=PC.results.get(String(c.id));
+    if(scope==='sel')return PC.sel.has(String(c.id));
     if(scope==='new')return !r;
     if(scope==='retry')return r&&['diff','multi','notfound','error','noname'].includes(r.status);
     return !r||r.status!=='done'&&r.status!=='skip';});
-  list=list.slice(0,lim);
-  if(!list.length){showToast('沒有要查的藥品','success');return;}
+  if(scope!=='sel')list=list.slice(0,lim);
+  if(!list.length){showToast(scope==='sel'?'還沒有勾選藥品':'沒有要查的藥品',scope==='sel'?'error':'success');return;}
+  await pcRunList(list);
+}
+// 重查指定的藥品（一筆或勾選的好幾筆）；已確認、不適用的也可以重查
+async function pcRecheck(ids){
+  if(PC.running){showToast('正在比對中，請先暫停','error');return;}
+  const want=new Set((Array.isArray(ids)?ids:[ids]).map(String));
+  const list=allAdminChems.filter(c=>want.has(String(c.id)));
+  if(!list.length){showToast('還沒有勾選藥品','error');return;}
+  if(list.length>100&&!confirm(`要重查 ${list.length} 筆？每筆約 10 秒，大約要 ${Math.ceil(list.length/6)} 分鐘。`))return;
+  await pcRunList(list);
+}
+async function pcRunList(list){
   PC.running=true;PC.stop=false;PC.reqs=0;let errs=0,done=0,backoff=0;pcRenderCtl();
   for(let k=0;k<list.length&&!PC.stop;){
     const c=list[k];
     PC.progress=`查第 ${k+1}／${list.length} 個：${c.name_zh||''}`;pcRenderCtl();
     try{
       const r=await pcLookup(c);
-      await pcSave(c.id,r);errs=0;backoff=0;done++;k++;pcRender();
+      await pcSave(c.id,r);PC.sel.delete(String(c.id));errs=0;backoff=0;done++;k++;pcRender();
     }catch(e){
       if(e.busy){backoff++;if(backoff>4){PC.progress='PubChem 一直很忙，先停下來，晚一點再試';break;}
         const w=60000*Math.pow(2,backoff-1);PC.progress=`PubChem 很忙，等 ${w/1000} 秒再繼續…`;pcRenderCtl();
@@ -5427,7 +5468,9 @@ async function pcRun(){
 async function pcConfirm(id,useCas){
   const c=allAdminChems.find(x=>String(x.id)===String(id)),r=PC.results.get(String(id));if(!c||!r||!r.data)return;
   const d=r.data,body={pubchem_cid:parseInt(d.cid)||null,structure:chemStructOk(d.st)?d.st:null,updated_at:new Date().toISOString()};
-  if(useCas&&d.cas&&casValid(d.cas)&&!c.cas)body.cas=d.cas;
+  // 好幾個 CAS 時，只有你按過「用這個」的才存；你選的可以取代原本存的（例如舊號換新號）
+  const many=(d.casList||[]).length>1;
+  if(useCas&&d.cas&&casValid(d.cas)&&(d.casChosen?true:(!many&&!c.cas)))body.cas=d.cas;
   try{
     await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body,prefer:'return=minimal'});
     Object.assign(c,body);await pcSave(c.id,Object.assign({},r,{status:'done'}));pcRender();
@@ -5436,9 +5479,16 @@ async function pcConfirm(id,useCas){
 async function pcConfirmAllMatch(){
   const ids=[...PC.results.values()].filter(r=>r.status==='match').map(r=>r.chem_id);
   if(!ids.length)return;
-  if(!confirm(`把 ${ids.length} 個「對得上」的藥品全部確認？（會存入結構式和 PubChem 附的 CAS）`))return;
+  if(!confirm(`把 ${ids.length} 個「對得上」的藥品全部確認？（會存入結構式；CAS 只有 PubChem 只列一個時才會自動存）`))return;
   for(const id of ids)await pcConfirm(id,true);
   showToast('已確認 '+ids.length+' 個','success');
+}
+// 從 PubChem 列的好幾個 CAS 裡選一個（先記在比對結果，按「就是這個」才寫進藥品）
+async function pcUseCas(id,v){
+  const r=PC.results.get(String(id));if(!r||!r.data)return;
+  const list=r.data.casList||[];if(!list.includes(v)||!casValid(v))return;
+  const data=Object.assign({},r.data,{cas:v,casChosen:true});
+  try{await pcSave(id,Object.assign({},r,{data}));pcRender();}catch(e){showToast('儲存失敗：'+e.message,'error');}
 }
 async function pcSkip(id){const r=PC.results.get(String(id))||{};try{await pcSave(id,{status:'skip',query:r.query||null,data:r.data||null});pcRender();}catch(e){showToast('儲存失敗：'+e.message,'error');}}
 // 改成另一個候選：再查那個編號的結構式
@@ -5449,9 +5499,9 @@ async function pcPick(id,cid){
   PC.running=true;PC.progress='查候選的結構式…';pcRenderCtl();
   try{
     const st=pcToStructure(await pcGet(`/compound/cid/${cid}/record/JSON?record_type=2d`));
-    let casSug='';if(!c.cas)casSug=pcPickCas(await pcGet(`/compound/cid/${cid}/synonyms/JSON`));
+    const casList=pcCasList(await pcGet(`/compound/cid/${cid}/synonyms/JSON`)),casSug=!c.cas&&casList.length===1?casList[0]:'';
     const same=formulaSame(c.formula,cand.formula);
-    await pcSave(c.id,{status:same===true?'match':'diff',query:r.query,data:Object.assign({},r.data,{cid,title:cand.title,formula:cand.formula,iupac:cand.iupac,cas:casSug,st,picked:true})});
+    await pcSave(c.id,{status:same===true?'match':'diff',query:r.query,data:Object.assign({},r.data,{cid,title:cand.title,formula:cand.formula,iupac:cand.iupac,cas:casSug,casList,casChosen:false,st,picked:true})});
     PC.progress='';
   }catch(e){PC.progress='查詢失敗：'+e.message;}
   PC.running=false;pcRenderCtl();pcRender();
@@ -5491,12 +5541,38 @@ function pcRender(){
   const rows=allAdminChems.map(c=>({c,r:PC.results.get(String(c.id))}));
   const cnt={todo:0,match:0,todo2:0,notfound:0,noname:0,skip:0,done:0,none:0};
   rows.forEach(({r})=>{if(!r)cnt.none++;else if(r.status==='match')cnt.match++;else if(['diff','multi','error'].includes(r.status))cnt.todo2++;else if(r.status==='notfound')cnt.notfound++;else if(r.status==='noname')cnt.noname++;else if(r.status==='skip')cnt.skip++;else if(r.status==='done')cnt.done++;});
-  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['match','✅ 對得上',cnt.match],['notfound','❓ 查不到',cnt.notfound],['noname','➖ 沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','➖ 不適用',cnt.skip],['none','還沒查',cnt.none]];
+  const casMany=({c,r})=>{const d=r&&r.data;return !!d&&!d.casChosen&&(((d.casList||[]).length>1)||!!(c.cas&&(d.casList||[]).length&&!d.casList.includes(String(c.cas).trim())));};
+  cnt.cas2=rows.filter(casMany).length;
+  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['cas2','🔢 CAS 要確認',cnt.cas2],['match','✅ 對得上',cnt.match],['notfound','❓ 查不到',cnt.notfound],['noname','➖ 沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','➖ 不適用',cnt.skip],['none','還沒查',cnt.none]];
   if(PC.filter==='todo')PC.filter=cnt.todo2?'todo2':cnt.match?'match':'none';
   document.getElementById('pcFilter').innerHTML=F.map(([k,l,n])=>`<button type="button" class="${PC.filter===k?'on':''}" onclick="PC.filter='${k}';PC.shown=60;pcRender()">${l} ${n}</button>`).join('')+
     (cnt.match?`<button type="button" class="pc-all" onclick="pcConfirmAllMatch()">✔ 對得上的全部確認</button>`:'');
-  const pick=rows.filter(({r})=>PC.filter==='none'?!r:PC.filter==='todo2'?r&&['diff','multi','error'].includes(r.status):r&&r.status===PC.filter);
+  // 有打字搜尋時，不分類別，直接找那一筆
+  const q=String(PC.q||'').trim().toLowerCase();
+  const pick=q?rows.filter(({c})=>chemHit(c,q)):rows.filter(o=>{const r=o.r;return PC.filter==='none'?!r:PC.filter==='cas2'?casMany(o):PC.filter==='todo2'?r&&['diff','multi','error'].includes(r.status):r&&r.status===PC.filter;});
+  if(q)document.querySelectorAll('#pcFilter button.on').forEach(b=>b.classList.remove('on'));
+  pcRenderSel(pick.slice(0,PC.shown).map(o=>String(o.c.id)));
   box.innerHTML=pick.slice(0,PC.shown).map(({c,r})=>pcRowHtml(c,r)).join('')+(pick.length>PC.shown?`<button type="button" class="btn btn-secondary btn-sm" style="width:100%" onclick="PC.shown+=60;pcRender()">再顯示 ${Math.min(60,pick.length-PC.shown)} 個（共 ${pick.length}）</button>`:'')||'<div class="empty"><p>這一類沒有藥品</p></div>';
+}
+// 勾選列：已勾幾筆、重查勾選的、勾這一頁、清除
+function pcRenderSel(pageIds){
+  const bar=document.getElementById('pcSelBar');if(!bar)return;
+  PC.pageIds=pageIds||[];
+  // 勾過但已經不在藥品清單的（被刪掉）就拿掉
+  const have=new Set(allAdminChems.map(c=>String(c.id)));[...PC.sel].forEach(id=>{if(!have.has(id))PC.sel.delete(id);});
+  const n=PC.sel.size;
+  bar.hidden=false;
+  bar.innerHTML=(n?`<b>已勾 ${n} 筆</b><button type="button" class="btn btn-primary btn-sm" onclick="pcRecheck([...PC.sel])" ${PC.running?'disabled':''}>🔄 重查勾選的 ${n} 筆</button><button type="button" class="btn btn-secondary btn-sm" onclick="PC.sel.clear();pcRender()">清除勾選</button>`:'<span>勾選左上角的方框，可以只重查你要的那幾筆</span>')+
+    (PC.pageIds.length?`<button type="button" class="btn btn-secondary btn-sm" onclick="PC.pageIds.forEach(id=>PC.sel.add(id));pcRender()">勾選這頁 ${PC.pageIds.length} 筆</button>`:'');
+}
+function pcToggleSel(id,on){id=String(id);if(on)PC.sel.add(id);else PC.sel.delete(id);pcRenderSel(PC.pageIds);}
+// CAS 清單：每個號碼旁邊放「CAS 官方」連結；好幾個時可以選一個
+function pcCasHtml(c,d){
+  const list=(d&&d.casList)||[],mine=String(c.cas||'').trim();
+  if(!list.length)return `<div>CAS：${d&&d.cas?escH(d.cas):mine?'（用你的）':'<i>沒找到</i>'}</div>`;
+  const note=pcCasNote(mine,list),many=list.length>1;
+  return `<div>CAS：</div><div class="pc-casl">${list.map(v=>{const u=casOfficialUrl(v),on=d.casChosen&&d.cas===v,cur=v===mine;
+    return `<div><code>${escH(v)}</code>${cur?'<small>（你存的）</small>':''}${u?`<a href="${escH(u)}" target="_blank" rel="noopener noreferrer">CAS 官方 ›</a>`:''}${many||(mine&&!cur)?`<button type="button" class="${on?'on':''}" onclick="pcUseCas(${ja(c.id)},${ja(v)})">${on?'✓ 用這個':'用這個'}</button>`:''}</div>`;}).join('')}</div>${note?`<div class="pc-note">${escH(note)}</div>`:''}`;
 }
 function pcRowHtml(c,r){
   const d=r&&r.data,st=d&&d.st;
@@ -5504,12 +5580,12 @@ function pcRowHtml(c,r){
   const ours=`<div class="pc-side"><div class="pc-h">我們的資料</div><b>${escH(c.name_zh||'')}</b>
     <div>${c.name_en?escH(c.name_en):'<i>沒有英文名</i>'}</div>
     <div>分子式：${c.formula?fmtFormula(c.formula):'<i>沒填</i>'}</div>
-    <div>CAS：${c.cas?escH(c.cas):'<i>沒填</i>'}</div></div>`;
+    <div>CAS：${c.cas?escH(c.cas)+(casOfficialUrl(String(c.cas).trim())?` <a href="${escH(casOfficialUrl(String(c.cas).trim()))}" target="_blank" rel="noopener noreferrer">CAS 官方 ›</a>`:''):'<i>沒填</i>'}</div></div>`;
   let theirs='';
   if(d&&d.cid){
     theirs=`<div class="pc-side"><div class="pc-h">PubChem 查到</div><b>${escH(d.title||'')}</b>
       <div>分子式：<span class="${same===false?'pc-bad':same?'pc-ok':''}">${escH(d.formula||'')}</span>${same===false?' ≠':same?' ✓':''}</div>
-      <div>CAS：${d.cas?escH(d.cas):c.cas?'（用你的）':'<i>沒找到</i>'}</div>
+      ${pcCasHtml(c,d)}
       ${note?`<div class="pc-note">${escH(note)}</div>`:''}${d.note?`<div class="pc-note">${escH(d.note)}</div>`:''}
       <div class="pc-st">${st?chemStructSvg(st):'<i>沒有結構資料</i>'}</div>
       <a href="https://pubchem.ncbi.nlm.nih.gov/compound/${parseInt(d.cid)||0}" target="_blank" rel="noopener noreferrer">在 PubChem 看 ›</a></div>`;
@@ -5518,10 +5594,12 @@ function pcRowHtml(c,r){
   }else theirs='<div class="pc-side"><div class="pc-h">PubChem</div><div>還沒查</div></div>';
   const cands=d&&d.cands&&d.cands.length>1?`<div class="pc-cands">其他候選：${d.cands.filter(x=>x.cid!==d.cid).map(x=>`<button type="button" onclick="pcPick(${ja(c.id)},${parseInt(x.cid)||0})">${escH(x.title||'')}（${escH(x.formula||'')}）</button>`).join('')}</div>`:'';
   const act=[];
-  if(d&&d.cid&&r.status!=='done')act.push(`<button type="button" class="btn btn-primary btn-sm" onclick="pcConfirm(${ja(c.id)},true)">✔ 就是這個${d.cas&&!c.cas?'（含 CAS）':''}</button>`);
+  const casWill=d&&d.cas&&(d.casChosen?d.cas!==String(c.cas||'').trim():((d.casList||[]).length<=1&&!c.cas));
+  if(d&&d.cid&&(r.status!=='done'||casWill))act.push(`<button type="button" class="btn btn-primary btn-sm" onclick="pcConfirm(${ja(c.id)},true)">✔ 就是這個${casWill?`（存 CAS ${escH(d.cas)}）`:''}</button>`);
+  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcRecheck(${ja(c.id)})" ${PC.running?'disabled':''}>🔄 重查這筆</button>`);
   act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcEditName(${ja(c.id)})">✏️ 改英文名／CAS 再查</button>`);
   if(!r||r.status!=='skip')act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcSkip(${ja(c.id)})">➖ 不適用</button>`);
-  return `<div class="pc-row"><div class="pc-st-line">${r?`<span class="pc-tag s-${escH(r.status)}">${escH(PC_STATUS[r.status]||r.status)}</span>`:''}</div><div class="pc-cmp">${ours}${theirs}</div>${cands}<div class="pc-act">${act.join('')}</div></div>`;
+  return `<div class="pc-row"><div class="pc-st-line"><label class="pc-pick"><input type="checkbox" ${PC.sel.has(String(c.id))?'checked':''} onchange="pcToggleSel(${ja(c.id)},this.checked)" aria-label="勾選 ${escH(c.name_zh||'')}">勾選</label><b style="font-size:13px">${escH(c.name_zh||'')}</b>${r?`<span class="pc-tag s-${escH(r.status)}">${escH(PC_STATUS[r.status]||r.status)}</span>`:''}</div><div class="pc-cmp">${ours}${theirs}</div>${cands}<div class="pc-act">${act.join('')}</div></div>`;
 }
 async function pcOpen(){
   if(!allAdminChems.length&&typeof loadAdminChems==='function'){try{await loadAdminChems();}catch(_){}}
