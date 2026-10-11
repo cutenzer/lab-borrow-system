@@ -1358,7 +1358,7 @@
     <div class="hero2-line" aria-hidden="true"></div>
     <label class="hero2-search">
       <svg class="ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-      <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位…" autocomplete="off" enterkeyhint="search" oninput="heroSearchLive(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}else if(event.key==='Escape'){this.value='';heroSearchLive('');}">
+      <input type="search" id="heroSearch" placeholder="搜尋器材、藥品、櫃位、CAS…" autocomplete="off" enterkeyhint="search" oninput="heroSearchLive(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();heroSearchGo();}else if(event.key==='Escape'){this.value='';heroSearchLive('');}">
       <button type="button" onclick="heroSearchGo()">搜尋</button>
     </label>
     <div class="hero2-slogan">整理的不是器材，<br>而是讓實驗順利的日常。</div>
@@ -1392,7 +1392,7 @@
     <div class="home-chem-cats" id="homeChemCats"></div>
     <div class="search-wrap home-eq-search" style="margin-top:10px">
       <span class="search-icon">🔎</span>
-      <input class="search-input" type="text" id="homeChemSearch" placeholder="搜尋藥品中文或英文名稱…" oninput="renderHomeChem()" autocomplete="off">
+      <input class="search-input" type="text" id="homeChemSearch" placeholder="搜尋藥品中文、英文名稱或 CAS…" oninput="renderHomeChem()" autocomplete="off">
     </div>
     <div class="home-chem-list" id="homeChemList"></div>
     <span class="home-eq-more" onclick="showPage('chemicals')">查看全部藥品 ›</span>
@@ -1656,7 +1656,7 @@
     <div id="chemCabView" style="display:none"></div>
     <div id="chemListView">
     <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <input type="text" id="chemSearch" placeholder="搜尋中文、英文名稱或分子式（例如 NaOH）…" oninput="filterChemicals()" style="flex:1;min-width:140px">
+      <input type="text" id="chemSearch" placeholder="搜尋中文、英文、分子式或 CAS（例如 NaOH、1310-73-2）…" oninput="filterChemicals()" style="flex:1;min-width:140px">
       <select id="chemCatFilter" onchange="filterChemicals()" style="min-width:100px">
         <option value="">全部分類</option>
       </select>
@@ -2257,7 +2257,7 @@ function heroSearchLive(q){
     let html='';
     if(locs.length)html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" onclick="heroLoc(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項</span></button>`).join('')}</div>`;
     if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
-    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
+    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${casHit(c,ql)?'CAS '+escH(c.cas)+'・':''}${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
     if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
     else if(eq.length>5)html+=`<button type="button" class="hr-more" onclick="heroSearchGo()">看全部 ${eq.length} 項器材 ›</button>`;
     box.innerHTML=html;
@@ -5972,8 +5972,13 @@ function fmtFormula(f){
 }
 // 搜尋用：分子式去掉空白、點、下標字，不分大小寫（打 cuso4、CuSO₄、CuSO4·5H2O 都找得到）
 function formulaKey(f){return String(f??'').replace(/[\u2080-\u2089]/g,d=>String(d.charCodeAt(0)-0x2080)).replace(/[\s·•∙⋅*.^]/g,'').toLowerCase();}
+// CAS 搜尋：只比數字，打 7664-93-9、7664 93 9、7664939 都找得到（全形數字也行）
+// 至少要 4 個數字才比，避免打「2」就整排藥品都中
+function casDigits(q){const s=String(q??'').replace(/[０-９]/g,d=>String.fromCharCode(d.charCodeAt(0)-0xFEE0)).trim();return /^[\d\s\-－‐–]+$/.test(s)?s.replace(/\D/g,''):'';}
+function casHit(c,q){const d=casDigits(q);return d.length>=4&&!!c&&String(c.cas||'').replace(/\D/g,'').includes(d);}
 function chemHit(c,ql){
   if(!ql)return true;
+  if(casHit(c,ql))return true;
   if((c.name_zh||'').toLowerCase().includes(ql)||(c.name_en||'').toLowerCase().includes(ql)||(c.alias||'').toLowerCase().includes(ql))return true;
   const k=formulaKey(ql);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
 }
@@ -6071,6 +6076,7 @@ function makeCabUI(rootId,opts){
   const aliasList=c=>String(c&&c.alias||'').split(/[、,，;；/／]/).map(qn).filter(Boolean);
   const chemQ=(c,q)=>{
     if(!c||!q)return false;
+    if(casHit(c,q))return true;
     if(qn(c.name_zh).includes(q)||qn(c.name_en).includes(q)||qn(c.alias).includes(q))return true;
     const k=formulaKey(q);return !!(c.formula&&/[a-z]/.test(k)&&formulaKey(c.formula).includes(k));
   };
@@ -6196,7 +6202,7 @@ function makeCabUI(rootId,opts){
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
       const inp=r.querySelector('.cab-q'),qx=r.querySelector('.cab-qx');
       const syncX=()=>{qx.hidden=!inp.value;};
       // 打字就直接跳到第一個找到的位置（不捲動畫面，免得手機鍵盤擋住）
