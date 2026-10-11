@@ -1310,6 +1310,50 @@
   
   .chem-unavail{opacity:0.45;}
 </style>
+<style id="eq-upgrade">
+/* ── 器材頁改版（2026-10-11）：沿用首頁 hero2 的深色主視覺 ── */
+.page-hero{padding:22px 18px 18px;margin-bottom:16px}
+.page-hero .hero2-title{font-size:28px}
+.page-hero .hero2-art{opacity:.14}
+.page-hero .hero2-search{order:0;max-width:640px}
+.ph-tabs{order:3;background:rgba(244,240,230,.08);max-width:300px;margin:4px 0 0;position:relative}
+.ph-tabs button{color:#c9c4b8;font-size:14px;padding:8px}
+.ph-tabs button.on{background:#f4f0e6;color:var(--ink);box-shadow:none}
+.eq-shell{padding-top:14px}
+.eq-toolbar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+.eq-toolbar .room-tabs{display:flex;gap:4px;margin:0;background:var(--surface2);padding:3px;border-radius:12px}
+.eq-toolbar .room-tab{border:0;background:transparent;padding:6px 14px;border-radius:9px}
+.eq-toolbar .room-tab.active,.eq-toolbar .room-tab:hover{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.eq-toolbar select{width:auto;min-width:150px;margin:0}
+.eq-low{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.eq-low input{width:16px;height:16px;margin:0;accent-color:var(--accent)}
+.eq-help{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--accent);font:inherit;font-size:14px;font-weight:700;cursor:pointer;padding:6px 4px}
+.eq-tag.eq-loc{display:inline-flex;align-items:center;gap:3px;font-family:'DM Mono',monospace}
+.eq-tag.eq-loc svg{flex:none}
+.page-hero .hero2-art{opacity:.07}
+@media(max-width:900px){.eq-toolbar{gap:10px}.eq-toolbar select{flex:1 1 140px}.eq-help{margin-left:0}}
+@media(min-width:901px){
+  .page-hero{padding:30px 44px 24px;gap:16px}
+  .page-hero .hero2-art{opacity:.14}
+  .page-hero .hero2-title{font-size:38px;letter-spacing:2px}
+  .page-hero .hero2-line{width:180px}
+  .page-hero .hero2-art{width:500px;right:-10px;top:-10px}
+}
+@media(min-width:1100px){
+  #equipBrowseGrid{grid-template-columns:repeat(auto-fill,minmax(205px,1fr))!important;gap:14px}
+  #equipBrowseGrid .home-eq-row{position:relative;border-radius:14px;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+  #equipBrowseGrid .home-eq-row:hover{transform:translateY(-2px);box-shadow:0 8px 20px -10px rgba(31,35,38,.35)}
+  #equipBrowseGrid .home-eq-info{padding:10px 14px 14px}
+  #equipBrowseGrid .home-eq-add{position:absolute;top:129px;right:12px;width:42px;height:42px;margin:0;padding:0;border-radius:50%;font-size:0;box-shadow:0 4px 10px -4px rgba(31,91,76,.6)}
+  #equipBrowseGrid .home-eq-add::before{content:"";display:block;width:18px;height:18px;margin:auto;background:currentColor;
+    -webkit-mask:linear-gradient(#000,#000) center/18px 2.5px no-repeat,linear-gradient(#000,#000) center/2.5px 18px no-repeat;mask:linear-gradient(#000,#000) center/18px 2.5px no-repeat,linear-gradient(#000,#000) center/2.5px 18px no-repeat}
+  #equipBrowseGrid .home-eq-add:disabled{box-shadow:none}
+  #equipBrowseGrid .equip-row-qty{position:absolute;top:131px;right:12px;margin:0;background:var(--surface);border-radius:20px;padding:2px;box-shadow:0 4px 12px -4px rgba(0,0,0,.25)}
+  #equipBrowseGrid .home-eq-row .qty-btn{width:30px;height:30px;min-width:30px;border-radius:50%}
+  #equipBrowseGrid .home-eq-row.added{border-left:1px solid var(--accent);box-shadow:0 0 0 1px var(--accent)}
+}
+</style>
+
 </head>
 <body class="on-home">
 <header>
@@ -1602,23 +1646,31 @@
 
 <!-- 器材查詢 -->
 <div id="page-equipment" class="page">
-  <div class="bw-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')">🔍 找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')">📝 借用單<span class="bw-n"></span></button></div>
-  <div class="card">
-    <div class="card-title">📦 器材庫存查詢
-      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="showLocationGuide()">❓ 找物說明</button>
-    </div>
-    <div class="browse-filters">
-      <input type="text" id="equipSearch" placeholder="搜尋器材或藥品名稱…（也支援英文/別名、櫃位，例如 beaker、BD08）" oninput="filterEquipBrowse()">
-      <select id="equipRoomFilter" onchange="filterEquipBrowse()"><option value="">全部房間</option></select>
-      <label style="display:flex;align-items:center;justify-content:flex-start;justify-self:start;gap:6px;font-size:13px;color:var(--text2);white-space:nowrap;cursor:pointer;width:auto">
-        <input type="checkbox" id="equipLowStockFilter" onchange="filterEquipBrowse()" style="width:auto">
-        只看耗材庫存不足
-      </label>
-    </div>
-    <div class="room-tabs" id="searchTypeTabs" style="margin:2px 0 10px">
-      <button type="button" class="room-tab active" data-type="all" onclick="setEquipSearchType('all')">全部</button>
-      <button type="button" class="room-tab" data-type="equip" onclick="setEquipSearchType('equip')">🔬 器材</button>
-      <button type="button" class="room-tab" data-type="chem" onclick="setEquipSearchType('chem')">🧪 藥品</button>
+  <section class="hero2 page-hero" aria-label="器材借用">
+    <svg class="hero2-art" viewBox="0 0 520 300" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M70 70h70M78 70v150a12 12 0 0 0 12 12h30a12 12 0 0 0 12-12V70"/><path d="M78 110h22M78 140h14M78 170h22M78 200h14"/>
+      <path d="M170 110h96v112a14 14 0 0 1-14 14h-68a14 14 0 0 1-14-14z"/><path d="M164 110h14"/><path d="M180 180c20-10 36 10 76 0"/>
+      <path d="M300 236h120M320 236v-20h80v20M360 216v-40M332 176h56l-6-70h-44z"/><path d="M350 106l-10-40h40l-10 40"/><circle cx="360" cy="140" r="10"/>
+      <path d="M450 60v150a12 12 0 0 0 24 0V60M444 60h36"/><path d="M450 150h24"/><path d="M40 256h480"/>
+    </svg>
+    <div class="hero2-date">器材借用</div>
+    <h2 class="hero2-title">要借什麼器材？</h2>
+    <div class="hero2-line" aria-hidden="true"></div>
+    <label class="hero2-search">
+      <svg class="ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input type="search" id="equipSearch" placeholder="器材名稱、英文、別名或櫃位，例如 beaker、BD08" oninput="filterEquipBrowse()" autocomplete="off">
+    </label>
+    <div class="bw-tabs ph-tabs" role="tablist" aria-label="器材借用"><button type="button" data-tab="equipment" onclick="showPage('equipment')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>找器材</button><button type="button" data-tab="borrow" onclick="showPage('borrow')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8l2 2v14H6V6z"/><path d="M9 10h6M9 14h6M9 18h3"/></svg>借用單<span class="bw-n"></span></button></div>
+  </section>
+  <div class="card eq-shell">
+    <div class="eq-toolbar">
+      <div class="room-tabs" id="searchTypeTabs">
+        <button type="button" class="room-tab active" data-type="all" onclick="setEquipSearchType('all')">全部</button>
+        <button type="button" class="room-tab" data-type="equip" onclick="setEquipSearchType('equip')">器材</button>
+        <button type="button" class="room-tab" data-type="chem" onclick="setEquipSearchType('chem')">藥品</button>
+      </div>
+      <select id="equipRoomFilter" onchange="filterEquipBrowse()" aria-label="房間"><option value="">全部房間</option></select>
+      <button type="button" class="eq-help" onclick="showLocationGuide()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/></svg>找物說明</button>
     </div>
     <div id="locSearchSection"></div>
     <div class="equip-browse-grid" id="equipBrowseGrid"><div class="loading"><div class="spinner"></div>載入中…</div></div>
@@ -1700,7 +1752,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-10b · 老師借用單兩張卡片</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11a · 器材頁改版、CAS 搜尋</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -6650,5 +6702,18 @@ if ('serviceWorker' in navigator) {
   }
 }
 </script>
+<script id="eq-upgrade-js">
+(()=>{
+const PIN='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>';
+const orig=window.renderEquipBrowse;
+window.renderEquipBrowse=function(items){
+  orig(items);
+  document.querySelectorAll('#equipBrowseGrid .home-eq-row').forEach(row=>{
+    row.querySelectorAll('.eq-loc').forEach(el=>{const t=el.textContent.replace(/^📍\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
+  });
+};
+})();
+</script>
+
 </body>
 </html>
