@@ -1864,7 +1864,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12b · 轉成藥品後位置可以點、學期實驗橫的日曆</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12c · 藥品位置寫「生物冰箱」也能點、學期實驗橫的日曆</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2781,13 +2781,32 @@ function toggleFloorplanEquipRow(rowId){
   floorplanExpandedRowId=(floorplanExpandedRowId===rowId)?null:rowId;
   renderFloorplanLocModalBody();
 }
-// 藥品的位置如果是文字（例如器材轉成藥品時留下的「生物實驗室 生物冰箱」）：
-// 拆成「哪間實驗室」＋「櫃位」，就能跟器材一樣跳到平面圖，平面圖上點那個櫃位也會列出這瓶藥品
+// 藥品的位置如果是文字（例如「生物冰箱」「BB02-4」「生物實驗室 生物冰箱」）：
+// 找出它在哪一間實驗室，就能跟器材一樣跳到平面圖，平面圖上點那個櫃位也會列出這瓶藥品。
+// 判斷順序：① 開頭寫了教室全名 ② 平面圖上有這個櫃位 ③ 有器材登記在這個位置 ④ 開頭是科目（生物、化學…）
+// ②③ 如果有兩間以上教室都對得上，就不猜，維持只顯示文字
+const CHEM_SUBJ_ROOM=[['理化','Physics Chemistry'],['生物','Biology'],['化學','Chemistry'],['物理','Physics'],['地科','Geoscience'],['地球科學','Geoscience'],['教具','TeachingMaterialRoom']];
+let _chemLocCache=new Map(),_chemLocVer='';
 function chemFreeLoc(c){
   const t=String(c&&c.location||'').trim();if(!t)return null;
-  const names=Object.entries(ROOM_NAMES).map(([k,v])=>[v,k]).concat([['地科實驗室','Geoscience']]).sort((a,b)=>b[0].length-a[0].length);
-  for(const [nm,room] of names){if(t.startsWith(nm)){const code=t.slice(nm.length).trim();return code&&ROOM_TO_FLOORPLAN_KEY[room]?{room,code}:null;}}
-  return null;
+  const ver=(allEquipment||[]).length+'|'+Object.values(FLOORPLAN_HOTSPOTS||{}).reduce((n,a)=>n+(a||[]).length,0);
+  if(ver!==_chemLocVer){_chemLocCache=new Map();_chemLocVer=ver;}
+  if(_chemLocCache.has(t))return _chemLocCache.get(t);
+  const ok=(room,code)=>room&&code&&ROOM_TO_FLOORPLAN_KEY[room]?{room,code}:null;
+  let out=null;
+  const names=Object.entries(ROOM_NAMES).map(([k,v])=>[v,k]).concat([['地科實驗室','Geoscience']]).sort((x,y)=>y[0].length-x[0].length);
+  const full=names.find(([nm])=>t.startsWith(nm));
+  if(full)out=ok(full[1],t.slice(full[0].length).trim());
+  else{
+    const want=expandLocationField(t),hit=(field)=>expandLocationField(field).some(x=>want.includes(x)||want.some(w=>w.startsWith(x+'-')));
+    let rooms=new Set();
+    Object.entries(FLOORPLAN_HOTSPOTS||{}).forEach(([key,arr])=>(arr||[]).forEach(sp=>{if(locCodeMatches(t,sp.code))rooms.add(FLOORPLAN_KEY_TO_ROOM[key]);}));
+    if(!rooms.size)(allEquipment||[]).forEach(e=>{if(e.room&&e.location&&hit(e.location))rooms.add(e.room);});
+    if(!rooms.size){const sj=CHEM_SUBJ_ROOM.find(([k])=>t.startsWith(k));if(sj)rooms.add(sj[1]);}
+    if(rooms.size===1)out=ok([...rooms][0],t);
+  }
+  _chemLocCache.set(t,out);
+  return out;
 }
 function chemLocJump(id){
   const c=(allChemicals||[]).find(x=>String(x.id)===String(id)),f=chemFreeLoc(c);
