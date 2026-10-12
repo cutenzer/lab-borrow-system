@@ -1806,7 +1806,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-11b';
+const ADMIN_VERSION='2026-10-12a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4194,18 +4194,21 @@ function semPlace(t,cal){
 // ==== 課綱實驗：健檢＋快速改日期＋編輯面板 開始 ====
 // 健檢：每一筆課綱實驗找出「可能填錯」的地方，清單上直接標出來，點「改日期」就能修
 //   日期：沒填月份／週次、看不懂、週次跟月份對不上、超出學期、同一週擠太多
-//   名稱：同名的有好幾筆（可能重複匯入）
+//   名稱：名稱、年級、學期都一樣的有好幾筆（可能重複匯入）；只是年級或學期不同，算不同的實驗
 const TPL_CROWD=10; // 同一週超過這麼多個實驗，多半是日期填錯
 function tplIssuesAll(){
   const cal={1:semCalendar(1,activeSemester),2:semCalendar(2,activeSemester)};
   const actTerm=cal[1].real?1:cal[2].real?2:semTermOfMonth(new Date().getMonth()+1);
   const norm=s=>String(s||'').replace(/\s+/g,'');
   const names={},byWeek={},map=new Map();
-  allTemplates.forEach(t=>{const k=norm(t.name);if(k)(names[k]=names[k]||[]).push(t);});
+  // 重複的判斷：名稱＋年級＋學期三個都一樣才算（同一個實驗高一、高二都做，或上下學期都做，是不同的實驗）
+  const termOf=t=>{const m=semMonthOf(t);return m?semTermOfMonth(m):actTerm;};
+  const dupKey=t=>{const k=norm(t.name);return k?k+'|'+norm(t.grade)+'|'+termOf(t):'';};
+  allTemplates.forEach(t=>{const k=dupKey(t);if(k)(names[k]=names[k]||[]).push(t);});
   allTemplates.forEach(t=>{
-    const m=semMonthOf(t),term=m?semTermOfMonth(m):actTerm,p=semPlace(t,cal[term]);
-    const same=names[norm(t.name)]||[];
-    const info={date:p.issues.slice(),name:same.length>1?`同名 ${same.length} 筆（${[...new Set(same.map(x=>String(x.grade||'沒填年級')))].join('、')}）`:'',term,weeks:p.weeks,cal:cal[term]};
+    const term=termOf(t),p=semPlace(t,cal[term]);
+    const same=names[dupKey(t)]||[];
+    const info={date:p.issues.slice(),name:same.length>1?`名稱、年級、學期都一樣的有 ${same.length} 筆（${t.grade?String(t.grade):'沒填年級'}・${term===1?'上':'下'}學期），可能重複匯入`:'',term,weeks:p.weeks,cal:cal[term]};
     p.weeks.forEach(w=>{const k=term+'-'+w;(byWeek[k]=byWeek[k]||[]).push(t);});
     map.set(t,info);
   });
@@ -4309,7 +4312,7 @@ function renderTemplateList(){
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';renderTemplateList()">全部 ${allTemplates.length}</button>`+
     (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
     (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
-    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 同名 ${nameN}</button>`:'');
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 可能重複 ${nameN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
