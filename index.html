@@ -1280,6 +1280,12 @@
   .hr-locs button{display:flex;flex-direction:column;align-items:flex-start;padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);font-family:inherit;cursor:pointer;}
   .hr-locs b{font-family:'DM Mono',monospace;font-size:15px;color:var(--accent);}
   .hr-locs span{font-size:12px;color:var(--text2);}
+  .hr-locs button.on{background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .hr-locbox{margin:10px 0 4px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);}
+  .hr-loch{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;font-size:14px;color:var(--text2);}
+  .hr-loch b{font-family:'DM Mono',monospace;color:var(--accent);font-size:16px;}
+  .hr-locbox .search-result-item:not(.chem-clickable) .sr-room{display:none;} /* 框標題已經寫了在哪個櫃位，每列不用再寫 */
+  .hr-locmap{border:0;background:none;color:var(--accent);font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;padding:4px 0;}
   .hr-more{display:block;margin:10px auto 2px;background:none;border:none;color:var(--accent);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;}
   .hero2-results .search-dropdown{margin:0;}
   @media(min-width:901px){.hero2-results{margin:12px 28px 0;}}
@@ -1864,7 +1870,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12c · 藥品位置寫「生物冰箱」也能點、學期實驗橫的日曆</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12e · 首頁搜尋櫃位直接列出裡面有什麼</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2416,10 +2422,27 @@ function heroSearchLive(q){
     // 櫃位：代碼開頭符合（例如打 BB02 會找到 BB02、BB02-4）
     const locMap=new Map();
     allEquipment.forEach(e=>{if(!e.location)return;expandLocationField(e.location).forEach(code=>{if(String(code).toLowerCase().startsWith(ql)){const k=e.room+'|'+code;if(!locMap.has(k))locMap.set(k,{room:e.room,code,n:0});locMap.get(k).n++;}});});
+    // 藥品的文字位置（例如「生物冰箱」）也算進櫃位
+    allChemicals.forEach(c=>{const f=chemFreeLoc(c);if(!f)return;expandLocationField(f.code).forEach(code=>{if(String(code).toLowerCase().startsWith(ql)){const k=f.room+'|'+code;if(!locMap.has(k))locMap.set(k,{room:f.room,code,n:0});locMap.get(k).n++;}});});
     const locs=[...locMap.values()].slice(0,6);
     window._heroLocs=locs;
+    // 搜尋櫃位時想看的是「裡面有什麼」：只找到一個櫃位、或打的剛好就是某個櫃位，直接展開內容；其他的點一下展開
+    if(window._heroLocQ!==q){window._heroLocQ=q;const ex=locs.findIndex(l=>String(l.code).toLowerCase()===ql);window._heroLocOpen=locs.length===1?0:ex;}
+    const oi=window._heroLocOpen;
     let html='';
-    if(locs.length)html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" onclick="heroLoc(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項</span></button>`).join('')}</div>`;
+    if(locs.length){
+      html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" class="${i===oi?'on':''}" aria-expanded="${i===oi}" onclick="heroLocToggle(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項 ${i===oi?'▴':'▾'}</span></button>`).join('')}</div>`;
+      const L=locs[oi];
+      if(L){
+        const its=allEquipment.filter(e=>e.room===L.room&&locCodeMatches(e.location,L.code));
+        const chs=allChemicals.filter(c=>{const f=chemFreeLoc(c);return f&&f.room===L.room&&locCodeMatches(f.code,L.code);});
+        window._srLists.heroLoc=its;window._heroLocChems=chs;
+        html+=`<div class="hr-locbox"><div class="hr-loch"><span><b>${escH(L.code)}</b> 裡面有什麼</span><button type="button" class="hr-locmap" onclick="heroLoc(${oi})">在平面圖看位置 ›</button></div>`+
+          (its.length?`<div class="search-dropdown">${its.map((e,j)=>searchResultRowHTML('heroLoc',e,j,false)).join('')}</div>`:'')+
+          (chs.length?`<div class="hr-sec" style="margin-top:8px">🧪 藥品</div><div class="search-dropdown">${chs.map((c,j)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroLocChems[${j}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh||'')}</div><div class="sr-room">剩 ${escH(c.bottles_left??'?')} 瓶${c.is_available===false?'・暫不開放':''}</div></div></div>`).join('')}</div>`:'')+
+          (!its.length&&!chs.length?'<div class="hint" style="padding:6px 2px">這個櫃位目前沒有登記東西</div>':'')+'</div>';
+      }
+    }
     if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
     if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${casHit(c,ql)?'CAS '+escH(c.cas)+'・':''}${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
     if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
@@ -2428,6 +2451,7 @@ function heroSearchLive(q){
   },200);
 }
 function heroLoc(i){const l=(window._heroLocs||[])[i];if(l)jumpToFloorplanLocation(l.room,l.code,'');}
+function heroLocToggle(i){window._heroLocOpen=window._heroLocOpen===i?-1:i;heroSearchLive(document.getElementById('heroSearch').value);}
 // 按 Enter：帶到器材查詢頁搜尋（器材＋藥品都會找）
 function heroSearchGo(){
   const q=(document.getElementById('heroSearch').value||'').trim();
@@ -4250,7 +4274,7 @@ function srRefresh(l){
   if(l==='cart'){doCartSearch(document.getElementById('cartSearchInput').value,true);renderCart();}
   else if(l==='bp'){doBorrowPageSearch(document.getElementById('borrowPageSearchInput').value,true);}
   else if(l==='side'){renderBorrowSidePanel();}
-  else if(l==='hero'){heroSearchLive(document.getElementById('heroSearch').value);}
+  else if(l==='hero'||l==='heroLoc'){heroSearchLive(document.getElementById('heroSearch').value);}
 }
 function srQty(l,i,d){const e=srItem(l,i);if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);srRefresh(l);}
 function srSet(l,i,v){const e=srItem(l,i);if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);srRefresh(l);}
@@ -6670,7 +6694,7 @@ async function openChemDetail(id,ctx){
   const hlId=ctx.locId!=null?String(ctx.locId):null;
   const showLocs=locs.filter(l=>String(l.id)!==hlId);
   const freeLocHtml=c.location?(chemFreeLoc(c)?`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();chemLocJump(${ja(c.id)})" title="看平面圖位置">📍 ${escH(c.location)} ›</button>`:`<span style="font-size:13.5px">📍 ${escH(c.location)}</span>`):'';
-  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
+  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):'';
   // 這一罐在哪裡（從櫃子點進來才有）
   let here='';
   const hl=ctx.locId!=null?allChemLocs.find(l=>String(l.id)===String(ctx.locId)):null;
