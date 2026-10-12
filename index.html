@@ -1418,6 +1418,29 @@
 @media(min-width:1100px){.eq-step .n{font-size:20px}}
 </style>
 
+<style id="sp-cal">
+/* ── 學期實驗：電腦版改成橫的日曆（2026-10-12）── */
+.sp-cal{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media(min-width:1280px){.sp-cal{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.sp-day{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0;min-height:120px}
+.sp-day.empty{background:transparent;border-style:dashed}
+.sp-day.now{background:#fff6d6;border-color:#e3c44a;box-shadow:0 0 0 1px #e3c44a}
+.sp-day.past .sp-chip{opacity:.55}
+.sp-day.undef{border-style:dashed;background:var(--surface2)}
+.sp-dh{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;min-height:22px}
+.sp-dh b{font:500 16px 'DM Mono',monospace;color:var(--text)}
+.sp-dh .sp-dd{font:400 13px 'DM Mono',monospace;color:var(--text2)}
+.sp-dh .sp-mon{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--accent);background:#e3efec;border-radius:6px;padding:0 7px}
+.sp-dh .sp-nowb{margin-left:auto}
+.sp-dh .sp-mon+.sp-nowb,.sp-dh .sp-mon~.sp-exam{margin-left:0}
+.sp-day .sp-chip{padding:5px 8px}
+.sp-day .sp-chip b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-day .sp-chip small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-more{border:1.5px dashed var(--border);background:transparent;border-radius:8px;padding:6px 8px;font:inherit;font-size:13.5px;font-weight:700;color:var(--accent);cursor:pointer;text-align:left}
+.sp-more:hover{background:var(--surface2)}
+.sp-more:focus-visible,.sp-day .sp-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+</style>
+
 </head>
 <body class="on-home">
 <header>
@@ -1827,7 +1850,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-11d · 電腦版字放大、借用單改版、器材卡片加減數量、CAS 搜尋</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12a · 學期實驗改成橫的日曆、電腦版字放大、借用單改版</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5457,6 +5480,7 @@ const SP_TINT={'物理':'#e9edf4','化學':'#f6ece4','生物':'#e8f1ea','地科'
 const SP_ONE={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理','其他':'其'};
 const SP_KIND={'科學研究':'研','科研':'研','菁英':'菁','探究':'探','選修':'選','資優':'資','實驗班':'實','科學班':'科','先修':'先','專題':'專','加深加廣':'深'};
 let spTerm=null,spSubj='全部',spSel=null;
+const SP_MAX=4; // 電腦版一格最多顯示幾個實驗
 function spKindOf(t){return SP_KIND[detectSpecialTag(t)]||'';}
 function spLetter(t){return SP_ONE[semSubjectOf(t)]+spKindOf(t);}
 function spMid(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // 用週四判斷這週算哪個月
@@ -5518,20 +5542,18 @@ function spRender(){
   if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，日期是估計的（${spTerm===1?'8 月底':'2 月中'}開學），週次照課綱寫的放。</div>`;
   // 沒填月份／週次、排不進表的
   const noMonthHtml=!B.noMonth.length?'':`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填月份或週次</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
-  // ── 電腦：月份 × 週 ──
-  h+=`<div class="sp-desk"><div class="sp-grid" style="grid-template-columns:60px repeat(${B.months.length},minmax(0,1fr))"><div class="sp-gh"></div>`;
-  h+=B.months.map(m=>`<div class="sp-gh${m===nowM?' now':''}">${m} 月</div>`).join('');
-  const rowsN=[];for(let n=1;n<=B.maxN;n++)rowsN.push(n);if(B.hasUndef)rowsN.push(0);
-  rowsN.forEach(n=>{
-    h+=`<div class="sp-rh">${n?`第 ${n} 週`:'未定'}</div>`;
-    B.months.forEach(m=>{
-      const s=B.slots.find(x=>x.m===m&&(n?x.n===n&&!x.undef:x.undef));
-      if(!s){h+='<div class="sp-c none"></div>';return;}
-      h+=`<div class="sp-c${s.now?' now':''}${s.past?' past':''}"><div class="sp-ch">${s.week?`<b>W${s.week}</b> ${spMD(s.date)}`:''}${s.exam?`<span class="sp-exam">${escH(s.exam)}</span>`:''}${s.now?'<span class="sp-nowb">本週</span>':''}</div>`;
-      // 選了某一科：只顯示那一科（跟課表一樣），其他科不出現
-      h+=s.items.filter(want).map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
-      h+='</div>';
-    });
+  // ── 電腦：像日曆一樣，一週一格，由左往右排（W1、W2、W3…），月份寫在該月第一週的格子裡 ──
+  // 一格最多顯示 SP_MAX 個實驗，多的收成「還有 N 個」，點了列出整週，不會把整排撐得很長
+  h+=`<div class="sp-desk"><div class="sp-cal">`;
+  let lastMD=null;
+  B.slots.forEach((s,i)=>{
+    const its=s.items.filter(want),first=s.m!==lastMD;lastMD=s.m;
+    const show=its.slice(0,its.length>SP_MAX?SP_MAX-1:SP_MAX),more=its.length-show.length;
+    h+=`<div class="sp-day${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}${first?' mstart':''}${its.length?'':' empty'}">
+      <div class="sp-dh"><b>${s.undef?'未定':'W'+s.week}</b><span class="sp-dd">${s.undef?'週次未定':spMD(s.date)}</span>${first?`<span class="sp-mon">${s.m} 月</span>`:''}${s.exam?`<span class="sp-exam">${escH(s.exam)}</span>`:''}${s.now?'<span class="sp-nowb">本週</span>':''}</div>`;
+    h+=show.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})" title="${escH(formatTemplateName(t)+(t.teacher?'・'+t.teacher:''))}"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
+    if(more>0)h+=`<button type="button" class="sp-more" onclick="spWeekAll(${i})">還有 ${more} 個實驗 ›</button>`;
+    h+='</div>';
   });
   h+='</div>'+noMonthHtml+'</div>';
   // ── 手機：上面學期週格子（約佔畫面一半，自己捲）＋ 下面那一週的清單（自己捲）──
@@ -5582,6 +5604,14 @@ function spCloseSheet(){if(!spSheetOn)return;spSheetOn=false;const sh=document.g
 function spPickWeek(i){
   const n=document.querySelectorAll('#spRoot .sp-w').length;if(i<0||i>=n)return;
   spSel=i;spSheetOn=true;spRender();
+}
+// 電腦版「還有 N 個」：列出這一週全部的實驗
+function spWeekAll(i){
+  const B=spBuild(spTerm||spHomeTerm()),s=B.slots[i];if(!s)return;
+  const want=t=>spSubj==='全部'||semSubjectOf(t)===spSubj,its=s.items.filter(want);
+  showModal(spSlotTitle(s,true),`<div class="sp-pc">這週有 ${its.length} 個實驗，點一下看器材、申請</div>`+
+    its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join(''),
+    [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // 點實驗：看器材、直接申請
 function spOpen(id){
