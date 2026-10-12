@@ -1461,6 +1461,35 @@
 .fp-chem .go{color:var(--text2);font-size:18px}
 </style>
 
+<style id="modal-fit">
+/* ── 視窗在手機上一定看得到「儲存／取消」（2026-10-12）──
+   iPhone 的 100vh 是「網址列收起來」時的高度，網址列、鍵盤出現時，90vh 的視窗會比看得到的畫面還高，
+   底下的按鈕就被擠到畫面外。改成跟著「實際看得到的畫面」（visualViewport）算高度，右上角另外放一個 ✕。 */
+#modalOverlay{padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px));}
+#modalOverlay .modal{position:relative;max-height:90vh;max-height:calc(var(--vvh,100dvh) - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));}
+#modalOverlay .modal-title{padding-right:52px!important;}
+.modal-x{position:absolute;top:12px;right:12px;width:38px;height:38px;border:0;border-radius:50%;background:var(--surface2);color:var(--text2);font:inherit;font-size:17px;line-height:1;cursor:pointer;z-index:2;display:grid;place-items:center;}
+.modal-x:hover{color:var(--text);}
+.modal-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+</style>
+
+<style id="sp-search">
+/* ── 學期實驗：搜尋框（2026-10-12）── */
+.sp-q{margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+.sp-qbox{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:0 14px;color:var(--text2);max-width:640px}
+.sp-qbox:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px #e3efec}
+#page-semester .sp-qbox input{flex:1;min-width:0;width:auto;border:0;border-radius:0;box-shadow:none;outline:none;background:transparent;padding:12px 0;margin:0;font:inherit;font-size:16px;color:var(--text)}
+.sp-qn{font-size:13.5px;color:var(--text2)}
+.sp-qlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:6px;max-height:min(46vh,420px);overflow-y:auto;padding:2px}
+.sp-qlist .sp-row{background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.sp-qlist .sp-rt{min-width:0}
+.sp-qw{font:500 12.5px 'DM Mono',monospace;color:var(--accent);white-space:nowrap;margin-left:auto;padding-left:6px}
+.sp-qeq{color:var(--accent)}
+@media(max-width:900px){.sp-qdesk{display:none}}
+.sp-q mark,.sp-qlist mark{background:#f3e08a;color:inherit;border-radius:3px;padding:0 1px}
+@media(min-width:901px){#page-semester .sp-qbox input{font-size:17px}.sp-qlist .sp-rt b{font-size:15.5px}}
+</style>
+
 </head>
 <body class="on-home">
 <header>
@@ -1568,6 +1597,11 @@
 <!-- 學期實驗週表（老師）-->
 <div id="page-semester" class="page">
   <div class="sp-head"><h2>📅 學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
+  <div class="sp-q">
+    <label class="sp-qbox"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <input type="search" id="spQ" maxlength="40" placeholder="找實驗：名稱、年級、老師或器材，例如 滴定、高二、顯微鏡" autocomplete="off" enterkeyhint="search" aria-label="搜尋學期實驗" oninput="spSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';spSearch('');}"></label>
+    <div id="spQRes" aria-live="polite"></div>
+  </div>
   <div id="spRoot"></div>
   <section class="fp-sheet sp-sheet" id="spSheet" role="region" aria-labelledby="spSheetTitle">
     <div class="fp-sheet-grip" aria-hidden="true"></div>
@@ -1870,7 +1904,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12e · 首頁搜尋櫃位直接列出裡面有什麼</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12g · 學期實驗可以搜尋、視窗看得到儲存和關閉</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -1928,7 +1962,7 @@
 
 <!-- Modal -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
-  <div class="modal"><div class="modal-title" id="modalTitle"></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></div>
+  <div class="modal"><button type="button" class="modal-x" onclick="closeModal()" aria-label="關閉">✕</button><div class="modal-title" id="modalTitle"></div><div id="modalBody"></div><div class="modal-actions" id="modalActions"></div></div>
 </div>
 <section class="fp-sheet" id="fpSheet" role="region" aria-labelledby="fpSheetTitle">
   <div class="fp-sheet-grip" aria-hidden="true"></div>
@@ -5620,11 +5654,11 @@ function spRender(){
   h+=`<div class="sp-desk"><div class="sp-cal">`;
   let lastMD=null;
   B.slots.forEach((s,i)=>{
-    const its=s.items.filter(want),first=s.m!==lastMD;lastMD=s.m;
+    const its=s.items.filter(want).sort((a,b)=>spQ?(!!spHit(b,spQ))-(!!spHit(a,spQ)):0),first=s.m!==lastMD;lastMD=s.m;
     const show=its.slice(0,its.length>SP_MAX?SP_MAX-1:SP_MAX),more=its.length-show.length;
     h+=`<div class="sp-day${s.now?' now':''}${s.past?' past':''}${s.undef?' undef':''}${first?' mstart':''}${its.length?'':' empty'}">
       <div class="sp-dh"><b>${s.undef?'未定':'W'+s.week}</b><span class="sp-dd">${s.undef?'週次未定':spMD(s.date)}</span>${first?`<span class="sp-mon">${s.m} 月</span>`:''}${s.exam?`<span class="sp-exam">${escH(s.exam)}</span>`:''}${s.now?'<span class="sp-nowb">本週</span>':''}</div>`;
-    h+=show.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})" title="${escH(formatTemplateName(t)+(t.teacher?'・'+t.teacher:''))}"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
+    h+=show.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-chip${spQ&&!spHit(t,spQ)?' dim':''}" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}" onclick="spOpen(${ja(t.id)})" title="${escH(formatTemplateName(t)+(t.teacher?'・'+t.teacher:''))}"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></button>`;}).join('');
     if(more>0)h+=`<button type="button" class="sp-more" onclick="spWeekAll(${i})">還有 ${more} 個實驗 ›</button>`;
     h+='</div>';
   });
@@ -5677,6 +5711,34 @@ function spCloseSheet(){if(!spSheetOn)return;spSheetOn=false;const sh=document.g
 function spPickWeek(i){
   const n=document.querySelectorAll('#spRoot .sp-w').length;if(i<0||i>=n)return;
   spSel=i;spSheetOn=true;spRender();
+}
+// ── 搜尋學期實驗：名稱、年級、老師、分類、器材都比對；上下學期一起找，結果直接列在搜尋框下面 ──
+let spQ='';
+function spHit(t,q){
+  if(!q)return '';
+  const own=[t.name,formatTemplateName(t),t.grade,t.teacher,t.category].map(v=>String(v||'').toLowerCase());
+  if(own.some(v=>v.includes(q)))return 'name';
+  const eq=(Array.isArray(t.equipment_items)?t.equipment_items:[]).find(it=>String(it.name||'').toLowerCase().includes(q));
+  return eq?'用到：'+eq.name:'';
+}
+function spWhen(t){
+  const m=semMonthOf(t),term=m?semTermOfMonth(m):null,w=semWeeksOf(t);
+  const tn=term===1?'上學期':term===2?'下學期':'';
+  if(w.length){const a=Math.min(...w),b=Math.max(...w);return {term,text:`${tn} 第 ${a===b?a:a+'～'+b} 週`,k:(term||9)*100+a};}
+  if(m)return {term,text:`${tn} ${m} 月・週次未定`,k:(term||9)*100+60};
+  return {term:null,text:'沒有填月份',k:999};
+}
+function spMark(s,q){const t=String(s||'');if(!q)return escH(t);const i=t.toLowerCase().indexOf(q);return i<0?escH(t):escH(t.slice(0,i))+'<mark>'+escH(t.slice(i,i+q.length))+'</mark>'+escH(t.slice(i+q.length));}
+function spSearch(v){
+  spQ=String(v||'').trim().toLowerCase().slice(0,40);
+  const box=document.getElementById('spQRes');if(!box)return;
+  if(!spQ){box.innerHTML='';spRender();return;}
+  const hits=allCourseTemplates.map(t=>({t,why:spHit(t,spQ),w:spWhen(t)})).filter(x=>x.why).sort((a,b)=>a.w.k-b.w.k||formatTemplateName(a.t).localeCompare(formatTemplateName(b.t),'zh-Hant'));
+  const MAX=30,list=hits.slice(0,MAX);
+  box.innerHTML=hits.length?`<div class="sp-qn">找到 ${hits.length} 個實驗${hits.length>MAX?`，先列前 ${MAX} 個`:''}<span class="sp-qdesk">・週表上符合的會亮起來</span></div><div class="sp-qlist">${list.map(({t,why,w})=>{const sj=semSubjectOf(t),p=templateNameParts(t);
+      return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${spMark(p.pure||p.head,spQ)}</b><small>${spMark([p.head,t.teacher].filter(Boolean).join('・'),spQ)}${why!=='name'?`・<span class="sp-qeq">${spMark(why,spQ)}</span>`:''}</small></span><span class="sp-qw">${escH(w.text)}</span><span class="sp-go">›</span></button>`;}).join('')}</div>`
+    :`<div class="sp-qn">找不到「${escH(spQ)}」。試試實驗名稱的一部分、年級（高一）、老師或器材名稱。</div>`;
+  spRender();
 }
 // 電腦版「還有 N 個」：列出這一週全部的實驗
 function spWeekAll(i){
@@ -6915,6 +6977,20 @@ window.renderEquipBrowse=function(items){
 // 視窗在手機寬度和電腦寬度之間切換時，重畫一次卡片
 const redraw=()=>{if(!document.getElementById('equipBrowseGrid'))return;if(typeof applyEquipBrowseFilter==='function')applyEquipBrowseFilter();else if(typeof filterEquipBrowse==='function')filterEquipBrowse();};
 if(wide.addEventListener)wide.addEventListener('change',redraw);else if(wide.addListener)wide.addListener(redraw);
+})();
+</script>
+
+<script id="modal-fit-js">
+// 視窗跟著「實際看得到的畫面」：網址列伸縮、鍵盤跳出來時，灰底和視窗一起縮，按鈕不會跑到畫面外
+(function(){
+  const vv=window.visualViewport;if(!vv)return;
+  const fit=()=>{
+    document.documentElement.style.setProperty('--vvh',vv.height+'px');
+    const ov=document.getElementById('modalOverlay');
+    if(ov){ov.style.top=vv.offsetTop+'px';ov.style.height=vv.height+'px';ov.style.bottom='auto';}
+  };
+  vv.addEventListener('resize',fit);vv.addEventListener('scroll',fit);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fit);else fit();
 })();
 </script>
 
