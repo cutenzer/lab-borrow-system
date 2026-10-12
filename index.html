@@ -1441,6 +1441,20 @@
 .sp-more:focus-visible,.sp-day .sp-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 </style>
 
+<style id="fp-chem">
+/* ── 平面圖櫃位面板：列出放在這裡的藥品（2026-10-12）── */
+.fp-chem-h{font-size:13px;font-weight:700;color:var(--text2);margin:12px 0 4px;padding-top:8px;border-top:1px solid var(--surface2)}
+.fp-chem{display:flex;align-items:center;gap:10px;width:100%;padding:8px 0;border:0;border-bottom:1px solid var(--surface2);background:none;font:inherit;color:var(--text);text-align:left;cursor:pointer}
+.fp-chem:hover{background:var(--surface2)}
+.fp-chem:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.fp-chem .ph{width:44px;height:44px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;overflow:hidden}
+.fp-chem .ph.st{background:#fff;border:1px solid var(--surface2);padding:3px}
+.fp-chem .nm{flex:1;min-width:0;display:flex;flex-direction:column}
+.fp-chem .nm b{font-weight:600}
+.fp-chem .nm small{font-size:12.5px;color:var(--text2)}
+.fp-chem .go{color:var(--text2);font-size:18px}
+</style>
+
 </head>
 <body class="on-home">
 <header>
@@ -1850,7 +1864,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12a · 學期實驗改成橫的日曆、電腦版字放大、借用單改版</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12b · 轉成藥品後位置可以點、學期實驗橫的日曆</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2707,17 +2721,21 @@ function renderFloorplanLocModalBody(){
   const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
   const items=(allEquipment||[]).filter(e=>e.room===room&&locCodeMatches(e.location,code));
   window._fpItems=items;
+  // 這個櫃位裡的藥品（位置寫成文字的，例如從器材轉過來的）；藥品還沒載入就先載，載好再畫一次
+  if(!(allChemicals||[]).length&&!window._fpChemLoading){window._fpChemLoading=true;ensureChemicalsLoaded().then(()=>{if(floorplanOpenLoc===code&&(allChemicals||[]).length)renderFloorplanLocModalBody();}).finally(()=>{window._fpChemLoading=false;});}
+  const chems=(allChemicals||[]).filter(c=>{const f=chemFreeLoc(c);return f&&f.room===room&&locCodeMatches(f.code,code);});
+  const chemHtml=chems.length?`<div class="fp-chem-h">藥品（${chems.length}）</div>`+chems.map(c=>`<button type="button" class="fp-chem" onclick="openChemDetail(${ja(c.id)})"><span class="ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</span><span class="nm"><b>${escH(c.name_zh||'')}</b><small>剩 ${escH(c.bottles_left??'?')} 瓶${c.is_available===false?'・暫不開放':''}</small></span><span class="go">›</span></button>`).join(''):'';
   const side=fpSideMode();
   if(side){
     const box=document.getElementById('floorplanSide');if(!box)return;
-    box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px"><span class="fp-code">${escH(code)}</span><span style="font-size:13px;color:var(--text2)">${escH(rn(room))}・${items.length} 項</span></div><div class="fp-bar"></div>`+
+    box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px"><span class="fp-code">${escH(code)}</span><span style="font-size:13px;color:var(--text2)">${escH(rn(room))}・${items.length+chems.length} 項</span></div><div class="fp-bar"></div>`+
       (items.length?items.map((e,i)=>{
         const avail=parseInt(e.available)||0,img=safeUrl(e.image_url),qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
         return `<div class="fp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="fpZoom(${i})">`:'<div class="ph">🔬</div>'}
           <div class="nm"><b>${escH(e.name)}</b><span>${e.spec?escH(e.spec)+'・':''}${escH(e.location||'')}</span><div class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借 '+avail+' '+escH(e.unit||''):'目前沒有可借'}</div></div>
           ${avail>0?(qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="fpQty(${i},-1)" aria-label="減少">−</button><span style="min-width:22px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="fpQty(${i},1)" aria-label="增加">+</button></div>`:`<button type="button" class="btn btn-primary btn-sm" onclick="fpQty(${i},1)">加入</button>`):''}
         </div>`;
-      }).join(''):'<div class="hint">（沒有找到對應器材資料）</div>');
+      }).join(''):(chems.length?'':'<div class="hint">（沒有找到對應器材資料）</div>'))+chemHtml;
     return;
   }
   const body=items.length?items.map((e,i)=>{
@@ -2750,11 +2768,11 @@ function renderFloorplanLocModalBody(){
         </div>`:''}
       </div>
     </div>`;
-  }).join(''):'<div style="font-size:13px;color:var(--text2);padding:8px 0">（沒有找到對應器材資料）</div>';
+  }).join(''):(chems.length?'':'<div style="font-size:13px;color:var(--text2);padding:8px 0">（沒有找到對應器材資料）</div>');
   const box=document.getElementById('fpSheetBody');
-  if(box)box.innerHTML=body;
+  if(box)box.innerHTML=body+chemHtml;
   const title=document.getElementById('fpSheetTitle');
-  if(title)title.textContent=`📦 ${code} 裡面有什麼（${items.length} 項）`;
+  if(title)title.textContent=`📦 ${code} 裡面有什麼（${items.length+chems.length} 項）`;
   syncFpSheetH();
 }
 function fpQty(i,d){const e=(window._fpItems||[])[i];if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);renderFloorplanLocModalBody();}
@@ -2762,6 +2780,18 @@ function fpZoom(i){const e=(window._fpItems||[])[i];if(e&&safeUrl(e.image_url))o
 function toggleFloorplanEquipRow(rowId){
   floorplanExpandedRowId=(floorplanExpandedRowId===rowId)?null:rowId;
   renderFloorplanLocModalBody();
+}
+// 藥品的位置如果是文字（例如器材轉成藥品時留下的「生物實驗室 生物冰箱」）：
+// 拆成「哪間實驗室」＋「櫃位」，就能跟器材一樣跳到平面圖，平面圖上點那個櫃位也會列出這瓶藥品
+function chemFreeLoc(c){
+  const t=String(c&&c.location||'').trim();if(!t)return null;
+  const names=Object.entries(ROOM_NAMES).map(([k,v])=>[v,k]).concat([['地科實驗室','Geoscience']]).sort((a,b)=>b[0].length-a[0].length);
+  for(const [nm,room] of names){if(t.startsWith(nm)){const code=t.slice(nm.length).trim();return code&&ROOM_TO_FLOORPLAN_KEY[room]?{room,code}:null;}}
+  return null;
+}
+function chemLocJump(id){
+  const c=(allChemicals||[]).find(x=>String(x.id)===String(id)),f=chemFreeLoc(c);
+  if(f)jumpToFloorplanLocation(f.room,f.code,c.name_zh||'');
 }
 async function jumpToFloorplanLocation(room,code,itemName){
   const key=ROOM_TO_FLOORPLAN_KEY[room];
@@ -5096,7 +5126,7 @@ async function renderChemSearchSection(){
     const avail=c.is_available!==false;
     return `<div class="home-eq-row chem-clickable" onclick="openChemDetail(${parseInt(c.id)})" title="看藥品資料與位置"><div class="home-eq-thumb${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div class="home-eq-info">
       <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en||c.formula?`<div class="home-eq-spec">${c.formula?fmtFormula(c.formula)+(c.name_en?'　':''):''}${escH(c.name_en||'')}</div>`:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?`<span class="eq-tag">📍${escH(c.location)}</span>`:''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?(chemFreeLoc(c)?`<span class="eq-tag eq-loc" role="button" tabindex="0" title="點我看平面圖位置" onclick="event.stopPropagation();chemLocJump(${ja(c.id)})" onkeydown="if(event.key==='Enter'){event.stopPropagation();chemLocJump(${ja(c.id)})}">📍${escH(c.location)}</span>`:`<span class="eq-tag">📍${escH(c.location)}</span>`):''}</div>
     </div>${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(${parseInt(c.id)})">申請</button>`:`<button type="button" class="home-eq-add" disabled>暫不開放</button>`}</div>`;
   }).join('')}</div>${list.length>limit?`<span class="home-eq-more" onclick="setEquipSearchType('chem')">看全部 ${list.length} 筆藥品 ›</span>`:''}`;
 }
@@ -6620,6 +6650,7 @@ async function openChemDetail(id,ctx){
   const row=(k,v)=>v?`<div class="note-row"><span class="k">${k}</span><span class="v">${v}</span></div>`:'';
   const hlId=ctx.locId!=null?String(ctx.locId):null;
   const showLocs=locs.filter(l=>String(l.id)!==hlId);
+  const freeLocHtml=c.location?(chemFreeLoc(c)?`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();chemLocJump(${ja(c.id)})" title="看平面圖位置">📍 ${escH(c.location)} ›</button>`:`<span style="font-size:13.5px">📍 ${escH(c.location)}</span>`):'';
   const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):(c.location?'📍 '+escH(c.location):'');
   // 這一罐在哪裡（從櫃子點進來才有）
   let here='';
@@ -6638,7 +6669,7 @@ async function openChemDetail(id,ctx){
     ${row('CAS',c.cas?escH(c.cas):'')}
     ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
-    ${hlId!=null||ctx.tray!=null?row('其他位置',showLocs.length?locHtml:''):row('位置',locHtml||'<span style="color:var(--text2)">還沒有登記位置</span>')}
+    ${hlId!=null||ctx.tray!=null?row('其他位置',(showLocs.length?locHtml:'')+freeLocHtml):row('位置',(locHtml+freeLocHtml)||'<span style="color:var(--text2)">還沒有登記位置</span>')}
     ${row('回收',c.recycle_type?'♻️ '+escH(c.recycle_type):'')}
     ${row('附註',c.note&&c.note!=='附註'?escH(c.note):'')}
 `,
