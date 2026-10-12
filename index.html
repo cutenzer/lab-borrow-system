@@ -1904,7 +1904,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12g · 學期實驗可以搜尋、視窗看得到儲存和關閉</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12h · 課綱借用預設今天借、學期實驗可以搜尋</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5784,6 +5784,12 @@ function cbMD(ds){const d=new Date(ds+'T00:00:00');return `${d.getMonth()+1}/${d
 // 一週＝星期一借、星期五還；已經過去的日子不能借，所以從今天開始；整週都過了就回傳 null
 function cbWeekRange(mon){const t=todayStr();let bd=mon,rd=cbAddDays(mon,4);if(rd<t)return null;if(bd<t)bd=t;return {bd,rd};}
 function cbThisWeek(){const t=todayStr(),dow=new Date(t+'T00:00:00').getDay();return cbWeekRange(cbMonday(dow===6||dow===0?cbAddDays(t,2):t));}
+// 今天借：借用日＝今天；歸還日＝3 天後，碰到週末或後台設的假日就往後延到上學日（例如週三借 → 週六 → 延到週一）
+function cbToday(){
+  const bd=todayStr();let rd=cbAddDays(bd,3);
+  for(let i=0;i<20;i++){const dow=new Date(rd+'T00:00:00').getDay();if(dow!==0&&dow!==6&&!(typeof holidayForDate==='function'&&holidayForDate(rd)))break;rd=cbAddDays(rd,1);}
+  return {bd,rd};
+}
 function cbNextWeek(){const r=cbThisWeek();return cbWeekRange(cbAddDays(cbMonday(r?r.rd:todayStr()),7));}
 // 這個實驗在週表上的那一格（找不到就是 null）
 function cbSlotOf(t){
@@ -5799,11 +5805,11 @@ function cbOpen(id){
   cb={ids:[t.id],groups:parseInt(t.group_count)||0,over:{},extra:{},mode:'course',bd:'',rd:'',
       venueOn:false,room:CB_ROOM[t.default_room]||VENUES[0],pDate:'',periods:[],bookings:null,grade:'',
       name:(v&&v.n)||lastSubmittedName||'',note:'',ack:false,q:''};
-  cbSetMode(cbCourseWeek()?'course':'this',true);
+  cbSetMode('today',true); // 預設今天借；要照課綱那週再點「課綱那週」
   showPage('coursebook');cbRender();
 }
 function cbSetMode(mode,silent){
-  const r=mode==='course'?cbCourseWeek():mode==='this'?cbThisWeek():mode==='next'?cbNextWeek():null;
+  const r=mode==='today'?cbToday():mode==='course'?cbCourseWeek():mode==='this'?cbThisWeek():mode==='next'?cbNextWeek():null;
   if(mode==='course'&&!r&&!silent)showToast('課綱那一週已經過了，改用這週','error');
   const use=r||(mode==='course'?cbThisWeek():null);
   cb.mode=r?mode:(mode==='course'?'this':mode);
@@ -5907,7 +5913,7 @@ function cbRender(){
   // 借用資訊：日期、教室、申請人放在一起
   h+=`<div class="cb-ct">📋 借用資訊</div>
     <div class="cb-dates"><label>借用日<input type="date" value="${escH(cb.bd)}" min="${todayStr()}" onchange="cbSetDate('bd',this.value)"></label><label>歸還日<input type="date" value="${escH(cb.rd)}" min="${escH(cb.bd||todayStr())}" onchange="cbSetDate('rd',this.value)"></label></div>
-    <div class="cb-chips">${[['course','課綱那週'],['this','這週'],['next','下週']].map(([k,l])=>`<button type="button" class="${cb.mode===k?'on':''}" onclick="cbSetMode('${k}')">${l}</button>`).join('')}${cb.mode==='custom'?'<button type="button" class="on">自己選</button>':''}</div>
+    <div class="cb-chips">${[['today','今天借'],['course','課綱那週'],['this','這週'],['next','下週']].map(([k,l])=>`<button type="button" class="${cb.mode===k?'on':''}" onclick="cbSetMode('${k}')">${l}</button>`).join('')}${cb.mode==='custom'?'<button type="button" class="on">自己選</button>':''}</div>
     <div class="cb-sep"></div>
     <label class="cb-tog"><input type="checkbox" ${cb.venueOn?'checked':''} onchange="cbVenue(this.checked)"><span>順便預約教室</span></label>`;
   if(cb.venueOn){
