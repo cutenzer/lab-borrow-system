@@ -1818,7 +1818,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-12b';
+const ADMIN_VERSION='2026-10-12c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4168,7 +4168,7 @@ function semThu(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // �
 function semCalendar(term,sem){
   const sw=sem?getSemesterWeeks(sem):[];
   if(sw.length&&semTermOfMonth(semThu(sw[0].date).getMonth()+1)===term)
-    return {real:true,weeks:sw.map(w=>({week:w.week,date:w.date,m:semThu(w.date).getMonth()+1}))};
+    return {real:true,weeks:sw.map(w=>({week:w.week,date:w.date,m:semThu(w.date).getMonth()+1,type:w.type||''}))};
   // 估計：學年從 8 月算起
   const base=sw.length?sw[0].date:new Date();
   let Y=base.getFullYear();if(base.getMonth()+1<8)Y--;
@@ -4182,10 +4182,14 @@ function semCalendar(term,sem){
 function semMonthGap(a,b){const o=[8,9,10,11,12,1,2,3,4,5,6,7];return Math.abs(o.indexOf(a)-o.indexOf(b));}
 // 這個實驗放哪幾週＋可能的問題
 // 回傳 {weeks:[週次], issues:[文字]}；weeks 空的＝放不進週表（放「未定」）
+// 週次寫寒輔／暑輔（寒假輔導、暑期輔導也算）
+function semSpecialOf(t){const w=String(t&&t.week||'');return /寒輔|寒假輔導|寒假/.test(w)?'寒輔':/暑輔|暑期輔導|暑假輔導|暑假/.test(w)?'暑輔':'';}
 function semPlace(t,cal){
   const m=semMonthOf(t),ws=semWeeksOf(t),raw=String(t.week??'').trim(),issues=[];
   if(!m&&!String(t.month??'').trim())issues.push('沒填月份');
   else if(!m)issues.push(`月份看不懂（${String(t.month).slice(0,10)}）`);
+  const sp=semSpecialOf(t);
+  if(!ws.length&&sp){const hit=cal.weeks.filter(x=>x.type===sp).map(x=>x.week);return {weeks:hit.slice(0,1),issues,special:sp};}
   if(!ws.length){issues.push(raw?`週次看不懂（${raw.slice(0,10)}）`:'沒填週次');return {weeks:[],issues};}
   const out=[];
   ws.forEach(n=>{
