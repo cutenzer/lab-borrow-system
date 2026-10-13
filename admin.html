@@ -989,6 +989,17 @@
 .pp-row.pp-changed,.pp-row.pp-new{box-shadow:inset 3px 0 0 #d9a21b}
 .pp-row.pp-changed .pp-name,.pp-row.pp-new .pp-name,#panel-purposes input.chg{border-color:#d9a21b;background:#fdf6e3}
 </style>
+<style id="tpl-cls-css">
+.tpl-cls{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#e7efe9;color:var(--accent);margin-left:4px;vertical-align:2px}
+.tpl-cls.miss{background:#fbeed2;color:#9a6a0a}
+.tpl-typemgr{border:0;background:none;color:var(--accent);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 0 6px}
+.ct-list{display:flex;flex-direction:column;gap:6px}
+.ct-row{display:flex;align-items:center;gap:8px}.ct-row.off input[type=text]{opacity:.55}
+.ct-row input[type=text]{flex:1;min-width:0;margin:0}
+.ct-mv{display:flex;gap:2px}.ct-mv .btn{padding:2px 7px}
+.ct-on{display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap}.ct-on input{width:auto}
+.ct-add{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}.ct-add input{flex:1;margin:0}
+</style>
 </head>
 <body>
 
@@ -1241,7 +1252,10 @@
     <div class="ts-body">
       <div class="ts-pane on" data-pane="basic"><div class="ts-grid">
         <div class="form-group full"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
-        <div class="form-group"><label>分類</label><input type="text" id="tpl-category"></div>
+        <div class="form-group"><label>科目 *</label><select id="tpl-subject"><option value="">（還沒選）</option><option>物理</option><option>化學</option><option>生物</option><option>地科</option><option>理化</option></select></div>
+        <div class="form-group"><label>課程類型 <button type="button" class="tpl-typemgr" onclick="openCourseTypes()">管理類型</button></label><select id="tpl-ctype"></select></div>
+        <div class="form-group full"><label>別名（以前用過的名稱，用「、」隔開；前台搜尋得到）</label><input type="text" id="tpl-aliases" maxlength="200" placeholder="例如：濾紙層析、色層分析"></div>
+        <div class="form-group"><label>原分類（舊資料參考）</label><input type="text" id="tpl-category"></div>
         <div class="form-group"><label>年級</label><input type="text" id="tpl-grade"></div>
         <div class="form-group full"><label>教師</label><input type="text" id="tpl-teacher"></div>
         <div class="form-group"><label>月份</label><input type="text" id="tpl-month" oninput="tplFormDatePrev()" placeholder="例如 5"></div>
@@ -1281,6 +1295,8 @@
         <button class="btn btn-primary btn-sm" onclick="newTemplate()">＋ 新增</button>
         <details class="act-more"><summary class="btn btn-secondary btn-sm" aria-label="更多動作">⋯<span class="eq-btn-txt"> 更多</span></summary><div class="act-pop">
           <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-file').click()">📤 上傳實驗紀錄表（老師的 Excel）</button>
+          <hr>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');openCourseTypes()">🏷️ 管理課程類型</button>
           <hr>
           <button type="button" onclick="this.closest('details').removeAttribute('open');exportTemplatesXlsx()">📥 匯出全部（Excel 備份）</button>
           <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-import-file').click()">📤 匯入備份 Excel（整批更新）</button>
@@ -1943,7 +1959,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13g';
+const ADMIN_VERSION='2026-10-13h';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4312,6 +4328,61 @@ function collectTplEquipItems(){
   })).filter(it=>it.name&&it.quantity>0);
 }
 
+// ── 科目、課程類型（類型可在「管理類型」增減；停用的不再出現在選單，但舊資料照樣顯示）──
+const TPL_SUBJ=['物理','化學','生物','地科','理化'];
+let courseTypes=[];
+async function loadCourseTypes(){
+  try{const r=await sb('GET','course_types',{order:'sort,id'});courseTypes=Array.isArray(r)?r:[];}catch(e){courseTypes=[];}
+}
+function tplParseAliases(v){return [...new Set(String(v||'').split(/[、,，;；\n]/).map(x=>x.trim().slice(0,40)).filter(Boolean))].slice(0,10);}
+function tplTypeOptions(cur){
+  const sel=document.getElementById('tpl-ctype');if(!sel)return;
+  const act=courseTypes.filter(t=>t.is_active!==false).map(t=>t.name);
+  const opts=[...act];if(cur&&!opts.includes(cur))opts.push(cur);
+  sel.innerHTML=`<option value="">（還沒選）</option>`+opts.map(n=>`<option value="${escH(n)}"${n===cur?' selected':''}>${escH(n)}${act.includes(n)?'':'（已停用）'}</option>`).join('');
+}
+function openCourseTypes(){
+  const rows=courseTypes.map((t,i)=>`<div class="ct-row${t.is_active===false?' off':''}">
+    <span class="ct-mv"><button type="button" class="btn btn-secondary btn-sm" onclick="ctMove(${i},-1)" ${i===0?'disabled':''} aria-label="往上">▲</button><button type="button" class="btn btn-secondary btn-sm" onclick="ctMove(${i},1)" ${i===courseTypes.length-1?'disabled':''} aria-label="往下">▼</button></span>
+    <input type="text" maxlength="12" value="${escH(t.name)}" onchange="ctRename(${ja(t.id)},this.value)" aria-label="類型名稱">
+    <label class="ct-on"><input type="checkbox" ${t.is_active!==false?'checked':''} onchange="ctToggle(${ja(t.id)},this.checked)">使用中</label></div>`).join('');
+  showModal('課程類型',`<div class="hint" style="margin-bottom:8px">前台的篩選、預約和登記實驗都用這份清單。不用的取消「使用中」就好，舊資料不會受影響。</div>
+    <div class="ct-list">${rows||'<div class="hint">還沒有任何類型</div>'}</div>
+    <div class="ct-add"><input type="text" id="ctNew" maxlength="12" placeholder="新增類型，例如：專題"><button type="button" class="btn btn-primary btn-sm" onclick="ctAdd()">＋ 新增</button></div>`,
+    [{label:'完成',cls:'btn-primary',fn:'closeModal();tplTypeOptions(document.getElementById(\'tpl-ctype\')?.value||\'\');renderTemplateList()'}]);
+}
+async function ctDo(fn,okMsg){try{await fn();await loadCourseTypes();openCourseTypes();if(okMsg)showToast(okMsg,'success');}catch(e){showToast('儲存失敗：'+e.message,'error');}}
+function ctAdd(){
+  const v=(document.getElementById('ctNew').value||'').trim();
+  if(!v){showToast('請輸入名稱','error');return;}
+  if(courseTypes.some(t=>t.name===v)){showToast('已經有這個類型','error');return;}
+  const sort=Math.max(0,...courseTypes.map(t=>t.sort||0))+1;
+  ctDo(()=>sb('POST','course_types',{body:{name:v.slice(0,12),sort,is_active:true},prefer:'return=minimal'}),'已新增');
+}
+function ctRename(id,v){
+  v=String(v||'').trim().slice(0,12);const t=courseTypes.find(x=>String(x.id)===String(id));if(!t||!v||v===t.name)return;
+  if(courseTypes.some(x=>x.name===v)){showToast('已經有這個名稱','error');openCourseTypes();return;}
+  showModal('改類型名稱',`<p>把「${escH(t.name)}」改成「${escH(v)}」？</p><p class="hint" style="margin-top:6px">已經用「${escH(t.name)}」的課綱實驗、預約、實驗紀錄會一起改。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'openCourseTypes()'},{label:'改名',cls:'btn-primary',fn:`ctRenameDo(${ja(id)},${ja(v)})`}]);
+}
+function ctRenameDo(id,v){
+  const t=courseTypes.find(x=>String(x.id)===String(id));if(!t)return;const old=t.name;
+  ctDo(async()=>{
+    await sb('PATCH','course_types',{filter:'id=eq.'+encodeURIComponent(id),body:{name:v},prefer:'return=minimal'});
+    for(const tb of ['course_templates','venue_bookings','experiment_runs'])
+      await sb('PATCH',tb,{filter:'course_type=eq.'+encodeURIComponent(old),body:{course_type:v},prefer:'return=minimal'}).catch(()=>{});
+    allTemplates.forEach(x=>{if(x.course_type===old)x.course_type=v;});
+  },'已改名');
+}
+function ctToggle(id,on){ctDo(()=>sb('PATCH','course_types',{filter:'id=eq.'+encodeURIComponent(id),body:{is_active:!!on},prefer:'return=minimal'}),on?'已啟用':'已停用（舊資料照樣顯示）');}
+function ctMove(i,d){
+  const j=i+d;if(j<0||j>=courseTypes.length)return;
+  const a=courseTypes[i],b=courseTypes[j];
+  ctDo(async()=>{
+    const list=courseTypes.slice();[list[i],list[j]]=[list[j],list[i]];
+    for(let k=0;k<list.length;k++)if((list[k].sort||0)!==k+1)await sb('PATCH','course_types',{filter:'id=eq.'+encodeURIComponent(list[k].id),body:{sort:k+1},prefer:'return=minimal'});
+  });
+}
 function newTemplate(){
   clearTemplateForm();
   tplSheet(true);setTimeout(()=>document.getElementById('tpl-name')?.focus(),300);
@@ -4319,7 +4390,8 @@ function newTemplate(){
 function clearTemplateForm(){
   editingTemplateId=null;
   tplSheet(false);
-  ['tpl-name','tpl-category','tpl-grade','tpl-teacher','tpl-month','tpl-week','tpl-classcount','tpl-groupcount','tpl-note'].forEach(id=>document.getElementById(id).value='');
+  ['tpl-name','tpl-category','tpl-grade','tpl-teacher','tpl-month','tpl-week','tpl-classcount','tpl-groupcount','tpl-note','tpl-aliases','tpl-subject'].forEach(id=>document.getElementById(id).value='');
+  tplTypeOptions('');
   document.getElementById('tpl-defaultroom').value='';
   renderTplEquipList([]);
   document.getElementById('tplParseMsg').textContent='';
@@ -4332,6 +4404,9 @@ async function saveTemplate(){
   const body={
     name,
     category:document.getElementById('tpl-category').value.trim(),
+    subject:TPL_SUBJ.includes(document.getElementById('tpl-subject').value)?document.getElementById('tpl-subject').value:null,
+    course_type:document.getElementById('tpl-ctype').value||null,
+    aliases:tplParseAliases(document.getElementById('tpl-aliases').value),
     grade:document.getElementById('tpl-grade').value.trim(),
     teacher:document.getElementById('tpl-teacher').value.trim(),
     month:document.getElementById('tpl-month').value.trim(),
@@ -4526,6 +4601,7 @@ async function loadTemplates(){
       (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null)
     ]);
     allTemplates=Array.isArray(rows)?rows:[];
+    await loadCourseTypes();
     if(!activeSemester)await loadActiveSemester();
     tplEqIndex=Array.isArray(eqs)?tplBuildEqIndex(eqs):null;
     renderTemplateList();
@@ -4538,20 +4614,23 @@ function renderTemplateList(){
   const iss=tplIssuesAll();
   const dateN=allTemplates.filter(t=>iss.get(t).date.length).length,nameN=allTemplates.filter(t=>iss.get(t).name).length;
   const badN=withMiss.filter(x=>x.miss.length).length;
+  const noCls=t=>!TPL_SUBJ.includes(t.subject)||!t.course_type,classN=allTemplates.filter(noCls).length;
   // 篩選籤：全部／對不到器材（健檢）
   const fb=document.getElementById('tplFilter');
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';renderTemplateList()">全部 ${allTemplates.length}</button>`+
     (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
     (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
-    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 可能重複 ${nameN}</button>`:'');
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 可能重複 ${nameN}</button>`:'')+
+    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';renderTemplateList()">📝 沒填科目或類型 ${classN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
     if(tplFilterMode==='bad'&&!miss.length)return false;
     if(tplFilterMode==='date'&&!iss.get(t).date.length)return false;
     if(tplFilterMode==='name'&&!iss.get(t).name)return false;
+    if(tplFilterMode==='cls'&&!noCls(t))return false;
     if(!q)return true;
-    return [t.name,t.grade,t.teacher,t.category].some(v=>String(v||'').toLowerCase().includes(q));
+    return [t.name,t.grade,t.teacher,t.category,t.subject,t.course_type,...(Array.isArray(t.aliases)?t.aliases:[])].some(v=>String(v||'').toLowerCase().includes(q));
   });
   items.sort((a,b)=>{const x=tplSortKey(a.t),y=tplSortKey(b.t);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2],'zh-Hant');});
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
@@ -4570,7 +4649,8 @@ function renderTemplateList(){
       :(n?'<div class="tpl-health ok">✔ 器材都對得到庫存</div>':''));
     html+=`<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
-      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${roomLabel?`<span class="badge badge-approved">${escH(roomLabel)}</span>`:''}</div>
+      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}${TPL_SUBJ.includes(t.subject)&&!t.course_type?'<span class="tpl-cls miss">沒填類型</span>':''}</div>
+        ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
         <div class="sub">${sub}</div>${when?`<div class="tpl-when">🗓️ ${escH(when)}</div>`:''}${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
     </div>`;
@@ -4710,6 +4790,9 @@ function editTemplate(id){
   editingTemplateId=id;
   document.getElementById('tpl-name').value=t.name||'';
   document.getElementById('tpl-category').value=t.category||'';
+  document.getElementById('tpl-subject').value=TPL_SUBJ.includes(t.subject)?t.subject:'';
+  tplTypeOptions(t.course_type||'');
+  document.getElementById('tpl-aliases').value=(Array.isArray(t.aliases)?t.aliases:[]).join('、');
   document.getElementById('tpl-grade').value=t.grade||'';
   document.getElementById('tpl-teacher').value=t.teacher||'';
   document.getElementById('tpl-month').value=t.month||'';
