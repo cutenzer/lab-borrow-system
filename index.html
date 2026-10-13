@@ -2004,7 +2004,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13g · 課綱器材「庫存沒有」提示</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13h · 學期頁同一週同一實驗合併</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -7210,27 +7210,46 @@ function sxWeekItems(w){
     const k=r.booking_id?`${r.booking_id}|${r.run_date}|${r.period||''}`:'r'+r.id;
     const o=latest.get(k);if(!o||r.id>o.id)latest.set(k,r);
   });
+  // 同一週、同一個實驗合成一張卡（例如高二探究各班都做蠟燭燃燒 → 一張，列出各班）
   const cards=new Map();
+  const add=(key,init,grade,who,n,date)=>{const c=cards.get(key)||Object.assign({n:0,date,grades:[],whos:[]},init);c.n+=n;if(date<c.date)c.date=date;if(grade&&!c.grades.includes(grade))c.grades.push(grade);if(who&&!c.whos.includes(who))c.whos.push(who);cards.set(key,c);return c;};
   latest.forEach(r=>{
     const t=r.template_id?sxTpl(r.template_id):null,b=r.booking_id?sxBookings.find(x=>x.id===r.booking_id):null;
     const title=t?(t.name||'').trim():(r.title||'');
-    const key=(r.booking_id||('r'+r.id))+'|'+(r.template_id||r.title||'');
-    const c=cards.get(key)||{n:0,date:r.run_date,subj:r.subject||(t&&sxTplSubj(t))||(b&&sxBkSubj(b))||'',type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',
-      grade:r.grade||(b&&b.grade)||(t&&t.grade)||'',who:r.teacher||(b&&b.borrower_name)||'',title,tpl:t?t.id:null,fixed:!!(b&&b.is_fixed),venue:r.booking_id?'':(r.venue||'')};
-    c.n++;if(r.run_date<c.date)c.date=r.run_date;cards.set(key,c);
+    const subj=r.subject||(t&&sxTplSubj(t))||(b&&sxBkSubj(b))||'';
+    const key='x|'+(r.template_id?'t'+r.template_id:'n'+title)+'|'+subj;
+    const c=add(key,{subj,type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',title,tpl:t?t.id:null,fixed:false,venues:[]},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',1,r.run_date);
+    if(b&&b.is_fixed)c.fixed=true;
+    if(!r.booking_id&&r.venue&&!c.venues.includes(r.venue))c.venues.push(r.venue);
   });
   sxBookings.forEach(b=>{
     if(b.status==='已拒絕'||b.is_fixed||!sxShow(b))return;
     const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!latest.has(`${b.id}|${p.date}|${p.period}`));
     if(!ps.length)return;
-    cards.set('b'+b.id,{n:ps.length,date:ps.map(p=>p.date).sort()[0],subj:sxBkSubj(b),type:sxBkType(b),grade:b.grade||'',who:b.borrower_name||'',title:'',tpl:null,fixed:false,bid:b.id,a,e});
+    const subj=sxBkSubj(b),type=sxBkType(b);
+    const c=add('u|'+subj+'|'+type+'|'+sxGradeKey(b.grade),{subj,type,title:'',tpl:null,fixed:false,venues:[],bids:[],a,e},b.grade||'',b.borrower_name||'',ps.length,ps.map(p=>p.date).sort()[0]);
+    if(!c.bids.includes(b.id))c.bids.push(b.id);
   });
+  cards.forEach(c=>{c.grade=sxGradesTxt(c.grades);c.who=c.whos.length>2?c.whos.slice(0,2).join('、')+' 等':c.whos.join('、');c.venue=c.venues.join('、');if(c.bids)c.bid=c.bids.join(',');});
   const ord=s=>{const i=SX_SUBJ.indexOf(s);return i<0?9:i;};
   return [...cards.values()]
-    .filter(c=>(spSubj==='全部'||c.subj===spSubj)&&(spGrade==='全部'||sxGradeKey(c.grade)===spGrade))
+    .filter(c=>(spSubj==='全部'||c.subj===spSubj)&&(spGrade==='全部'||c.grades.some(g=>sxGradeKey(g)===spGrade)))
     .sort((x,y)=>ord(x.subj)-ord(y.subj)||String(x.date).localeCompare(String(y.date)));
 }
-function sxCardSub(c){return [`${c.grade||''}${c.subj||''}${sxTypeTxt(c.type)?(c.grade||c.subj?'・':'')+sxTypeTxt(c.type):''}`,c.who,c.venue||(c.n?`${c.n} 節`:'')].filter(Boolean).join('・');}
+// 「高二甲探物理、高二乙探物理」→「高二甲乙探物理」；班太多就寫「高二 6 班」
+const SX_CLS='甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥忠孝仁愛信義和平美';
+function sxGradesTxt(list){
+  list=[...new Set((list||[]).map(g=>String(g||'').trim()).filter(Boolean))];
+  if(list.length<=1)return list[0]||'';
+  const by=new Map();
+  list.forEach(g=>{const lv=sxGradeKey(g)||'';const rest=lv&&g.startsWith(lv)?g.slice(lv.length):g;const k=lv+'\u0001'+(SX_CLS.includes(rest.charAt(0))?rest.slice(1):'\u0002'+rest);const x=by.get(k)||{lv,suf:SX_CLS.includes(rest.charAt(0))?rest.slice(1):null,cls:[],raw:[]};if(x.suf!==null)x.cls.push(rest.charAt(0));x.raw.push(g);by.set(k,x);});
+  return [...by.values()].map(x=>{
+    if(x.suf===null)return x.raw.join('、');
+    const cls=[...new Set(x.cls)].sort((p,q)=>SX_CLS.indexOf(p)-SX_CLS.indexOf(q));
+    return cls.length>5?`${x.lv} ${cls.length} 班${x.suf}`:x.lv+cls.join('')+x.suf;
+  }).join('、');
+}
+function sxCardSub(c){return [`${c.grade||''}${c.subj&&!String(c.grade||'').includes(c.subj)?c.subj:''}${sxTypeTxt(c.type)?(c.grade||c.subj?'・':'')+sxTypeTxt(c.type):''}`,c.who,c.venue||(c.n?`${c.n} 節`:'')].filter(Boolean).join('・');}
 function sxCardHtml(c,mobile){
   const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
   const on=c.tpl?`spOpen(${ja(c.tpl)})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
@@ -7337,27 +7356,31 @@ function sxStickWatch(){
 window.matchMedia('(min-width:901px)').addEventListener?.('change',()=>{if(document.getElementById('page-semester')?.classList.contains('active'))spRender();});
 // ── 補填／登記實驗 ──
 function sxNameGuess(){try{return localStorage.getItem('sxTeacher')||'';}catch(_){return '';}}
+function sxFillPs(bid,a,e){
+  const filled=new Set(sxRuns.map(r=>`${r.booking_id}|${r.run_date}|${r.period||''}`));
+  const out=[];String(bid).split(',').forEach(id=>{const b=sxBookings.find(x=>x.id===id);if(!b)return;(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!filled.has(`${b.id}|${p.date}|${p.period}`)).forEach(p=>out.push({...p,b}));});
+  return out.sort((x,y)=>String(x.date+x.period).localeCompare(String(y.date+y.period)));
+}
 function sxFill(bid,a,e){
-  const b=sxBookings.find(x=>x.id===bid);if(!b)return;
-  const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕');
+  const ps=sxFillPs(bid,a,e);const b=ps[0]&&ps[0].b;if(!b)return;
+  const many=new Set(ps.map(p=>p.b.id)).size>1;
   showModal('這幾節做了什麼實驗？',`
     <div class="sx-form">
-      <div class="hint">${escH([b.grade,sxBkSubj(b),sxTypeTxt(sxBkType(b)),b.borrower_name].filter(Boolean).join('・'))}</div>
+      <div class="hint">${escH([many?sxGradesTxt(ps.map(p=>p.b.grade)):b.grade,sxBkSubj(b),sxTypeTxt(sxBkType(b)),many?'':b.borrower_name].filter(Boolean).join('・'))}</div>
       <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定"></div>
-      <div class="form-group"><label>哪幾節</label>${ps.map((p,i)=>`<label class="sx-ck"><input type="checkbox" data-i="${i}" checked> ${escH(p.date)} ${escH(p.period)} ${escH(p.venue||'')}</label>`).join('')}</div>
+      <div class="form-group"><label>哪幾節</label>${ps.map((p,i)=>`<label class="sx-ck"><input type="checkbox" data-i="${i}" checked> ${escH(p.date)} ${escH(p.period)} ${escH(p.venue||'')}${many?` <b>${escH(p.b.grade||'')}</b>`:''}</label>`).join('')}</div>
       <div class="form-group"><label>填的人</label><input id="sx-who" maxlength="30" value="${escH(b.role==='老師'?b.borrower_name||'':sxNameGuess())}"></div>
     </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:`sxFillSave(${ja(bid)},${ja(a)},${ja(e)})`}]);
   sxDatalist();
 }
 async function sxFillSave(bid,a,e){
-  const b=sxBookings.find(x=>x.id===bid);if(!b)return;
-  const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕');
+  const ps=sxFillPs(bid,a,e);if(!ps.length)return;
   const pick=sxPickTpl(document.getElementById('sx-exp').value),who=document.getElementById('sx-who').value.trim();
   if(!pick.tpl&&!pick.title){showToast('請填實驗','error');return;}
   if(!who){showToast('請填你的名字','error');return;}
   const sel=[...document.querySelectorAll('.sx-form .sx-ck input:checked')].map(x=>ps[+x.dataset.i]).filter(Boolean);
   if(!sel.length){showToast('至少勾一節','error');return;}
-  const rows=sel.map(p=>({run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(b)||null,course_type:sxBkType(b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:b.id}));
+  const rows=sel.map(p=>({run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(p.b)||null,course_type:sxBkType(p.b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(p.b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:p.b.id}));
   await sxSaveRuns(rows,who);
 }
 function sxLog(tplId){
