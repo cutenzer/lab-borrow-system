@@ -1521,6 +1521,65 @@
 @media(min-width:901px){.sp-fb{display:contents}.sp-fd{display:none}#page-semester .sp-bar{gap:10px 12px}.sp-frow{padding-left:12px;gap:6px}.sp-frow .sp-legend{gap:4px}.sp-frow .sp-legend button{padding:5px 9px;font-size:13px;gap:5px}.sp-frow .sp-legend i{width:8px;height:8px}}
 </style>
 <style id="sx-css">
+.ps-dh.wk-go{all:unset;box-sizing:border-box;display:flex;align-items:baseline;gap:6px;cursor:pointer;border-radius:7px;padding:2px 4px;margin:-2px -4px}
+.ps-dh.wk-go:hover{background:rgba(31,35,38,.06)}.ps-dh.wk-go:hover b{text-decoration:underline;text-underline-offset:3px}
+.ps-dh.wk-go:focus-visible{outline:2px solid var(--accent)}
+.ps-dh .wk-ic{font-size:11px;color:var(--text2);margin-left:2px}
+.wk-mbtn{all:unset;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:-2px 0 10px;padding:8px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);font-size:14px;font-weight:600;cursor:pointer}
+.wk-ov{position:fixed;inset:0;z-index:260;background:rgba(20,18,15,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+body.wk-open{overflow:hidden}
+.wk-box{background:var(--surface);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);width:min(1180px,100%);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;overflow:hidden}
+.wk-top{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border)}
+.wk-t{display:flex;align-items:baseline;gap:8px}.wk-t b{font-size:17px}.wk-t span{font-size:13px;color:var(--text2);font-family:'DM Mono',monospace}
+.wk-nav{all:unset;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:18px}
+.wk-nav[disabled]{opacity:.35;cursor:default}
+.wk-lg{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+.wk-lg span{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2)}
+.wk-lg i,.wk-c i{font-style:normal;font-weight:700;font-size:11px;color:#fff;background:var(--c);border-radius:4px;width:17px;height:17px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.wk-x{all:unset;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2);cursor:pointer;margin-left:6px}
+.wk-body{overflow:auto;padding:8px 12px 4px;flex:1;min-height:0}
+.wk-grid{display:grid;border-top:1px solid var(--border);border-left:1px solid var(--border)}
+.wk-grid>div{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0}
+.wk-h{position:sticky;top:0;z-index:2;background:var(--surface2);font-size:13px;padding:5px 6px;text-align:center}
+.wk-h b{font-size:14px}
+.wk-p{display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--text2);background:var(--surface2);font-family:'DM Mono',monospace}
+.wk-td{padding:3px;display:flex;flex-direction:column;gap:3px}
+.wk-c{display:flex;gap:5px;align-items:center;background:var(--t);border-left:3px solid var(--c);border-radius:5px;padding:3px 5px;min-width:0}
+.wk-c.go{cursor:pointer}.wk-c.go:hover{filter:brightness(.96)}
+.wk-c.pend{background:transparent;border:1px dashed var(--c);border-left-width:3px}
+.wk-c>span{display:flex;flex-direction:column;min-width:0;line-height:1.3;flex:1}
+.wk-c b{font-size:12.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-c em{font-style:normal;font-size:12.5px;color:var(--c);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-c small{font-size:11.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-l1{display:flex;align-items:baseline;gap:6px;min-width:0}.wk-l1 b{flex-shrink:0}
+.wk-foot{font-size:12px;color:var(--text2);padding:6px 12px 10px}
+.wk-empty{padding:30px;text-align:center;color:var(--text2)}
+.wk-days{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;position:sticky;top:-8px;background:var(--surface);padding:4px 0 8px;z-index:2}
+.wk-days button{all:unset;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;padding:5px 0;border-radius:9px;border:1.5px solid var(--border);cursor:pointer;position:relative}
+.wk-days button b{font-size:15px}.wk-days button small{font-size:11.5px;color:var(--text2)}
+.wk-days button em{position:absolute;top:-6px;right:-3px;font-style:normal;font-size:10.5px;background:var(--text);color:var(--surface);border-radius:9px;padding:0 5px;min-width:8px;text-align:center}
+.wk-days button em:empty{display:none}
+.wk-days button.on{background:var(--text);border-color:var(--text);color:var(--surface)}.wk-days button.on small{color:inherit;opacity:.8}
+.wk-mr{display:grid;grid-template-columns:30px 1fr;gap:6px;padding:6px 0;border-bottom:1px dashed var(--border)}
+.wk-mr .wk-p{background:none;align-items:flex-start;padding-top:4px;font-size:14px}
+.wk-cl{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.wk-cl .wk-c b,.wk-cl .wk-c em{font-size:13px}
+.wk-mg{display:grid;gap:3px}
+.wk-mh{text-align:center;line-height:1.15;padding-bottom:2px}.wk-mh b{display:block;font-size:14px}.wk-mh small{font-size:10.5px;color:var(--text2)}
+.wk-mp{display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;color:var(--text2);font-family:'DM Mono',monospace}
+.wk-mc{all:unset;box-sizing:border-box;min-height:34px;border-radius:7px;background:var(--surface2);display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;padding:3px;cursor:pointer}
+.wk-mc[disabled]{background:transparent;border:1px dashed var(--border);cursor:default}
+.wk-mc.on{outline:2.5px solid var(--text);outline-offset:-1px;background:#fff}
+.wk-mc i{font-style:normal;font-size:10.5px;font-weight:700;color:#fff;background:var(--c);border-radius:3px;width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center}
+.wk-mc i.pd{background:transparent;color:var(--c);border:1px dashed var(--c)}
+.wk-mc small{font-size:10px;color:var(--text2)}
+.wk-det{margin-top:10px;padding-top:8px;border-top:2px solid var(--text);display:flex;flex-direction:column;gap:4px}
+.wk-dt{font-size:14px;font-weight:700;margin-bottom:2px}
+.wk-det .wk-c b,.wk-det .wk-c em{font-size:13.5px}
+.wk-ds h5{position:sticky;top:-8px;z-index:2;background:var(--surface);margin:0;padding:8px 0 4px;font-size:15px;border-bottom:2px solid var(--text);display:flex;gap:8px;align-items:baseline}
+.wk-ds h5 small{font-size:12px;color:var(--text2);font-weight:400}
+@media(max-width:900px){.wk-ov{padding:0;align-items:flex-end}.wk-box{border-radius:14px 14px 0 0;max-height:92dvh}.wk-lg{display:none}.wk-top{gap:6px}.wk-x{margin-left:auto}}
+
 /* 學期實驗（新版） */
 #page-semester .sp-q{display:none}
 #page-semester .sp-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -2004,7 +2063,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13i · 同名實驗合併、卡片顯示實際老師</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13j · 點週次看當週課表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -7157,6 +7216,71 @@ if(wide.addEventListener)wide.addEventListener('change',redraw);else if(wide.add
 </script>
 
 <script id="sx-js">
+// ── 點週次看這週的實驗室課表（節次 × 星期，五間實驗室合在同一格，用科目色塊分）──
+let wkIdx=null,wkDay=0,wkSel=null;
+const WK_SUB={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理'};
+function wkData(w){
+  const days=[0,1,2,3,4,5].map(i=>{const d=sxAddDays(w.date,i);return {i,date:fmtDate(d),d};});
+  const runAt=new Map();sxRuns.forEach(r=>{if(r.booking_id){const k=`${r.booking_id}|${r.run_date}|${r.period||''}`;const o=runAt.get(k);if(!o||r.id>o.id)runAt.set(k,r);}});
+  const cells=new Map(),add=(date,period,e)=>{const k=date+'|'+period;(cells.get(k)||cells.set(k,[]).get(k)).push(e);};
+  const a=days[0].date,z=days[5].date;
+  sxBookings.forEach(b=>{if(b.status==='已拒絕')return;(b.periods||[]).forEach(p=>{
+    if(!p.date||p.date<a||p.date>z||p.status==='已拒絕')return;
+    const r=runAt.get(`${b.id}|${p.date}|${p.period}`),t=r&&r.template_id?sxTpl(r.template_id):null;
+    add(p.date,p.period,{subj:sxVenueSubj(p.venue)||sxBkSubj(b)||'其他',cls:(r&&r.grade)||b.grade||'',who:(r&&r.teacher)||b.borrower_name||'',exp:t?(t.name||'').trim():(r&&r.title)||'',pend:p.status==='待審核',fixed:!!b.is_fixed,tpl:t?t.id:null});
+  });});
+  sxRuns.forEach(r=>{if(r.booking_id||r.is_hidden||r.run_date<a||r.run_date>z)return;const t=r.template_id?sxTpl(r.template_id):null;
+    add(r.run_date,r.period||'未填節次',{subj:r.subject||'其他',cls:r.grade||'',who:r.teacher||'',exp:t?(t.name||'').trim():(r.title||''),out:r.venue||'班上',tpl:t?t.id:null});});
+  const used=new Set([...cells.keys()].map(k=>k.split('|')[1]));
+  const per=[...PERIODS.filter(p=>used.has(p)),...[...used].filter(p=>!PERIODS.includes(p))];
+  const sat=[...cells.keys()].some(k=>k.startsWith(days[5].date));
+  const ord=s=>{const i=SX_SUBJ.indexOf(s);return i<0?9:i;};
+  cells.forEach(l=>l.sort((x,y)=>ord(x.subj)-ord(y.subj)));
+  return {days:sat?days:days.slice(0,5),cells,per};
+}
+function wkChip(e){
+  const col=semColor(e.subj),tint=SP_TINT[e.subj]||SP_TINT['其他'];
+  const on=e.tpl?` onclick="spOpen(${ja(e.tpl)})"`:'';
+  return `<div class="wk-c${e.pend?' pend':''}${e.tpl?' go':''}" style="--c:${col};--t:${tint}"${on}><i>${escH(WK_SUB[e.subj]||'・')}</i><span><span class="wk-l1"><b>${escH(e.cls||'—')}</b><small>${escH(e.who)}${e.out?'・'+escH(e.out):''}${e.pend?'・待審':''}</small></span>${e.exp?`<em>${escH(e.exp)}</em>`:''}</span></div>`;
+}
+function wkOpen(i){wkIdx=i;const cal=semCalendar(spTerm,activeSemester);const w=cal.weeks[i];if(!w)return;
+  const td=new Date();td.setHours(0,0,0,0);const k=Math.round((td-w.date)/864e5);wkDay=k>=0&&k<5?k:0;wkRender();document.body.classList.add('wk-open');}
+function wkClose(){const o=document.getElementById('wkSheet');if(o)o.remove();document.body.classList.remove('wk-open');wkIdx=null;}
+function wkRender(){
+  const cal=semCalendar(spTerm,activeSemester),w=cal.weeks[wkIdx];if(!w)return;
+  const {days,cells,per}=wkData(w);
+  const mobile=!window.matchMedia('(min-width:901px)').matches;
+  const wd='一二三四五六';
+  const md=d=>`${d.getMonth()+1}/${d.getDate()}`;
+  const cnt=d=>per.reduce((s,p)=>s+((cells.get(d.date+'|'+p)||[]).length),0);
+  let body;
+  if(!per.length)body='<div class="wk-empty">這週沒有實驗室預約，也沒有登記的實驗</div>';
+  else if(mobile){
+    // 手機 A：整週縮圖（每格只放科目小方塊），點格子在下面看詳細
+    if(!wkSel||!cells.has(wkSel)){const td=fmtDate(new Date());wkSel=[...cells.keys()].sort().find(k=>k>=td)||[...cells.keys()].sort()[0];}
+    const sl=cells.get(wkSel)||[],[sd,sp]=wkSel.split('|'),sdd=new Date(sd+'T00:00:00');
+    body=`<div class="wk-mg" style="grid-template-columns:34px repeat(${days.length},1fr)"><div></div>${days.map(x=>`<div class="wk-mh"><b>${wd[x.i]}</b><small>${md(x.d)}</small></div>`).join('')}`+
+      per.map(p=>`<div class="wk-mp">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>{const k=x.date+'|'+p,l=cells.get(k)||[];return `<button type="button" class="wk-mc${k===wkSel?' on':''}" ${l.length?`onclick="wkSel=${ja(k)};wkRender()"`:'disabled'}>${l.slice(0,4).map(e=>`<i class="${e.pend?'pd':''}" style="--c:${semColor(e.subj)}">${escH(WK_SUB[e.subj]||'・')}</i>`).join('')}${l.length>4?`<small>+${l.length-4}</small>`:''}</button>`;}).join('')).join('')+'</div>'+
+      `<div class="wk-det"><div class="wk-dt">${wd[sdd.getDay()-1]||''} ${md(sdd)}・${escH(sp||'')}</div>${sl.map(wkChip).join('')}</div>`;
+  }else{
+    body=`<div class="wk-grid" style="grid-template-columns:52px repeat(${days.length},minmax(0,1fr))"><div class="wk-h"></div>${days.map(x=>`<div class="wk-h"><b>${wd[x.i]}</b> ${md(x.d)}</div>`).join('')}`+
+      per.map(p=>`<div class="wk-p">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>`<div class="wk-td">${(cells.get(x.date+'|'+p)||[]).map(wkChip).join('')}</div>`).join('')).join('')+'</div>';
+  }
+  const legend=SX_SUBJ.map(s=>`<span style="--c:${semColor(s)};--t:${SP_TINT[s]}"><i>${WK_SUB[s]}</i>${s}</span>`).join('');
+  let o=document.getElementById('wkSheet');
+  if(!o){o=document.createElement('div');o.id='wkSheet';o.className='wk-ov';o.onclick=e=>{if(e.target===o)wkClose();};document.body.appendChild(o);}
+  o.innerHTML=`<div class="wk-box" role="dialog" aria-label="第 ${w.week} 週課表">
+    <div class="wk-top"><button type="button" class="wk-nav" onclick="wkIdx=Math.max(0,wkIdx-1);wkRender()" ${wkIdx<=0?'disabled':''} aria-label="上一週">‹</button>
+      <div class="wk-t"><b>第 ${w.week} 週</b><span>${md(w.date)}～${md(sxAddDays(w.date,4))}</span></div>
+      <button type="button" class="wk-nav" onclick="wkIdx=Math.min(${cal.weeks.length-1},wkIdx+1);wkRender()" ${wkIdx>=cal.weeks.length-1?'disabled':''} aria-label="下一週">›</button>
+      <div class="wk-lg">${legend}</div>
+      <button type="button" class="wk-x" onclick="wkClose()" aria-label="關閉">✕</button></div>
+    <div class="wk-body">${body}</div>
+    ${per.length?`<div class="wk-foot">${mobile?'點格子看那一節的班級、老師；虛線＝待審核':'只列出這週有用到的節次；虛線框＝待審核；點有實驗名稱的格子可以看器材'}</div>`:''}
+  </div>`;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('wkSheet'))wkClose();});
+
 // ==== 學期實驗（新版）開始 ====
 // 「這學期」：照實驗室預約＋實驗紀錄排，一週一格；固定課有填主題的那幾週才出現
 // 「實驗庫」：歷年所有課綱實驗，五科分欄、可搜尋篩選，點開看器材與做過的紀錄
@@ -7283,13 +7407,13 @@ function sxSemHtml(mobile){
     if(sxWeek==null||sxWeek>=weeks.length)sxWeek=Math.max(0,nowIdx);
     const w=weeks[sxWeek],its=w?sxWeekItems(w):[];
     h+=`<div class="pm-head"><button type="button" onclick="sxWeek=Math.max(0,sxWeek-1);spRender();sxListTop()" aria-label="上一週" ${sxWeek<=0?'disabled':''}>‹</button><label class="pm-wsel"><select onchange="sxWeek=+this.value;spRender();sxListTop()" aria-label="選週次">${weeks.map((x,i)=>`<option value="${i}"${i===sxWeek?' selected':''}>第 ${x.week} 週　${spMD(x.date)}${i===nowIdx?'　本週':''}</option>`).join('')}</select><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></label><button type="button" onclick="sxWeek=Math.min(${weeks.length-1},sxWeek+1);spRender();sxListTop()" aria-label="下一週" ${sxWeek>=weeks.length-1?'disabled':''}>›</button></div>`;
-    h+=`<!--sx-body--><div class="pm-list">${its.map(c=>sxCardHtml(c,true)).join('')||'<div class="pm-empty">這週沒有實驗</div>'}${logBtn}</div>`;
+    h+=`<!--sx-body--><button type="button" class="wk-mbtn" onclick="wkOpen(sxWeek)">▦ 看這週的實驗室課表</button><div class="pm-list">${its.map(c=>sxCardHtml(c,true)).join('')||'<div class="pm-empty">這週沒有實驗</div>'}${logBtn}</div>`;
     return h;
   }
   h+='<div class="ps-weeks">';
   weeks.forEach((w,i)=>{
     const its=sxWeekItems(w);
-    h+=`<div class="ps-day${i===nowIdx?' now':''}${i<nowIdx?' past':''}"><div class="ps-dh"><b>W${w.week}</b><span>${spMD(w.date)}</span>${i===nowIdx?'<em>本週</em>':''}</div>${its.map(c=>sxCardHtml(c,false)).join('')}</div>`;
+    h+=`<div class="ps-day${i===nowIdx?' now':''}${i<nowIdx?' past':''}"><button type="button" class="ps-dh wk-go" onclick="wkOpen(${i})" title="看第 ${w.week} 週的實驗室課表"><b>W${w.week}</b><span>${spMD(w.date)}</span><span class="wk-ic">▦</span>${i===nowIdx?'<em>本週</em>':''}</button>${its.map(c=>sxCardHtml(c,false)).join('')}</div>`;
   });
   return h+'</div>';
 }
