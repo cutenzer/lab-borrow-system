@@ -503,7 +503,7 @@
   /* 照片放大檢視：在原頁面上蓋一層，點一下或按返回就關 */
   .photo-viewer{position:fixed;inset:0;z-index:300;background:rgba(10,12,14,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:16px;cursor:zoom-out;}
   .photo-viewer.show{display:flex;}
-  .photo-viewer img{max-width:100%;max-height:calc(100% - 50px);object-fit:contain;border-radius:6px;}
+  .photo-viewer img{width:100%;height:calc(100% - 50px);max-width:1200px;object-fit:contain;border-radius:6px;}
   .photo-viewer .pv-msg{color:#eee;font-size:14px;text-align:center;line-height:1.7;}
   .photo-viewer .pv-msg a{color:#9fd3c0;}
   .photo-viewer .pv-close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:14px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:18px;cursor:pointer;}
@@ -1943,7 +1943,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13f';
+const ADMIN_VERSION='2026-10-13g';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2236,7 +2236,7 @@ function openPhotoViewer(url){
   url=safeUrl(url);if(!url)return;
   let v=document.getElementById('photoViewer');
   if(!v){v=document.createElement('div');v.id='photoViewer';v.className='photo-viewer';v.onclick=closePhotoViewer;document.body.appendChild(v);}
-  v.innerHTML=`<button type="button" class="pv-close" aria-label="關閉">✕</button><img alt="借用人上傳照片">`;
+  v.innerHTML=`<button type="button" class="pv-close" aria-label="關閉">✕</button><img alt="放大的照片">`;
   const im=v.querySelector('img');
   im.onerror=()=>{im.remove();const m=document.createElement('div');m.className='pv-msg';m.innerHTML='這張照片的格式瀏覽器無法顯示<br>（多半是舊版上傳的 iPhone HEIC 照片）<br>';const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';a.textContent='下載原檔';a.onclick=e=>e.stopPropagation();m.appendChild(a);v.appendChild(m);};
   im.src=url;
@@ -7208,7 +7208,7 @@ function eqPaneRender(){
   if(!e){p.innerHTML=`<div class="eq-pane-empty"><b>點左邊任一筆器材</b><span>這裡會顯示照片、借用狀況，也在這裡編輯。</span><button class="btn btn-primary btn-sm" onclick="toggleEqAdd(true)">＋ 新增器材</button></div>`;return;}
   if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id)){p.innerHTML=`<div class="eq-pane-h"><b>編輯</b><span>${escH(e.name)}</span></div>`+renderInlineEditEquip(e);return;}
   const img=safeUrl(e.image_url),tot=parseInt(e.total)||0,out=equipOut(e),av=equipAvailable(e),mm=equipLocationMismatches(e),kit=kitLines(e);
-  p.innerHTML=`<div class="eq-pane-ph">${img?`<img src="${escH(img)}" alt="" onclick="window.open(this.src,'_blank','noopener')">`:'<span>沒有照片</span>'}</div>
+  p.innerHTML=`<div class="eq-pane-ph">${img?`<img src="${escH(img)}" alt="" title="點一下放大" onclick="openPhotoViewer(${ja(img)})">`:'<span>沒有照片</span>'}</div>
     <div class="eq-pane-h"><b>${escH(e.name)}${e.featured===true?' <span style="color:#b7791f">★</span>':''}</b><span>${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}${e.is_available===false?' ・ <em style="color:var(--danger);font-style:normal">已停用</em>':''}</span></div>
     <div class="eq-pane-nums"><div><small>總數</small><b>${tot}</b></div><div><small>借出中</small><b>${out}</b></div><div class="${av>0?'ok':'bad'}"><small>可借</small><b>${av}</b></div></div>
     <dl class="eq-pane-dl">
@@ -7606,7 +7606,7 @@ function renderAdminEquipCard(e){
     if(!eqWide()&&inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgUrl=safeUrl(e.image_url);
-    const imgHtml=imgUrl?`<a href="${escH(imgUrl)}" target="_blank" rel="noopener noreferrer" title="點我看大圖"><img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt=""></a>`:`<div class="eq-thumb">🔬</div>`;
+    const imgHtml=imgUrl?`<img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt="" title="點一下放大" onclick="openPhotoViewer(${ja(imgUrl)})">`:`<div class="eq-thumb">🔬</div>`;
     const mismatches=equipLocationMismatches(e);
     const stkChanged=stocktakePending[e.id]!==undefined,stkSameOn=!stkChanged&&stocktakeSame.has(String(e.id));
     const sel=eqSelId!==null&&String(eqSelId)===String(e.id);
@@ -8900,7 +8900,7 @@ function renderHighlightsList(){
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📸</div><p>目前沒有資料</p></div>';return;}
   list.innerHTML='<div class="record-list">'+items.map(h=>`
     <div class="record-card" style="display:flex;gap:12px;align-items:flex-start">
-      <img src="${h.image_url}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">
+      <img src="${escH(safeUrl(h.image_url))}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">
       <div style="flex:1;min-width:0">
         <div style="font-weight:700">${h.event_name} <span style="font-weight:400;color:var(--text2);font-size:12px">${h.year}</span></div>
         ${h.note?`<div style="font-size:12.5px;color:var(--text2);margin-top:2px">${escH(h.note)}</div>`:''}
