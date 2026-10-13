@@ -1974,7 +1974,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13m';
+const ADMIN_VERSION='2026-10-13n';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9425,7 +9425,8 @@ async function srDel(id){
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
 // 表單：新增／修改一筆；從預約「填實驗」時可以一次勾好幾節
-function srTplLabel(t){return `${(t.name||'').trim()}｜${(t.grade||'').trim()||'未填年級'}`;}
+// 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
+function srTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dup=allTemplates.some(x=>x!==t&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
 function srFormHtml(r,ps){
   const t=r.template_id?srTpl(r.template_id):null;
   const types=courseTypes.filter(x=>x.is_active!==false).map(x=>x.name);if(r.course_type&&!types.includes(r.course_type))types.push(r.course_type);
