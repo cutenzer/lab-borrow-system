@@ -868,6 +868,63 @@
   header .header-logout{display:none;}
 }
 </style>
+<style id="eq-split">
+/* 器材頁：電腦版左清單、右窗格 */
+.eq-pane{display:none}
+.eq-flags{display:none}
+@media(min-width:1100px){
+  .eq-ws{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+  .eq-pane{display:block;position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+  .eq-pane>.card{margin:0!important;padding:0;border:0;box-shadow:none;background:none}
+  .eq-pane>.card>div[style*="grid-template-columns"]{grid-template-columns:1fr 1fr!important}
+  .eq-pane .record-card{margin:0;padding:0;background:none!important;border:0!important}
+  .eq-pane .record-card>div[style*="grid-template-columns"]{grid-template-columns:1fr 1fr!important}
+  .eq-pane .form-group[style*="span 2"]{grid-column:1/-1!important}
+  #adminEquipList .eq-item{padding:8px 12px;margin-bottom:6px;cursor:pointer;transition:border-color .12s}
+  #adminEquipList .eq-item:hover{border-color:#cfc6b4}
+  #adminEquipList .eq-item.sel{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+  #adminEquipList .eq-thumb{width:44px;height:44px;font-size:18px;border-radius:7px}
+  #adminEquipList .eq-name{font-size:15px}
+  #adminEquipList .eq-card-row{align-items:center!important}
+  #adminEquipList .eq-body{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:center}
+  #adminEquipList .eq-name,#adminEquipList .eq-sub{grid-column:1}
+  #adminEquipList .eq-meta{grid-column:2;grid-row:1/3;margin:0;flex-wrap:nowrap;justify-content:flex-end}
+  #adminEquipList .eq-x,#adminEquipList .eq-actions{display:none}
+  .eq-flags{display:inline}
+  #panel-equipment .stk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:8px 12px}
+  #panel-equipment .stk-prog-row{flex:1 1 280px}
+  #panel-equipment .stk-round{margin:0;display:flex;align-items:center;gap:6px;font-size:13px}
+  #panel-equipment .stk-views{margin:0;flex:0 0 auto}
+  #panel-equipment .stk-views button{flex:0 0 auto;padding:4px 14px;font-size:13px}
+  .eq-flags i{font-style:normal;font-size:11.5px;padding:0 7px;border-radius:9px;margin-left:6px;background:#e7efe9;color:var(--accent);white-space:nowrap}
+  .eq-flags i.w{background:#f6e1dc;color:var(--danger)}
+  .eq-pane-empty{display:flex;flex-direction:column;gap:6px;align-items:flex-start;color:var(--text2);font-size:13.5px;padding:8px 2px}
+  .eq-pane-empty b{color:var(--text);font-size:15px}
+  .eq-pane-empty .btn{margin-top:8px}
+  .eq-pane-ph{height:190px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;color:var(--text2);font-size:13px;margin-bottom:12px}
+  .eq-pane-ph img{width:100%;height:100%;object-fit:contain;cursor:zoom-in}
+  .eq-pane-h{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .eq-pane-h b{font-size:18px}
+  .eq-pane-h span{font-size:13px;color:var(--text2)}
+  .eq-pane-nums{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+  .eq-pane-nums div{padding:8px 10px;display:flex;flex-direction:column}
+  .eq-pane-nums div+div{border-left:1px solid var(--border)}
+  .eq-pane-nums small{font-size:11.5px;color:var(--text2)}
+  .eq-pane-nums b{font-size:20px;font-family:'DM Mono',monospace;font-weight:500}
+  .eq-pane-nums .ok b{color:var(--accent)} .eq-pane-nums .bad b{color:var(--danger)}
+  .eq-pane-dl{display:grid;grid-template-columns:72px 1fr;gap:6px 10px;margin:0 0 12px;font-size:14px}
+  .eq-pane-dl dt{color:var(--text2);font-size:12.5px;padding-top:1px}
+  .eq-pane-dl dd{margin:0}
+  .eq-pane-dl .mut{color:var(--text2)}
+  .eq-pane-warn{font-size:12.5px;color:var(--danger);background:#f6e1dc;border-radius:8px;padding:7px 10px;margin-bottom:10px}
+  .eq-pane .eq-usage{margin:0 0 10px}
+  .eq-pane-kit{font-size:13px;margin-bottom:10px}
+  .eq-pane-kit small{color:var(--text2)}
+  .eq-pane-kit ul{margin:4px 0 0;padding-left:18px}
+  .eq-pane-act{display:flex;gap:8px;align-items:center;border-top:1px solid var(--border);padding-top:12px}
+  .eq-pane-act .act-more{margin-left:auto}
+}
+</style>
 </head>
 <body>
 
@@ -1435,7 +1492,8 @@
     </div>
   </div>
 
-  <div class="card" style="margin-bottom:16px">
+  <div class="eq-ws">
+  <div class="card eq-listcard" style="margin-bottom:16px">
     <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
       <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
       <button class="btn btn-primary btn-sm" id="eqAddBtn" onclick="toggleEqAdd(true)">＋ 新增器材</button>
@@ -1463,6 +1521,8 @@
       <button class="btn btn-secondary btn-sm" onclick="markPageSame()" title="這一頁還沒改數量、也還沒按過的，全部當作數量沒變">✓ 本頁其餘都無變動</button>
       <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存盤點（<span id="stkPendingCount">0</span> 筆）</button>
     </div>
+  </div>
+  <aside class="eq-pane" id="eqPane" aria-label="器材詳情"></aside>
   </div>
 
   <div class="card" style="margin-bottom:16px">
@@ -1816,7 +1876,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13a';
+const ADMIN_VERSION='2026-10-13b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -6972,7 +7032,54 @@ function equipAvailable(e){
   const borrowed=equipBorrowedMap[e.room+'__'+e.name]||0;
   return Math.max(0,(parseInt(e.total)||0)-borrowed);
 }
+// ── 電腦版右窗格：選一筆看詳情、編輯；新增器材也在這裡 ──
+let eqSelId=null,eqAddMode=false;
+const eqWide=()=>window.matchMedia('(min-width:1100px)').matches;
+function eqRowClick(ev,id){
+  if(!eqWide())return;
+  if(ev.target.closest('input,button,a,select,textarea,label,details,.more-wrap'))return;
+  if(String(eqSelId)!==String(id)){eqSelId=id;inlineEditEquipId=null;eqAddMode=false;eqMarkSel();eqPaneRender();}
+}
+function eqMarkSel(){document.querySelectorAll('#adminEquipList .eq-item').forEach(c=>c.classList.toggle('sel',c.id==='eqcard-'+eqSelId));}
+function eqPaneRender(){
+  const p=document.getElementById('eqPane');if(!p)return;
+  const add=document.getElementById('eqAddCard');
+  if(!eqWide()){if(add&&add.parentElement===p)document.getElementById('panel-equipment').prepend(add);p.innerHTML='';return;}
+  if(eqAddMode&&add){if(add.parentElement!==p){p.innerHTML='';p.appendChild(add);}add.classList.add('open');return;}
+  if(add&&add.parentElement===p){add.classList.remove('open');document.getElementById('panel-equipment').prepend(add);}
+  const e=allAdminEquipment.find(x=>String(x.id)===String(eqSelId));
+  if(!e){p.innerHTML=`<div class="eq-pane-empty"><b>點左邊任一筆器材</b><span>這裡會顯示照片、借用狀況，也在這裡編輯。</span><button class="btn btn-primary btn-sm" onclick="toggleEqAdd(true)">＋ 新增器材</button></div>`;return;}
+  if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id)){p.innerHTML=`<div class="eq-pane-h"><b>編輯</b><span>${escH(e.name)}</span></div>`+renderInlineEditEquip(e);return;}
+  const img=safeUrl(e.image_url),tot=parseInt(e.total)||0,out=equipOut(e),av=equipAvailable(e),mm=equipLocationMismatches(e),kit=kitLines(e);
+  p.innerHTML=`<div class="eq-pane-ph">${img?`<img src="${escH(img)}" alt="" onclick="window.open(this.src,'_blank','noopener')">`:'<span>沒有照片</span>'}</div>
+    <div class="eq-pane-h"><b>${escH(e.name)}${e.featured===true?' <span style="color:#b7791f">★</span>':''}</b><span>${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}${e.is_available===false?' ・ <em style="color:var(--danger);font-style:normal">已停用</em>':''}</span></div>
+    <div class="eq-pane-nums"><div><small>總數</small><b>${tot}</b></div><div><small>借出中</small><b>${out}</b></div><div class="${av>0?'ok':'bad'}"><small>可借</small><b>${av}</b></div></div>
+    <dl class="eq-pane-dl">
+      <dt>櫃位</dt><dd>${e.location?escH(e.location):'<span class="mut">未填</span>'}</dd>
+      <dt>單位</dt><dd>${escH(e.unit||'個')}</dd>
+      ${e.alias?`<dt>別名</dt><dd>${escH(e.alias)}</dd>`:''}
+      ${e.restricted_note?`<dt>選修專用</dt><dd style="color:#7e22ce">${escH(e.restricted_note)}</dd>`:''}
+      <dt>上次盤點</dt><dd>${e.last_counted_at?escH(new Date(e.last_counted_at).toLocaleDateString('zh-TW')):'<span class="mut">還沒盤點</span>'}</dd>
+    </dl>
+    ${mm.length?`<div class="eq-pane-warn">位置代碼「${mm.map(escH).join('、')}」開頭跟房間對不上（應該是「${escH(ROOM_EXPECTED_PREFIX[e.room]||'')}」開頭）</div>`:''}
+    ${equipUsageHtml(e)}
+    ${kit.length?`<div class="eq-pane-kit"><small>套組內容 ${kit.length} 項</small><ul>${kit.map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:''}
+    <div class="eq-pane-act">
+      <button class="btn btn-primary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">編輯</button>
+      <button class="btn btn-secondary btn-sm" onclick="openEquipPhotoUpload(${ja(e.id)})">換照片</button>
+      ${moreMenuHtml([
+        {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
+        'hr',
+        {label:'🧪 這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
+        'hr',
+        {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
+        {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
+      ])}
+    </div>`;
+}
+window.matchMedia('(min-width:1100px)').addEventListener?.('change',()=>{if(typeof filterAdminEquip==='function'&&allAdminEquipment.length)filterAdminEquip();else eqPaneRender();});
 function toggleEqAdd(open){
+  if(eqWide()){eqAddMode=!!open;if(open){inlineEditEquipId=null;eqSelId=null;eqMarkSel();}eqPaneRender();const b=document.getElementById('eqAddBtn');if(b)b.style.display=open?'none':'';if(open)setTimeout(()=>{const n=document.getElementById('eq-name');if(n)n.focus({preventScroll:true});},100);return;}
   const c=document.getElementById('eqAddCard'),b=document.getElementById('eqAddBtn');if(!c)return;
   c.classList.toggle('open',!!open);if(b)b.style.display=open?'none':'';
   if(open){c.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>{const n=document.getElementById('eq-name');if(n)n.focus({preventScroll:true});},300);}
@@ -7028,6 +7135,7 @@ async function checkTemplateHealth(){
 }
 function toggleInlineEditEquip(id){
   inlineEditEquipId=(inlineEditEquipId===id)?null:id;
+  if(eqWide()){eqSelId=id;eqAddMode=false;filterAdminEquip();return;}
   filterAdminEquip();
   if(inlineEditEquipId===id){
     document.getElementById('eqcard-'+id)?.scrollIntoView({behavior:'smooth',block:'center'});
@@ -7307,6 +7415,7 @@ function filterAdminEquip(){
     return head+renderAdminEquipCard(e);
   }).join('')+'</div>'+pager;
   renderFeaturedList();
+  eqPaneRender();
 }
 // ── 器材相關小工具 ──
 const ACTIVE_ST=['待審核','已核准','逾期'];
@@ -7337,18 +7446,19 @@ function equipUsageHtml(e){
   return `<div class="eq-usage">${h}</div>`;
 }
 function renderAdminEquipCard(e){
-    if(inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
+    if(!eqWide()&&inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgUrl=safeUrl(e.image_url);
     const imgHtml=imgUrl?`<a href="${escH(imgUrl)}" target="_blank" rel="noopener noreferrer" title="點我看大圖"><img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt=""></a>`:`<div class="eq-thumb">🔬</div>`;
     const mismatches=equipLocationMismatches(e);
     const stkChanged=stocktakePending[e.id]!==undefined,stkSameOn=!stkChanged&&stocktakeSame.has(String(e.id));
-    return `<div class="record-card ${stkChanged?'stk-card-changed':''} ${stkSameOn?'stk-card-same':''}" id="eqcard-${e.id}">
+    const sel=eqSelId!==null&&String(eqSelId)===String(e.id);
+    return `<div class="record-card eq-item ${sel?'sel':''} ${stkChanged?'stk-card-changed':''} ${stkSameOn?'stk-card-same':''}" id="eqcard-${e.id}" onclick="eqRowClick(event,${ja(e.id)})">
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
-        <div style="flex:1;min-width:0">
+        <div class="eq-body" style="flex:1;min-width:0">
           <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">📦 套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
-          <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
+          <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}<span class="eq-flags">${mismatches.length?'<i class="w" title="位置代碼對不上">位置待確認</i>':''}${equipUsageHtml(e)?'<i title="有人在借或申請中">借用中</i>':''}</span></div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">${equipOut(e)?'架上實點':'實點數量'}：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??stkShelfExpected(e)}" data-orig="${stkShelfExpected(e)}" oninput="markStocktake(${ja(e.id)},this.value,${stkShelfExpected(e)})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
               <button type="button" class="stk-same ${stkSameOn?'on':''}" id="stks-${e.id}" style="${stkChanged?'display:none':''}" onclick="toggleStkSame(${ja(e.id)})">${stkSameOn?'✓ 無變動':'無變動'}</button>
@@ -7357,11 +7467,11 @@ function renderAdminEquipCard(e){
             ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
-          ${e.restricted_note?`<div style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
-          ${kitLines(e).length?`<details class="kit-box"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
-          ${equipUsageHtml(e)}
-          ${mismatches.length?`<div style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
-          ${e.last_counted_at?`<div style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
+          ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
+          ${kitLines(e).length?`<details class="kit-box eq-x"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
+          <div class="eq-x">${equipUsageHtml(e)}</div>
+          ${mismatches.length?`<div class="eq-x" style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
+          ${e.last_counted_at?`<div class="eq-x" style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
         <div class="eq-actions">
           <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">編輯</button>
