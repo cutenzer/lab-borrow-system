@@ -247,7 +247,6 @@
   .noloc-acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;max-width:52%;}
   .chem-sec.on{display:block;}
   @media(min-width:1100px){
-    body:has(#panel-chemicals.active) main{max-width:1560px;}
     .chem-ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(400px,1fr);gap:16px;align-items:start;}
     .chem-tabs .ct-cab{display:none;}
     .chem-left{display:block!important;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;border-radius:14px;}
@@ -434,31 +433,21 @@
   .eq-meta{font-size:12.5px;margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
   .eq-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
 
-  /* ── 電腦版：畫面比較寬，字和圖片一起放大 ── */
+  /* ── 電腦版：字稍微放大好讀，但縮圖、留白不放大，寬度留給內容 ── */
   @media(min-width:901px){
-    body{font-size:16px;}
-    header{height:62px;}
-    header h1{font-size:18px;}
+    body{font-size:15.5px;}
     main{max-width:1180px;padding:24px 28px;}
-    .card{padding:22px 26px;}
-    .card-title{font-size:17px;}
-    .tab{font-size:15px;padding:10px 16px;}
-    .tab-more-menu button{font-size:15px;padding:12px 18px;}
-    .btn{font-size:14.5px;padding:9px 18px;}
-    .btn-sm{font-size:13.5px;padding:7px 13px;}
-    input,select,textarea{font-size:15.5px;padding:9px 12px;}
-    .purpose-tab{font-size:13.5px;padding:5px 13px;}
-    .record-card{padding:16px 20px;}
-    .record-id{font-size:12.5px;}
-    .record-meta{font-size:14px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));}
-    .record-meta-label{font-size:12px;}
-    .item-row{font-size:14.5px;padding:6px 0;}
-    .item-num{font-size:12.5px;}
-    .eq-thumb{width:104px;height:104px;border-radius:10px;font-size:36px;}
-    .eq-name{font-size:19px;}
-    .eq-sub{font-size:14.5px;margin-top:4px;}
-    .eq-meta{font-size:15px;gap:16px;margin-top:8px;}
-    .eq-meta input{font-size:15.5px!important;width:84px!important;padding:5px 8px!important;}
+    .tab{font-size:15px;}
+    .btn{font-size:14.5px;}
+    .btn-sm{font-size:13.5px;}
+    input,select,textarea{font-size:15px;}
+    .record-meta{font-size:14px;}
+    .item-row{font-size:14.5px;}
+    .eq-thumb{width:64px;height:64px;}
+    .eq-name{font-size:16.5px;}
+    .eq-sub{font-size:13.5px;}
+    .eq-meta{font-size:14px;}
+    .record-meta{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));}
     .eq-actions{flex-direction:row;flex-wrap:wrap;justify-content:flex-end;max-width:260px;align-content:flex-start;}
   }
 
@@ -869,6 +858,16 @@
 .modal-x:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 </style>
 
+<style id="admin-frame">
+/* 後台母版第一步：每頁同寬、靠左，換頁不跳；器材新增表單平常收起 */
+.eq-add-card{display:none}
+.eq-add-card.open{display:block}
+.eq-filter-row select{flex:0 0 150px}
+@media(min-width:1100px){
+  main{max-width:1480px;margin:0;}
+  header .header-logout{display:none;}
+}
+</style>
 </head>
 <body>
 
@@ -1396,8 +1395,8 @@
 </div>
 
 <div id="panel-equipment" class="panel">
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">🏷️ 新增 / 編輯器材</div>
+  <div class="card eq-add-card" id="eqAddCard" style="margin-bottom:16px">
+    <div class="card-title">新增器材<button type="button" class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="toggleEqAdd(false)">收起</button></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group">
         <label>房間 *</label>
@@ -1439,10 +1438,11 @@
   <div class="card" style="margin-bottom:16px">
     <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
       <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
+      <button class="btn btn-primary btn-sm" id="eqAddBtn" onclick="toggleEqAdd(true)">＋ 新增器材</button>
     </div>
     <div class="info-box">現場點貨：只點<b>架上</b>的數量，借出中的系統會自動加回總數。數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「💾 儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「✏️ 編輯」。</div>
-    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1">
+    <div class="eq-filter-row" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1 1 260px;min-width:0">
       <select id="adminEquipRoomFilter" onchange="adminEquipPage=1;filterAdminEquip()">
         <option value="">全部房間</option>
         <option value="Physics">物理</option>
@@ -1452,9 +1452,7 @@
         <option value="Physics Chemistry">理化</option>
         <option value="TeachingMaterialRoom">教具室</option>
       </select>
-    </div>
-    <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
-      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;white-space:nowrap">
         <input type="checkbox" id="adminEquipLowStock" onchange="adminEquipPage=1;filterAdminEquip()" style="width:auto">
         只看耗材庫存不足
       </label>
@@ -1818,7 +1816,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-12c';
+const ADMIN_VERSION='2026-10-13a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2119,7 +2117,7 @@ function openPhotoViewer(url){
   if(typeof navPush==='function')navPush('photoViewer');
 }
 function closePhotoViewer(){const v=document.getElementById('photoViewer');if(v)v.classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closePhotoViewer();});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const ov=document.getElementById('modalOverlay');if(ov&&ov.classList.contains('show')){ov.classList.remove('show');return;}closePhotoViewer();});
 function renderList(records,container,mode){
   if(!records||!records.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';return;}
   let bar='';
@@ -6973,6 +6971,11 @@ function stkShelfExpected(e){return Math.max(0,(parseInt(e.total)||0)-equipOut(e
 function equipAvailable(e){
   const borrowed=equipBorrowedMap[e.room+'__'+e.name]||0;
   return Math.max(0,(parseInt(e.total)||0)-borrowed);
+}
+function toggleEqAdd(open){
+  const c=document.getElementById('eqAddCard'),b=document.getElementById('eqAddBtn');if(!c)return;
+  c.classList.toggle('open',!!open);if(b)b.style.display=open?'none':'';
+  if(open){c.scrollIntoView({behavior:'smooth',block:'start'});setTimeout(()=>{const n=document.getElementById('eq-name');if(n)n.focus({preventScroll:true});},300);}
 }
 function clearEquipForm(){
   editingEquipId=null;
