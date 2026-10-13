@@ -1491,6 +1491,24 @@
 @media(min-width:901px){#page-semester .sp-qbox input{font-size:17px}.sp-qlist .sp-rt b{font-size:15.5px}}
 </style>
 
+<style id="sp-filter">
+/* 學期實驗：科目、年級篩選。電腦一排排按鈕；手機兩個下拉 */
+.sp-fb{display:none;flex-direction:column;gap:8px;margin:-2px 0 14px}
+.sp-frow{display:flex;align-items:center;gap:10px}
+.sp-fl{font-size:12.5px;color:var(--text2);letter-spacing:.1em;width:2.6em;flex-shrink:0}
+.sp-fd{display:flex;gap:6px;align-items:center;margin:-2px 0 12px}
+.sp-sel{position:relative;flex:1;min-width:0;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--surface);border-radius:12px;padding:0 8px 0 10px;height:42px;color:var(--text);cursor:pointer}
+.sp-sel.on{border-color:var(--text);background:var(--surface2)}
+.sp-sl{font-size:12px;color:var(--text2);letter-spacing:.08em;border-right:1px solid var(--border);padding-right:6px;flex-shrink:0}
+.sp-sel i{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+#page-semester .sp-sel select{appearance:none;-webkit-appearance:none;flex:1;min-width:0;width:auto;border:0;border-radius:0;background:transparent;box-shadow:none;outline:none;font:inherit;font-size:16px;font-weight:700;color:var(--text);padding:0 18px 0 0;margin:0;height:100%;cursor:pointer;text-overflow:ellipsis}
+.sp-sel:focus-within{box-shadow:0 0 0 3px #e3efec;border-color:var(--accent)}
+.sp-chev{position:absolute;right:10px;pointer-events:none;color:var(--text2)}
+.sp-fclr{flex-shrink:0;width:42px;height:42px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text2);font:inherit;font-size:15px;cursor:pointer}
+.sp-qn b{color:var(--text)}
+.sp-qall{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0 0 0 8px}
+@media(min-width:901px){.sp-fb{display:flex}.sp-fd{display:none}}
+</style>
 </head>
 <body class="on-home">
 <header>
@@ -1905,7 +1923,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-12i · 學期實驗只放學期週次＋寒輔暑輔</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13a · 學期實驗可選科目、年級</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5591,7 +5609,16 @@ function renderSemTable(){
 const SP_TINT={'物理':'#e9edf4','化學':'#f6ece4','生物':'#e8f1ea','地科':'#e5f0f0','理化':'#efe9f4','其他':'#efede8'};
 const SP_ONE={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理','其他':'其'};
 const SP_KIND={'科學研究':'研','科研':'研','菁英':'菁','探究':'探','選修':'選','資優':'資','實驗班':'實','科學班':'科','先修':'先','專題':'專','加深加廣':'深'};
-let spTerm=null,spSubj='全部',spSel=null;
+let spTerm=null,spSubj='全部',spSel=null,spGrade='全部';
+// 年級：從「高二多元選修（物理）」這種寫法抓開頭的 國一～高三
+const SP_GRADES=['國一','國二','國三','高一','高二','高三'];
+function spGradeOf(t){const m=String(t&&t.grade||'').replace(/\s/g,'').match(/^(國|高)([一二三])/);return m?m[1]+m[2]:'';}
+function spGradeList(){const h=new Set(allCourseTemplates.map(spGradeOf));return SP_GRADES.filter(g=>h.has(g));}
+function spWant(t){return (spSubj==='全部'||semSubjectOf(t)===spSubj)&&(spGrade==='全部'||spGradeOf(t)===spGrade);}
+// 只接受清單裡有的值，別的一律當「全部」
+function spSetSubj(v){spSubj=SEM_SUBJ.some(x=>x[0]===v)?v:'全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
+function spSetGrade(v){spGrade=SP_GRADES.includes(v)?v:'全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
+function spClearFilter(){spSubj='全部';spGrade='全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
 const SP_MAX=4; // 電腦版一格最多顯示幾個實驗
 function spKindOf(t){return SP_KIND[detectSpecialTag(t)]||'';}
 function spLetter(t){return SP_ONE[semSubjectOf(t)]+spKindOf(t);}
@@ -5652,10 +5679,19 @@ function spRender(){
   const subjHave=new Set(allCourseTemplates.map(semSubjectOf));
   const subjList=SEM_SUBJ.filter(x=>subjHave.has(x[0]));
   if(spSubj!=='全部'&&!subjHave.has(spSubj))spSubj='全部';
-  const want=t=>spSubj==='全部'||semSubjectOf(t)===spSubj;
+  if(spGrade!=='全部'&&!spGradeList().includes(spGrade))spGrade='全部';
+  const want=spWant;
   const termName=n=>n===1?'上學期':'下學期';
-  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div>
-    <div class="sp-legend" role="group" aria-label="只看哪一科">${['全部',...subjList.map(x=>x[0])].map(s=>`<button type="button" class="${spSubj===s?'on':''}" onclick="spSubj=${ja(s)};spRender()">${s==='全部'?'':`<i style="background:${semColor(s)}"></i>`}${escH(s)}</button>`).join('')}</div></div>`;
+  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div></div>`;
+  const subjVals=['全部',...subjList.map(x=>x[0])],gradeVals=['全部',...spGradeList()];
+  // 電腦：科目、年級各一排按鈕，全部列出來
+  h+=`<div class="sp-fb"><div class="sp-frow"><span class="sp-fl">科目</span><div class="sp-legend" role="group" aria-label="只看哪一科">${subjVals.map(v=>`<button type="button" class="${spSubj===v?'on':''}" onclick="spSetSubj(${ja(v)})">${v==='全部'?'':`<i style="background:${semColor(v)}"></i>`}${escH(v)}</button>`).join('')}</div></div>`+
+    (gradeVals.length>2?`<div class="sp-frow"><span class="sp-fl">年級</span><div class="sp-legend" role="group" aria-label="只看哪個年級">${gradeVals.map(v=>`<button type="button" class="${spGrade===v?'on':''}" onclick="spSetGrade(${ja(v)})">${escH(v)}</button>`).join('')}</div></div>`:'')+`</div>`;
+  // 手機：科目、年級兩個下拉選單放同一列
+  const chev='<svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  h+=`<div class="sp-fd"><label class="sp-sel${spSubj!=='全部'?' on':''}"><span class="sp-sl">科目</span>${spSubj!=='全部'?`<i style="background:${semColor(spSubj)}"></i>`:''}<select aria-label="科目" onchange="spSetSubj(this.value)">${subjVals.map(v=>`<option value="${escH(v)}"${v===spSubj?' selected':''}>${v==='全部'?'全部科目':escH(v)}</option>`).join('')}</select>${chev}</label>`+
+    (gradeVals.length>2?`<label class="sp-sel${spGrade!=='全部'?' on':''}"><span class="sp-sl">年級</span><select aria-label="年級" onchange="spSetGrade(this.value)">${gradeVals.map(v=>`<option value="${escH(v)}"${v===spGrade?' selected':''}>${v==='全部'?'全部年級':escH(v)}</option>`).join('')}</select>${chev}</label>`:'')+
+    ((spSubj!=='全部'||spGrade!=='全部')?`<button type="button" class="sp-fclr" onclick="spClearFilter()" aria-label="清除科目和年級">✕</button>`:'')+`</div>`;
   if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，日期是估計的（${spTerm===1?'8 月底':'2 月中'}開學），週次照課綱寫的放。</div>`;
   // 沒填月份／週次、排不進表的
   const noMonthHtml=!B.noMonth.length?'':`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填週次（請管理員在後台補上）</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
@@ -5744,17 +5780,20 @@ function spSearch(v){
   spQ=String(v||'').trim().toLowerCase().slice(0,40);
   const box=document.getElementById('spQRes');if(!box)return;
   if(!spQ){box.innerHTML='';spRender();return;}
-  const hits=allCourseTemplates.map(t=>({t,why:spHit(t,spQ),w:spWhen(t)})).filter(x=>x.why).sort((a,b)=>a.w.k-b.w.k||formatTemplateName(a.t).localeCompare(formatTemplateName(b.t),'zh-Hant'));
+  const allN=allCourseTemplates.filter(t=>spHit(t,spQ)).length;
+  const scope=[spSubj,spGrade].filter(x=>x!=='全部');
+  const hits=allCourseTemplates.filter(spWant).map(t=>({t,why:spHit(t,spQ),w:spWhen(t)})).filter(x=>x.why).sort((a,b)=>a.w.k-b.w.k||formatTemplateName(a.t).localeCompare(formatTemplateName(b.t),'zh-Hant'));
   const MAX=30,list=hits.slice(0,MAX);
-  box.innerHTML=hits.length?`<div class="sp-qn">找到 ${hits.length} 個實驗${hits.length>MAX?`，先列前 ${MAX} 個`:''}<span class="sp-qdesk">・週表上符合的會亮起來</span></div><div class="sp-qlist">${list.map(({t,why,w})=>{const sj=semSubjectOf(t),p=templateNameParts(t);
+  const allBtn=scope.length&&allN>hits.length?`<button type="button" class="sp-qall" onclick="spClearFilter()">全部科目、年級有 ${allN} 個 ›</button>`:'';
+  box.innerHTML=hits.length?`<div class="sp-qn">${scope.length?`在 <b>${escH(scope.join('・'))}</b> 裡`:''}找到 ${hits.length} 個實驗${hits.length>MAX?`，先列前 ${MAX} 個`:''}${allBtn}<span class="sp-qdesk">・週表上符合的會亮起來</span></div><div class="sp-qlist">${list.map(({t,why,w})=>{const sj=semSubjectOf(t),p=templateNameParts(t);
       return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${spMark(p.pure||p.head,spQ)}</b><small>${spMark([p.head,t.teacher].filter(Boolean).join('・'),spQ)}${why!=='name'?`・<span class="sp-qeq">${spMark(why,spQ)}</span>`:''}</small></span><span class="sp-qw">${escH(w.text)}</span><span class="sp-go">›</span></button>`;}).join('')}</div>`
-    :`<div class="sp-qn">找不到「${escH(spQ)}」。試試實驗名稱的一部分、年級（高一）、老師或器材名稱。</div>`;
+    :scope.length&&allN?`<div class="sp-qn">在 <b>${escH(scope.join('・'))}</b> 裡沒有「${escH(spQ)}」${allBtn}</div>`:`<div class="sp-qn">找不到「${escH(spQ)}」。試試實驗名稱的一部分、年級（高一）、老師或器材名稱。</div>`;
   spRender();
 }
 // 電腦版「還有 N 個」：列出這一週全部的實驗
 function spWeekAll(i){
   const B=spBuild(spTerm||spHomeTerm()),s=B.slots[i];if(!s)return;
-  const want=t=>spSubj==='全部'||semSubjectOf(t)===spSubj,its=s.items.filter(want);
+  const want=spWant,its=s.items.filter(want);
   showModal(spSlotTitle(s,true),`<div class="sp-pc">這週有 ${its.length} 個實驗，點一下看器材、申請</div>`+
     its.map(t=>{const sj=semSubjectOf(t),p=templateNameParts(t);return `<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(p.pure||p.head)}</b><small>${escH(spSub(t))}</small></span><span class="sp-go">›</span></button>`;}).join(''),
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
