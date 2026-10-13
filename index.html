@@ -1493,9 +1493,10 @@
 
 <style id="sp-filter">
 /* 學期實驗：科目、年級篩選。電腦一排排按鈕；手機兩個下拉 */
-.sp-fb{display:none;flex-direction:column;gap:8px;margin:-2px 0 14px}
-.sp-frow{display:flex;align-items:center;gap:10px}
-.sp-fl{font-size:12.5px;color:var(--text2);letter-spacing:.1em;width:2.6em;flex-shrink:0}
+.sp-fb{display:none}
+.sp-frow{display:flex;align-items:center;gap:8px;padding-left:18px;border-left:1px solid var(--border)}
+.sp-frow .sp-legend{flex-wrap:nowrap}
+.sp-fl{font-size:12.5px;color:var(--text2);letter-spacing:.1em;flex-shrink:0}
 .sp-fd{display:flex;gap:6px;align-items:center;margin:-2px 0 12px}
 .sp-sel{position:relative;flex:1;min-width:0;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--surface);border-radius:12px;padding:0 8px 0 10px;height:42px;color:var(--text);cursor:pointer}
 .sp-sel.on{border-color:var(--text);background:var(--surface2)}
@@ -1507,7 +1508,17 @@
 .sp-fclr{flex-shrink:0;width:42px;height:42px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text2);font:inherit;font-size:15px;cursor:pointer}
 .sp-qn b{color:var(--text)}
 .sp-qall{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;cursor:pointer;padding:0 0 0 8px}
-@media(min-width:901px){.sp-fb{display:flex}.sp-fd{display:none}}
+@media(max-width:900px){
+  #page-semester .sp-bar{overflow:visible;gap:6px}
+  .sp-fd{flex:1;min-width:0;margin:0;gap:5px}
+  #page-semester .sem-seg button{padding:6px 9px}
+  .sp-sl{display:none}
+  .sp-sel{height:38px;padding:0 6px 0 9px;gap:5px;border-radius:10px}
+  #page-semester .sp-sel select{font-size:15px;padding-right:16px}
+  .sp-chev{right:7px}
+  .sp-fclr{width:36px;height:38px;border-radius:10px}
+}
+@media(min-width:901px){.sp-fb{display:contents}.sp-fd{display:none}#page-semester .sp-bar{gap:10px 12px}.sp-frow{padding-left:12px;gap:6px}.sp-frow .sp-legend{gap:4px}.sp-frow .sp-legend button{padding:5px 9px;font-size:13px;gap:5px}.sp-frow .sp-legend i{width:8px;height:8px}}
 </style>
 </head>
 <body class="on-home">
@@ -1923,7 +1934,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13a · 學期實驗可選科目、年級</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13c · 學期實驗篩選跟學期同一排、格子最多 3 個</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5619,7 +5630,7 @@ function spWant(t){return (spSubj==='全部'||semSubjectOf(t)===spSubj)&&(spGrad
 function spSetSubj(v){spSubj=SEM_SUBJ.some(x=>x[0]===v)?v:'全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
 function spSetGrade(v){spGrade=SP_GRADES.includes(v)?v:'全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
 function spClearFilter(){spSubj='全部';spGrade='全部';spSel=null;if(spQ)spSearch(spQ);else spRender();}
-const SP_MAX=4; // 電腦版一格最多顯示幾個實驗
+const SP_MAX=3; // 電腦版一格最多顯示幾個實驗（超過就收成「還有 N 個」）
 function spKindOf(t){return SP_KIND[detectSpecialTag(t)]||'';}
 function spLetter(t){return SP_ONE[semSubjectOf(t)]+spKindOf(t);}
 function spMid(d){const x=new Date(d);x.setDate(x.getDate()+3);return x;} // 用週四判斷這週算哪個月
@@ -5682,16 +5693,16 @@ function spRender(){
   if(spGrade!=='全部'&&!spGradeList().includes(spGrade))spGrade='全部';
   const want=spWant;
   const termName=n=>n===1?'上學期':'下學期';
-  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div></div>`;
+  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};spSel=null;spRender()">${termName(n)}</button>`).join('')}</div>`;
   const subjVals=['全部',...subjList.map(x=>x[0])],gradeVals=['全部',...spGradeList()];
   // 電腦：科目、年級各一排按鈕，全部列出來
   h+=`<div class="sp-fb"><div class="sp-frow"><span class="sp-fl">科目</span><div class="sp-legend" role="group" aria-label="只看哪一科">${subjVals.map(v=>`<button type="button" class="${spSubj===v?'on':''}" onclick="spSetSubj(${ja(v)})">${v==='全部'?'':`<i style="background:${semColor(v)}"></i>`}${escH(v)}</button>`).join('')}</div></div>`+
     (gradeVals.length>2?`<div class="sp-frow"><span class="sp-fl">年級</span><div class="sp-legend" role="group" aria-label="只看哪個年級">${gradeVals.map(v=>`<button type="button" class="${spGrade===v?'on':''}" onclick="spSetGrade(${ja(v)})">${escH(v)}</button>`).join('')}</div></div>`:'')+`</div>`;
-  // 手機：科目、年級兩個下拉選單放同一列
+  // 手機：科目、年級兩個下拉選單，跟學期放同一列
   const chev='<svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   h+=`<div class="sp-fd"><label class="sp-sel${spSubj!=='全部'?' on':''}"><span class="sp-sl">科目</span>${spSubj!=='全部'?`<i style="background:${semColor(spSubj)}"></i>`:''}<select aria-label="科目" onchange="spSetSubj(this.value)">${subjVals.map(v=>`<option value="${escH(v)}"${v===spSubj?' selected':''}>${v==='全部'?'全部科目':escH(v)}</option>`).join('')}</select>${chev}</label>`+
     (gradeVals.length>2?`<label class="sp-sel${spGrade!=='全部'?' on':''}"><span class="sp-sl">年級</span><select aria-label="年級" onchange="spSetGrade(this.value)">${gradeVals.map(v=>`<option value="${escH(v)}"${v===spGrade?' selected':''}>${v==='全部'?'全部年級':escH(v)}</option>`).join('')}</select>${chev}</label>`:'')+
-    ((spSubj!=='全部'||spGrade!=='全部')?`<button type="button" class="sp-fclr" onclick="spClearFilter()" aria-label="清除科目和年級">✕</button>`:'')+`</div>`;
+    ((spSubj!=='全部'||spGrade!=='全部')?`<button type="button" class="sp-fclr" onclick="spClearFilter()" aria-label="清除科目和年級">✕</button>`:'')+`</div></div>`;
   if(!B.real)h+=`<div class="sp-note">${activeSemester?'這學期還沒在後台設定週次':'後台還沒設定學期週次'}，日期是估計的（${spTerm===1?'8 月底':'2 月中'}開學），週次照課綱寫的放。</div>`;
   // 沒填月份／週次、排不進表的
   const noMonthHtml=!B.noMonth.length?'':`<details class="sem-search"><summary>還有 ${B.noMonth.length} 個課綱實驗沒有填週次（請管理員在後台補上）</summary><div class="sp-nomonth">${B.noMonth.filter(want).map(t=>`<button type="button" class="sp-row" onclick="spOpen(${ja(t.id)})"><span class="sp-lt" style="color:${semColor(semSubjectOf(t))};background:${SP_TINT[semSubjectOf(t)]}">${escH(spLetter(t))}</span><span class="sp-rt"><b>${escH(formatTemplateName(t))}</b><small>${escH(t.teacher||'')}</small></span><span class="sp-go">›</span></button>`).join('')}</div></details>`;
