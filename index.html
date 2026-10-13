@@ -1934,7 +1934,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13c · 學期實驗篩選跟學期同一排、格子最多 3 個</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13d · 照片上傳網路不穩會自動重試</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -4130,19 +4130,30 @@ async function uploadPendingPhotos(reqId){
       type=file.type||'application/octet-stream';
     }
     const path=`${reqId}/${Date.now()}_${i}.${ext}`;
-    const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
-      method:'POST',
-      headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':type},
-      body
-    });
-    if(!res.ok){
-      const t=await res.text().catch(()=>'');
-      throw new Error(t||res.statusText||'照片上傳失敗');
+    // 手機網路（尤其 LINE 內建瀏覽器）常常「檔案其實傳上去了，回應卻斷掉」：
+    // 失敗就用同一個檔名再傳一次；伺服器說「已經有這個檔」就代表第一次其實成功了
+    let ok=false,lastErr='';
+    for(let t=0;t<3&&!ok;t++){
+      if(t)await new Promise(r=>setTimeout(r,800*t));
+      try{
+        const res=await fetch(`${SUPABASE_URL}/storage/v1/object/borrow-photos/${path}`,{
+          method:'POST',
+          headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':type},
+          body
+        });
+        if(res.ok){ok=true;break;}
+        const txt=await res.text().catch(()=>'');
+        if(t&&/duplicate|already exists|409/i.test(txt+' '+res.status)){ok=true;break;}
+        lastErr=txt||res.statusText||'照片上傳失敗';
+        if(res.status>=400&&res.status<500&&res.status!==408&&res.status!==429)break; // 檔案本身被拒（太大、格式）就不用再試
+      }catch(e){lastErr=e.message||'網路中斷';}
     }
-    urls.push(`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`);
+    if(ok)urls.push(`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`);
+    else photoUploadFails.push(lastErr);
   }
   return urls;
 }
+let photoUploadFails=[];
 
 // ── 購物車 ────────────────────────────────────────────────
 // 讀出借用表單目前「同步場地」的時段（只讀畫面，不做檢查）
@@ -4877,7 +4888,10 @@ if(courseNoteBody){
     // 照片：先上傳到 Supabase Storage（borrow-photos bucket），失敗不阻擋申請送出
     let photoUrls=[];
     try{
+      photoUploadFails=[];
       photoUrls=await uploadPendingPhotos(id);
+      // 有幾張沒傳上去：成功的照樣附上，不會整批丟掉
+      if(photoUploadFails.length)showToast(`有 ${photoUploadFails.length} 張照片沒傳上去，其他 ${photoUrls.length} 張已附上，申請照常送出`,'error');
     }catch(photoErr){
       console.warn('照片上傳失敗（借用申請仍會送出）：',photoErr.message);
       showToast('照片上傳失敗，已略過照片但申請仍會送出','error');
