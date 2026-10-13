@@ -925,6 +925,42 @@
   .eq-pane-act .act-more{margin-left:auto}
 }
 </style>
+<style id="rec-split">
+/* 借用單：電腦版一筆一行＋右窗格 */
+@media(min-width:1100px){
+  .rec-ws{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
+  .rec-rows{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+  .rec-row{display:grid;grid-template-columns:28px minmax(150px,1.1fr) minmax(0,1.6fr) 118px 96px;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;min-height:48px}
+  .rec-row:last-child{border-bottom:0}
+  .rec-row:hover{background:var(--surface2)}
+  .rec-row.sel{background:#e3eee9;box-shadow:inset 3px 0 0 var(--accent)}
+  .rec-row.bsel-on .rr-who b{color:var(--accent)}
+  .rec-row.overdue .rr-date{color:var(--danger);font-weight:700}
+  .rr-chk .bsel{margin:0}
+  .rr-who{display:flex;flex-direction:column;min-width:0}
+  .rr-who b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rr-who small{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rr-who em{font-style:normal;color:var(--accent)}
+  .rr-items{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .rr-date{font-family:'DM Mono',monospace;font-size:12.5px;color:var(--text2);white-space:nowrap}
+  .rr-st{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .rr-od{font-size:11px;color:var(--danger);font-weight:700}
+  .rr-dep{display:flex;flex-direction:column;align-items:flex-end;font-family:'DM Mono',monospace;font-size:13px}
+  .rr-dep small{font-family:inherit;font-size:11px;color:var(--text2)}
+  .rec-pane{position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto}
+  .rec-pane>.record-card{margin:0}
+  .rec-pane-empty{color:var(--text2);font-size:13.5px;padding:16px}
+  .rec-stock{margin-top:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:10px 12px}
+  .rs-h{font-size:12px;color:var(--text2);font-weight:700;margin-bottom:6px}
+  .rec-stock table{width:100%;border-collapse:collapse;font-size:13px}
+  .rec-stock th{font-size:11.5px;color:var(--text2);font-weight:500;text-align:left;padding:3px 4px;border-bottom:1px solid var(--border)}
+  .rec-stock td{padding:5px 4px;border-bottom:1px dashed var(--border)}
+  .rec-stock tr:last-child td{border-bottom:0}
+  .rec-stock .n{text-align:right;font-family:'DM Mono',monospace}
+  .rec-stock tr.short td{color:var(--danger);font-weight:700}
+  .rec-stock .mut{color:var(--text2);font-weight:400}
+}
+</style>
 </head>
 <body>
 
@@ -1876,7 +1912,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13b';
+const ADMIN_VERSION='2026-10-13c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2188,7 +2224,65 @@ function renderList(records,container,mode){
       <span id="bselCount" style="color:var(--text2)">已選 ${batchSel.size} 筆</span>
       <button type="button" class="btn btn-primary btn-sm" id="bselGo" style="margin-left:auto" ${batchSel.size?'':'disabled'} onclick="confirmBatchApprove()">核准選取的 ${batchSel.size} 筆</button></div>`;
   }
+  if(recWide()){
+    // 電腦版：左邊一筆一行，右邊看選到的那筆（詳情＋核准／歸還等動作）
+    recLists[mode]=records;
+    if(!records.some(r=>String(r.id)===String(recSel[mode])))recSel[mode]=String(records[0].id);
+    container.innerHTML=bar+`<div class="rec-ws"><div class="rec-rows" role="list">${records.map(r=>recRowHtml(r,mode)).join('')}</div><aside class="rec-pane" id="recPane-${mode}" aria-label="申請詳情">${recPaneHtml(mode)}</aside></div>`;
+    return;
+  }
   container.innerHTML=bar+'<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
+}
+// ── 借用單電腦版：一筆一行＋右窗格 ──
+const recWide=()=>window.matchMedia('(min-width:1100px)').matches;
+const recSel={},recLists={};
+const REC_BADGE={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'};
+function recOverdueDays(r){const t=new Date(),d=r.returnDate?new Date(r.returnDate):null;return d&&t>d?Math.floor((t-d)/864e5):0;}
+function recRowHtml(r,mode){
+  const items=Array.isArray(r.items)?r.items:[];
+  const itemTxt=items.length?items.slice(0,2).map(i=>`${escH(i.name)}×${parseInt(i.quantity)||0}`).join('、')+(items.length>2?` 等 ${items.length} 項`:''):(Array.isArray(r.photos)&&r.photos.length?'只附照片':'─');
+  const canBatch=mode==='pending'&&r.status==='待審核',bOn=canBatch&&batchSel.has(String(r.id)),od=recOverdueDays(r);
+  const sel=String(recSel[mode])===String(r.id);
+  const right=mode==='deposit'?`<span class="rr-dep">NT$${parseInt(r.depositAmount)||0}<small>${escH(r.depositStatus||'')}</small></span>`:`<span class="badge ${REC_BADGE[r.status]||'badge-pending'}">${escH(r.status)}</span>${od>0&&(r.status==='已核准'||r.status==='逾期')?`<small class="rr-od">逾期 ${od} 天</small>`:''}`;
+  return `<div class="rec-row ${sel?'sel':''} ${bOn?'bsel-on':''} ${r.status==='逾期'?'overdue':''}" role="listitem" data-rid="${escH(r.id)}" onclick="recPick(event,${ja(mode)},this.dataset.rid)">
+    <span class="rr-chk">${canBatch?`<label class="bsel" title="勾選後可一次核准"><input type="checkbox" data-rid="${escH(r.id)}" ${bOn?'checked':''} onchange="batchToggle(this.dataset.rid,this.checked)"></label>`:''}</span>
+    <span class="rr-who"><b>${escH(r.name)}</b><small>${escH(r.role||'學生')}${r.studentId?'・'+escH(r.studentId):''}・<em>${escH(r.purpose||'')}</em></small></span>
+    <span class="rr-items">${itemTxt}</span>
+    <span class="rr-date">${escH(mdShort(r.borrowDate)||'─')} → ${escH(mdShort(r.returnDate)||'─')}</span>
+    <span class="rr-st">${right}</span>
+  </div>`;
+}
+// 右窗格：原本的完整卡片＋每樣器材的櫃位、可借數（不夠的變紅）
+function recStockHtml(r,mode){
+  const full=mode==='pending';
+  const items=(Array.isArray(r.items)?r.items:[]).filter(i=>i&&!i.loose);if(!items.length)return '';
+  const used={};
+  allRecords.filter(x=>(x.status==='已核准'||x.status==='逾期')&&String(x.id)!==String(r.id)).forEach(x=>(x.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;used[k]=(used[k]||0)+(parseInt(it.quantity)||0);}));
+  const rows=items.map(i=>{
+    const e=allEquipment.find(q=>q.room===i.room&&q.name===i.name),need=parseInt(i.quantity)||0;
+    const av=e?Math.max(0,(parseInt(e.total)||0)-(used[i.room+'__'+i.name]||0)):null,short=av!==null&&av<need;
+    return `<tr class="${full&&short?'short':''}"><td>${escH(i.name)}</td><td>${e&&e.location?escH(e.location):'<span class="mut">─</span>'}</td><td class="n">${need}</td>${full?`<td class="n">${av===null?'<span class="mut">找不到</span>':av}</td>`:''}</tr>`;
+  }).join('');
+  const h=full?'到哪裡拿、夠不夠':mode==='return'?'放回哪裡':'到哪裡拿';
+  return `<div class="rec-stock"><div class="rs-h">${h}</div><table><thead><tr><th>器材</th><th>櫃位</th><th class="n">${full?'要借':'數量'}</th>${full?'<th class="n">可借</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function recPaneHtml(mode){
+  const r=(recLists[mode]||[]).find(x=>String(x.id)===String(recSel[mode]));
+  if(!r)return '<div class="rec-pane-empty">點左邊一筆看詳情</div>';
+  return renderRecord(r,mode)+(['pending','approved','return'].includes(mode)?recStockHtml(r,mode):'');
+}
+function recPick(ev,mode,id){
+  if(ev&&ev.target.closest('input,button,a,label,details,select,textarea'))return;
+  recSel[mode]=String(id);
+  const box=document.getElementById(mode+'List');if(!box)return;
+  box.querySelectorAll('.rec-row').forEach(x=>x.classList.toggle('sel',x.dataset.rid===String(id)));
+  const p=document.getElementById('recPane-'+mode);if(p){p.innerHTML=recPaneHtml(mode);p.scrollTop=0;}
+}
+window.matchMedia('(min-width:1100px)').addEventListener?.('change',()=>{if(allRecords.length)loadAllRenderOnly();});
+function loadAllRenderOnly(){
+  ['pending','approved','all'].forEach(p=>{try{renderWithFilter(p);}catch(_){}});
+  renderList(allRecords.filter(r=>r.status==='已核准'||r.status==='逾期'),document.getElementById('returnList'),'return');
+  renderList(allRecords.filter(r=>r.depositAmount>0),document.getElementById('depositList'),'deposit');
 }
 // ── 延長歸還日：跨學期繼續借的，改日期後會一直留在「借出中追蹤」直到歸還 ──
 function semesterRange(){
@@ -2275,14 +2369,15 @@ function exportLoanList(){
 const batchSel=new Set();
 function batchToggle(id,on){
   id=String(id);if(on)batchSel.add(id);else batchSel.delete(id);
-  const card=document.querySelector(`.record-card[data-rid="${CSS.escape(id)}"]`);if(card)card.classList.toggle('bsel-on',on);
+  document.querySelectorAll(`.record-card[data-rid="${CSS.escape(id)}"],.rec-row[data-rid="${CSS.escape(id)}"]`).forEach(card=>card.classList.toggle('bsel-on',on));
+  document.querySelectorAll(`#pendingList .bsel input[data-rid="${CSS.escape(id)}"]`).forEach(cb=>{if(cb.checked!==on)cb.checked=on;});
   updateBatchBar();
 }
 function batchSelectAll(on){
-  document.querySelectorAll('#pendingList .bsel input').forEach(cb=>{cb.checked=on;batchToggle(cb.dataset.rid,on);});
+  document.querySelectorAll('#pendingList .bsel input').forEach(cb=>{if(cb.closest('.rec-pane'))return;cb.checked=on;batchToggle(cb.dataset.rid,on);});
 }
 function updateBatchBar(){
-  const n=batchSel.size,total=document.querySelectorAll('#pendingList .bsel input').length;
+  const n=batchSel.size,total=document.querySelectorAll('#pendingList .bsel input:not(.rec-pane *)').length;
   const c=document.getElementById('bselCount');if(c)c.textContent=`已選 ${n} 筆`;
   const g=document.getElementById('bselGo');if(g){g.disabled=!n;g.textContent=`核准選取的 ${n} 筆`;}
   const a=document.getElementById('bselAll');if(a)a.checked=n>0&&n===total;
