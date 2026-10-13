@@ -1974,7 +1974,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13l';
+const ADMIN_VERSION='2026-10-13m';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9490,8 +9490,8 @@ function srMoreHtml(b,e){
   let h='';
   if(next.length)h+=`<div class="sr-more"><div class="sr-mh"><b>同一班接下來的課也是這個實驗？</b><small>勾到哪一次，前面的會一起勾</small></div>
     <div class="sr-chain">${next.map((x,i)=>`<label><input type="checkbox" data-n="${i}" onchange="srChain(this)"> ${lab(x)}</label>`).join('')}</div></div>`;
-  if(others.length)h+=`<div class="sr-more"><div class="sr-mh"><b>${escH(lv)}${escH(subj)}其他班也做這個實驗？</b><small>每班只填還沒填的下一次課</small><button type="button" class="sr-all" onclick="document.querySelectorAll('.sr-oth input').forEach(i=>i.checked=true)">全選</button></div>
-    <div class="sr-oth">${others.map((x,i)=>`<label><input type="checkbox" data-o="${i}"> <b>${escH(x.b.grade||'')}</b> ${lab(x)}<small>${escH(x.b.borrower_name||'')}</small></label>`).join('')}</div></div>`;
+  if(others.length)h+=`<div class="sr-more"><div class="sr-mh"><b>${escH(lv)}${escH(subj)}其他班也做這個實驗？</b><small>每班只填還沒填的下一次課；老師都記成上面填的</small><button type="button" class="sr-all" onclick="document.querySelectorAll('.sr-oth input').forEach(i=>i.checked=true)">全選</button></div>
+    <div class="sr-oth">${others.map((x,i)=>`<label><input type="checkbox" data-o="${i}"> <b>${escH(x.b.grade||'')}</b> ${lab(x)}</label>`).join('')}</div></div>`;
   return h;
 }
 function srChain(el){const n=+el.dataset.n;document.querySelectorAll('.sr-chain input').forEach(i=>{const k=+i.dataset.n;if(el.checked&&k<n)i.checked=true;if(!el.checked&&k>n)i.checked=false;});}
@@ -9525,9 +9525,9 @@ async function srSave(){
       if(!pick.length){showToast('至少勾一節','error');return;}
       const body=pick.map(p=>({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(srCtx.bid)}));
       // 一起填：同一班之後的課（同一個老師、班級）
-      [...document.querySelectorAll('.sr-chain input:checked')].map(i=>srCtx.next[+i.dataset.n]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||base.grade||'').slice(0,20)||null,teacher:(x.b.borrower_name||base.teacher).slice(0,30)})));
+      [...document.querySelectorAll('.sr-chain input:checked')].map(i=>srCtx.next[+i.dataset.n]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||base.grade||'').slice(0,20)||null,teacher:base.teacher})));
       // 一起填：同年級其他班（班級、老師用他們自己的預約）
-      [...document.querySelectorAll('.sr-oth input:checked')].map(i=>srCtx.others[+i.dataset.o]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||'').slice(0,20)||null,teacher:(x.b.borrower_name||base.teacher).slice(0,30),course_type:base.course_type||srBkType(x.b)||null})));
+      [...document.querySelectorAll('.sr-oth input:checked')].map(i=>srCtx.others[+i.dataset.o]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||'').slice(0,20)||null,teacher:base.teacher,course_type:base.course_type||srBkType(x.b)||null})));
       if(body.length>pick.length&&!confirm(`這次會一起填 ${body.length} 節，確定？`))return;
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
