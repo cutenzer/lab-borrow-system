@@ -2004,7 +2004,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13h · 學期頁同一週同一實驗合併</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13i · 同名實驗合併、卡片顯示實際老師</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -5904,7 +5904,7 @@ function spWeekAll(i){
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // 點實驗：看器材、直接申請
-function spOpen(id){
+function spOpen(id,ctx){
   const t=allCourseTemplates.find(x=>String(x.id)===String(id));if(!t)return;
   const sj=semSubjectOf(t),gc=parseInt(t.group_count)||0;
   const B=spBuild(spTerm||1),s=B.slots.find(x=>x.items.includes(t));
@@ -5914,7 +5914,7 @@ function spOpen(id){
     return `<div class="sp-eq"><span>${escH(it.name||'')}${it.spec?`<small> ${escH(it.spec)}</small>`:''}</span>${q?`<i class="${per?'pg':'sh'}">${per?`每組 ${per}`:'全班共用'}</i><b>${q} ${escH(it.unit||'')}</b>`:''}</div>`;}).join('');
   showModal('📅 '+formatTemplateName(t),`
     <div class="sp-dtag" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</div>
-    <div class="sp-dmeta"><span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
+    <div class="sp-dmeta">${ctx?`<span>🗓️ ${escH(ctx.when)}${ctx.n?`・${ctx.n} 節`:''}</span>${ctx.cls?`<span>🏫 ${escH(ctx.cls)}</span>`:''}${ctx.who?`<span>👩‍🏫 ${escH(ctx.who)}</span>`:''}`:`<span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}`}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
     <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
     ${t.reference_note?`<div class="sp-ref">📝 ${escH(t.reference_note)}</div>`:''}
     <div class="hint" style="margin-top:10px">按「用這個申請」會帶入器材、日期先放課綱那一週，下一頁都可以再改。</div>`,
@@ -7191,7 +7191,8 @@ async function sxLoad(force){
   sxLoading=false;sxDatalist();spRender();
 }
 // 選實驗用的清單（可以打字找）：「名稱｜年級」
-function sxTplLabel(t){return `${(t.name||'').trim()}｜${(t.grade||'').trim()||'未填年級'}`;}
+// 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
+function sxTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dup=allCourseTemplates.some(x=>x!==t&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
 function sxDatalist(){
   let dl=document.getElementById('sxTplList');
   if(!dl){dl=document.createElement('datalist');dl.id='sxTplList';document.body.appendChild(dl);}
@@ -7217,9 +7218,11 @@ function sxWeekItems(w){
     const t=r.template_id?sxTpl(r.template_id):null,b=r.booking_id?sxBookings.find(x=>x.id===r.booking_id):null;
     const title=t?(t.name||'').trim():(r.title||'');
     const subj=r.subject||(t&&sxTplSubj(t))||(b&&sxBkSubj(b))||'';
-    const key='x|'+(r.template_id?'t'+r.template_id:'n'+title)+'|'+subj;
+    // 用實驗名稱合併（課綱實驗裡有同名重複的也算同一個）
+    const key='x|'+String(title).replace(/\s+/g,'').toLowerCase()+'|'+subj;
     const c=add(key,{subj,type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',title,tpl:t?t.id:null,fixed:false,venues:[]},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',1,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
+    c.last=c.last&&c.last>r.run_date?c.last:r.run_date;
     if(!r.booking_id&&r.venue&&!c.venues.includes(r.venue))c.venues.push(r.venue);
   });
   sxBookings.forEach(b=>{
@@ -7250,9 +7253,17 @@ function sxGradesTxt(list){
   }).join('、');
 }
 function sxCardSub(c){return [`${c.grade||''}${c.subj&&!String(c.grade||'').includes(c.subj)?c.subj:''}${sxTypeTxt(c.type)?(c.grade||c.subj?'・':'')+sxTypeTxt(c.type):''}`,c.who,c.venue||(c.n?`${c.n} 節`:'')].filter(Boolean).join('・');}
+let sxCardArr=[];
+// 點卡片看實驗：老師、班級、日期用這一週實際做的，不用課綱實驗裡寫的
+function sxOpenCard(i){
+  const c=sxCardArr[i];if(!c)return;
+  const md=d=>{const x=new Date(d+'T00:00:00');return `${x.getMonth()+1}/${x.getDate()}`;};
+  spOpen(c.tpl,{when:c.last&&c.last!==c.date?`${md(c.date)}～${md(c.last)}`:md(c.date),who:c.whos.join('、'),cls:c.grade,n:c.n});
+}
 function sxCardHtml(c,mobile){
   const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
-  const on=c.tpl?`spOpen(${ja(c.tpl)})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
+  const ci=sxCardArr.push(c)-1;
+  const on=c.tpl?`sxOpenCard(${ci})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
   return `<button type="button" class="${mobile?'pm-item':'ps-chip'}${c.title?'':' noexp'}" style="--c:${col};--t:${tint}" ${on?`onclick="${on}"`:'disabled'}>
     <span class="sx-ct"><b>${escH(c.title||'未填實驗')}${c.fixed&&!mobile?'<em>固定</em>':''}</b><small>${escH(sxCardSub(c))}</small></span>${c.fixed&&mobile?'<em>固定課</em>':''}</button>`;
 }
@@ -7334,6 +7345,7 @@ spRender=function(){
   const head=document.querySelector('#page-semester .sp-head');
   if(head)head.innerHTML=`<h2>📅 學期實驗</h2><div class="pv-tabs" role="tablist"><button type="button" role="tab" class="${sxView==='sem'?'on':''}" onclick="sxView='sem';spRender()">這學期</button><button type="button" role="tab" class="${sxView==='lib'?'on':''}" onclick="sxView='lib';spRender()">實驗庫</button></div>`;
   const mobile=!window.matchMedia('(min-width:901px)').matches;
+  sxCardArr=[];
   const html=sxView==='lib'?sxLibHtml(mobile):sxSemHtml(mobile);
   if(mobile&&head&&html.includes('<!--sx-body-->')){
     // 手機：標題、分頁、搜尋、篩選固定在上方，只捲課程清單
