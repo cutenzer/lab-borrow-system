@@ -1297,6 +1297,7 @@
           <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-file').click()">📤 上傳實驗紀錄表（老師的 Excel）</button>
           <hr>
           <button type="button" onclick="this.closest('details').removeAttribute('open');openCourseTypes()">🏷️ 管理課程類型</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');openEqMap()">🔗 器材對名稱（對到庫存品名）</button>
           <hr>
           <button type="button" onclick="this.closest('details').removeAttribute('open');exportTemplatesXlsx()">📥 匯出全部（Excel 備份）</button>
           <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-import-file').click()">📤 匯入備份 Excel（整批更新）</button>
@@ -1310,6 +1311,7 @@
     </div>
     <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p></div></div>
   </div>
+  <div id="emView" class="em-view"></div>
 </div>
 
 <div id="panel-floorplan" class="panel">
@@ -1959,7 +1961,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13h';
+const ADMIN_VERSION='2026-10-13i';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4303,6 +4305,7 @@ function addTplEquipRow(data){
   const div=document.createElement('div');
   div.className='period-setting-row';
   div.id='ter-'+id;
+  if(data.no_stock){div.dataset.ns='1';div.dataset.nsName=data.name||'';}
   div.innerHTML=`
     <input type="text" id="te-name-${id}" placeholder="器材名稱" style="flex:2;min-width:100px" value="${escH(data.name||'')}">
     <input type="text" id="te-spec-${id}" placeholder="規格" style="flex:1;min-width:70px" value="${escH(data.spec||'')}">
@@ -4325,7 +4328,7 @@ function collectTplEquipItems(){
     unit:document.getElementById('te-unit-'+id).value.trim()||'個',
     room:document.getElementById('te-room-'+id).value,
     note:document.getElementById('te-note-'+id).value.trim(),
-  })).filter(it=>it.name&&it.quantity>0);
+  })).map((it,i)=>{const d=document.getElementById('ter-'+tplEquipRows[i]);if(d&&d.dataset.ns==='1'&&d.dataset.nsName===it.name)it.no_stock=true;return it;}).filter(it=>it.name&&it.quantity>0);
 }
 
 // ── 科目、課程類型（類型可在「管理類型」增減；停用的不再出現在選單，但舊資料照樣顯示）──
@@ -4590,7 +4593,7 @@ function tplBuildEqIndex(eqs){
 function tplMissItems(t){
   if(!tplEqIndex)return [];
   const {norm,list}=tplEqIndex;
-  return (Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>{const n=norm(it.name);if(!n)return false;return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));});
+  return (Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>{const n=norm(it&&it.name);if(!n||it.no_stock)return false;return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));});
 }
 async function loadTemplates(){
   const list=document.getElementById('templateList');
@@ -4635,6 +4638,7 @@ function renderTemplateList(){
   items.sort((a,b)=>{const x=tplSortKey(a.t),y=tplSortKey(b.t);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2],'zh-Hant');});
   if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
   let html='',lastM='§';
+  if(tplFilterMode==='bad'&&typeof emGroups==='function'){const gn=emGroups().filter(g=>!g.no).length;if(gn)html+=`<div class="em-cta">這些實驗裡共有 <b>${gn}</b> 種器材名稱對不到庫存<button type="button" class="btn btn-primary btn-sm" onclick="openEqMap()">一次對名稱 ›</button></div>`;}
   items.forEach(({t,miss})=>{
     const m=tplMonthNum(t);
     if(m!==lastM){html+=`<div class="tpl-month">${m==null?'沒填月份':m+' 月'}</div>`;lastM=m;}
@@ -7359,7 +7363,7 @@ async function checkTemplateHealth(){
     const [tpls,eqs]=await Promise.all([sb('GET','course_templates',{order:'name'}),sb('GET','equipment',{})]);
     const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
     const eqList=(Array.isArray(eqs)?eqs:[]).map(e=>({n:norm(e.name),full:norm(e.name)+norm(e.spec)}));
-    const matches=it=>{const n=norm(it.name);if(!n)return true;return eqList.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));};
+    const matches=it=>{const n=norm(it&&it.name);if(!n||it.no_stock)return true;return eqList.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));};
     const bad=(Array.isArray(tpls)?tpls:[]).map(t=>({t,miss:(Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>!matches(it))})).filter(x=>x.miss.length);
     const total=(Array.isArray(tpls)?tpls:[]).length;
     if(!bad.length){
@@ -9059,5 +9063,157 @@ async function doDeleteHighlight(id){
 })();
 </script>
 
+<style id="em-css">
+.em-view{display:none}
+#panel-templates.em-on>*:not(#emView){display:none!important}
+#panel-templates.em-on #emView{display:block}
+.em-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.em-head h3{margin:0;font-size:20px;letter-spacing:.02em}
+.em-back{border:0;background:none;font:inherit;font-size:14px;color:var(--text2);cursor:pointer;padding:6px 4px}
+.em-back:hover{color:var(--text)}
+.em-tabs{display:flex;margin-left:auto;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.em-tabs button{border:0;background:var(--surface);font:inherit;font-size:13.5px;padding:7px 14px;cursor:pointer;color:var(--text2)}
+.em-tabs button.on{background:var(--text);color:var(--surface)}
+.em-tabs b{font-variant-numeric:tabular-nums;margin-left:3px}
+.em-lead{margin:0 0 12px;font-size:13.5px;color:var(--text2)}
+.em-done{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--text2);margin-bottom:10px}
+.em-done span{background:#e3efe6;color:#1f5b4c;border-radius:6px;padding:2px 8px;font-weight:600}
+.em-list{display:flex;flex-direction:column;border-top:2px solid var(--text)}
+.em-row{display:grid;grid-template-columns:minmax(170px,240px) 22px 1fr auto;gap:10px 12px;align-items:center;padding:12px 4px;border-bottom:1px dashed var(--border)}
+.em-src b{display:block;font-size:16px}
+.em-src small{display:block;font-size:12px;color:var(--text2);margin-top:2px;line-height:1.45}
+.em-src .em-alt{color:#9a5b16}
+.em-spec{display:inline-block;font-size:11.5px;color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:0 5px;margin-top:3px}
+.em-arrow{color:var(--text2);font-size:18px;text-align:center}
+.em-dst{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-width:0}
+.em-chip{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:1.5px solid var(--border);background:var(--surface);border-radius:9px;padding:5px 10px;font:inherit;cursor:pointer;text-align:left;max-width:100%}
+.em-chip b{font-size:14px;font-weight:600}
+.em-chip small{font-size:11px;color:var(--text2)}
+.em-chip:hover{border-color:var(--text2)}
+.em-chip.on{border-color:#1f5b4c;background:#e3efe6;box-shadow:inset 0 0 0 1px #1f5b4c}
+.em-chip.on b{color:#1f5b4c}
+.em-find input{width:140px;font-size:13.5px;padding:7px 9px;border-radius:9px}
+.em-find.on input{border-color:#1f5b4c;background:#e3efe6;width:200px}
+.em-none{font-size:13px;color:var(--text2)}
+.em-act{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.em-act .btn[disabled]{opacity:.4;cursor:not-allowed}
+.em-no{border:0;background:none;font:inherit;font-size:13px;color:var(--text2);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px}
+.em-no:hover{color:var(--danger)}
+.em-cta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff7ed;border:1px solid #f1d3a8;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:13.5px}
+.em-cta button{margin-left:auto}
+@media(max-width:760px){
+  .em-row{grid-template-columns:1fr;gap:8px;padding:12px 0}
+  .em-arrow{display:none}
+  .em-act{justify-content:flex-start}
+  .em-tabs{margin-left:0;width:100%}.em-tabs button{flex:1}
+  .em-find input,.em-find.on input{width:100%}.em-find{flex:1 1 100%}
+}
+</style>
+<script id="em-js">
+// ── 器材對名稱：課綱實驗裡寫的器材名稱，一次對到庫存品名 ──
+let emOpen=false,emPick={},emBusy=false,emDone=[],emShow='todo';
+const EM_SYN=[['錶','表'],['堝','鍋'],['鉗','夾'],['鐳','雷'],['鎳子','鑷子'],['橡膠','橡皮'],['容量瓶','定量瓶'],['吸濾','抽濾'],['玻璃棒','玻棒'],['攪拌棒','玻棒'],['電子天平','電子秤'],['溼','濕'],['氦氖雷射','氦氖鐳射'],['量熱器','卡計'],['移液管','吸量管'],['分度吸量管','吸量管'],['析量管','吸量管']];
+function emKey(s){return String(s||'').toLowerCase().replace(/[\s（）()【】\[\]、，,./／+＋&＆:：·・\-－_]/g,'').replace(/[及與和跟]/g,'');}
+function emCanon(s){let k=emKey(s);EM_SYN.forEach(([a,b])=>{k=k.split(emKey(a)).join(emKey(b));});return k.replace(/\d+(\.\d+)?(ml|l|g|kg|cm|mm|v|a|w)?/g,'');}
+function emBig(s){const o=new Set();for(let i=0;i<s.length-1;i++)o.add(s.slice(i,i+2));if(s.length===1)o.add(s);return o;}
+function emScore(a,b){
+  if(!a||!b)return 0;if(a===b)return 1;
+  if(a.includes(b)||b.includes(a)){const s=Math.min(a.length,b.length),l=Math.max(a.length,b.length);return s<2?0.3:0.6+0.35*s/l;}
+  const A=emBig(a),B=emBig(b);let n=0;A.forEach(x=>{if(B.has(x))n++;});
+  const dice=2*n/(A.size+B.size||1);
+  const ca=new Set(a),cb=new Set(b);let c=0;ca.forEach(x=>{if(cb.has(x))c++;});
+  return Math.max(dice,0.85*c/Math.max(ca.size,cb.size)-0.1);
+}
+function emEqNames(){
+  const m=new Map();
+  (allEquipment||[]).forEach(e=>{const n=(e.name||'').trim();if(!n)return;const r=m.get(n)||{name:n,specs:new Set(),rooms:new Set(),avail:0,canon:emCanon(n)};if(e.spec)r.specs.add(String(e.spec));if(e.room)r.rooms.add(e.room);r.avail+=parseInt(e.available)||0;m.set(n,r);});
+  return [...m.values()];
+}
+function emItemOk(it){return !!it&&(it.no_stock||!tplMissItems({equipment_items:[it]}).length);}
+// 把所有實驗裡對不到的名稱整理成一組一組（寫法只差括號、空白、及／與／＋ 的算同一組）
+function emGroups(){
+  const g=new Map();
+  allTemplates.forEach(t=>(Array.isArray(t.equipment_items)?t.equipment_items:[]).forEach(it=>{
+    const n=(it&&it.name||'').trim();if(!n)return;
+    const isNo=!!it.no_stock;if(!isNo&&emItemOk(it))return;
+    const k=emKey(n);const x=g.get(k)||{key:k,names:new Map(),tpls:new Map(),specs:new Set(),no:true,uses:0};
+    x.names.set(n,(x.names.get(n)||0)+1);x.tpls.set(t.id,t);if(it.spec)x.specs.add(String(it.spec));if(!isNo)x.no=false;x.uses++;g.set(k,x);
+  }));
+  return [...g.values()].map(x=>{const names=[...x.names.entries()].sort((a,b)=>b[1]-a[1]).map(a=>a[0]);return {...x,main:names[0],alt:names.slice(1),tplList:[...x.tpls.values()]};})
+    .sort((a,b)=>b.uses-a.uses||a.main.localeCompare(b.main,'zh-Hant'));
+}
+function emSuggest(gp,eqn){
+  const c=emCanon(gp.main),spec=[...gp.specs].map(emKey).filter(Boolean);
+  return eqn.map(e=>{let s=emScore(c,e.canon);if(s>0.3&&spec.length){const hay=emKey(e.name)+[...e.specs].map(emKey).join('');if(spec.some(p=>hay.includes(p)))s+=0.12;}return {e,s};})
+    .filter(x=>x.s>=0.42).sort((a,b)=>b.s-a.s||b.e.avail-a.e.avail).slice(0,4);
+}
+function openEqMap(){if(!tplEqIndex&&Array.isArray(allEquipment)&&allEquipment.length)tplEqIndex=tplBuildEqIndex(allEquipment);emOpen=true;emPick={};emShow='todo';document.getElementById('panel-templates').classList.add('em-on');emRender();window.scrollTo(0,0);}
+function closeEqMap(){emOpen=false;document.getElementById('panel-templates').classList.remove('em-on');renderTemplateList();}
+function emRender(){
+  const box=document.getElementById('emView');if(!box)return;
+  const eqn=emEqNames(),all=emGroups(),todo=all.filter(g=>!g.no),nos=all.filter(g=>g.no);
+  const list=emShow==='no'?nos:todo;
+  const roomShort=r=>({'Chemistry':'化學','Biology':'生物','Physics':'物理','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具室'}[r]||r);
+  const rows=list.map((g,i)=>{
+    const sug=emSuggest(g,eqn),picked=emPick[g.key]??(sug[0]&&sug[0].s>=0.6?sug[0].e.name:'');
+    if(emPick[g.key]===undefined)emPick[g.key]=picked;
+    const tn=g.tplList.map(t=>(t.name||'').trim()).filter(Boolean);
+    const chips=sug.map(({e})=>`<button type="button" class="em-chip${picked===e.name?' on':''}" onclick="emSet(${ja(g.key)},${ja(e.name)})"><b>${escH(e.name)}</b><small>${escH([...e.rooms].map(roomShort).join('・'))}・可借 ${e.avail}</small></button>`).join('');
+    const other=picked&&!sug.some(x=>x.e.name===picked);
+    return `<div class="em-row" data-k="${escH(g.key)}">
+      <div class="em-src"><b>${escH(g.main)}</b>${g.specs.size?`<span class="em-spec">${escH([...g.specs].slice(0,3).join('、'))}</span>`:''}
+        <small>${g.tplList.length} 個實驗：${escH(tn.slice(0,3).join('、'))}${tn.length>3?` 等`:''}</small>${g.alt.length?`<small class="em-alt">也寫成：${escH(g.alt.join('、'))}</small>`:''}</div>
+      <div class="em-arrow" aria-hidden="true">→</div>
+      <div class="em-dst">${emShow==='no'?'<span class="em-none">標成庫存沒有</span>':`${chips||'<span class="em-none">找不到像的品名</span>'}
+        <label class="em-find${other?' on':''}"><input list="emEqList" placeholder="找其他品名…" value="${other?escH(picked):''}" onchange="emSet(${ja(g.key)},this.value.trim())" maxlength="60"></label>`}</div>
+      <div class="em-act">${emShow==='no'?`<button type="button" class="btn btn-secondary btn-sm" onclick="emUndoNo(${ja(g.key)})">取消標記</button>`:
+        `<button type="button" class="btn btn-primary btn-sm" ${picked?'':'disabled'} onclick="emApply(${ja(g.key)})">改成這個</button><button type="button" class="em-no" onclick="emMarkNo(${ja(g.key)})">庫存沒有</button>`}</div>
+    </div>`;}).join('');
+  const done=emDone.slice(-4).reverse().map(d=>`<span>${escH(d)}</span>`).join('');
+  box.innerHTML=`<div class="em-head">
+      <button type="button" class="em-back" onclick="closeEqMap()">‹ 回課綱實驗</button>
+      <h3>器材對名稱</h3>
+      <div class="em-tabs"><button type="button" class="${emShow==='todo'?'on':''}" onclick="emShow='todo';emRender()">還沒對到 <b>${todo.length}</b></button><button type="button" class="${emShow==='no'?'on':''}" onclick="emShow='no';emRender()">庫存沒有 <b>${nos.length}</b></button></div>
+    </div>
+    <p class="em-lead">左邊是實驗裡寫的名稱，右邊是庫存裡像的品名。按「改成這個」，所有用到這個名稱的實驗會一起改。</p>
+    ${done?`<div class="em-done">剛改好：${done}</div>`:''}
+    <datalist id="emEqList">${eqn.map(e=>`<option value="${escH(e.name)}">`).join('')}</datalist>
+    <div class="em-list">${rows||`<div class="empty"><p>${emShow==='no'?'沒有標成庫存沒有的器材':'全部都對到庫存了'}</p></div>`}</div>`;
+}
+function emSet(k,name){emPick[k]=name;const y=scrollY;emRender();scrollTo(0,y);}
+async function emPatchItems(match,fn){
+  const hit=allTemplates.filter(t=>(t.equipment_items||[]).some(match));
+  for(const t of hit){
+    const items=(t.equipment_items||[]).map(it=>match(it)?fn({...it}):it);
+    await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(t.id),body:{equipment_items:items,updated_at:new Date().toISOString()},prefer:'return=minimal'});
+    t.equipment_items=items;
+  }
+  return hit.length;
+}
+async function emApply(k){
+  if(emBusy){showToast('上一筆還在儲存，稍等一下','error');return;}const name=String(emPick[k]||'').trim();
+  if(!name)return;
+  if(!emEqNames().some(e=>e.name===name)){showToast('庫存裡沒有「'+name+'」這個品名，請從清單挑','error');return;}
+  emBusy=true;
+  try{
+    const n=await emPatchItems(it=>emKey(it&&it.name)===k&&!it.no_stock,it=>{it.name=name;delete it.no_stock;return it;});
+    emDone.push(name);delete emPick[k];
+    showToast(`已改成「${name}」，${n} 個實驗一起更新`,'success');
+  }catch(e){showToast('儲存失敗：'+e.message,'error');}
+  emBusy=false;const y=scrollY;emRender();scrollTo(0,y);
+}
+async function emMarkNo(k){
+  if(emBusy){showToast('上一筆還在儲存，稍等一下','error');return;}emBusy=true;
+  try{const n=await emPatchItems(it=>emKey(it&&it.name)===k&&!it.no_stock,it=>{it.no_stock=true;return it;});showToast(`已標成庫存沒有（${n} 個實驗），老師借用時會顯示「請自備或向管理員確認」`,'success');}
+  catch(e){showToast('儲存失敗：'+e.message,'error');}
+  emBusy=false;const y=scrollY;emRender();scrollTo(0,y);
+}
+async function emUndoNo(k){
+  if(emBusy){showToast('上一筆還在儲存，稍等一下','error');return;}emBusy=true;
+  try{await emPatchItems(it=>emKey(it&&it.name)===k&&it.no_stock,it=>{delete it.no_stock;return it;});showToast('已取消標記','success');}
+  catch(e){showToast('儲存失敗：'+e.message,'error');}
+  emBusy=false;const y=scrollY;emRender();scrollTo(0,y);
+}
+</script>
 </body>
 </html>
