@@ -1974,7 +1974,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13j';
+const ADMIN_VERSION='2026-10-13k';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9354,7 +9354,7 @@ function srWeekRows(w){
     if(b.status==='已拒絕')return;
     const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!filled.has(`${b.id}|${p.date}|${p.period}`));
     if(!ps.length)return;
-    rows.push({kind:'bk',b,ps,date:ps.map(p=>p.date).sort()[0],period:ps.map(p=>p.period).join('、'),title:'',subj:srBkSubj(b),grade:b.grade||'',type:srBkType(b),who:b.borrower_name||'',venue:[...new Set(ps.map(p=>p.venue))].join('、'),fixed:!!b.is_fixed,shown:srShown(b)});
+    rows.push({kind:'bk',b,ps,a,e,date:ps.map(p=>p.date).sort()[0],period:ps.map(p=>p.period).join('、'),title:'',subj:srBkSubj(b),grade:b.grade||'',type:srBkType(b),who:b.borrower_name||'',venue:[...new Set(ps.map(p=>p.venue))].join('、'),fixed:!!b.is_fixed,shown:srShown(b)});
   });
   const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;};
   return rows.filter(x=>(srSubj==='全部'||x.subj===srSubj)&&(srMode==='all'||(srMode==='empty'?x.kind==='bk':x.kind==='run')))
@@ -9374,7 +9374,7 @@ function srRowHtml(x){
   }else{
     tag=x.fixed?'<span class="sr-tag fx">固定課</span>':'<span class="sr-tag">預約</span>';
     const sv=x.b.semester_show===true?'1':x.b.semester_show===false?'0':'';
-    act=`<button type="button" class="btn btn-primary btn-sm" onclick="srFill(${ja(x.b.id)},${ja(x.ps.map(p=>p.date+'|'+p.period))})">填實驗</button>`+
+    act=`<button type="button" class="btn btn-primary btn-sm" onclick="srFill(${ja(x.b.id)},${ja(x.a)},${ja(x.e)})">填實驗</button>`+
       (x.fixed?'':`<label class="sr-show" title="還沒填實驗時，要不要出現在前台學期頁"><select onchange="srSetShow(${ja(x.b.id)},this.value)" aria-label="前台學期頁"><option value=""${sv===''?' selected':''}>前台：自動（${srShowAuto(x.b)?'顯示':'不顯示'}）</option><option value="1"${sv==='1'?' selected':''}>前台：顯示</option><option value="0"${sv==='0'?' selected':''}>前台：不顯示</option></select></label>`);
   }
   return `<div class="sr-row${x.kind==='bk'?' sr-empty':''}${x.hidden||(x.kind==='bk'&&!x.shown)?' dim':''}" style="--c:${col}">
@@ -9454,10 +9454,12 @@ async function srEdit(id){
   srCtx={id:id??null};
   showModal(id!=null?'修改實驗紀錄':'新增實驗紀錄',srFormHtml(r,null),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
 }
-async function srFill(bid,keys){
+async function srFill(bid,a,e){
   await srEnsureTeachers();
-  const b=srBks.find(x=>x.id===bid);if(!b)return;
-  const ps=keys.map(k=>{const [d,p]=k.split('|');return (b.periods||[]).find(x=>x.date===d&&x.period===p);}).filter(Boolean);
+  const b=srBks.find(x=>String(x.id)===String(bid));if(!b){showToast('找不到這筆預約，請重新整理','error');return;}
+  const done=new Set(srRuns.filter(r=>String(r.booking_id)===String(b.id)).map(r=>`${r.run_date}|${r.period||''}`));
+  const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!done.has(`${p.date}|${p.period}`));
+  if(!ps.length){showToast('這週的節次都填好了','success');srRender();return;}
   srCtx={bid,ps};
   const r={subject:srBkSubj(b),course_type:srBkType(b),grade:b.grade||'',teacher:b.borrower_name||''};
   showModal('填實驗',srFormHtml(r,ps),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
@@ -9472,7 +9474,7 @@ async function srSave(){
     if(srCtx&&srCtx.bid){
       const pick=[...document.querySelectorAll('.sr-ps input:checked')].map(i=>srCtx.ps[+i.dataset.i]).filter(Boolean);
       if(!pick.length){showToast('至少勾一節','error');return;}
-      const body=pick.map(p=>({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:srCtx.bid}));
+      const body=pick.map(p=>({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(srCtx.bid)}));
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
     }else{
