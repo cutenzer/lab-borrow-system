@@ -1943,7 +1943,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13e';
+const ADMIN_VERSION='2026-10-13f';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2636,7 +2636,7 @@ async function saveTeacher(){
 function deleteTeacher(id){
   showModal('確認刪除',`<p>確定刪除這位老師的科目設定嗎？（不會刪除他過去的場地預約記錄）</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteTeacher('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteTeacher(${ja(id)})`}
   ]);
 }
 async function doDeleteTeacher(id){
@@ -2735,7 +2735,7 @@ async function approveVenueSelected(bookingId,approve,force){
     if(conflicts.length){
       showModal('⚠️ 時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-        {label:'仍要核准',cls:'btn-warn',fn:`approveVenueSelected('${bookingId}',true,true)`}
+        {label:'仍要核准',cls:'btn-warn',fn:`approveVenueSelected(${ja(bookingId)},true,true)`}
       ]);
       return;
     }
@@ -2761,7 +2761,7 @@ async function approveAllVenue(bookingId,approve,force){
     if(conflicts.length){
       showModal('⚠️ 時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-        {label:'仍要核准',cls:'btn-warn',fn:`approveAllVenue('${bookingId}',true,true)`}
+        {label:'仍要核准',cls:'btn-warn',fn:`approveAllVenue(${ja(bookingId)},true,true)`}
       ]);
       return;
     }
@@ -2922,7 +2922,7 @@ async function loadSemesters(){
       <div class="record-card" style="${s.is_active?'border-color:var(--accent);border-width:2px':''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
           <div>
-            <div style="font-size:15px;font-weight:700">${s.name} ${s.is_active?'<span class="badge badge-approved">啟用中</span>':''}</div>
+            <div style="font-size:15px;font-weight:700">${escH(s.name)} ${s.is_active?'<span class="badge badge-approved">啟用中</span>':''}</div>
             <div style="margin-top:4px">${periodSummary||'<span style="font-size:12px;color:var(--text2)">尚未設定期間</span>'}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
@@ -3113,7 +3113,7 @@ async function saveHoliday(){
 function deleteHoliday(id){
   showModal('確認刪除',`<p>確定刪除這筆假期設定嗎？</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHoliday('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHoliday(${ja(id)})`}
   ]);
 }
 async function doDeleteHoliday(id){
@@ -3190,7 +3190,7 @@ async function activateSemester(id){
 function deleteSemester(id){
   showModal('確認刪除',`<p>確定刪除這個學期設定嗎？</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteSemester('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteSemester(${ja(id)})`}
   ]);
 }
 async function doDeleteSemester(id){
@@ -3308,23 +3308,23 @@ function clickAdminBooking(bookingId,date,period,venue){
   showModal(`場地預約 — ${date} ${period}`,`
     <div style="font-size:14px;margin-bottom:6px"><strong>${escH(booking.borrower_name)}</strong> 【${booking.grade?escH(booking.grade)+'・':''}${escH(booking.purpose)}】</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${escH(booking.role||'')}${booking.student_id?' ・ '+escH(booking.student_id):''}</div>
-    <div style="font-size:13px;margin-bottom:10px">${venue}　${period}　狀態：<strong>${target?.status||booking.status}</strong></div>
+    <div style="font-size:13px;margin-bottom:10px">${escH(venue)}　${escH(period)}　狀態：<strong>${escH(target?.status||booking.status)}</strong></div>
     ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${escH(booking.note)}</div>`:''}
     ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${rec.week_start}～${rec.week_end}週・每週${DAYS[rec.day_of_week-1]}（共 ${periods.length} 個時段）</div>`:''}
     <div style="font-size:12px;color:var(--text2);margin-top:8px">此預約單共 ${periods.length} 個時段，「刪除此時段」僅移除這一筆。</div>
   `,[
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'},
     ...((target?.status||booking.status)==='待審核'?[
-      {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准')`},
-      {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已拒絕')`}
+      {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准')`},
+      {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已拒絕')`}
     ]:[]),
     {label:'＋ 這節再加一筆',cls:'btn-secondary',fn:`closeModal();openAdminAddVenue(${ja(date)},${ja(period)},${ja(venue)})`},
-    {label:'✏️ 編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal('${bookingId}')`},
+    {label:'✏️ 編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal(${ja(bookingId)})`},
     ...(rec?[
-      {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal('${bookingId}')`},
-      {label:'🗑️ 刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries('${bookingId}')`}
+      {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal(${ja(bookingId)})`},
+      {label:'🗑️ 刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries(${ja(bookingId)})`}
     ]:[]),
-    {label:'🗑️ 刪除此時段',cls:'btn-danger',fn:`deletePeriod('${bookingId}','${date}','${period}','${venue}')`}
+    {label:'🗑️ 刪除此時段',cls:'btn-danger',fn:`deletePeriod(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)})`}
   ]);
 }
 
@@ -3332,7 +3332,7 @@ function clickAdminBooking(bookingId,date,period,venue){
 function openEditGradeSubjectModal(bookingId){
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
   showModal('✏️ 編輯年級／科目',`
-    <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="egs-grade" value="${(booking.grade||'').replace(/"/g,'&quot;')}" placeholder="例如：高一戊、高二選"></div>
+    <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="egs-grade" value="${escH(booking.grade||'')}" placeholder="例如：高一戊、高二選"></div>
     <div class="form-group"><label>科目（顏色分類，留空則依「教師管理」的老師姓名自動判斷）</label>
       <select id="egs-subject">
         <option value="">(自動依老師清單判斷)</option>
@@ -3341,7 +3341,7 @@ function openEditGradeSubjectModal(bookingId){
     </div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'儲存',cls:'btn-primary',fn:`saveGradeSubject('${bookingId}')`}
+    {label:'儲存',cls:'btn-primary',fn:`saveGradeSubject(${ja(bookingId)})`}
   ]);
 }
 async function saveGradeSubject(bookingId){
@@ -3365,7 +3365,7 @@ async function setPeriodStatus(bookingId,date,period,venue,status,force){
     if(conf){
       showModal('⚠️ 時段衝突',`<p>此時段已有 <strong>${escH(conf.borrower_name)}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${date} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-        {label:'仍要核准',cls:'btn-warn',fn:`setPeriodStatus('${bookingId}','${date}','${period}','${venue}','已核准',true)`}
+        {label:'仍要核准',cls:'btn-warn',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准',true)`}
       ]);
       return;
     }
@@ -3410,7 +3410,7 @@ function openAdminAddVenue(date,period,presetVenue){
       </select>
     </div>
     <div class="form-group"><label>姓名 *</label><input type="text" id="avf-name" placeholder="例如：王老師 / 王小美" list="teacherNameList" oninput="avfAutoFillSubject()"></div>
-    <datalist id="teacherNameList">${allTeachers.map(t=>`<option value="${t.name}">`).join('')}</datalist>
+    <datalist id="teacherNameList">${allTeachers.map(t=>`<option value="${escH(t.name)}">`).join('')}</datalist>
     <div class="form-group" id="avf-sid-group" style="display:none"><label>學號 *</label><input type="text" id="avf-sid" placeholder="例如：191010"></div>
     <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="avf-grade" placeholder="例如：高一戊、高二選"></div>
     <div class="form-group"><label>目的</label><select id="avf-purpose"><option value="課程">課程</option><option value="自主學習">自主學習</option><option value="科展">科展</option><option value="探究">探究</option><option value="選修">選修</option><option value="菁英">菁英</option><option value="社團">社團</option><option value="其他">其他</option></select></div>
@@ -3430,7 +3430,7 @@ function openAdminAddVenue(date,period,presetVenue){
     <div class="form-group"><label>備註</label><textarea id="avf-note" rows="2"></textarea></div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認新增',cls:'btn-primary',fn:`adminAddVenue('${date}','${period}',${dow})`}
+    {label:'確認新增',cls:'btn-primary',fn:`adminAddVenue(${ja(date)},${ja(period)},${dow})`}
   ]);
   document.getElementById('avf-fixed').addEventListener('change',function(){document.getElementById('weekRangeWrap').style.display=this.checked?'block':'none';});
   if(hasWeeks){
@@ -3513,7 +3513,7 @@ function openEditRecurrenceModal(bookingId){
   if(!weeks.length){showToast('找不到學期週次設定，無法編輯排程','error');return;}
   const weekOptions=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
   showModal('✏️ 編輯整學期排程',`
-    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${escH(booking.borrower_name)}　【${escH(booking.purpose)}】　${rec.venue}　${rec.period}　每週${DAYS[rec.day_of_week-1]}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${escH(booking.borrower_name)}　【${escH(booking.purpose)}】　${escH(rec.venue)}　${escH(rec.period)}　每週${DAYS[rec.day_of_week-1]}</div>
     <div style="display:flex;gap:8px">
       <div class="form-group" style="flex:1"><label>起始週</label><select id="erc-week-start">${weekOptions}</select></div>
       <div class="form-group" style="flex:1"><label>結束週</label><select id="erc-week-end">${weekOptions}</select></div>
@@ -3521,7 +3521,7 @@ function openEditRecurrenceModal(bookingId){
     <div class="info-box" style="margin-top:6px">調整週次範圍後，系統會自動比對新舊範圍對應的日期，新增或移除時段（已核准/拒絕狀態的既有時段不受影響）。</div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'預覽變更',cls:'btn-primary',fn:`previewRecurrenceEdit('${bookingId}')`}
+    {label:'預覽變更',cls:'btn-primary',fn:`previewRecurrenceEdit(${ja(bookingId)})`}
   ]);
   document.getElementById('erc-week-start').value=rec.week_start;
   document.getElementById('erc-week-end').value=rec.week_end;
@@ -3545,7 +3545,7 @@ function previewRecurrenceEdit(bookingId){
   showModal('預覽變更',`
     <div style="font-size:13px;margin-bottom:8px">新週次範圍：第${newStart}～${newEnd}週</div>
     ${toAdd.length?`<div style="font-size:13px;color:var(--accent);margin-bottom:4px">將新增 ${toAdd.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${toAdd.join('、')}</div>`:''}
-    ${toRemove.length?`<div style="font-size:13px;color:var(--danger);margin-bottom:4px">將移除 ${toRemove.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${toRemove.map(p=>p.date).join('、')}</div>`:''}
+    ${toRemove.length?`<div style="font-size:13px;color:var(--danger);margin-bottom:4px">將移除 ${toRemove.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${escH(toRemove.map(p=>p.date).join('、'))}</div>`:''}
     ${addConflicts.length?`<div style="font-size:13px;color:var(--danger);margin-top:6px">⚠️ 新增的日期中有 ${addConflicts.length} 筆與既有核准／固定預約衝突，新增後請至週曆檢查。</div>`:''}
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
@@ -3572,7 +3572,7 @@ async function applyRecurrenceEdit(){
 function deleteWholeSeries(bookingId){
   showModal('確認刪除整個系列',`<p>確定要刪除整個固定課程系列嗎？這會移除此預約單的所有時段，無法復原。</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteWholeSeries('${bookingId}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteWholeSeries(${ja(bookingId)})`}
   ]);
 }
 async function doDeleteWholeSeries(bookingId){
@@ -3582,7 +3582,7 @@ async function doDeleteWholeSeries(bookingId){
 }
 
 // ── 器材審核 ──────────────────────────────────────────────
-function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${id}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doApprove('${id}')`}]);}
+function approveRecord(id){showModal('確認核准',`<p>確定核准 <strong>${escH(id)}</strong> 嗎？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認核准',cls:'btn-primary',fn:`doApprove(${ja(id)})`}]);}
 const REJECT_REASONS=['數量不足，請減少數量或改日期','時段衝突，請改其他日期','請先詢問選修課負責老師','資料不完整，請補填後重新申請','器材維修中，暫停出借'];
 function rejectRecord(id){showModal('確認拒絕',`<p>確定拒絕 <strong>${escH(id)}</strong> 嗎？</p><div class="form-group" style="margin-top:10px"><label>拒絕原因（借用人查紀錄時看得到）</label>
   <div class="reason-chips">${REJECT_REASONS.map((t,i)=>`<button type="button" onclick="pickRejectReason(${i})">${escH(t)}</button>`).join('')}</div>
@@ -3607,7 +3607,7 @@ async function doApprove(id,force){
       const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name);
       const total=eq?parseInt(eq.total)||0:0;
       const already=borrowedMap[it.room+'__'+it.name]||0;
-      if(already+(parseInt(it.quantity)||0)>total)shortage.push(`${it.name}（需 ${it.quantity}，可借 ${Math.max(0,total-already)}）`);
+      if(already+(parseInt(it.quantity)||0)>total)shortage.push(`${escH(it.name)}（需 ${parseInt(it.quantity)||0}，可借 ${Math.max(0,total-already)}）`);
     });
     // 庫存不足：不再硬性阻擋，改為跳確認視窗，確認後可強制核准
     if(shortage.length&&!force){
@@ -3618,7 +3618,7 @@ async function doApprove(id,force){
         <p style="font-size:12px;color:var(--text2);margin-top:6px">⚠️ 強制核准後，這些器材的可借量可能會暫時顯示為 0 或負數，等你之後到器材管理把實際總數補齊，就會自動恢復正常。</p>
       `,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-        {label:'仍要核准',cls:'btn-warn',fn:`doApprove('${id}',true)`}
+        {label:'仍要核准',cls:'btn-warn',fn:`doApprove(${ja(id)},true)`}
       ]);
       return;
     }
@@ -3973,7 +3973,7 @@ async function markSheetSigned(id,on){
 function deleteBorrowRecord(id){
   showModal('確認刪除',`<p>確定要永久刪除這筆記錄嗎？</p><p style="font-size:13px;color:var(--text2);margin-top:6px">${id}</p><p style="font-size:13px;color:var(--danger);margin-top:6px">此操作無法復原。</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteBorrowRecord('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteBorrowRecord(${ja(id)})`}
   ]);
 }
 async function doDeleteBorrowRecord(id){
@@ -3997,14 +3997,14 @@ function openDamageModal(id){
     <div class="form-group"><label>損壞說明 *</label><textarea id="damageNoteInput" rows="2" placeholder="說明損壞情況"></textarea></div>
     <div class="damage-form">
       <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px">💸 賠償計算</div>
-      ${items.map((item,i)=>`<div class="damage-row"><span style="font-size:12.5px;min-width:90px">${item.name}×${item.quantity}</span><input type="number" id="dmg_qty_${i}" placeholder="損壞數" min="0" max="${item.quantity}" oninput="calcDamage(${record?.depositAmount||0})"><span style="font-size:12px">件×NT$</span><input type="number" id="dmg_price_${i}" placeholder="單價" oninput="calcDamage(${record?.depositAmount||0})"></div>`).join('')}
+      ${items.map((item,i)=>`<div class="damage-row"><span style="font-size:12.5px;min-width:90px">${escH(item.name)}×${parseInt(item.quantity)||0}</span><input type="number" id="dmg_qty_${i}" placeholder="損壞數" min="0" max="${parseInt(item.quantity)||0}" oninput="calcDamage(${record?.depositAmount||0})"><span style="font-size:12px">件×NT$</span><input type="number" id="dmg_price_${i}" placeholder="單價" oninput="calcDamage(${record?.depositAmount||0})"></div>`).join('')}
       <div class="damage-summary">
         <div class="damage-line"><span>保證金</span><span>NT$${record?.depositAmount||0}</span></div>
         <div class="damage-line"><span>賠償金額</span><span id="dmgTotal">NT$0</span></div>
         <div class="damage-line"><span>實際退還</span><span id="dmgRefund">NT$${record?.depositAmount||0}</span></div>
       </div>
     </div>
-  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認損壞歸還',cls:'btn-danger',fn:`doReturn('${id}',true,document.getElementById('damageNoteInput').value,${record?.depositAmount||0})`}]);
+  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認損壞歸還',cls:'btn-danger',fn:`doReturn(${ja(id)},true,document.getElementById('damageNoteInput').value,${record?.depositAmount||0})`}]);
   window._dmgItems=items;window._dmgDeposit=record?.depositAmount||0;
 }
 function calcDamage(deposit){const items=window._dmgItems||[];let total=0;items.forEach((item,i)=>{const q=parseInt(document.getElementById('dmg_qty_'+i)?.value)||0,p=parseInt(document.getElementById('dmg_price_'+i)?.value)||0;total+=q*p;});const refund=Math.max(0,deposit-total);if(document.getElementById('dmgTotal'))document.getElementById('dmgTotal').textContent='NT$'+total;if(document.getElementById('dmgRefund'))document.getElementById('dmgRefund').textContent='NT$'+refund;}
@@ -4028,8 +4028,8 @@ async function doReturn(id,damaged,damageNote,depositAmount){
   }catch(e){showToast('更新失敗','error');}
 }
 async function updateDeposit(id,status){try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:status},prefer:'return=minimal'});showToast('已更新','success');loadAll();}catch(e){showToast('失敗','error');}}
-function confirmRefund(id,amount){showModal('確認退還',`<p>確認退還 NT$<strong>${amount}</strong>？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認已退還',cls:'btn-primary',fn:`updateDeposit('${id}','已退還')`}]);}
-function openDamageSettleModal(id,depositAmount){showModal('💸 損壞賠償結算',`<div class="form-group"><label>損壞說明</label><textarea id="settleNote" rows="2">${allRecords.find(r=>r.id===id)?.damageNote||''}</textarea></div><div class="form-group"><label>賠償金額(NT$)</label><input type="number" id="settleComp" placeholder="0" oninput="calcSettle(${depositAmount})"></div><div class="damage-summary"><div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div><div class="damage-line"><span>賠償</span><span id="settleCompDisplay">NT$0</span></div><div class="damage-line"><span>退還</span><span id="settleRefund">NT$${depositAmount}</span></div></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認結算',cls:'btn-warn',fn:`doSettle('${id}',${depositAmount})`}]);}
+function confirmRefund(id,amount){showModal('確認退還',`<p>確認退還 NT$<strong>${parseInt(amount)||0}</strong>？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認已退還',cls:'btn-primary',fn:`updateDeposit(${ja(id)},'已退還')`}]);}
+function openDamageSettleModal(id,depositAmount){showModal('💸 損壞賠償結算',`<div class="form-group"><label>損壞說明</label><textarea id="settleNote" rows="2">${escH(allRecords.find(r=>r.id===id)?.damageNote||'')}</textarea></div><div class="form-group"><label>賠償金額(NT$)</label><input type="number" id="settleComp" placeholder="0" oninput="calcSettle(${depositAmount})"></div><div class="damage-summary"><div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div><div class="damage-line"><span>賠償</span><span id="settleCompDisplay">NT$0</span></div><div class="damage-line"><span>退還</span><span id="settleRefund">NT$${depositAmount}</span></div></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認結算',cls:'btn-warn',fn:`doSettle(${ja(id)},${depositAmount})`}]);}
 function calcSettle(deposit){const comp=parseInt(document.getElementById('settleComp')?.value)||0,refund=Math.max(0,deposit-comp);if(document.getElementById('settleCompDisplay'))document.getElementById('settleCompDisplay').textContent='NT$'+comp;if(document.getElementById('settleRefund'))document.getElementById('settleRefund').textContent='NT$'+refund;}
 async function doSettle(id,depositAmount){const comp=parseInt(document.getElementById('settleComp')?.value)||0,note=document.getElementById('settleNote')?.value||'',refund=Math.max(0,depositAmount-comp);closeModal();try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'已退還',damage_note:note,final_refund:refund},prefer:'return=minimal'});showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();}catch(e){showToast('結算失敗：'+e.message,'error');}}
 
@@ -7261,8 +7261,8 @@ function checkEquipLocationMismatch(){
   }
   const rows=flagged.map(({e,bad})=>`
     <div style="padding:8px 10px;border-radius:6px;background:#fff5f5;margin-bottom:6px;font-size:13px">
-      <strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）</span>
-      <div style="color:var(--danger);margin-top:2px">目前位置代碼：${e.location}　→　可疑：${bad.join('、')}</div>
+      <strong>${escH(e.name)}</strong> <span style="color:var(--text2);font-size:12px">${escH(rn(e.room))}（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）</span>
+      <div style="color:var(--danger);margin-top:2px">目前位置代碼：${escH(e.location)}　→　可疑：${escH(bad.join('、'))}</div>
     </div>`).join('');
   showModal(`⚠️ 發現 ${flagged.length} 筆位置代碼開頭可能不對`,
     `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">對照表：T=教具室、PC=理化、C=化學、B=生物、P=物理、G=地科（物理室自己的 PC 開頭櫃子已經自動排除，不會誤判）。</div>${rows}`,
@@ -7311,11 +7311,11 @@ function renderInlineEditEquip(e){
           <option value="TeachingMaterialRoom" ${e.room==='TeachingMaterialRoom'?'selected':''}>教具室</option>
         </select>
       </div>
-      <div class="form-group" style="grid-column:span 2"><label>名稱</label><input type="text" id="ie-name-${e.id}" value="${(e.name||'').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label>規格</label><input type="text" id="ie-spec-${e.id}" value="${(e.spec||'').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label>單位</label><input type="text" id="ie-unit-${e.id}" value="${(e.unit||'個').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label>櫃位編碼</label><input type="text" id="ie-location-${e.id}" value="${(e.location||'').replace(/"/g,'&quot;')}"></div>
-      <div class="form-group"><label>別名</label><input type="text" id="ie-alias-${e.id}" value="${(e.alias||'').replace(/"/g,'&quot;')}"></div>
+      <div class="form-group" style="grid-column:span 2"><label>名稱</label><input type="text" id="ie-name-${e.id}" value="${escH(e.name||'')}"></div>
+      <div class="form-group"><label>規格</label><input type="text" id="ie-spec-${e.id}" value="${escH(e.spec||'')}"></div>
+      <div class="form-group"><label>單位</label><input type="text" id="ie-unit-${e.id}" value="${escH(e.unit||'個')}"></div>
+      <div class="form-group"><label>櫃位編碼</label><input type="text" id="ie-location-${e.id}" value="${escH(e.location||'')}"></div>
+      <div class="form-group"><label>別名</label><input type="text" id="ie-alias-${e.id}" value="${escH(e.alias||'')}"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="ie-available-${e.id}" ${e.is_available!==false?'checked':''} style="width:auto">
         <label style="color:var(--text)">開放借用</label>
@@ -8234,14 +8234,14 @@ function showEquipDiffModal(added,removed,changed){
   const removedRows=removed.map((e,i)=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="eqdiff-remove" data-idx="${i}" style="width:auto;flex-shrink:0">
-      <span style="flex:1"><strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}</span></span>
+      <span style="flex:1"><strong>${escH(e.name)}</strong> <span style="color:var(--text2);font-size:12px">${escH(rn(e.room))}</span></span>
       <span style="font-size:11px;color:var(--danger)">刪除</span>
     </label>`).join('');
   const changedRows=changed.map((item,i)=>`
     <label style="display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;background:#fef3c7;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="eqdiff-change" data-idx="${i}" checked style="width:auto;flex-shrink:0;margin-top:2px">
       <div style="flex:1">
-        <div><strong>${item.newData.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(item.newData.room)}</span></div>
+        <div><strong>${escH(item.newData.name)}</strong> <span style="color:var(--text2);font-size:12px">${escH(rn(item.newData.room))}</span></div>
         <div style="font-size:11px;color:#92400e;margin-top:2px">${escH(item.diffs.join('　'))}</div>
       </div>
       <span style="font-size:11px;color:#92400e;white-space:nowrap">更新</span>
@@ -8249,7 +8249,7 @@ function showEquipDiffModal(added,removed,changed){
   const addedRows=added.map((e,i)=>`
     <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#d1fae5;margin-bottom:4px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="eqdiff-add" data-idx="${i}" checked style="width:auto;flex-shrink:0">
-      <span style="flex:1"><strong>${e.name}</strong> <span style="color:var(--text2);font-size:12px">${rn(e.room)}</span>　總數 ${e.total}</span>
+      <span style="flex:1"><strong>${escH(e.name)}</strong> <span style="color:var(--text2);font-size:12px">${escH(rn(e.room))}</span>　總數 ${parseInt(e.total)||0}</span>
       <span style="font-size:11px;color:#065f46">新增</span>
     </label>`).join('');
   const body=`
@@ -8310,7 +8310,7 @@ function openWriteoffModal(id){
     <div class="form-group"><label>備註（選填）</label><textarea id="wo-note" rows="2" placeholder="例如：110年度報廢單編號、細節說明…"></textarea></div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認報廢',cls:'btn-danger',fn:`doWriteoff('${id}')`}
+    {label:'確認報廢',cls:'btn-danger',fn:`doWriteoff(${ja(id)})`}
   ]);
 }
 async function doWriteoff(id){
@@ -8342,8 +8342,8 @@ async function loadWriteoffLog(){
       <div class="record-card" style="padding:10px 14px">
         <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <div>
-            <span style="font-weight:700">${w.name}</span>
-            <span style="font-size:12px;color:var(--text2)">　${rn(w.room)}　－${w.quantity}${w.reason?'　'+w.reason:''}</span>
+            <span style="font-weight:700">${escH(w.name)}</span>
+            <span style="font-size:12px;color:var(--text2)">　${escH(rn(w.room))}　－${parseInt(w.quantity)||0}${w.reason?'　'+escH(w.reason):''}</span>
           </div>
           <span style="font-size:11px;color:var(--text2)">${w.created_at?new Date(w.created_at).toLocaleString('zh-TW'):''}</span>
         </div>
@@ -8922,7 +8922,7 @@ async function toggleHighlightPublic(id,checked){
 function deleteHighlight(id){
   showModal('確認刪除',`<p>確定刪除這筆精彩時刻嗎？</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHighlight('${id}')`}
+    {label:'確認刪除',cls:'btn-danger',fn:`doDeleteHighlight(${ja(id)})`}
   ]);
 }
 async function doDeleteHighlight(id){
