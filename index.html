@@ -1520,6 +1520,72 @@
 }
 @media(min-width:901px){.sp-fb{display:contents}.sp-fd{display:none}#page-semester .sp-bar{gap:10px 12px}.sp-frow{padding-left:12px;gap:6px}.sp-frow .sp-legend{gap:4px}.sp-frow .sp-legend button{padding:5px 9px;font-size:13px;gap:5px}.sp-frow .sp-legend i{width:8px;height:8px}}
 </style>
+<style id="sx-css">
+/* 學期實驗（新版） */
+#page-semester .sp-q{display:none}
+#page-semester .sp-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.pv-tabs{display:inline-flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
+.pv-tabs button{border:0;background:var(--surface);font:inherit;font-size:14px;padding:6px 16px;cursor:pointer;color:var(--text2)}
+.pv-tabs button.on{background:var(--accent);color:#fff;font-weight:700}
+.sx-log{margin-left:auto;white-space:nowrap}
+.sx-log-m{display:none;border:1.5px dashed var(--border);background:none;border-radius:10px;padding:12px;font:inherit;font-size:14.5px;color:var(--text2);cursor:pointer}
+@media(max-width:900px){#page-semester .sp-bar .sx-log{display:none}.sx-log-m{display:block}}
+.ps-weeks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.ps-day{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;min-height:84px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.ps-day.now{border-color:#d9a21b;background:#fdf6e3}.ps-day.past{opacity:.75}
+.ps-dh{display:flex;align-items:baseline;gap:6px}.ps-dh b{font-family:'DM Mono',monospace}.ps-dh span{font-size:12px;color:var(--text2)}.ps-dh em{margin-left:auto;font-style:normal;font-size:11px;background:#d9a21b;color:#fff;border-radius:6px;padding:0 6px}
+.ps-chip{all:unset;box-sizing:border-box;background:var(--t);border-left:3px solid var(--c);border-radius:6px;padding:4px 7px;display:flex;cursor:pointer;min-width:0}
+.ps-chip:hover{filter:brightness(.97)}.ps-chip:focus-visible{outline:2px solid var(--accent)}
+.sx-ct{display:flex;flex-direction:column;min-width:0}
+.ps-chip b{font-size:13px;line-height:1.35}.ps-chip small{font-size:11px;color:var(--text2);line-height:1.35}
+.ps-chip b em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--c);border:1px solid var(--c);border-radius:6px;padding:0 4px;margin-left:5px;vertical-align:1px}
+.ps-chip.noexp,.pm-item.noexp{background:transparent;outline:1.5px dashed #c9c1b2;outline-offset:-1.5px}.ps-chip.noexp b,.pm-item.noexp b{color:var(--text2);font-weight:500}
+.pm-head{display:flex;align-items:center;gap:8px;margin:2px 0 10px}
+.pm-head button{flex:0 0 44px;height:44px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);font-size:22px}
+.pm-head button:disabled{opacity:.4}
+.pm-wsel{flex:1;position:relative;display:flex;align-items:center;border:1.5px solid var(--border);background:var(--surface);border-radius:12px;height:44px}
+#page-semester .pm-wsel select{appearance:none;-webkit-appearance:none;border:0;background:transparent;box-shadow:none;margin:0;width:100%;height:100%;padding:0 34px 0 14px;font:inherit;font-size:16px;font-weight:700;color:var(--text);outline:none}
+.pm-wsel svg{position:absolute;right:12px;pointer-events:none;color:var(--text2)}
+.pm-list,.lb-mlist{display:flex;flex-direction:column;gap:8px}
+.pm-item{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--c);border-radius:10px;padding:10px 12px;cursor:pointer}
+.pm-item .sx-ct{flex:1}.pm-item b{font-size:15.5px}.pm-item small{font-size:12.5px;color:var(--text2)}
+.pm-item em{font-style:normal;font-size:11.5px;color:var(--c);background:var(--t);border-radius:8px;padding:2px 8px;white-space:nowrap}
+.pm-empty{color:var(--text2);text-align:center;padding:20px;font-size:13.5px}
+
+.lb-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.lb-q{flex:1 1 300px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:0 12px;color:var(--text2);min-width:0}
+#page-semester .lb-q input{border:0;background:transparent;box-shadow:none;padding:10px 0;margin:0;font:inherit;font-size:16px;flex:1;min-width:0;outline:none;width:auto}
+.lb-filters{display:flex;gap:6px}
+#page-semester .lb-filters select{width:auto;margin:0;padding:8px 10px;border-radius:10px;font-size:14px}
+.lb-cols{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:start}
+.lb-col{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:color-mix(in srgb,var(--surface) 55%,transparent);min-width:0}
+.lb-ch{display:flex;align-items:center;gap:6px;padding:10px 12px;font-weight:700;border-bottom:3px solid var(--c);background:var(--surface)}.lb-ch i{width:10px;height:10px;border-radius:50%;background:var(--c)}.lb-ch small{margin-left:auto;font-weight:400;color:var(--text2);font-size:12px}
+.lb-cl{display:flex;flex-direction:column;gap:4px;padding:8px;max-height:calc(100vh - 230px);overflow:auto}
+.lb-row{display:grid;grid-template-columns:52px minmax(0,1fr);column-gap:8px;row-gap:2px;align-items:baseline;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--c);border-radius:8px;padding:7px 9px;cursor:pointer}
+.lb-row:hover{border-color:#cfc6b4;border-left-color:var(--c)}
+.lb-row .lb-wk{grid-row:1/3;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--c);font-weight:700}
+.lb-row .lb-name{font-size:14px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.lb-row .lb-tags{font-size:11.5px;color:var(--text2)}.lb-row .lb-tags em{font-style:normal;color:var(--c);font-weight:700}
+.lb-row.open{background:var(--t);box-shadow:0 2px 10px rgba(34,38,42,.08)}
+.lb-more{grid-column:1/-1;margin-top:6px;padding-top:8px;border-top:1px dashed #cfc6b4;display:flex;flex-direction:column;gap:6px;cursor:default}
+.lb-alias{font-size:12px;color:var(--text2)}.lb-eqh{font-size:11.5px;color:var(--text2)}
+.lb-eq{display:flex;gap:6px;flex-wrap:wrap}.lb-th{display:flex;flex-direction:column;align-items:center;gap:2px;width:52px}
+.lb-th img,.lb-th i{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--surface);border:1px solid var(--border);display:block}
+.lb-th small{font-size:10.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52px}
+.lb-foot{font-size:11.5px;color:var(--text2);border-top:1px dashed #cfc6b4;padding-top:4px}
+.lb-acts{display:flex;gap:6px;flex-wrap:wrap}
+.lb-go,.lb-go2{border:0;border-radius:8px;font:inherit;font-size:13px;font-weight:700;padding:6px 12px;cursor:pointer}
+.lb-go{background:var(--accent);color:#fff}.lb-go2{background:var(--surface);color:var(--text);border:1.5px solid var(--border)}
+.lb-stabs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px}
+.lb-stabs button{border:1.5px solid var(--border);border-bottom:3px solid var(--border);background:var(--surface);border-radius:10px;font:inherit;font-size:14px;padding:6px 0;display:flex;flex-direction:column;align-items:center;cursor:pointer}
+.lb-stabs small{font-size:11px;color:var(--text2)}
+.lb-stabs button.on{border-color:var(--c);color:var(--c);font-weight:700}
+@media(max-width:900px){.lb-bar{flex-wrap:wrap}.lb-q{flex:1 1 100%}.lb-filters{width:100%}#page-semester .lb-filters select{flex:1;min-width:0;padding:8px 6px;font-size:14px}}
+.sx-form .hint{margin-bottom:8px}
+.sx-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sx-ck{display:flex;align-items:center;gap:6px;font-size:14px;padding:3px 0;font-weight:400}
+.sx-ck input{width:auto}
+</style>
 </head>
 <body class="on-home">
 <header>
@@ -1934,7 +2000,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13d · 照片上傳網路不穩會自動重試</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13e · 學期實驗改版：這學期＋實驗庫</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -3358,7 +3424,10 @@ function onVenuePurposeChange(){
   const p=document.getElementById('vf-purpose').value;
   document.getElementById('vf-purpose-other').style.display=p==='其他'?'block':'none';
   const gg=document.getElementById('vGradeGroup');
-  if(gg)gg.style.display=(currentVenueRole==='老師'&&!!p&&p!=='其他'&&!purposeNeedsDeposit(p,'老師'))?'flex':'none';
+  const showG=(currentVenueRole==='老師'&&!!p&&p!=='其他'&&!purposeNeedsDeposit(p,'老師'));
+  if(gg)gg.style.display=showG?'flex':'none';
+  const eg=document.getElementById('vExpGroup');if(eg)eg.style.display=showG?'flex':'none';
+  if(showG&&typeof sxDatalist==='function')sxDatalist();
 }
 
 // 時段清單基本檢查：日期不可空白、不可早於今天、同一申請內不可重複
@@ -3446,6 +3515,9 @@ async function submitVenueRequest(){
     const id='VEN-'+Date.now();
     const noteWithSupervisor=supervisor?`[陪同老師：${supervisor}]${note?' '+note:''}`:note;
     await sb('POST','venue_bookings',{body:{id,borrower_name:name,student_id:studentId||null,role:currentVenueRole,purpose,periods,status:'待審核',note:noteWithSupervisor,grade:grade||null},prefer:'return=minimal'});
+    // 有選實驗：每一節記一筆實驗紀錄（學期實驗頁會顯示）
+    const expV=(document.getElementById('vExpGroup')?.style.display!=='none')?(document.getElementById('vf-exp')?.value||'').trim():'';
+    if(expV&&typeof sxRunsForBooking==='function')await sxRunsForBooking(id,periods,expV,name,grade,{purpose});
     showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。審核前課表上會以<strong>虛線框</strong>顯示「待審核」，其他人也看得到，不會被重複預約。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     periodRows=[];
     submittingVenue=false;
@@ -3716,6 +3788,10 @@ function openVenueBookingModal(dateStr,period,venue){
     <div class="form-group" id="vGradeGroup" style="display:none">
       <label>年級／班級（例如：高一戊）</label>
       <input type="text" id="vf-grade" maxlength="20" placeholder="例如：高一戊、高二選">
+    </div>
+    <div class="form-group" id="vExpGroup" style="display:none">
+      <label>做什麼實驗（可不填，之後也能補）</label>
+      <input type="text" id="vf-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="打字找，例如：酸鹼滴定">
     </div>
     <div class="form-group" id="vSupervisorGroup" style="display:none">
       <label>指導老師／陪同老師</label>
@@ -6058,7 +6134,8 @@ async function cbSubmit(){
     let venueId='',venueFail='';
     if(periods.length){
       venueId='VEN-'+Date.now();
-      try{await sb('POST','venue_bookings',{body:{id:venueId,borrower_name:name,student_id:null,role:'老師',purpose:'課程',periods,status:'待審核',note:`[關聯借用申請 ${id}]${cb.note?' '+cb.note.trim():''}`,grade:(cb.grade||'').trim()||null},prefer:'return=minimal'});}
+      try{await sb('POST','venue_bookings',{body:{id:venueId,borrower_name:name,student_id:null,role:'老師',purpose:'課程',periods,status:'待審核',note:`[關聯借用申請 ${id}]${cb.note?' '+cb.note.trim():''}`,grade:(cb.grade||'').trim()||null},prefer:'return=minimal'});
+        if(typeof sxRunsForBooking==='function')for(const t of tpls)await sxRunsForBooking(venueId,periods,{tpl:t,title:''},name,(cb.grade||'').trim(),{purpose:'課程'});}
       catch(ve){venueFail=ve.message||'未知錯誤';venueId='';}
       renderHomeVenuePreview();
     }
@@ -7075,5 +7152,239 @@ if(wide.addEventListener)wide.addEventListener('change',redraw);else if(wide.add
 })();
 </script>
 
+<script id="sx-js">
+// ==== 學期實驗（新版）開始 ====
+// 「這學期」：照實驗室預約＋實驗紀錄排，一週一格；固定課有填主題的那幾週才出現
+// 「實驗庫」：歷年所有課綱實驗，五科分欄、可搜尋篩選，點開看器材與做過的紀錄
+// 實驗紀錄（experiment_runs）：哪天、哪節、誰、哪班、做了哪個實驗；可以不借教室（帶到班上做）
+const SX_SUBJ=['物理','化學','生物','地科','理化'];
+const SX_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','課程':'一般'};
+let sxView='sem',sxRuns=[],sxTypes=[],sxBookings=[],sxLoaded=false,sxLoading=false,sxWeek=null;
+let sxLibQ='',sxLibGrade='全部',sxLibType='全部',sxLibTerm=0,sxLibSubj='化學',sxLibOpen='';
+function sxTpl(id){return allCourseTemplates.find(x=>String(x.id)===String(id));}
+function sxTplSubj(t){if(!t)return '';if(SX_SUBJ.includes(t.subject))return t.subject;const s=semSubjectOf(t);return SX_SUBJ.includes(s)?s:'';}
+function sxTplType(t){return t&&t.course_type||'';}
+function sxVenueSubj(v){v=String(v||'');return SX_SUBJ.find(s=>v.startsWith(s))||'';}
+function sxBkSubj(b){return SX_SUBJ.includes(b.lab_subject)?b.lab_subject:sxVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
+function sxBkType(b){return b.course_type||SX_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
+// 沒填實驗的預約要不要出現：後台設了就照設的；沒設＝有課程類型（課程、探究、菁英…）才出現，純借場地的不出現
+function sxShow(b){return b.semester_show===true||(b.semester_show!==false&&!!sxBkType(b));}
+function sxTypeTxt(t){return t&&t!=='一般'?t:'';}
+function sxGradeKey(g){return spGradeOf({grade:g});}
+function sxAddDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+async function sxLoad(force){
+  if(sxLoading||(sxLoaded&&!force))return;
+  sxLoading=true;
+  try{
+    const [runs,types,bks]=await Promise.all([
+      sb('GET','experiment_runs',{order:'id'}).catch(()=>[]),
+      sb('GET','course_types',{order:'sort'}).catch(()=>[]),
+      sb('GET','venue_bookings',{order:'created_at'}).catch(()=>[])
+    ]);
+    sxRuns=Array.isArray(runs)?runs:[];sxTypes=(Array.isArray(types)?types:[]).filter(t=>t.is_active!==false).map(t=>t.name);
+    sxBookings=Array.isArray(bks)?bks:[];sxLoaded=true;
+  }catch(e){sxLoaded=true;}
+  sxLoading=false;sxDatalist();spRender();
+}
+// 選實驗用的清單（可以打字找）：「名稱｜年級」
+function sxTplLabel(t){return `${(t.name||'').trim()}｜${(t.grade||'').trim()||'未填年級'}`;}
+function sxDatalist(){
+  let dl=document.getElementById('sxTplList');
+  if(!dl){dl=document.createElement('datalist');dl.id='sxTplList';document.body.appendChild(dl);}
+  dl.innerHTML=allCourseTemplates.filter(t=>t.name).map(t=>`<option value="${escH(sxTplLabel(t))}"></option>`).join('');
+}
+function sxPickTpl(v){
+  v=String(v||'').trim();if(!v)return {tpl:null,title:''};
+  const t=allCourseTemplates.find(x=>sxTplLabel(x)===v)||(()=>{const m=allCourseTemplates.filter(x=>(x.name||'').trim()===v);return m.length===1?m[0]:null;})();
+  return t?{tpl:t,title:''}:{tpl:null,title:v.slice(0,60)};
+}
+// ── 這學期：一週一格 ──
+function sxWeekItems(w){
+  const a=fmtDate(w.date),e=fmtDate(sxAddDays(w.date,6));
+  const latest=new Map();
+  sxRuns.filter(r=>r.run_date>=a&&r.run_date<=e).forEach(r=>{
+    const k=r.booking_id?`${r.booking_id}|${r.run_date}|${r.period||''}`:'r'+r.id;
+    const o=latest.get(k);if(!o||r.id>o.id)latest.set(k,r);
+  });
+  const cards=new Map();
+  latest.forEach(r=>{
+    const t=r.template_id?sxTpl(r.template_id):null,b=r.booking_id?sxBookings.find(x=>x.id===r.booking_id):null;
+    const title=t?(t.name||'').trim():(r.title||'');
+    const key=(r.booking_id||('r'+r.id))+'|'+(r.template_id||r.title||'');
+    const c=cards.get(key)||{n:0,date:r.run_date,subj:r.subject||(t&&sxTplSubj(t))||(b&&sxBkSubj(b))||'',type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',
+      grade:r.grade||(b&&b.grade)||(t&&t.grade)||'',who:r.teacher||(b&&b.borrower_name)||'',title,tpl:t?t.id:null,fixed:!!(b&&b.is_fixed),venue:r.booking_id?'':(r.venue||'')};
+    c.n++;if(r.run_date<c.date)c.date=r.run_date;cards.set(key,c);
+  });
+  sxBookings.forEach(b=>{
+    if(b.status==='已拒絕'||b.is_fixed||!sxShow(b))return;
+    const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!latest.has(`${b.id}|${p.date}|${p.period}`));
+    if(!ps.length)return;
+    cards.set('b'+b.id,{n:ps.length,date:ps.map(p=>p.date).sort()[0],subj:sxBkSubj(b),type:sxBkType(b),grade:b.grade||'',who:b.borrower_name||'',title:'',tpl:null,fixed:false,bid:b.id,a,e});
+  });
+  const ord=s=>{const i=SX_SUBJ.indexOf(s);return i<0?9:i;};
+  return [...cards.values()]
+    .filter(c=>(spSubj==='全部'||c.subj===spSubj)&&(spGrade==='全部'||sxGradeKey(c.grade)===spGrade))
+    .sort((x,y)=>ord(x.subj)-ord(y.subj)||String(x.date).localeCompare(String(y.date)));
+}
+function sxCardSub(c){return [`${c.grade||''}${c.subj||''}${sxTypeTxt(c.type)?(c.grade||c.subj?'・':'')+sxTypeTxt(c.type):''}`,c.who,c.venue||(c.n?`${c.n} 節`:'')].filter(Boolean).join('・');}
+function sxCardHtml(c,mobile){
+  const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
+  const on=c.tpl?`spOpen(${ja(c.tpl)})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
+  return `<button type="button" class="${mobile?'pm-item':'ps-chip'}${c.title?'':' noexp'}" style="--c:${col};--t:${tint}" ${on?`onclick="${on}"`:'disabled'}>
+    <span class="sx-ct"><b>${escH(c.title||'未填實驗')}${c.fixed&&!mobile?'<em>固定</em>':''}</b><small>${escH(sxCardSub(c))}</small></span>${c.fixed&&mobile?'<em>固定課</em>':''}</button>`;
+}
+function sxSemHtml(mobile){
+  const cal=semCalendar(spTerm,activeSemester),weeks=cal.weeks;
+  const today=new Date();today.setHours(0,0,0,0);
+  const nowIdx=weeks.findIndex(w=>today>=w.date&&today<sxAddDays(w.date,7));
+  const termName=n=>n===1?'上學期':'下學期';
+  const subjVals=['全部',...SX_SUBJ],gradeVals=['全部',...SP_GRADES];
+  let h=`<div class="sp-bar"><div class="sem-seg" role="group" aria-label="學期">${[1,2].map(n=>`<button type="button" class="${spTerm===n?'on':''}" onclick="spTerm=${n};sxWeek=null;spRender()">${termName(n)}</button>`).join('')}</div>`;
+  h+=`<div class="sp-fb"><div class="sp-frow"><span class="sp-fl">科目</span><div class="sp-legend">${subjVals.map(v=>`<button type="button" class="${spSubj===v?'on':''}" onclick="spSubj=${ja(v)};spRender()">${v==='全部'?'':`<i style="background:${semColor(v)}"></i>`}${escH(v)}</button>`).join('')}</div></div><div class="sp-frow"><span class="sp-fl">年級</span><div class="sp-legend">${gradeVals.map(v=>`<button type="button" class="${spGrade===v?'on':''}" onclick="spGrade=${ja(v)};spRender()">${escH(v)}</button>`).join('')}</div></div></div>`;
+  h+=`<div class="sp-fd"><label class="sp-sel${spSubj!=='全部'?' on':''}"><select aria-label="科目" onchange="spSubj=this.value;spRender()">${subjVals.map(v=>`<option value="${escH(v)}"${v===spSubj?' selected':''}>${v==='全部'?'全部科目':escH(v)}</option>`).join('')}</select><svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label><label class="sp-sel${spGrade!=='全部'?' on':''}"><select aria-label="年級" onchange="spGrade=this.value;spRender()">${gradeVals.map(v=>`<option value="${escH(v)}"${v===spGrade?' selected':''}>${v==='全部'?'全部年級':escH(v)}</option>`).join('')}</select><svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label></div>`;
+  h+=`<button type="button" class="btn btn-secondary btn-sm sx-log" onclick="sxLog()">＋ 登記實驗</button></div>`;
+  const logBtn=`<button type="button" class="sx-log-m" onclick="sxLog()">＋ 登記實驗（不借教室也可以）</button>`;
+  if(!sxLoaded)return h+'<div class="loading"><div class="spinner"></div>載入中…</div>';
+  if(mobile){
+    if(sxWeek==null||sxWeek>=weeks.length)sxWeek=Math.max(0,nowIdx);
+    const w=weeks[sxWeek],its=w?sxWeekItems(w):[];
+    h+=`<div class="pm-head"><button type="button" onclick="sxWeek=Math.max(0,sxWeek-1);spRender()" aria-label="上一週" ${sxWeek<=0?'disabled':''}>‹</button><label class="pm-wsel"><select onchange="sxWeek=+this.value;spRender()" aria-label="選週次">${weeks.map((x,i)=>`<option value="${i}"${i===sxWeek?' selected':''}>第 ${x.week} 週　${spMD(x.date)}${i===nowIdx?'　本週':''}</option>`).join('')}</select><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></label><button type="button" onclick="sxWeek=Math.min(${weeks.length-1},sxWeek+1);spRender()" aria-label="下一週" ${sxWeek>=weeks.length-1?'disabled':''}>›</button></div>`;
+    h+=`<div class="pm-list">${its.map(c=>sxCardHtml(c,true)).join('')||'<div class="pm-empty">這週沒有實驗</div>'}${logBtn}</div>`;
+    return h;
+  }
+  h+='<div class="ps-weeks">';
+  weeks.forEach((w,i)=>{
+    const its=sxWeekItems(w);
+    h+=`<div class="ps-day${i===nowIdx?' now':''}${i<nowIdx?' past':''}"><div class="ps-dh"><b>W${w.week}</b><span>${spMD(w.date)}</span>${i===nowIdx?'<em>本週</em>':''}</div>${its.map(c=>sxCardHtml(c,false)).join('')}</div>`;
+  });
+  return h+'</div>';
+}
+// ── 實驗庫 ──
+function sxTplTerm(t){const m=semMonthOf(t);return m?semTermOfMonth(m):(semSpecialOf(t)==='暑輔'?2:0);}
+function sxTplSortKey(t){const term=sxTplTerm(t)||9,w=semWeeksOf(t)[0],sp=semSpecialOf(t);return term*1000+(w||(sp==='寒輔'?(term===1?60:0):sp==='暑輔'?70:80))*10;}
+function sxTplWhen(t){const term=sxTplTerm(t),w=semWeeksOf(t)[0],sp=semSpecialOf(t),m=semMonthOf(t);const tn=term===1?'上':term===2?'下':'';return sp?sp:w?`${tn} W${w}`:m?`${tn} ${m}月`:'—';}
+function sxRunsOf(t){return sxRuns.filter(r=>String(r.template_id)===String(t.id));}
+function sxLibMatch(t){
+  if(sxLibGrade!=='全部'&&spGradeOf(t)!==sxLibGrade)return false;
+  if(sxLibType!=='全部'&&sxTplType(t)!==sxLibType)return false;
+  if(sxLibTerm&&sxTplTerm(t)!==sxLibTerm)return false;
+  const q=sxLibQ.trim().toLowerCase();if(!q)return true;
+  const hay=[t.name,t.grade,t.teacher,...(Array.isArray(t.aliases)?t.aliases:[]),...(Array.isArray(t.equipment_items)?t.equipment_items.map(i=>i&&i.name):[])].map(v=>String(v||'').toLowerCase());
+  return hay.some(v=>v.includes(q));
+}
+function sxEqThumb(name){const e=allEquipment.find(x=>x.name===name&&x.image_url);const u=e?safeUrl(e.image_url):'';return u?`<img src="${escH(u)}" alt="" loading="lazy">`:'<i></i>';}
+function sxLibRow(t){
+  const s=sxTplSubj(t),open=String(sxLibOpen)===String(t.id),tp=sxTypeTxt(sxTplType(t));
+  const col=semColor(s||'其他'),tint=SP_TINT[s]||SP_TINT['其他'];
+  let more='';
+  if(open){
+    const al=(Array.isArray(t.aliases)?t.aliases:[]).filter(Boolean),eq=Array.isArray(t.equipment_items)?t.equipment_items:[],runs=sxRunsOf(t);
+    const last=runs.slice().sort((a,b)=>String(b.run_date).localeCompare(String(a.run_date)))[0];
+    more=`<div class="lb-more">${al.length?`<div class="lb-alias">又叫：${escH(al.join('、'))}</div>`:''}
+      ${eq.length?`<div class="lb-eqh">器材</div><div class="lb-eq">${eq.slice(0,12).map(i=>`<span class="lb-th">${sxEqThumb(i&&i.name)}<small>${escH(i&&i.name||'')}</small></span>`).join('')}</div>`:''}
+      <div class="lb-foot">${runs.length?`做過 ${runs.length} 次・最近 ${escH(String(last.run_date).replace(/-/g,'/'))}${last.teacher?'・'+escH(last.teacher):''}`:'還沒有做過的紀錄'}</div>
+      <div class="lb-acts"><button type="button" class="lb-go" onclick="event.stopPropagation();spOpen(${ja(t.id)})">看器材・借用 ›</button><button type="button" class="lb-go2" onclick="event.stopPropagation();sxLog(${ja(t.id)})">登記做過</button></div></div>`;
+  }
+  return `<div class="lb-row${open?' open':''}" style="--c:${col};--t:${tint}" role="button" tabindex="0" onclick="sxLibOpen=(String(sxLibOpen)===${ja(String(t.id))})?'':${ja(String(t.id))};spRender()">
+    <span class="lb-wk">${escH(sxTplWhen(t))}</span><b class="lb-name">${escH((t.name||'').trim())}</b><span class="lb-tags">${escH(spGradeOf(t)||t.grade||'')}${tp?`・<em>${escH(tp)}</em>`:''}</span>${more}</div>`;
+}
+function sxLibHtml(mobile){
+  const types=['全部',...(sxTypes.length?sxTypes:['一般','探究','菁英','選修','競賽培訓','科學研究'])];
+  const list=allCourseTemplates.filter(t=>t.name&&sxTplSubj(t)&&sxLibMatch(t)).sort((a,b)=>sxTplSortKey(a)-sxTplSortKey(b)||String(a.name).localeCompare(String(b.name),'zh-Hant'));
+  const by=s=>list.filter(t=>sxTplSubj(t)===s);
+  const filters=`<select aria-label="年級" onchange="sxLibGrade=this.value;spRender()">${['全部',...SP_GRADES].map(g=>`<option value="${escH(g)}"${g===sxLibGrade?' selected':''}>${g==='全部'?'全部年級':escH(g)}</option>`).join('')}</select>
+    <select aria-label="類型" onchange="sxLibType=this.value;spRender()">${types.map(g=>`<option value="${escH(g)}"${g===sxLibType?' selected':''}>${g==='全部'?'全部類型':escH(g)}</option>`).join('')}</select>
+    <select aria-label="學期" onchange="sxLibTerm=+this.value;spRender()">${[[0,'上下學期'],[1,'上學期'],[2,'下學期']].map(([v,l])=>`<option value="${v}"${v===sxLibTerm?' selected':''}>${l}</option>`).join('')}</select>`;
+  let h=`<div class="lb-bar"><label class="lb-q"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="sxLibQ" maxlength="40" value="${escH(sxLibQ)}" placeholder="${mobile?'搜名稱、舊名稱或器材':'搜實驗名稱、舊名稱或器材，例如 打點計時器'}" oninput="sxLibQ=this.value;clearTimeout(window._sxq);window._sxq=setTimeout(()=>{spRender();const i=document.getElementById('sxLibQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},200)"></label><div class="lb-filters">${filters}</div></div>`;
+  if(mobile){
+    if(!SX_SUBJ.includes(sxLibSubj))sxLibSubj='化學';
+    h+=`<div class="lb-stabs">${SX_SUBJ.map(s=>`<button type="button" class="${s===sxLibSubj?'on':''}" style="--c:${semColor(s)}" onclick="sxLibSubj=${ja(s)};spRender()">${s}<small>${by(s).length}</small></button>`).join('')}</div>`;
+    return h+`<div class="lb-mlist">${by(sxLibSubj).map(sxLibRow).join('')||'<div class="pm-empty">沒有符合的實驗</div>'}</div>`;
+  }
+  return h+`<div class="lb-cols">${SX_SUBJ.map(s=>{const its=by(s);return `<div class="lb-col"><div class="lb-ch" style="--c:${semColor(s)}"><i></i>${s}<small>${its.length} 個</small></div><div class="lb-cl">${its.map(sxLibRow).join('')||'<div class="pm-empty">沒有符合的實驗</div>'}</div></div>`;}).join('')}</div>`;
+}
+// ── 主畫面（取代原本的週表）──
+spRender=function(){
+  const root=document.getElementById('spRoot');if(!root)return;
+  if(spTerm==null)spTerm=spHomeTerm();
+  if(!sxLoaded)sxLoad();
+  const head=document.querySelector('#page-semester .sp-head');
+  if(head)head.innerHTML=`<h2>📅 學期實驗</h2><div class="pv-tabs" role="tablist"><button type="button" role="tab" class="${sxView==='sem'?'on':''}" onclick="sxView='sem';spRender()">這學期</button><button type="button" role="tab" class="${sxView==='lib'?'on':''}" onclick="sxView='lib';spRender()">實驗庫</button></div>`;
+  const mobile=!window.matchMedia('(min-width:901px)').matches;
+  root.innerHTML=sxView==='lib'?sxLibHtml(mobile):sxSemHtml(mobile);
+  const sh=document.getElementById('spSheet');if(sh)sh.classList.remove('show');document.body.classList.remove('sp-sheet-open');
+};
+window.matchMedia('(min-width:901px)').addEventListener?.('change',()=>{if(document.getElementById('page-semester')?.classList.contains('active'))spRender();});
+// ── 補填／登記實驗 ──
+function sxNameGuess(){try{return localStorage.getItem('sxTeacher')||'';}catch(_){return '';}}
+function sxFill(bid,a,e){
+  const b=sxBookings.find(x=>x.id===bid);if(!b)return;
+  const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕');
+  showModal('這幾節做了什麼實驗？',`
+    <div class="sx-form">
+      <div class="hint">${escH([b.grade,sxBkSubj(b),sxTypeTxt(sxBkType(b)),b.borrower_name].filter(Boolean).join('・'))}</div>
+      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定"></div>
+      <div class="form-group"><label>哪幾節</label>${ps.map((p,i)=>`<label class="sx-ck"><input type="checkbox" data-i="${i}" checked> ${escH(p.date)} ${escH(p.period)} ${escH(p.venue||'')}</label>`).join('')}</div>
+      <div class="form-group"><label>填的人</label><input id="sx-who" maxlength="30" value="${escH(b.role==='老師'?b.borrower_name||'':sxNameGuess())}"></div>
+    </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:`sxFillSave(${ja(bid)},${ja(a)},${ja(e)})`}]);
+  sxDatalist();
+}
+async function sxFillSave(bid,a,e){
+  const b=sxBookings.find(x=>x.id===bid);if(!b)return;
+  const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕');
+  const pick=sxPickTpl(document.getElementById('sx-exp').value),who=document.getElementById('sx-who').value.trim();
+  if(!pick.tpl&&!pick.title){showToast('請填實驗','error');return;}
+  if(!who){showToast('請填你的名字','error');return;}
+  const sel=[...document.querySelectorAll('.sx-form .sx-ck input:checked')].map(x=>ps[+x.dataset.i]).filter(Boolean);
+  if(!sel.length){showToast('至少勾一節','error');return;}
+  const rows=sel.map(p=>({run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(b)||null,course_type:sxBkType(b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:b.id}));
+  await sxSaveRuns(rows,who);
+}
+function sxLog(tplId){
+  const t=tplId?sxTpl(tplId):null,types=sxTypes.length?sxTypes:['一般','探究','菁英','選修','競賽培訓','科學研究'];
+  const ts=t&&sxTplSubj(t),tt=t&&sxTplType(t);
+  showModal('登記實驗',`
+    <div class="sx-form">
+      <div class="hint">不借教室的也可以登記（例如帶到班上做的示範實驗）。</div>
+      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）*</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" value="${t?escH(sxTplLabel(t)):''}" placeholder="例如：酸鹼滴定"></div>
+      <div class="sx-2"><div class="form-group"><label>日期 *</label><input type="date" id="sx-date" value="${escH(todayStr())}"></div>
+      <div class="form-group"><label>節次</label><select id="sx-period"><option value="">（不填）</option>${PERIODS.map(p=>`<option>${escH(p)}</option>`).join('')}</select></div></div>
+      <div class="sx-2"><div class="form-group"><label>科目 *</label><select id="sx-subj">${SX_SUBJ.map(s=>`<option${s===ts?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="form-group"><label>類型</label><select id="sx-type">${types.map(s=>`<option${s===(tt||'一般')?' selected':''}>${escH(s)}</option>`).join('')}</select></div></div>
+      <div class="sx-2"><div class="form-group"><label>班級</label><input id="sx-grade" maxlength="20" placeholder="例如：高一戊"></div>
+      <div class="form-group"><label>地點</label><input id="sx-venue" maxlength="30" value="班上"></div></div>
+      <div class="form-group"><label>老師 *</label><input id="sx-who" maxlength="30" value="${escH(sxNameGuess())}"></div>
+    </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'登記',cls:'btn-primary',fn:'sxLogSave()'}]);
+  sxDatalist();
+}
+async function sxLogSave(){
+  const pick=sxPickTpl(document.getElementById('sx-exp').value),who=document.getElementById('sx-who').value.trim(),date=document.getElementById('sx-date').value;
+  if(!pick.tpl&&!pick.title){showToast('請填實驗','error');return;}
+  if(!date){showToast('請選日期','error');return;}
+  if(!who){showToast('請填老師','error');return;}
+  const subj=document.getElementById('sx-subj').value;
+  await sxSaveRuns([{run_date:date,period:document.getElementById('sx-period').value||null,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,
+    subject:SX_SUBJ.includes(subj)?subj:null,course_type:document.getElementById('sx-type').value||null,grade:document.getElementById('sx-grade').value.trim().slice(0,20)||null,
+    teacher:who.slice(0,30),venue:document.getElementById('sx-venue').value.trim().slice(0,30)||null,booking_id:null}],who);
+}
+async function sxSaveRuns(rows,who){
+  const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  try{
+    await sb('POST','experiment_runs',{body:rows,prefer:'return=minimal'});
+    try{localStorage.setItem('sxTeacher',who);}catch(_){}
+    closeModal();showToast('已記下來','success');await sxLoad(true);
+  }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='儲存';}}
+}
+// 預約教室時一起選了實驗：每一節各記一筆（之後可以再補或改）
+async function sxRunsForBooking(bookingId,periods,tplOrTitle,who,grade,bk){
+  const pick=typeof tplOrTitle==='string'?sxPickTpl(tplOrTitle):tplOrTitle;
+  if(!pick||(!pick.tpl&&!pick.title)||!periods.length)return;
+  const subjOf=p=>(pick.tpl&&sxTplSubj(pick.tpl))||sxVenueSubj(p.venue)||null;
+  const rows=periods.map(p=>({run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:subjOf(p),
+    course_type:(bk&&sxBkType(bk))||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(grade||'').slice(0,20)||null,teacher:String(who||'').slice(0,30)||'未填',venue:(p.venue||'').slice(0,30)||null,booking_id:bookingId}));
+  try{await sb('POST','experiment_runs',{body:rows,prefer:'return=minimal'});sxLoaded=false;}catch(e){console.warn('實驗紀錄沒存到',e.message);}
+}
+// ==== 學期實驗（新版）結束 ====
+</script>
 </body>
 </html>
