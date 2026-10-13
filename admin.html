@@ -961,6 +961,23 @@
   .rec-stock .mut{color:var(--text2);font-weight:400}
 }
 </style>
+<style id="venue-split">
+/* 場地：衝突紅框、跳過來時閃一下；電腦版待審核放右邊 */
+.venue-booking.st-conflict{outline:2px solid var(--danger)!important;outline-offset:-2px}
+@keyframes vbFlash{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 4px rgba(217,119,6,.45)}}
+.venue-booking.vb-flash{animation:vbFlash 1.2s ease 2}
+.vp-show{display:none}
+@media(min-width:1100px){
+  .venue-ws{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+  .venue-ws>.venue-pend-card{grid-column:2;grid-row:1;position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto;margin-bottom:0!important;padding:16px}
+  .venue-ws>.card:not(.venue-pend-card){grid-column:1;grid-row:1;margin-bottom:0!important}
+  .venue-pend-card .venue-request-card{padding:12px}
+  .venue-pend-card .period-manage-row{flex-wrap:wrap;gap:4px 8px;font-size:13px}
+  .venue-pend-card .period-manage-row>span:first-of-type{flex:1 1 100%!important}
+  .venue-pend-card .btn-sm{font-size:12.5px;padding:5px 9px}
+  .vp-show{display:inline-flex}
+}
+</style>
 </head>
 <body>
 
@@ -1061,7 +1078,8 @@
 </div>
 
 <div id="panel-venue" class="panel">
-  <div class="card" style="margin-bottom:16px">
+  <div class="venue-ws">
+  <div class="card venue-pend-card" style="margin-bottom:16px">
     <div class="card-title">⏳ 待審核場地申請</div>
     <div id="venuePendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
@@ -1088,6 +1106,7 @@
       <button class="btn btn-primary btn-sm" onclick="goAdminThisWeek()">本週</button>
     </div>
     <div class="venue-table-wrap"><table class="venue-table" id="adminVenueTable"></table></div>
+  </div>
   </div>
 </div>
 
@@ -1912,7 +1931,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13c';
+const ADMIN_VERSION='2026-10-13d';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2658,7 +2677,7 @@ function renderVenuePending(){
           <div style="font-size:14px;font-weight:700;margin-top:2px">${escH(b.borrower_name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${b.grade?escH(b.grade)+'・':''}${escH(b.purpose)}】</span></div>
           <div style="font-size:12px;color:var(--text2)">${escH(b.role||'學生')}${b.student_id?' ・ '+escH(b.student_id):''}</div>
         </div>
-        <span class="badge badge-pending">待審核 ${pendingCount} 筆</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="badge badge-pending">待審核 ${pendingCount} 筆</span><button type="button" class="btn btn-secondary btn-sm vp-show" onclick="venueShowOnCal(${ja(b.id)})">在週曆上看</button></div>
       </div>
       <div class="period-manage-list">
         ${periods.map((p,i)=>`
@@ -2846,6 +2865,7 @@ function adminJumpToWeek(week){
 }
 
 async function loadAdminVenue(){
+  initAdminVenueLab();
   if(!activeSemester)await loadActiveSemester();
   if(!allHolidays.length)await loadHolidays();
   const dates=getWeekDates(adminWeekOffset);
@@ -2866,6 +2886,12 @@ async function loadAdminVenue(){
     const expanded=[];
     (Array.isArray(all)?all:[]).forEach(b=>{b={...b,id:safeId(b.id)};(b.periods||[]).forEach(p=>{if(p.date>=startStr&&p.date<=endStr){expanded.push({...b,displayDate:p.date,displayPeriod:p.period,displayVenue:p.venue,periodStatus:p.status});}});});
     renderAdminVenueTable(dates,expanded);
+    if(window._venueFlash){
+      const id=window._venueFlash;window._venueFlash=null;
+      const els=[...document.querySelectorAll('#adminVenueTable .venue-booking')].filter(x=>x.dataset.bid===id);
+      if(els[0])els[0].scrollIntoView({behavior:'smooth',block:'center'});
+      els.forEach(x=>{x.classList.remove('vb-flash');void x.offsetWidth;x.classList.add('vb-flash');});
+    }
   }catch(e){}
 }
 
@@ -3161,9 +3187,31 @@ async function doDeleteSemester(id){
   catch(e){showToast('刪除失敗','error');}
 }
 
-let adminVenueLabFilter='';
+let adminVenueLabFilter='',adminVenueLabInit=false;
+const VENUE_SHORT={'生物實驗室':'生物','化學實驗室':'化學','理化實驗室':'理化','物理實驗室':'物理','地科實驗室':'地科'};
+function initAdminVenueLab(){
+  if(adminVenueLabInit)return;adminVenueLabInit=true;
+  let saved=null;try{saved=localStorage.getItem('adminVenueLab');}catch(_){}
+  if(saved!==null&&(saved===''||Object.values(VENUE_SHORT).includes(saved)))adminVenueLabFilter=saved;
+  else if(window.matchMedia('(min-width:1100px)').matches){
+    const p=allVenueBookings.flatMap(b=>(b.periods||[]).filter(x=>x.status==='待審核')).sort((a,b)=>String(a.date).localeCompare(String(b.date)))[0];
+    adminVenueLabFilter=(p&&VENUE_SHORT[p.venue])||'化學';
+  }
+  document.querySelectorAll('#adminVenueLabTabs .purpose-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===adminVenueLabFilter));
+}
+// 右邊待審核按「在週曆上看」：跳到那一週、那一間，對應的格子閃一下
+function venueShowOnCal(bookingId){
+  const b=allVenueBookings.find(x=>String(x.id)===String(bookingId));if(!b)return;
+  const p=(b.periods||[]).filter(x=>x.status==='待審核').sort((x,y)=>String(x.date).localeCompare(String(y.date)))[0]||(b.periods||[])[0];if(!p)return;
+  const mon=getWeekDates(0)[0],d=new Date(String(p.date)+'T00:00:00');if(isNaN(d))return;
+  adminWeekOffset=Math.floor((d-mon)/(7*864e5));
+  const lab=VENUE_SHORT[p.venue]||'';
+  window._venueFlash=String(bookingId);
+  setAdminVenueLabFilter(lab);
+}
 function setAdminVenueLabFilter(lab){
-  adminVenueLabFilter=lab;
+  adminVenueLabFilter=lab;adminVenueLabInit=true;
+  try{localStorage.setItem('adminVenueLab',lab);}catch(_){}
   document.querySelectorAll('#adminVenueLabTabs .purpose-tab').forEach(t=>t.classList.toggle('active',t.dataset.lab===lab));
   loadAdminVenue();
 }
@@ -3198,7 +3246,8 @@ function renderAdminVenueTable(dates,expanded){
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
           const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
-          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'📌':''}[${b._lab}] ${venueLabel(b)}</div>`;
+          const cf=b.periodStatus==='待審核'&&venueSlotConflict(dateStr,period,b._venueFull,b.id)?' st-conflict':'';
+          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'📌':''}[${b._lab}] ${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${labFull['生物']}')">＋</button>`;
         html+=`</td>`;
@@ -3220,7 +3269,8 @@ function renderAdminVenueTable(dates,expanded){
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
           const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
-          html+=`<div class="venue-booking ${catCls} ${statusCls}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
+          const cf=b.periodStatus==='待審核'&&venueSlotConflict(dateStr,period,venueFull,b.id)?' st-conflict':'';
+          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${venueFull}')">＋</button>`;
         html+=`</td>`;
