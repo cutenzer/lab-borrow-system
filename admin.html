@@ -978,6 +978,17 @@
   .vp-show{display:inline-flex}
 }
 </style>
+<style id="settings-frame">
+/* 設定類頁面：限寬、靠左；有改才出現儲存列 */
+@media(min-width:1100px){.panel.no-pane{max-width:760px}}
+.save-bar{display:none;position:sticky;bottom:0;z-index:30;align-items:center;justify-content:flex-end;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 16px rgba(34,38,42,.08)}
+.save-bar.show{display:flex}
+.save-bar{flex-wrap:wrap}.save-bar .btn{white-space:nowrap}
+@media(max-width:700px){.save-bar .sb-msg{flex:1 1 100%;margin:0 0 2px}}
+.save-bar .sb-msg{margin-right:auto;font-size:13.5px;color:#9a6a0a;font-weight:700}
+.pp-row.pp-changed,.pp-row.pp-new{box-shadow:inset 3px 0 0 #d9a21b}
+.pp-row.pp-changed .pp-name,.pp-row.pp-new .pp-name,#panel-purposes input.chg{border-color:#d9a21b;background:#fdf6e3}
+</style>
 </head>
 <body>
 
@@ -1110,7 +1121,7 @@
   </div>
 </div>
 
-<div id="panel-purposes" class="panel">
+<div id="panel-purposes" class="panel no-pane">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">💰 借用目的與保證金</div>
     <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
@@ -1126,21 +1137,22 @@
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">💵 保證金金額（新台幣）</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-      <div class="form-group"><label>只借器材</label><input type="number" id="dep-equip" min="0" max="100000" step="100"></div>
-      <div class="form-group"><label>只借場地</label><input type="number" id="dep-venue" min="0" max="100000" step="100"></div>
-      <div class="form-group"><label>器材＋場地</label><input type="number" id="dep-both" min="0" max="100000" step="100"></div>
+      <div class="form-group"><label>只借器材</label><input type="number" id="dep-equip" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
+      <div class="form-group"><label>只借場地</label><input type="number" id="dep-venue" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
+      <div class="form-group"><label>器材＋場地</label><input type="number" id="dep-both" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
     </div>
   </div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">👀 前台會看到</div>
     <div id="purposePreview" style="font-size:14px;line-height:1.8"></div>
   </div>
-  <div style="display:flex;justify-content:flex-end;gap:8px">
+  <div class="save-bar" id="ppSaveBar">
+    <span class="sb-msg" id="ppDirtyMsg">有未儲存的變更</span>
     <button class="btn btn-secondary" onclick="loadPurposesAdmin()">↺ 放棄修改</button>
     <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">💾 儲存全部</button>
   </div>
 </div>
-<div id="panel-teachers" class="panel">
+<div id="panel-teachers" class="panel no-pane">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">👩‍🏫 新增 / 編輯教師科目</div>
     <div class="info-box">在這裡登記每位老師固定教授的科目，之後在「場地管理」新增課程時，只要輸入老師姓名，系統就會自動依此判斷顏色分類（生物/化學/物理/地科/理化）。若某筆場地預約需要不同分類，也可以在該筆記錄上手動指定科目或探究/選修/菁英/社團/其他。</div>
@@ -1167,7 +1179,7 @@
   </div>
 </div>
 
-<div id="panel-semester" class="panel">
+<div id="panel-semester" class="panel no-pane">
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📆 新增 / 編輯學期</div>
     <div class="info-box">設定各個「期間」的日期範圍與起始週次，系統會依此計算每個日期屬於第幾週，或顯示為寒假／寒輔／暑假／暑輔等標籤。設為「啟用中」的學期會用於前台週次顯示。</div>
@@ -1931,7 +1943,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13d';
+const ADMIN_VERSION='2026-10-13e';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -7731,6 +7743,7 @@ async function loadPurposesAdmin(){
     document.getElementById('dep-equip').value=purposeDepositRow.equip_amount;
     document.getElementById('dep-venue').value=purposeDepositRow.venue_amount;
     document.getElementById('dep-both').value=purposeDepositRow.both_amount;
+    purposeSnap=purposeRows.map(r=>JSON.stringify(r));purposeDepSnap=[purposeDepositRow.equip_amount,purposeDepositRow.venue_amount,purposeDepositRow.both_amount].map(String).join('|');
     renderPurposeRows();
   }catch(e){
     list.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>讀取失敗：${escH(e.message)}</p><p class="hint" style="margin-top:6px">如果訊息提到 borrow_purposes 不存在，請先在 Supabase 執行「借用目的與保證金.sql」</p></div>`;
@@ -7738,10 +7751,10 @@ async function loadPurposesAdmin(){
 }
 function renderPurposeRows(){
   const list=document.getElementById('purposeList');
-  if(!purposeRows.length){list.innerHTML='<div class="empty"><p>目前沒有任何借用目的</p></div>';renderPurposePreview();return;}
+  if(!purposeRows.length){list.innerHTML='<div class="empty"><p>目前沒有任何借用目的</p></div>';renderPurposePreview();ppDirtyUpdate();return;}
   const ck=(i,f,label)=>`<label><input type="checkbox" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)">${label}</label>`;
   list.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+purposeRows.map((r,i)=>`
-    <div class="pp-row" style="background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
+    <div class="pp-row ${ppRowState(r)}" style="background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
       <div class="pp-move">
         <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},-1)" ${i===0?'disabled':''} aria-label="往上">▲</button>
         <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},1)" ${i===purposeRows.length-1?'disabled':''} aria-label="往下">▼</button>
@@ -7750,8 +7763,27 @@ function renderPurposeRows(){
       <div class="pp-checks">${ck(i,'for_teacher','老師可選')}${ck(i,'for_student','學生可選')}${ck(i,'needs_deposit','需保證金')}${ck(i,'is_active','啟用')}</div>
       <button class="btn btn-danger-outline btn-sm" onclick="deletePurposeRow(${i})" aria-label="刪除">刪除</button>
     </div>`).join('')+`</div>`;
-  renderPurposePreview();
+  renderPurposePreview();ppDirtyUpdate();
 }
+// 跟剛載入時比：哪幾列是新增／改過，整頁有沒有沒存的
+let purposeSnap=[],purposeDepSnap='';
+function ppRowState(r){
+  if(!r.id)return 'pp-new';
+  const o=purposeSnap.find(x=>{try{return JSON.parse(x).id===r.id;}catch(_){return false;}});
+  return o&&o!==JSON.stringify(r)?'pp-changed':'';
+}
+function purposeDirty(){
+  const dep=['dep-equip','dep-venue','dep-both'].map(id=>String((document.getElementById(id)||{}).value??'')).join('|');
+  return purposeDeleted.length>0||dep!==purposeDepSnap||purposeRows.length!==purposeSnap.length||purposeRows.some((r,i)=>JSON.stringify(r)!==purposeSnap[i]);
+}
+function ppDirtyUpdate(){
+  const bar=document.getElementById('ppSaveBar');if(!bar)return;
+  const d=purposeDirty();bar.classList.toggle('show',d);
+  const ds=purposeDepSnap.split('|');['dep-equip','dep-venue','dep-both'].forEach((id,k)=>{const el=document.getElementById(id);if(el)el.classList.toggle('chg',String(el.value)!==ds[k]);});
+  const n=purposeRows.filter(r=>ppRowState(r)).length+purposeDeleted.length+document.querySelectorAll('#panel-purposes input.chg').length;
+  const m=document.getElementById('ppDirtyMsg');if(m)m.textContent=n?`有 ${n} 項未儲存的變更`:'順序有變更，還沒儲存';
+}
+window.addEventListener('beforeunload',e=>{try{if(purposeSnap.length&&purposeDirty()){e.preventDefault();e.returnValue='';}}catch(_){}});
 function setPurposeField(i,f,v){if(!purposeRows[i])return;purposeRows[i][f]=f==='name'?String(v).trim():!!v;renderPurposeRows();}
 function movePurpose(i,d){const j=i+d;if(j<0||j>=purposeRows.length)return;[purposeRows[i],purposeRows[j]]=[purposeRows[j],purposeRows[i]];renderPurposeRows();}
 function deletePurposeRow(i){
