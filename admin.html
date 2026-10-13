@@ -1974,7 +1974,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13k';
+const ADMIN_VERSION='2026-10-13l';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9154,6 +9154,14 @@ async function doDeleteHighlight(id){
 .sr-ps{display:flex;flex-direction:column;gap:4px;font-size:14px}
 .sr-ps label,.sr-ck{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px}
 .sr-ps input,.sr-ck input{width:auto}
+.sr-more{margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}
+.sr-mh{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.sr-mh b{font-size:13.5px}.sr-mh small{font-size:12px;color:var(--text2)}
+.sr-all{margin-left:auto;border:0;background:none;font:inherit;font-size:12.5px;color:#1f5b4c;text-decoration:underline;cursor:pointer}
+.sr-chain,.sr-oth{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 10px;max-height:220px;overflow:auto}
+.sr-chain label,.sr-oth label{display:flex;align-items:center;gap:6px;font-size:13.5px;cursor:pointer;padding:3px 0}
+.sr-chain input,.sr-oth input{width:auto}
+.sr-oth small{color:var(--text2);font-size:12px;margin-left:auto}
 @media(max-width:760px){
   .sr-row{grid-template-columns:72px minmax(0,1fr);padding-left:10px}
   .sr-tags{grid-column:2;justify-content:flex-start}
@@ -9446,6 +9454,47 @@ function srTplFill(){
   if(ty&&!ty.value&&t.course_type&&[...ty.options].some(o=>o.value===t.course_type))ty.value=t.course_type;
   if(g&&!g.value&&t.grade)g.value=String(t.grade).slice(0,20);
 }
+
+// ── 一起填：同一班接下來的課、同年級其他班 ──
+function srLevel(g){const m=String(g||'').match(/^(國|高)\s*([一二三123])/);return m?m[1]+({'1':'一','2':'二','3':'三'}[m[2]]||m[2]):'';}
+function srClassKey(b){return b.is_fixed?'F'+b.id:'C'+[String(b.grade||'').trim(),String(b.borrower_name||'').trim(),srBkSubj(b)].join('|');}
+function srFilledSet(){return new Set(srRuns.map(r=>`${r.booking_id}|${r.run_date}|${r.period||''}`));}
+// 把一筆預約裡、某天之後還沒填的節次，依日期合成「一次課」
+function srSessions(bks,after,filled){
+  const m=new Map();
+  bks.forEach(b=>(b.periods||[]).forEach(p=>{
+    if(!p.date||p.date<=after||p.status==='已拒絕'||filled.has(`${b.id}|${p.date}|${p.period}`))return;
+    const k=b.id+'|'+p.date;const x=m.get(k)||{b,date:p.date,ps:[]};x.ps.push(p);m.set(k,x);
+  }));
+  return [...m.values()].sort((x,y)=>x.date.localeCompare(y.date));
+}
+function srMoreHtml(b,e){
+  const filled=srFilledSet(),key=srClassKey(b);
+  const mine=srBks.filter(x=>x.status!=='已拒絕'&&srClassKey(x)===key);
+  const next=srSessions(mine,e,filled).slice(0,12);
+  const lv=srLevel(b.grade),subj=srBkSubj(b);
+  let others=[];
+  if(lv){
+    const seen=new Set([key]);
+    const start=(()=>{const d=new Date(e+'T00:00:00');d.setDate(d.getDate()-6);return fmtDate(d);})();
+    const lim=(()=>{const d=new Date(e+'T00:00:00');d.setDate(d.getDate()+42);return fmtDate(d);})();
+    srBks.filter(x=>x.status!=='已拒絕'&&srLevel(x.grade)===lv&&srBkSubj(x)===subj&&srClassKey(x)!==key)
+      .forEach(x=>{const k=srClassKey(x);if(seen.has(k))return;
+        const ss=srSessions(srBks.filter(y=>y.status!=='已拒絕'&&srClassKey(y)===k),(()=>{const d=new Date(start+'T00:00:00');d.setDate(d.getDate()-1);return fmtDate(d);})(),filled).filter(z=>z.date<=lim);
+        if(ss.length){seen.add(k);others.push(ss[0]);}});
+    const gk=g=>{g=String(g||'');const i='甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥'.indexOf(g.replace(/^(國|高)\s*[一二三123]/,'').charAt(0));return i<0?99:i;};
+    others.sort((x,y)=>gk(x.b.grade)-gk(y.b.grade)||String(x.b.grade||'').localeCompare(String(y.b.grade||''),'zh-Hant')||x.date.localeCompare(y.date));
+  }
+  srCtx.next=next;srCtx.others=others;
+  const lab=x=>`${srMD(x.date)}（${srWD(x.date)}）${escH(x.ps.map(p=>p.period).join('、'))}`;
+  let h='';
+  if(next.length)h+=`<div class="sr-more"><div class="sr-mh"><b>同一班接下來的課也是這個實驗？</b><small>勾到哪一次，前面的會一起勾</small></div>
+    <div class="sr-chain">${next.map((x,i)=>`<label><input type="checkbox" data-n="${i}" onchange="srChain(this)"> ${lab(x)}</label>`).join('')}</div></div>`;
+  if(others.length)h+=`<div class="sr-more"><div class="sr-mh"><b>${escH(lv)}${escH(subj)}其他班也做這個實驗？</b><small>每班只填還沒填的下一次課</small><button type="button" class="sr-all" onclick="document.querySelectorAll('.sr-oth input').forEach(i=>i.checked=true)">全選</button></div>
+    <div class="sr-oth">${others.map((x,i)=>`<label><input type="checkbox" data-o="${i}"> <b>${escH(x.b.grade||'')}</b> ${lab(x)}<small>${escH(x.b.borrower_name||'')}</small></label>`).join('')}</div></div>`;
+  return h;
+}
+function srChain(el){const n=+el.dataset.n;document.querySelectorAll('.sr-chain input').forEach(i=>{const k=+i.dataset.n;if(el.checked&&k<n)i.checked=true;if(!el.checked&&k>n)i.checked=false;});}
 let srCtx=null;
 async function srEnsureTeachers(){if(!(allTeachers||[]).length){try{await loadTeachers();}catch(e){}}}
 async function srEdit(id){
@@ -9462,7 +9511,7 @@ async function srFill(bid,a,e){
   if(!ps.length){showToast('這週的節次都填好了','success');srRender();return;}
   srCtx={bid,ps};
   const r={subject:srBkSubj(b),course_type:srBkType(b),grade:b.grade||'',teacher:b.borrower_name||''};
-  showModal('填實驗',srFormHtml(r,ps),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
+  showModal('填實驗',srFormHtml(r,ps)+srMoreHtml(b,e),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
 }
 async function srSave(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
@@ -9475,6 +9524,11 @@ async function srSave(){
       const pick=[...document.querySelectorAll('.sr-ps input:checked')].map(i=>srCtx.ps[+i.dataset.i]).filter(Boolean);
       if(!pick.length){showToast('至少勾一節','error');return;}
       const body=pick.map(p=>({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(srCtx.bid)}));
+      // 一起填：同一班之後的課（同一個老師、班級）
+      [...document.querySelectorAll('.sr-chain input:checked')].map(i=>srCtx.next[+i.dataset.n]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||base.grade||'').slice(0,20)||null,teacher:(x.b.borrower_name||base.teacher).slice(0,30)})));
+      // 一起填：同年級其他班（班級、老師用他們自己的預約）
+      [...document.querySelectorAll('.sr-oth input:checked')].map(i=>srCtx.others[+i.dataset.o]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||'').slice(0,20)||null,teacher:(x.b.borrower_name||base.teacher).slice(0,30),course_type:base.course_type||srBkType(x.b)||null})));
+      if(body.length>pick.length&&!confirm(`這次會一起填 ${body.length} 節，確定？`))return;
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
     }else{
