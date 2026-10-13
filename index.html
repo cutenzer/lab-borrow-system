@@ -1529,7 +1529,11 @@
 .pv-tabs button.on{background:var(--accent);color:#fff;font-weight:700}
 .sx-log{margin-left:auto;white-space:nowrap}
 .sx-log-m{display:none;border:1.5px dashed var(--border);background:none;border-radius:10px;padding:12px;font:inherit;font-size:14.5px;color:var(--text2);cursor:pointer}
-@media(max-width:900px){#page-semester .sp-bar .sx-log{display:none}.sx-log-m{display:block}}
+@media(max-width:900px){#page-semester .sp-bar .sx-log{display:none}.sx-log-m{display:block}
+  .sx-stick{position:sticky;top:var(--sxTop,0px);z-index:20;background:var(--bg);margin:-8px -16px 10px;padding:8px 16px 10px;transition:box-shadow .15s}
+  .sx-stick.stuck{box-shadow:0 6px 12px -8px rgba(31,35,38,.35)}
+  .sx-stick>*:last-child{margin-bottom:0}
+  .sx-stick .sp-head{margin:0 0 8px}}
 .ps-weeks{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .ps-day{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:8px;min-height:84px;display:flex;flex-direction:column;gap:5px;min-width:0}
 .ps-day.now{border-color:#d9a21b;background:#fdf6e3}.ps-day.past{opacity:.75}
@@ -2000,7 +2004,7 @@
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13e · 學期實驗改版：這學期＋實驗庫</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13g · 課綱器材「庫存沒有」提示</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -6227,7 +6231,7 @@ function applyTemplate(id){
       selectedItems[room+'__'+name]={room,name,spec,unit,quantity:want};
       added.push({room,name,unit,spec,qty:want,info,base:want,per:perOf(want)});
     }else{
-      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,base:want,per:perOf(want),note:'課綱實驗器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
+      unmatched.push({key:'u-'+Date.now()+'-'+Math.floor(Math.random()*10000),name:it.name,spec:it.spec||'',unit:it.unit||'個',quantity:want,base:want,per:perOf(want),note:it.no_stock?'庫存沒有登記這項（多為耗材），請自備或向管理員確認':'課綱實驗器材，庫存清單中查無相符品名，請向管理員確認（採購或補登庫存）'});
     }
   });
   appliedTemplate={id:t.id,name:formatTemplateName(t),rawName:(t.name||'').trim(),note:t.reference_note||'',added,unmatched,groupCount:gc,groups:gc};
@@ -7244,12 +7248,12 @@ function sxSemHtml(mobile){
   h+=`<div class="sp-fd"><label class="sp-sel${spSubj!=='全部'?' on':''}"><select aria-label="科目" onchange="spSubj=this.value;spRender()">${subjVals.map(v=>`<option value="${escH(v)}"${v===spSubj?' selected':''}>${v==='全部'?'全部科目':escH(v)}</option>`).join('')}</select><svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label><label class="sp-sel${spGrade!=='全部'?' on':''}"><select aria-label="年級" onchange="spGrade=this.value;spRender()">${gradeVals.map(v=>`<option value="${escH(v)}"${v===spGrade?' selected':''}>${v==='全部'?'全部年級':escH(v)}</option>`).join('')}</select><svg class="sp-chev" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label></div>`;
   h+=`<button type="button" class="btn btn-secondary btn-sm sx-log" onclick="sxLog()">＋ 登記實驗</button></div>`;
   const logBtn=`<button type="button" class="sx-log-m" onclick="sxLog()">＋ 登記實驗（不借教室也可以）</button>`;
-  if(!sxLoaded)return h+'<div class="loading"><div class="spinner"></div>載入中…</div>';
+  if(!sxLoaded)return h+'<!--sx-body--><div class="loading"><div class="spinner"></div>載入中…</div>';
   if(mobile){
     if(sxWeek==null||sxWeek>=weeks.length)sxWeek=Math.max(0,nowIdx);
     const w=weeks[sxWeek],its=w?sxWeekItems(w):[];
-    h+=`<div class="pm-head"><button type="button" onclick="sxWeek=Math.max(0,sxWeek-1);spRender()" aria-label="上一週" ${sxWeek<=0?'disabled':''}>‹</button><label class="pm-wsel"><select onchange="sxWeek=+this.value;spRender()" aria-label="選週次">${weeks.map((x,i)=>`<option value="${i}"${i===sxWeek?' selected':''}>第 ${x.week} 週　${spMD(x.date)}${i===nowIdx?'　本週':''}</option>`).join('')}</select><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></label><button type="button" onclick="sxWeek=Math.min(${weeks.length-1},sxWeek+1);spRender()" aria-label="下一週" ${sxWeek>=weeks.length-1?'disabled':''}>›</button></div>`;
-    h+=`<div class="pm-list">${its.map(c=>sxCardHtml(c,true)).join('')||'<div class="pm-empty">這週沒有實驗</div>'}${logBtn}</div>`;
+    h+=`<div class="pm-head"><button type="button" onclick="sxWeek=Math.max(0,sxWeek-1);spRender();sxListTop()" aria-label="上一週" ${sxWeek<=0?'disabled':''}>‹</button><label class="pm-wsel"><select onchange="sxWeek=+this.value;spRender();sxListTop()" aria-label="選週次">${weeks.map((x,i)=>`<option value="${i}"${i===sxWeek?' selected':''}>第 ${x.week} 週　${spMD(x.date)}${i===nowIdx?'　本週':''}</option>`).join('')}</select><svg width="14" height="14" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></label><button type="button" onclick="sxWeek=Math.min(${weeks.length-1},sxWeek+1);spRender();sxListTop()" aria-label="下一週" ${sxWeek>=weeks.length-1?'disabled':''}>›</button></div>`;
+    h+=`<!--sx-body--><div class="pm-list">${its.map(c=>sxCardHtml(c,true)).join('')||'<div class="pm-empty">這週沒有實驗</div>'}${logBtn}</div>`;
     return h;
   }
   h+='<div class="ps-weeks">';
@@ -7298,8 +7302,8 @@ function sxLibHtml(mobile){
   let h=`<div class="lb-bar"><label class="lb-q"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input type="search" id="sxLibQ" maxlength="40" value="${escH(sxLibQ)}" placeholder="${mobile?'搜名稱、舊名稱或器材':'搜實驗名稱、舊名稱或器材，例如 打點計時器'}" oninput="sxLibQ=this.value;clearTimeout(window._sxq);window._sxq=setTimeout(()=>{spRender();const i=document.getElementById('sxLibQ');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},200)"></label><div class="lb-filters">${filters}</div></div>`;
   if(mobile){
     if(!SX_SUBJ.includes(sxLibSubj))sxLibSubj='化學';
-    h+=`<div class="lb-stabs">${SX_SUBJ.map(s=>`<button type="button" class="${s===sxLibSubj?'on':''}" style="--c:${semColor(s)}" onclick="sxLibSubj=${ja(s)};spRender()">${s}<small>${by(s).length}</small></button>`).join('')}</div>`;
-    return h+`<div class="lb-mlist">${by(sxLibSubj).map(sxLibRow).join('')||'<div class="pm-empty">沒有符合的實驗</div>'}</div>`;
+    h+=`<div class="lb-stabs">${SX_SUBJ.map(s=>`<button type="button" class="${s===sxLibSubj?'on':''}" style="--c:${semColor(s)}" onclick="sxLibSubj=${ja(s)};spRender();sxListTop()">${s}<small>${by(s).length}</small></button>`).join('')}</div>`;
+    return h+`<!--sx-body--><div class="lb-mlist">${by(sxLibSubj).map(sxLibRow).join('')||'<div class="pm-empty">沒有符合的實驗</div>'}</div>`;
   }
   return h+`<div class="lb-cols">${SX_SUBJ.map(s=>{const its=by(s);return `<div class="lb-col"><div class="lb-ch" style="--c:${semColor(s)}"><i></i>${s}<small>${its.length} 個</small></div><div class="lb-cl">${its.map(sxLibRow).join('')||'<div class="pm-empty">沒有符合的實驗</div>'}</div></div>`;}).join('')}</div>`;
 }
@@ -7311,9 +7315,25 @@ spRender=function(){
   const head=document.querySelector('#page-semester .sp-head');
   if(head)head.innerHTML=`<h2>📅 學期實驗</h2><div class="pv-tabs" role="tablist"><button type="button" role="tab" class="${sxView==='sem'?'on':''}" onclick="sxView='sem';spRender()">這學期</button><button type="button" role="tab" class="${sxView==='lib'?'on':''}" onclick="sxView='lib';spRender()">實驗庫</button></div>`;
   const mobile=!window.matchMedia('(min-width:901px)').matches;
-  root.innerHTML=sxView==='lib'?sxLibHtml(mobile):sxSemHtml(mobile);
+  const html=sxView==='lib'?sxLibHtml(mobile):sxSemHtml(mobile);
+  if(mobile&&head&&html.includes('<!--sx-body-->')){
+    // 手機：標題、分頁、搜尋、篩選固定在上方，只捲課程清單
+    const [top,body]=html.split('<!--sx-body-->');
+    const hd=document.querySelector('header');
+    root.style.setProperty('--sxTop',((hd&&getComputedStyle(hd).position==='sticky')?hd.offsetHeight:0)+'px');
+    root.innerHTML=`<div class="sx-stick"><div class="sp-head">${head.innerHTML}</div>${top}</div>${body}`;
+    head.style.display='none';
+  }else{root.innerHTML=html.replace('<!--sx-body-->','');if(head)head.style.display='';}
+  sxStickWatch();
   const sh=document.getElementById('spSheet');if(sh)sh.classList.remove('show');document.body.classList.remove('sp-sheet-open');
 };
+// 已往下捲時切換科目／週次，回到清單開頭（不動上方固定區）
+function sxListTop(){const st=document.querySelector('#spRoot .sx-stick'),nx=st&&st.nextElementSibling;if(!nx||getComputedStyle(st).position!=='sticky')return;const top=parseFloat(getComputedStyle(st).top)||0;const y=nx.getBoundingClientRect().top+scrollY-top-st.offsetHeight-6;if(scrollY>y)scrollTo(0,Math.max(0,y));st.classList.toggle('stuck',scrollY>0&&st.getBoundingClientRect().top<=top+0.5);}
+function sxStickWatch(){
+  if(window._sxStickOn)return;window._sxStickOn=true;
+  const f=()=>{const st=document.querySelector('#spRoot .sx-stick');if(!st)return;const top=parseFloat(getComputedStyle(st).top)||0;st.classList.toggle('stuck',st.getBoundingClientRect().top<=top+0.5&&scrollY>0);};
+  addEventListener('scroll',f,{passive:true});addEventListener('resize',f);
+}
 window.matchMedia('(min-width:901px)').addEventListener?.('change',()=>{if(document.getElementById('page-semester')?.classList.contains('active'))spRender();});
 // ── 補填／登記實驗 ──
 function sxNameGuess(){try{return localStorage.getItem('sxTeacher')||'';}catch(_){return '';}}
