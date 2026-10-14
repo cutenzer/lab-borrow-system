@@ -1974,7 +1974,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-13n';
+const ADMIN_VERSION='2026-10-14b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4162,17 +4162,26 @@ const TPL_ROOM_GUESS_RULES = [
 ];
 const TPL_ROOM_OPTIONS = [['','不指定'],['Physics','物理'],['Chemistry','化學'],['Biology','生物'],['Geoscience','地科'],['Physics Chemistry','理化'],['TeachingMaterialRoom','教具室']];
 
-function parseCourseTemplateXlsx(workbook, fileName) {
-  for (const sheetName of workbook.SheetNames) {
+// 一個檔案可能有好幾個工作表（老師常把舊的實驗表一起留在同一個檔案），全部找出來
+function parseCourseTemplateSheets(workbook, fileName) {
+  const out = [];
+  workbook.SheetNames.forEach((sheetName, idx) => {
     const ws = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null, raw: true });
-    const a1 = rows[0] && rows[0][0];
-    const a2 = rows[1] && rows[1][0];
-    if (a1 && String(a1).includes('曉明女中') && a2 === '實驗名稱') {
-      return parseTplSheet(rows, fileName, sheetName);
+    // 前 6 列的 A 欄或 C 欄有「實驗名稱」就算（不再要求第一列一定寫「曉明女中」）
+    const isTpl = rows.slice(0, 6).some(r => r && [0, 2].some(c => String(r[c] ?? '').replace(/\s+/g, '') === '實驗名稱'));
+    if (isTpl) {
+      const r = parseTplSheet(rows, fileName, sheetName);
+      const st = (workbook.Workbook && workbook.Workbook.Sheets && workbook.Workbook.Sheets[idx]) || {};
+      r.hidden = !!st.Hidden;
+      out.push(r);
     }
-  }
-  return { error: '此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗', file: fileName };
+  });
+  return out;
+}
+function parseCourseTemplateXlsx(workbook, fileName) {
+  const all = parseCourseTemplateSheets(workbook, fileName);
+  return all[0] || { error: '此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗', file: fileName };
 }
 
 function parseTplSheet(rows, fileName, sheetName) {
@@ -4181,9 +4190,9 @@ function parseTplSheet(rows, fileName, sheetName) {
 
   const category = trimStr(get(0, 2));
   const info = {};
-  for (let r = 1; r < 6; r++) {
+  for (let r = 0; r < 6; r++) {
     [[0, 1], [2, 3]].forEach(([lc, vc]) => {
-      const label = trimStr(get(r, lc));
+      const label = (trimStr(get(r, lc)) || '').replace(/\s+/g, '');
       const val = get(r, vc);
       if (label && TPL_LABELS.includes(label)) info[label] = val;
     });
@@ -4271,10 +4280,18 @@ async function handleTemplateFile(input){
   reader.onload=e=>{
     try{
       const wb=XLSX.read(e.target.result,{type:'array'});
-      const r=parseCourseTemplateXlsx(wb,file.name);
-      if(r.error){msg.textContent='⚠️ '+r.error;return;}
-      loadTemplateIntoForm(r);
-      msg.textContent='✅ 解析成功，請確認下方資料後儲存';
+      const all=parseCourseTemplateSheets(wb,file.name);
+      const sheetsTxt=`（檔案「${file.name}」共有 ${wb.SheetNames.length} 個工作表：${wb.SheetNames.join('、')}）`;
+      if(!all.length){msg.textContent='⚠️ 此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗'+sheetsTxt;return;}
+      if(all.length===1){loadTemplateIntoForm(all[0]);msg.textContent=`✅ 讀到工作表「${all[0].sheet_name}」的「${all[0].name}」，請確認後儲存${sheetsTxt}`;return;}
+      // 好幾個工作表：檔名裡有提到的那個實驗優先；其他讓使用者挑
+      const fn=String(file.name||'').replace(/\s+/g,'');
+      const hit=all.filter(r=>r.name&&fn.includes(String(r.name).replace(/\s+/g,'')));
+      if(hit.length===1){loadTemplateIntoForm(hit[0]);msg.textContent=`✅ 這個檔案有 ${all.length} 個工作表，已帶入檔名對應的「${hit[0].name}」（工作表：${hit[0].sheet_name}）`;return;}
+      window._tplSheets=all;msg.textContent=`這個檔案有 ${all.length} 個實驗工作表，請選要帶入哪一個`;
+      showModal(`這個檔案有 ${all.length} 個實驗，要帶入哪一個？`,
+        `<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${escH(file.name)}</div><div style="display:flex;flex-direction:column;gap:6px">${all.map((r,i)=>`<button type="button" class="btn btn-secondary" style="justify-content:space-between;text-align:left;width:100%" onclick="closeModal();loadTemplateIntoForm(window._tplSheets[${i}]);document.getElementById('tplParseMsg').textContent='✅ 已帶入「'+(window._tplSheets[${i}].name||'')+'」，請確認後儲存'"><span><b>${escH(r.name||'（沒有實驗名稱）')}</b> <small style="color:var(--text2)">${escH(r.grade||'')}${r.teacher?'・'+escH(r.teacher):''}</small></span><small style="color:var(--text2)">工作表：${escH(r.sheet_name)}${r.hidden?'（隱藏）':''}・器材 ${r.equipment_items.length}</small></button>`).join('')}</div>`,
+        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'}]);
     }catch(err){msg.textContent='解析失敗：'+err.message;}
   };
   reader.readAsArrayBuffer(file);
@@ -4293,6 +4310,10 @@ function loadTemplateIntoForm(r){
   document.getElementById('tpl-classcount').value=r.class_count??'';
   document.getElementById('tpl-groupcount').value=r.group_count??'';
   document.getElementById('tpl-defaultroom').value=r.default_room||'';
+  const gs=`${r.grade||''} ${r.category||''} ${r.source_file||''}`;
+  document.getElementById('tpl-subject').value=TPL_SUBJ.find(x=>gs.includes(x))||'';
+  tplTypeOptions('');
+  document.getElementById('tpl-aliases').value='';
   const items=r.equipment_items.map(it=>{
     const matches=allEquipment.filter(e=>e.name===it.name);
     let room='';
