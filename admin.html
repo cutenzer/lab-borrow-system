@@ -1003,7 +1003,6 @@
 <style id="tpl-cls-css">
 .tpl-cls{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#e7efe9;color:var(--accent);margin-left:4px;vertical-align:2px}
 .tpl-cls.miss{background:#fbeed2;color:#9a6a0a}
-.tpl-typemgr{border:0;background:none;color:var(--accent);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 0 6px}
 .ct-list{display:flex;flex-direction:column;gap:6px}
 .ct-row{display:flex;align-items:center;gap:8px}.ct-row.off input[type=text]{opacity:.55}
 .ct-row input[type=text]{flex:1;min-width:0;margin:0}
@@ -1266,7 +1265,7 @@
       <div class="ts-pane on" data-pane="basic"><div class="ts-grid">
         <div class="form-group full"><label>課程名稱 *</label><input type="text" id="tpl-name"></div>
         <div class="form-group"><label>科目 *</label><select id="tpl-subject"><option value="">（還沒選）</option><option>物理</option><option>化學</option><option>生物</option><option>地科</option><option>理化</option></select></div>
-        <div class="form-group"><label>課程類型 <button type="button" class="tpl-typemgr" onclick="openCourseTypes()">管理類型</button></label><select id="tpl-ctype"></select></div>
+        <div class="form-group"><label>課程類型</label><select id="tpl-ctype" onchange="tplTypeChange(this)"></select></div>
         <div class="form-group full"><label>別名（以前用過的名稱，用「、」隔開；前台搜尋得到）</label><input type="text" id="tpl-aliases" maxlength="200" placeholder="例如：濾紙層析、色層分析"></div>
         <div class="form-group"><label>原分類（舊資料參考）</label><input type="text" id="tpl-category"></div>
         <div class="form-group"><label>年級</label><input type="text" id="tpl-grade"></div>
@@ -1974,7 +1973,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-14b';
+const ADMIN_VERSION='2026-10-16a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4188,7 +4187,9 @@ function parseTplSheet(rows, fileName, sheetName) {
   const get = (r, c) => (rows[r] && rows[r][c] !== undefined) ? rows[r][c] : null;
   const trimStr = v => (v === null || v === undefined) ? null : String(v).trim();
 
-  const category = trimStr(get(0, 2));
+  // 原分類寫在 C1，但只有標題列在第一列（A1 是校名）時才讀；標題列往下移時 C1 可能是「實驗名稱」這類欄名（2026-10-16）
+  const c1 = trimStr(get(0, 2));
+  const category = (/曉明/.test(String(get(0, 0) ?? '')) && c1 && !TPL_LABELS.includes(c1.replace(/\s+/g, ''))) ? c1 : '';
   const info = {};
   for (let r = 0; r < 6; r++) {
     [[0, 1], [2, 3]].forEach(([lc, vc]) => {
@@ -4378,7 +4379,13 @@ function tplTypeOptions(cur){
   const sel=document.getElementById('tpl-ctype');if(!sel)return;
   const act=courseTypes.filter(t=>t.is_active!==false).map(t=>t.name);
   const opts=[...act];if(cur&&!opts.includes(cur))opts.push(cur);
-  sel.innerHTML=`<option value="">（還沒選）</option>`+opts.map(n=>`<option value="${escH(n)}"${n===cur?' selected':''}>${escH(n)}${act.includes(n)?'':'（已停用）'}</option>`).join('');
+  sel.innerHTML=`<option value="">不指定</option>`+opts.map(n=>`<option value="${escH(n)}"${n===cur?' selected':''}>${escH(n)}${act.includes(n)?'':'（已停用）'}</option>`).join('')+'<option value="__mgr">＋ 管理類型…</option>';
+  sel.dataset.prev=sel.value;
+}
+// 選單最後一項「管理類型…」：不另放按鈕，選到就開管理視窗，選單退回原本的值（2026-10-16）
+function tplTypeChange(sel){
+  if(sel.value==='__mgr'){sel.value=sel.dataset.prev||'';openCourseTypes();return;}
+  sel.dataset.prev=sel.value;
 }
 function openCourseTypes(){
   const rows=courseTypes.map((t,i)=>`<div class="ct-row${t.is_active===false?' off':''}">
@@ -4436,15 +4443,33 @@ function clearTemplateForm(){
   document.getElementById('tplParseMsg').textContent='';
 }
 
-async function saveTemplate(){
+// ── 同名比對（2026-10-16）：新增時遇到「名稱＋年級」相同的課綱實驗 → 問要不要覆蓋，不再多一筆同名 ──
+// 年級有一邊沒填也算同一個；名稱、年級比對時忽略空白。好幾筆同名時取最近更新的那筆
+const tplNorm=v=>String(v??'').replace(/\s+/g,'');
+function tplSameAs(name,grade){
+  const n=tplNorm(name),g=tplNorm(grade);if(!n)return [];
+  return allTemplates.filter(t=>tplNorm(t.name)===n&&(!g||!tplNorm(t.grade)||tplNorm(t.grade)===g))
+    .sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+}
+// 器材差異：用「名稱＋規格」當同一樣，數量不同算變動
+function tplEquipDiff(oldItems,newItems){
+  const key=it=>tplNorm(it.name)+'|'+tplNorm(it.spec);
+  const om=new Map((Array.isArray(oldItems)?oldItems:[]).map(it=>[key(it),it])),nm=new Map((newItems||[]).map(it=>[key(it),it]));
+  let add=0,del=0,chg=0;
+  nm.forEach((it,k)=>{const o=om.get(k);if(!o)add++;else if((parseInt(o.quantity)||0)!==(parseInt(it.quantity)||0))chg++;});
+  om.forEach((_,k)=>{if(!nm.has(k))del++;});
+  return {add,del,chg};
+}
+async function saveTemplate(overwriteId){
   const name=document.getElementById('tpl-name').value.trim();
   if(!name){showToast('請填寫課程名稱','error');return;}
   const items=collectTplEquipItems();
+  const ctype=document.getElementById('tpl-ctype').value;
   const body={
     name,
     category:document.getElementById('tpl-category').value.trim(),
     subject:TPL_SUBJ.includes(document.getElementById('tpl-subject').value)?document.getElementById('tpl-subject').value:null,
-    course_type:document.getElementById('tpl-ctype').value||null,
+    course_type:(ctype&&ctype!=='__mgr')?ctype:null,
     aliases:tplParseAliases(document.getElementById('tpl-aliases').value),
     grade:document.getElementById('tpl-grade').value.trim(),
     teacher:document.getElementById('tpl-teacher').value.trim(),
@@ -4457,10 +4482,30 @@ async function saveTemplate(){
     reference_note:document.getElementById('tpl-note').value,
     updated_at:new Date().toISOString(),
   };
+  // 新增時先比對同名；按「覆蓋」後帶著 overwriteId 再進來
+  const old=overwriteId?allTemplates.find(t=>String(t.id)===String(overwriteId)):null;
+  if(!editingTemplateId&&!old){
+    const same=tplSameAs(name,body.grade);
+    if(same.length){
+      const t=same[0],d=tplEquipDiff(t.equipment_items,items);
+      const dTxt=[d.add?`新增 ${d.add}`:'',d.del?`移除 ${d.del}`:'',d.chg?`數量變動 ${d.chg}`:''].filter(Boolean).join('、')||'沒有變動';
+      showModal('已經有這個實驗',`<p>已有「${escH(t.name)}」${t.grade?'（'+escH(t.grade)+'）':''}${same.length>1?`，共 ${same.length} 筆同名，會覆蓋最近更新的那筆`:''}。</p>
+        <p style="margin-top:8px">覆蓋後器材以這次為準：<b>${escH(dTxt)}</b>。</p>
+        <p class="hint" style="margin-top:6px">這次沒填的欄位（別名、類型、週次等）沿用原本的。</p>`,
+        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'覆蓋',cls:'btn-primary',fn:`closeModal();saveTemplate(${ja(t.id)})`}]);
+      return;
+    }
+  }
+  if(old){
+    // 空白欄位沿用舊值，避免匯入時把別名、類型、週次清掉
+    const blank=v=>v==null||v===''||(Array.isArray(v)&&!v.length);
+    Object.keys(body).forEach(k=>{if(k!=='equipment_items'&&blank(body[k])&&!blank(old[k]))body[k]=old[k];});
+  }
+  const patchId=editingTemplateId||(old&&old.id);
   try{
-    if(editingTemplateId){
-      await sb('PATCH','course_templates',{filter:'id=eq.'+editingTemplateId,body,prefer:'return=minimal'});
-      showToast('課綱實驗已更新','success');
+    if(patchId){
+      await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(patchId),body,prefer:'return=minimal'});
+      showToast(old?`已覆蓋更新「${name}」`:'課綱實驗已更新','success');
     }else{
       body.id='TPL-'+Date.now();
       await sb('POST','course_templates',{body,prefer:'return=minimal'});
@@ -4653,14 +4698,14 @@ function renderTemplateList(){
   const iss=tplIssuesAll();
   const dateN=allTemplates.filter(t=>iss.get(t).date.length).length,nameN=allTemplates.filter(t=>iss.get(t).name).length;
   const badN=withMiss.filter(x=>x.miss.length).length;
-  const noCls=t=>!TPL_SUBJ.includes(t.subject)||!t.course_type,classN=allTemplates.filter(noCls).length;
+  const noCls=t=>!TPL_SUBJ.includes(t.subject),classN=allTemplates.filter(noCls).length;
   // 篩選籤：全部／對不到器材（健檢）
   const fb=document.getElementById('tplFilter');
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';renderTemplateList()">全部 ${allTemplates.length}</button>`+
     (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
     (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
     (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 可能重複 ${nameN}</button>`:'')+
-    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';renderTemplateList()">📝 沒填科目或類型 ${classN}</button>`:'');
+    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';renderTemplateList()">📝 沒填科目 ${classN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
@@ -4689,7 +4734,7 @@ function renderTemplateList(){
       :(n?'<div class="tpl-health ok">✔ 器材都對得到庫存</div>':''));
     html+=`<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
-      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}${TPL_SUBJ.includes(t.subject)&&!t.course_type?'<span class="tpl-cls miss">沒填類型</span>':''}</div>
+      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}</div>
         ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
         <div class="sub">${sub}</div>${when?`<div class="tpl-when">🗓️ ${escH(when)}</div>`:''}${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
