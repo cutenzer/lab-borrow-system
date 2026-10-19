@@ -878,7 +878,7 @@
 .eq-add-card.open{display:block}
 .eq-filter-row select{flex:0 0 150px}
 @media(min-width:1100px){
-  main{max-width:1480px;margin:0;}
+  main{max-width:none;margin:0;}  /* 2026-10-19：不再限 1480px，螢幕多寬就用多寬（側欄右邊全部給內容） */
   header .header-logout{display:none;}
 }
 </style>
@@ -998,6 +998,10 @@
   #panel-pending>.card>.purpose-tabs,#panel-approved>.card>.purpose-tabs{margin:0}
   #pendingList,#approvedList{grid-column:1/-1;margin-top:12px}
   #pendingList .bsel-bar{padding:4px 2px;margin-bottom:8px;border:0;background:none;min-height:32px}
+  /* 寬螢幕（2026-10-19）：多出來的寬度一部分給右窗格；清單的姓名欄不再無限變寬，器材欄可以多顯示幾項 */
+  .rec-ws{grid-template-columns:minmax(0,1fr) clamp(400px,30%,560px)}
+  .eq-ws,main .venue-ws{grid-template-columns:minmax(0,1fr) clamp(360px,28%,520px)}
+  .rec-row{grid-template-columns:28px minmax(150px,240px) minmax(0,1fr) 118px 96px}
   /* 右窗格：按鈕列黏在窗格底部，捲到哪都按得到；「更多」選單改往上開，才不會被窗格底邊切掉 */
   .rec-pane .record-actions{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:12px -16px -14px;padding:10px 16px;border-top:1px solid var(--border);border-radius:0 0 8px 8px}
   .rec-pane .record-actions .act-pop{top:auto;bottom:calc(100% + 4px)}
@@ -1033,8 +1037,17 @@
 }
 </style>
 <style id="settings-frame">
-/* 設定類頁面：限寬、靠左；有改才出現儲存列 */
-@media(min-width:1100px){.panel.no-pane{max-width:760px}}
+/* 設定類頁面：靠左；有改才出現儲存列
+   窄螢幕（1100～1279）單欄限 760px，表單才不會被拉得太長；1280 以上改成「左邊編輯、右邊清單」兩欄，不再右半邊空白（2026-10-19） */
+@media(min-width:1100px) and (max-width:1279px){.panel.no-pane{max-width:760px}}
+@media(min-width:1280px){
+  #panel-purposes.active,#panel-teachers.active,#panel-semester.active{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+  #panel-purposes>.card,#panel-teachers>.card,#panel-semester>.card{margin:0!important}
+  #panel-teachers.active{grid-template-columns:minmax(360px,.8fr) minmax(0,1.2fr)}
+  #panel-purposes.active{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  #panel-purposes>.card:first-child{grid-row:span 2}
+  #panel-purposes>.save-bar{grid-column:1/-1}
+}
 .save-bar{display:none;position:sticky;bottom:0;z-index:30;align-items:center;justify-content:flex-end;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 16px rgba(34,38,42,.08)}
 .save-bar.show{display:flex}
 .save-bar{flex-wrap:wrap}.save-bar .btn{white-space:nowrap}
@@ -2030,7 +2043,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19g';
+const ADMIN_VERSION='2026-10-19h';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9338,7 +9351,8 @@ async function doDeleteHighlight(id){
   .em-tabs{margin-left:0;width:100%}.em-tabs button{flex:1}
   .em-find input,.em-find.on input{width:100%}.em-find{flex:1 1 100%}
 }
-@media(min-width:1100px){#panel-semruns.no-pane{max-width:1060px}}
+/* 學期實驗紀錄：卡片自動排滿整個寬度（2026-10-19 拿掉 1060px 上限） */
+@media(min-width:1100px){#panel-semruns.no-pane{max-width:none}}
 .sr-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
 .sr-bar select{width:auto;padding:7px 10px;font-size:13.5px}
 .sr-seg{display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden}
