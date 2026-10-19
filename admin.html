@@ -1017,6 +1017,13 @@
 .pp-row.pp-changed .pp-name,.pp-row.pp-new .pp-name,#panel-purposes input.chg{border-color:#d9a21b;background:#fdf6e3}
 </style>
 <style id="tpl-cls-css">
+.tpl-verbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 16px 6px;font-size:12.5px;color:var(--text2)}
+.tpl-verbar:empty,.tpl-veropt:empty{display:none}
+.tpl-verbar button{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:3px 10px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--text)}
+.tpl-verbar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tpl-veropt{padding:8px 16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.tpl-veropt label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tpl-cls.ver{background:#f3efe4;color:#6b5a2e}
 .tpl-cls{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#e7efe9;color:var(--accent);margin-left:4px;vertical-align:2px}
 .tpl-cls.miss{background:#fbeed2;color:#9a6a0a}
 .ct-list{display:flex;flex-direction:column;gap:6px}
@@ -1276,6 +1283,7 @@
 
   <div class="card tpl-sheet" id="tplFormCard" style="display:none" role="dialog" aria-label="編輯課綱實驗">
     <div class="ts-head"><b>📚 新增 / 編輯課綱實驗</b><button type="button" class="ts-x" onclick="clearTemplateForm()" aria-label="關閉">✕</button></div>
+    <div class="tpl-verbar" id="tplVerBar"></div>
     <div class="ts-tabs"><button type="button" data-tab="basic" class="on" onclick="tplTab('basic')">基本資料</button><button type="button" data-tab="equip" onclick="tplTab('equip')">器材<span id="tsEqN"></span></button><button type="button" data-tab="note" onclick="tplTab('note')">備註</button></div>
     <div class="ts-body">
       <div class="ts-pane on" data-pane="basic"><div class="ts-grid">
@@ -1314,6 +1322,7 @@
         <textarea id="tpl-note" rows="10"></textarea>
       </div>
     </div>
+    <div class="tpl-veropt" id="tplVerOpt"></div>
     <div class="ts-foot"><button class="btn btn-secondary" onclick="clearTemplateForm()">取消</button><button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課綱實驗</button></div>
   </div>
 
@@ -1993,7 +2002,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-16b';
+const ADMIN_VERSION='2026-10-19a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4291,6 +4300,20 @@ function buildReferenceNote(otherItems, chemicals, recycling){
 
 // ── 課綱實驗：上傳/表單 ────────────────────────────────────
 let allTemplates=[], editingTemplateId=null, tplEquipRows=[];
+// ── 課綱實驗版本（2026-10-19）──
+// family_id 相同＝同一個實驗的不同版本；version_label 空白＝原版。一個學年度一版，同學年度再存就是覆蓋。
+// allTemplates 只放每條線的最新版（清單、選單、健檢用）；tplAllVers 放全部（看舊版、舊紀錄用）。
+let tplAllVers=[];
+function tplFam(t){return t?String(t.family_id||t.id):'';}
+function tplVerNum(t){const m=String(t&&t.version_label||'').match(/\d+/);return m?+m[0]:0;}
+function tplVerName(t){return (t&&t.version_label)||'原版';}
+function tplNewer(a,b){return tplVerNum(a)-tplVerNum(b)||String(a.updated_at||'').localeCompare(String(b.updated_at||''));}
+function tplFamilyOf(t){const f=tplFam(t);return tplAllVers.filter(x=>tplFam(x)===f).sort((a,b)=>tplNewer(b,a));}
+function tplLatestOnly(rows){const m=new Map();rows.forEach(t=>{const o=m.get(tplFam(t));if(!o||tplNewer(t,o)>0)m.set(tplFam(t),t);});return rows.filter(t=>m.get(tplFam(t))===t);}
+function tplSetAll(rows){tplAllVers=Array.isArray(rows)?rows:[];allTemplates=tplLatestOnly(tplAllVers);}
+function tplById(id){return tplAllVers.find(x=>String(x.id)===String(id))||allTemplates.find(x=>String(x.id)===String(id));}
+// 學年度：8 月起算新學年（2026/10 → 115學年度）
+function tplCurLabel(d){d=d||new Date();let y=d.getFullYear()-1911;if(d.getMonth()+1<8)y--;return y+'學年度';}
 
 async function handleTemplateFile(input){
   if(!input.files||!input.files[0])return;
@@ -4454,7 +4477,7 @@ function newTemplate(){
   tplSheet(true);setTimeout(()=>document.getElementById('tpl-name')?.focus(),300);
 }
 function clearTemplateForm(){
-  editingTemplateId=null;
+  editingTemplateId=null;tplVerUi(null);
   tplSheet(false);
   ['tpl-name','tpl-category','tpl-grade','tpl-teacher','tpl-month','tpl-week','tpl-classcount','tpl-groupcount','tpl-note','tpl-aliases','tpl-subject'].forEach(id=>document.getElementById(id).value='');
   tplTypeOptions('');
@@ -4466,9 +4489,9 @@ function clearTemplateForm(){
 // ── 同名比對（2026-10-16）：新增時遇到「名稱＋年級」相同的課綱實驗 → 問要不要覆蓋，不再多一筆同名 ──
 // 年級有一邊沒填也算同一個；名稱、年級比對時忽略空白。好幾筆同名時取最近更新的那筆
 const tplNorm=v=>String(v??'').replace(/\s+/g,'');
-function tplSameAs(name,grade){
-  const n=tplNorm(name),g=tplNorm(grade);if(!n)return [];
-  return allTemplates.filter(t=>tplNorm(t.name)===n&&(!g||!tplNorm(t.grade)||tplNorm(t.grade)===g))
+function tplSameAs(name,grade,ctype){
+  const n=tplNorm(name),g=tplNorm(grade),c=tplNorm(ctype);if(!n)return [];
+  return allTemplates.filter(t=>tplNorm(t.name)===n&&(!g||!tplNorm(t.grade)||tplNorm(t.grade)===g)&&(!c||!tplNorm(t.course_type)||tplNorm(t.course_type)===c))
     .sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
 }
 // 器材差異：用「名稱＋規格」當同一樣，數量不同算變動
@@ -4503,16 +4526,16 @@ async function saveTemplate(overwriteId){
     updated_at:new Date().toISOString(),
   };
   // 新增時先比對同名；按「覆蓋」後帶著 overwriteId 再進來
-  const old=overwriteId?allTemplates.find(t=>String(t.id)===String(overwriteId)):null;
+  const old=overwriteId?tplById(overwriteId):null;
   if(!editingTemplateId&&!old){
-    const same=tplSameAs(name,body.grade);
+    const same=tplSameAs(name,body.grade,body.course_type);
     if(same.length){
-      const t=same[0],d=tplEquipDiff(t.equipment_items,items);
+      const t=same[0],d=tplEquipDiff(t.equipment_items,items),cur=tplCurLabel(),sameYear=tplVerName(t)===cur;
       const dTxt=[d.add?`新增 ${d.add}`:'',d.del?`移除 ${d.del}`:'',d.chg?`數量變動 ${d.chg}`:''].filter(Boolean).join('、')||'沒有變動';
-      showModal('已經有這個實驗',`<p>已有「${escH(t.name)}」${t.grade?'（'+escH(t.grade)+'）':''}${same.length>1?`，共 ${same.length} 筆同名，會覆蓋最近更新的那筆`:''}。</p>
-        <p style="margin-top:8px">覆蓋後器材以這次為準：<b>${escH(dTxt)}</b>。</p>
+      showModal('已經有這個實驗',`<p>已有「${escH(t.name)}」${t.grade?'（'+escH(t.grade)+'）':''}${t.course_type?'・'+escH(t.course_type):''}，目前最新是「${escH(tplVerName(t))}」${same.length>1?`（共 ${same.length} 筆同名，取最近更新的那筆）`:''}。</p>
+        <p style="margin-top:8px">${sameYear?`會覆蓋「${escH(cur)}」這一版`:`會存成新版本「${escH(cur)}」，舊的「${escH(tplVerName(t))}」留著當歷史`}，器材以這次為準：<b>${escH(dTxt)}</b>。</p>
         <p class="hint" style="margin-top:6px">這次沒填的欄位（別名、類型、週次等）沿用原本的。</p>`,
-        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'覆蓋',cls:'btn-primary',fn:`closeModal();saveTemplate(${ja(t.id)})`}]);
+        [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:sameYear?'覆蓋':`存成${cur}版`,cls:'btn-primary',fn:`closeModal();saveTemplate(${ja(t.id)})`}]);
       return;
     }
   }
@@ -4521,13 +4544,21 @@ async function saveTemplate(overwriteId){
     const blank=v=>v==null||v===''||(Array.isArray(v)&&!v.length);
     Object.keys(body).forEach(k=>{if(k!=='equipment_items'&&blank(body[k])&&!blank(old[k]))body[k]=old[k];});
   }
-  const patchId=editingTemplateId||(old&&old.id);
+  const target=editingTemplateId?tplById(editingTemplateId):old;
+  const cur=tplCurLabel();
+  const mode=!target?'new':tplVerName(target)===cur?'patch':(editingTemplateId?(document.querySelector('input[name="tplVerMode"]:checked')?.value||'ver'):'ver');
   try{
-    if(patchId){
-      await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(patchId),body,prefer:'return=minimal'});
-      showToast(old?`已覆蓋更新「${name}」`:'課綱實驗已更新','success');
+    if(mode==='patch'||mode==='fix'){
+      await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(target.id),body,prefer:'return=minimal'});
+      showToast(old?`已覆蓋更新「${name}」`:`課綱實驗已更新（${tplVerName(target)}）`,'success');
+    }else if(mode==='ver'){
+      // 新版本：同一條版本線、這個學年度；資料庫有「同線同學年度只能一筆」的保護
+      const fam=tplFamilyOf(target),exist=fam.find(x=>tplVerName(x)===cur);
+      if(exist){await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(exist.id),body,prefer:'return=minimal'});}
+      else{await sb('POST','course_templates',{body:{...body,id:'TPL-'+Date.now(),family_id:tplFam(target),version_label:cur},prefer:'return=minimal'});}
+      showToast(`已存成「${cur}」版，舊版留著當歷史`,'success');
     }else{
-      body.id='TPL-'+Date.now();
+      body.id='TPL-'+Date.now();body.family_id=body.id;
       await sb('POST','course_templates',{body,prefer:'return=minimal'});
       showToast('課綱實驗已建立','success');
     }
@@ -4704,7 +4735,7 @@ async function loadTemplates(){
       sb('GET','course_templates',{order:'created_at.desc'}),
       (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null)
     ]);
-    allTemplates=Array.isArray(rows)?rows:[];
+    tplSetAll(rows);
     await loadCourseTypes();
     if(!activeSemester)await loadActiveSemester();
     tplEqIndex=Array.isArray(eqs)?tplBuildEqIndex(eqs):null;
@@ -4754,7 +4785,7 @@ function renderTemplateList(){
       :(n?'<div class="tpl-health ok">✔ 器材都對得到庫存</div>':''));
     html+=`<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
-      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}</div>
+      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}${(()=>{const n=tplFamilyOf(t).length;return t.version_label||n>1?`<span class="tpl-cls ver">${escH(tplVerName(t))}${n>1?`・共 ${n} 版`:''}</span>`:'';})()}</div>
         ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
         <div class="sub">${sub}</div>${when?`<div class="tpl-when">🗓️ ${escH(when)}</div>`:''}${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
@@ -4891,7 +4922,7 @@ async function confirmTemplateImport(){
   loadTemplates();
 }
 function editTemplate(id){
-  const t=allTemplates.find(x=>x.id===id);if(!t)return;
+  const t=tplById(id);if(!t)return;
   editingTemplateId=id;
   document.getElementById('tpl-name').value=t.name||'';
   document.getElementById('tpl-category').value=t.category||'';
@@ -4908,12 +4939,27 @@ function editTemplate(id){
   renderTplEquipList(t.equipment_items||[]);
   document.getElementById('tpl-note').value=t.reference_note||'';
   document.getElementById('tplParseMsg').textContent='';
+  tplVerUi(t);
   tplSheet(true);
 }
-function deleteTemplate(id){
-  const t=allTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+function tplVerUi(t){
+  const bar=document.getElementById('tplVerBar'),opt=document.getElementById('tplVerOpt');if(!bar||!opt)return;
+  if(!t){bar.innerHTML='';opt.innerHTML='';return;}
+  const fam=tplFamilyOf(t),cur=tplCurLabel();
+  bar.innerHTML=fam.length>1?`<span>版本</span>${fam.map((v,i)=>`<button type="button" class="${String(v.id)===String(t.id)?'on':''}" onclick="editTemplate(${ja(v.id)})">${escH(tplVerName(v))}${i===0?'（最新）':''}</button>`).join('')}`:`<span>版本：${escH(tplVerName(t))}</span>`;
+  const hasCur=fam.some(x=>tplVerName(x)===cur);
+  opt.innerHTML=tplVerName(t)===cur?'':`<label><input type="radio" name="tplVerMode" value="ver" checked> ${hasCur?`覆蓋「${escH(cur)}」版`:`存成新版本「${escH(cur)}」`}（「${escH(tplVerName(t))}」留著當歷史）</label>
+    <label><input type="radio" name="tplVerMode" value="fix"> 只修正「${escH(tplVerName(t))}」這一版（例如打錯字）</label>`;
+}
+async function deleteTemplate(id){
+  const t=tplById(id);if(!t)return;
   const used=(Array.isArray(allRecords)?allRecords:[]).filter(r=>r.courseName&&r.courseName===t.name).length;
-  showModal('確認刪除',`<p>確定刪除「${escH(t.name||'（未命名）')}」嗎？</p>
+  // 實驗紀錄是用編號連到「這一版」的；刪掉的話那些紀錄會變成沒有實驗（2026-10-19）
+  let runN=0;try{const rr=await sb('GET','experiment_runs',{select:'id',filter:'template_id=eq.'+encodeURIComponent(t.id)});runN=Array.isArray(rr)?rr.length:0;}catch(_){}
+  const fam=tplFamilyOf(t);
+  showModal('確認刪除',`<p>確定刪除「${escH(t.name||'（未命名）')}」${fam.length>1?`的「${escH(tplVerName(t))}」這一版`:''}嗎？</p>
+    ${fam.length>1?`<p style="font-size:13px;color:var(--text2);margin-top:6px">其他 ${fam.length-1} 個版本會留著。</p>`:''}
+    ${runN?`<p style="font-size:13px;color:var(--danger);margin-top:6px">有 <b>${runN}</b> 筆學期實驗紀錄用的是這一版，刪除後那些紀錄會變成「未填實驗」。舊版本建議留著當歷史。</p>`:''}
     ${used?`<p style="font-size:13px;color:var(--text2);margin-top:6px">目前載入的借用紀錄裡，有 <b>${used}</b> 筆用過這個課綱實驗（刪除不會影響那些紀錄，只是以後不能再套用）。</p>`:''}
     <p style="font-size:13px;color:var(--text2);margin-top:6px">建議先用「⋯ 更多 → 匯出全部」留一份備份。</p>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
@@ -9231,7 +9277,16 @@ async function doDeleteHighlight(id){
 .sr-row.sr-empty .sr-what b{color:var(--text2);font-weight:500}
 .sr-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .sr-tag{font-size:11px;border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--text2);white-space:nowrap}
-.sr-tag.fx{border-color:#b5612a;color:#b5612a}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
+.sr-tag.fx{border-color:#b5612a;color:#b5612a}.sr-tag.eq{border-color:#8a5a00;color:#8a5a00;background:#fbf1dc}
+.sr-eqtog{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer}
+.sr-eqbox{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:6px}
+.sr-eqrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:14px}
+.sr-eqrow .n{flex:1;min-width:0}.sr-eqrow .n small{color:var(--text2);margin-left:4px}
+.sr-eqrow .q{display:flex;align-items:center;gap:4px}.sr-eqrow .q b{min-width:28px;text-align:center}
+.sr-eqrow .q button,.sr-eqrow .x{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:28px;height:28px;font:inherit;cursor:pointer}
+.sr-eqrow .x{background:none;border:0;color:var(--text2)}
+.sr-eqhit{display:flex;gap:6px;align-items:baseline;width:100%;text-align:left;border:0;border-bottom:1px solid var(--surface2);background:none;padding:8px 2px;font:inherit;cursor:pointer;color:var(--text)}
+.sr-eqhit small{color:var(--text2)}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
 .sr-act{display:flex;gap:6px;align-items:center;justify-content:flex-end}
 .sr-show select{width:auto;font-size:12.5px;padding:5px 6px}
 .sr-del{border:0;background:none;font:inherit;font-size:13px;color:var(--text2);cursor:pointer;padding:6px}
@@ -9411,7 +9466,7 @@ const SR_SUBJ=['物理','化學','生物','地科','理化'];
 const SR_COL={'物理':'#3d5a99','化學':'#b5612a','生物':'#2f7a4f','地科':'#8a6a1f','理化':'#7a4b8f'};
 const SR_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','課程':'一般'};
 let srRuns=[],srBks=[],srTerm=null,srSubj='全部',srMode='all',srLoaded=false;
-function srTpl(id){return allTemplates.find(t=>String(t.id)===String(id));}
+function srTpl(id){return tplById(id);}
 function srVenueSubj(v){v=String(v||'');return SR_SUBJ.find(s=>v.startsWith(s))||'';}
 function srBkSubj(b){return SR_SUBJ.includes(b.lab_subject)?b.lab_subject:srVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
 function srBkType(b){return b.course_type||SR_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
@@ -9424,7 +9479,7 @@ async function loadSemRuns(force){
   if(!srLoaded||force)box.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';
   try{
     const jobs=[sb('GET','experiment_runs',{order:'run_date,id'}),sb('GET','venue_bookings',{order:'created_at'})];
-    if(!allTemplates.length)jobs.push(sb('GET','course_templates',{order:'name'}).then(r=>{allTemplates=Array.isArray(r)?r:[];}));
+    if(!allTemplates.length)jobs.push(sb('GET','course_templates',{order:'name'}).then(r=>{tplSetAll(r);}));
     if(!courseTypes.length)jobs.push(loadCourseTypes());
     if(!activeSemester)jobs.push(loadActiveSemester());
     const [runs,bks]=await Promise.all(jobs);
@@ -9464,7 +9519,11 @@ function srRowHtml(x){
   if(x.kind==='run'){
     tag=x.r.booking_id?(x.fixed?'<span class="sr-tag fx">固定課</span>':'<span class="sr-tag">預約</span>'):'<span class="sr-tag lg">登記</span>';
     if(x.hidden)tag+='<span class="sr-tag hd">前台不顯示</span>';
-    act=`<button type="button" class="btn btn-secondary btn-sm" onclick="srEdit(${x.r.id})">修改</button><button type="button" class="sr-del" onclick="srDel(${x.r.id})">刪除</button>`;
+    const tv=x.r.template_id&&srTpl(x.r.template_id);
+    if(tv&&tplFamilyOf(tv).length>1)tag+=`<span class="sr-tag">${escH(tplVerName(tv))}</span>`;
+    const adj=Array.isArray(x.r.equipment_items)&&tv;
+    if(adj)tag+='<span class="sr-tag eq">器材有調整</span>';
+    act=(adj?`<button type="button" class="btn btn-secondary btn-sm" onclick="srUpgrade(${x.r.id})" title="把這次的器材存成這學年度的課綱版本">升級成新版本</button>`:'')+`<button type="button" class="btn btn-secondary btn-sm" onclick="srEdit(${x.r.id})">修改</button><button type="button" class="sr-del" onclick="srDel(${x.r.id})">刪除</button>`;
   }else{
     tag=x.fixed?'<span class="sr-tag fx">固定課</span>':'<span class="sr-tag">預約</span>';
     const sv=x.b.semester_show===true?'1':x.b.semester_show===false?'0':'';
@@ -9512,7 +9571,7 @@ async function srDel(id){
 }
 // 表單：新增／修改一筆；從預約「填實驗」時可以一次勾好幾節
 // 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
-function srTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dup=allTemplates.some(x=>x!==t&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
+function srTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dups=allTemplates.filter(x=>x!==t&&tplFam(x)!==tplFam(t)&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);const dup=dups.length>0;if(dup&&t.course_type&&dups.every(x=>(x.course_type||'')!==t.course_type))return `${n}｜${g||'未填年級'}｜${String(t.course_type).trim()}`;return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
 function srFormHtml(r,ps){
   const t=r.template_id?srTpl(r.template_id):null;
   const types=courseTypes.filter(x=>x.is_active!==false).map(x=>x.name);if(r.course_type&&!types.includes(r.course_type))types.push(r.course_type);
@@ -9530,6 +9589,7 @@ function srFormHtml(r,ps){
       <div class="form-group"><label>老師 *</label><input id="sr-teacher" maxlength="30" list="srTeacherList" value="${escH(r.teacher||'')}"></div></div>
     <datalist id="srTeacherList">${(allTeachers||[]).map(x=>`<option value="${escH(x.name)}">`).join('')}</datalist>
     ${ps?'':`<div class="form-group"><label>地點</label><select id="sr-venue">${vOpts.map(v=>`<option${v===(r.venue||'')?' selected':''}>${escH(v)}</option>`).join('')}</select></div>`}
+    ${ps?'':`<div class="form-group"><button type="button" class="sr-eqtog" id="srEqTog" onclick="srEqOpen()">${Array.isArray(r.equipment_items)?'這次的器材（已調整）':'這次器材不一樣？調整器材'} ›</button><div id="srEqBox"></div></div>`}
     <div class="form-group"><label>備註</label><input id="sr-note" maxlength="200" value="${escH(r.note||'')}"></div>
     <label class="sr-ck"><input type="checkbox" id="sr-hidden"${r.is_hidden?' checked':''}> 前台學期頁不顯示這筆</label>
   </div>`;
@@ -9587,7 +9647,7 @@ async function srEnsureTeachers(){if(!(allTeachers||[]).length){try{await loadTe
 async function srEdit(id){
   await srEnsureTeachers();
   const r=id!=null?srRuns.find(x=>x.id===id):{};if(!r)return;
-  srCtx={id:id??null};
+  srCtx={id:id??null};srEq=null;
   showModal(id!=null?'修改實驗紀錄':'新增實驗紀錄',srFormHtml(r,null),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
 }
 async function srFill(bid,a,e){
@@ -9600,9 +9660,88 @@ async function srFill(bid,a,e){
   const r={subject:srBkSubj(b),course_type:srBkType(b),grade:b.grade||'',teacher:b.borrower_name||''};
   showModal('填實驗',srFormHtml(r,ps)+srMoreHtml(b,e),[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srSave()'}]);
 }
+// ── 這次的器材（紀錄自己的清單；空＝照課綱那一版）──
+let srEq=null;
+const SR_EQ_MAX=60;
+function srEqClean(it){return {name:String(it.name||'').trim().slice(0,60),spec:String(it.spec||'').trim().slice(0,40),unit:String(it.unit||'個').trim().slice(0,6)||'個',quantity:Math.max(0,Math.min(999,parseInt(it.quantity)||0)),room:String(it.room||'').slice(0,30)};}
+function srEqKey(list){return JSON.stringify((list||[]).map(srEqClean).filter(x=>x.name&&x.quantity>0));}
+function srEqTpl(){
+  const tv=(document.getElementById('sr-tpl')?.value||'').trim(),r=srCtx&&srCtx.id!=null?srRuns.find(x=>x.id===srCtx.id):null,own=r?srTpl(r.template_id):null;
+  return (own&&srTplLabel(own)===tv)?own:allTemplates.find(x=>srTplLabel(x)===tv)||null;
+}
+async function srEqOpen(){
+  // 器材頁沒開過時另外抓一份精簡清單（不動器材頁自己的資料）
+  if(!(allAdminEquipment||[]).length&&!window._srEqPool){try{const rows=await sb('GET','equipment',{select:'name,spec,unit,room'});window._srEqPool=Array.isArray(rows)?rows:[];}catch(_){window._srEqPool=[];}}
+  const t=srEqTpl();if(!t){showToast('先選課綱實驗，才帶得出器材','error');return;}
+  const r=srCtx&&srCtx.id!=null?srRuns.find(x=>x.id===srCtx.id):null;
+  const base=(Array.isArray(t.equipment_items)?t.equipment_items:[]).map(srEqClean).filter(x=>x.name);
+  const mine=r&&String(r.template_id)===String(t.id)&&Array.isArray(r.equipment_items)?r.equipment_items.map(srEqClean):null;
+  srEq={tid:t.id,items:(mine||base).map(x=>({...x})),base:srEqKey(base),q:'',ver:tplVerName(t)};
+  srEqRender();
+}
+function srEqRender(){
+  const box=document.getElementById('srEqBox'),tog=document.getElementById('srEqTog');if(!box||!srEq)return;
+  if(tog)tog.style.display='none';
+  const changed=srEqKey(srEq.items)!==srEq.base;
+  box.innerHTML=`<div class="sr-eqbox"><div class="hint" style="margin:0 0 4px">課綱「${escH(srEq.ver)}」的清單${changed?'・<b style="color:#8a5a00">這次已調整</b>':''}</div>
+    ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><b>${it.quantity}</b><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+    ${srEq.items.length<SR_EQ_MAX?`<input type="search" id="srEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(srEq.q||'')}" oninput="srEqSearch(this.value)" style="margin-top:6px"><div id="srEqHits"></div>`:''}
+    ${changed?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEqRender()">還原成課綱的清單</button>`:''}</div>`;
+}
+function srEqQty(i,d){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
+function srEqSearch(q){
+  if(!srEq)return;srEq.q=q;const box=document.getElementById('srEqHits');if(!box)return;
+  const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
+  window._srEqHits=((allAdminEquipment||[]).length?allAdminEquipment:(window._srEqPool||[])).filter(e=>`${e.name||''} ${e.spec||''}`.toLowerCase().includes(k)).slice(0,6);
+  box.innerHTML=window._srEqHits.map((e,i)=>`<button type="button" class="sr-eqhit" onclick="srEqAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}</small></button>`).join('')+
+    `<button type="button" class="sr-eqhit" onclick="srEqAdd(-1)">找不到？直接加「${escH(String(q).trim().slice(0,60))}」</button>`;
+}
+function srEqAdd(i){
+  if(!srEq||srEq.items.length>=SR_EQ_MAX)return;
+  const e=i>=0?(window._srEqHits||[])[i]:null;
+  const it=e?srEqClean({name:e.name,spec:e.spec,unit:e.unit,quantity:1,room:e.room}):srEqClean({name:srEq.q,quantity:1});
+  if(!it.name)return;
+  const same=srEq.items.find(x=>x.name===it.name&&x.spec===it.spec);
+  if(same)same.quantity=Math.min(999,same.quantity+1);else srEq.items.push(it);
+  srEq.q='';srEqRender();
+}
+// 存檔：跟課綱那一版一樣 → null（照課綱）；實驗換了 → null
+function srEqCollect(t){
+  if(!srEq||!t||String(srEq.tid)!==String(t.id))return null;
+  const list=srEq.items.map(srEqClean).filter(x=>x.name&&x.quantity>0).slice(0,SR_EQ_MAX);
+  return JSON.stringify(list)===srEq.base?null:list;
+}
+// 老師這次改了器材 → 一鍵存成這學年度的課綱版本（之後大家選這個實驗就用新的清單）
+function srUpgrade(id){
+  const r=srRuns.find(x=>x.id===id),t=r&&srTpl(r.template_id);
+  if(!r||!t||!Array.isArray(r.equipment_items)){showToast('這筆紀錄沒有調整器材','error');return;}
+  const fam=tplFamilyOf(t),latest=fam[0]||t,cur=tplCurLabel(),exist=fam.find(x=>tplVerName(x)===cur);
+  const d=tplEquipDiff(latest.equipment_items,r.equipment_items);
+  const dTxt=[d.add?`新增 ${d.add}`:'',d.del?`移除 ${d.del}`:'',d.chg?`數量變動 ${d.chg}`:''].filter(Boolean).join('、')||'和最新版一樣';
+  showModal('升級成新版本',`<p>把 ${escH(r.run_date)} ${escH(r.teacher||'')} 這次用的器材，${exist?`覆蓋到「${escH(cur)}」版`:`存成「${escH(t.name)}」的新版本「${escH(cur)}」`}。</p>
+    <p style="margin-top:8px">和目前最新的「${escH(tplVerName(latest))}」比：<b>${escH(dTxt)}</b>。</p>
+    <p class="hint" style="margin-top:6px">舊版本會留著；以前的實驗紀錄還是顯示當時那一版。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:exist?'覆蓋':'存成新版本',cls:'btn-primary',fn:`srUpgradeDo(${r.id})`}]);
+}
+async function srUpgradeDo(id){
+  const r=srRuns.find(x=>x.id===id),t=r&&srTpl(r.template_id);if(!r||!t)return;
+  const fam=tplFamilyOf(t),latest=fam[0]||t,cur=tplCurLabel(),exist=fam.find(x=>tplVerName(x)===cur);
+  const items=r.equipment_items.map(srEqClean).filter(x=>x.name&&x.quantity>0),now=new Date().toISOString();
+  try{
+    if(exist)await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(exist.id),body:{equipment_items:items,updated_at:now},prefer:'return=minimal'});
+    else{
+      const {id:_i,created_at:_c,...copy}=latest;
+      await sb('POST','course_templates',{body:{...copy,id:'TPL-'+Date.now(),family_id:tplFam(latest),version_label:cur,equipment_items:items,updated_at:now},prefer:'return=minimal'});
+    }
+    tplSetAll(await sb('GET','course_templates',{order:'name'}));
+    closeModal();showToast(`已存成「${cur}」版`,'success');srRender();
+  }catch(e){showToast('升級失敗：'+e.message,'error');}
+}
 async function srSave(){
   const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
-  const tv=g('sr-tpl'),t=allTemplates.find(x=>srTplLabel(x)===tv)||(()=>{const m=allTemplates.filter(x=>(x.name||'').trim()===tv);return m.length===1?m[0]:null;})();
+  const tv=g('sr-tpl'),own=srCtx&&srCtx.id!=null?srTpl((srRuns.find(x=>x.id===srCtx.id)||{}).template_id):null;
+  // 實驗沒換：保留原本那一版（舊紀錄可能是舊版本），不要被換成最新版
+  const t=(own&&srTplLabel(own)===tv)?own:(allTemplates.find(x=>srTplLabel(x)===tv)||(()=>{const m=allTemplates.filter(x=>(x.name||'').trim()===tv);return m.length===1?m[0]:null;})());
   const base={template_id:t?String(t.id):null,title:t?null:(tv.slice(0,60)||null),subject:g('sr-subj')||null,course_type:g('sr-type')||null,grade:g('sr-grade').slice(0,20)||null,teacher:g('sr-teacher').slice(0,30),note:g('sr-note').slice(0,200)||null,is_hidden:!!document.getElementById('sr-hidden')?.checked};
   if(!base.subject){showToast('請選科目','error');return;}
   if(!base.teacher){showToast('請填老師','error');return;}
@@ -9621,6 +9760,7 @@ async function srSave(){
     }else{
       const run_date=g('sr-date');if(!/^\d{4}-\d{2}-\d{2}$/.test(run_date)){showToast('請填日期','error');return;}
       const body={...base,run_date,period:g('sr-period')||null,venue:g('sr-venue')||null};
+      if(srEq)body.equipment_items=srEqCollect(t);
       if(srCtx&&srCtx.id!=null){
         await sb('PATCH','experiment_runs',{filter:'id=eq.'+encodeURIComponent(srCtx.id),body,prefer:'return=minimal'});
         const r=srRuns.find(x=>x.id===srCtx.id);if(r)Object.assign(r,body);
