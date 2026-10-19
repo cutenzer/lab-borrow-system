@@ -2002,7 +2002,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19b';
+const ADMIN_VERSION='2026-10-19c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9288,7 +9288,9 @@ async function doDeleteHighlight(id){
 .sr-qn{width:52px;height:28px;text-align:center;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:0 2px;font:inherit;font-weight:700;-moz-appearance:textfield}
 .sr-qn::-webkit-outer-spin-button,.sr-qn::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .sr-eqhit{display:flex;gap:6px;align-items:baseline;width:100%;text-align:left;border:0;border-bottom:1px solid var(--surface2);background:none;padding:8px 2px;font:inherit;cursor:pointer;color:var(--text)}
-.sr-eqhit small{color:var(--text2)}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
+.sr-eqhit small{color:var(--text2)}
+.sr-notel{display:block;font-size:13px;color:var(--text2);margin:10px 0 4px}
+#srEqNote{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;line-height:1.5;border:1px solid var(--border);border-radius:8px;padding:8px 10px;resize:vertical}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
 .sr-act{display:flex;gap:6px;align-items:center;justify-content:flex-end}
 .sr-show select{width:auto;font-size:12.5px;padding:5px 6px}
 .sr-del{border:0;background:none;font:inherit;font-size:13px;color:var(--text2);cursor:pointer;padding:6px}
@@ -9523,8 +9525,8 @@ function srRowHtml(x){
     if(x.hidden)tag+='<span class="sr-tag hd">前台不顯示</span>';
     const tv=x.r.template_id&&srTpl(x.r.template_id);
     if(tv&&tplFamilyOf(tv).length>1)tag+=`<span class="sr-tag">${escH(tplVerName(tv))}</span>`;
-    const adj=Array.isArray(x.r.equipment_items)&&tv;
-    if(adj)tag+='<span class="sr-tag eq">器材有調整</span>';
+    const adj=(Array.isArray(x.r.equipment_items)||x.r.ref_note!=null)&&tv;
+    if(adj)tag+=`<span class="sr-tag eq">${[Array.isArray(x.r.equipment_items)?'器材':'',x.r.ref_note!=null?'備註':''].filter(Boolean).join('、')}有調整</span>`;
     act=(adj?`<button type="button" class="btn btn-secondary btn-sm" onclick="srUpgrade(${x.r.id})" title="把這次的器材存成這學年度的課綱版本">升級成新版本</button>`:'')+`<button type="button" class="btn btn-secondary btn-sm" onclick="srEdit(${x.r.id})">修改</button><button type="button" class="sr-del" onclick="srDel(${x.r.id})">刪除</button>`;
   }else{
     tag=x.fixed?'<span class="sr-tag fx">固定課</span>':'<span class="sr-tag">預約</span>';
@@ -9591,7 +9593,7 @@ function srFormHtml(r,ps){
       <div class="form-group"><label>老師 *</label><input id="sr-teacher" maxlength="30" list="srTeacherList" value="${escH(r.teacher||'')}"></div></div>
     <datalist id="srTeacherList">${(allTeachers||[]).map(x=>`<option value="${escH(x.name)}">`).join('')}</datalist>
     ${ps?'':`<div class="form-group"><label>地點</label><select id="sr-venue">${vOpts.map(v=>`<option${v===(r.venue||'')?' selected':''}>${escH(v)}</option>`).join('')}</select></div>`}
-    ${ps?'':`<div class="form-group"><button type="button" class="sr-eqtog" id="srEqTog" onclick="srEqOpen()">${Array.isArray(r.equipment_items)?'這次的器材（已調整）':'這次器材不一樣？調整器材'} ›</button><div id="srEqBox"></div></div>`}
+    ${ps?'':`<div class="form-group"><button type="button" class="sr-eqtog" id="srEqTog" onclick="srEqOpen()">${Array.isArray(r.equipment_items)||r.ref_note!=null?'這次的器材和備註（已調整）':'這次器材或備註不一樣？調整'} ›</button><div id="srEqBox"></div></div>`}
     <div class="form-group"><label>備註</label><input id="sr-note" maxlength="200" value="${escH(r.note||'')}"></div>
     <label class="sr-ck"><input type="checkbox" id="sr-hidden"${r.is_hidden?' checked':''}> 前台學期頁不顯示這筆</label>
   </div>`;
@@ -9678,17 +9680,19 @@ async function srEqOpen(){
   const r=srCtx&&srCtx.id!=null?srRuns.find(x=>x.id===srCtx.id):null;
   const base=(Array.isArray(t.equipment_items)?t.equipment_items:[]).map(srEqClean).filter(x=>x.name);
   const mine=r&&String(r.template_id)===String(t.id)&&Array.isArray(r.equipment_items)?r.equipment_items.map(srEqClean):null;
-  srEq={tid:t.id,items:(mine||base).map(x=>({...x})),base:srEqKey(base),q:'',ver:tplVerName(t)};
+  const baseNote=String(t.reference_note||''),mineNote=r&&String(r.template_id)===String(t.id)&&r.ref_note!=null?String(r.ref_note):null;
+  srEq={tid:t.id,items:(mine||base).map(x=>({...x})),base:srEqKey(base),q:'',ver:tplVerName(t),note:mineNote??baseNote,baseNote};
   srEqRender();
 }
 function srEqRender(){
   const box=document.getElementById('srEqBox'),tog=document.getElementById('srEqTog');if(!box||!srEq)return;
   if(tog)tog.style.display='none';
-  const changed=srEqKey(srEq.items)!==srEq.base;
+  const changed=srEqKey(srEq.items)!==srEq.base||srEq.note!==srEq.baseNote;
   box.innerHTML=`<div class="sr-eqbox"><div class="hint" style="margin:0 0 4px">課綱「${escH(srEq.ver)}」的清單${changed?'・<b style="color:#8a5a00">這次已調整</b>':''}</div>
     ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><input type="number" class="sr-qn" inputmode="numeric" min="0" max="999" value="${it.quantity}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="srEqSet(${i},this.value)"><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
     ${srEq.items.length<SR_EQ_MAX?`<input type="search" id="srEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(srEq.q||'')}" oninput="srEqSearch(this.value)" style="margin-top:6px"><div id="srEqHits"></div>`:''}
-    ${changed?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEqRender()">還原成課綱的清單</button>`:''}</div>`;
+    <label class="sr-notel">備註（藥品、共用品項、注意事項）</label><textarea id="srEqNote" rows="5" maxlength="2000" oninput="srEq.note=this.value">${escH(srEq.note)}</textarea>
+    ${changed?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEq.note=srEq.baseNote;srEqRender()">還原成課綱的清單和備註</button>`:''}</div>`;
 }
 function srEqQty(i,d){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
 function srEqSet(i,v){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,parseInt(v)||0));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
@@ -9714,13 +9718,18 @@ function srEqCollect(t){
   const list=srEq.items.map(srEqClean).filter(x=>x.name&&x.quantity>0).slice(0,SR_EQ_MAX);
   return JSON.stringify(list)===srEq.base?null:list;
 }
+function srNoteCollect(t){
+  if(!srEq||!t||String(srEq.tid)!==String(t.id))return null;
+  const n=String(srEq.note||'').slice(0,2000);return n===srEq.baseNote?null:n;
+}
 // 老師這次改了器材 → 一鍵存成這學年度的課綱版本（之後大家選這個實驗就用新的清單）
 function srUpgrade(id){
   const r=srRuns.find(x=>x.id===id),t=r&&srTpl(r.template_id);
-  if(!r||!t||!Array.isArray(r.equipment_items)){showToast('這筆紀錄沒有調整器材','error');return;}
+  if(!r||!t||(!Array.isArray(r.equipment_items)&&r.ref_note==null)){showToast('這筆紀錄沒有調整器材或備註','error');return;}
   const fam=tplFamilyOf(t),latest=fam[0]||t,cur=tplCurLabel(),exist=fam.find(x=>tplVerName(x)===cur);
-  const d=tplEquipDiff(latest.equipment_items,r.equipment_items);
-  const dTxt=[d.add?`新增 ${d.add}`:'',d.del?`移除 ${d.del}`:'',d.chg?`數量變動 ${d.chg}`:''].filter(Boolean).join('、')||'和最新版一樣';
+  const d=Array.isArray(r.equipment_items)?tplEquipDiff(latest.equipment_items,r.equipment_items):{add:0,del:0,chg:0};
+  const noteChg=r.ref_note!=null&&String(r.ref_note)!==String(latest.reference_note||'');
+  const dTxt=[d.add?`新增 ${d.add}`:'',d.del?`移除 ${d.del}`:'',d.chg?`數量變動 ${d.chg}`:'',noteChg?'備註有改':''].filter(Boolean).join('、')||'和最新版一樣';
   showModal('升級成新版本',`<p>把 ${escH(r.run_date)} ${escH(r.teacher||'')} 這次用的器材，${exist?`覆蓋到「${escH(cur)}」版`:`存成「${escH(t.name)}」的新版本「${escH(cur)}」`}。</p>
     <p style="margin-top:8px">和目前最新的「${escH(tplVerName(latest))}」比：<b>${escH(dTxt)}</b>。</p>
     <p class="hint" style="margin-top:6px">舊版本會留著；以前的實驗紀錄還是顯示當時那一版。</p>`,
@@ -9729,12 +9738,13 @@ function srUpgrade(id){
 async function srUpgradeDo(id){
   const r=srRuns.find(x=>x.id===id),t=r&&srTpl(r.template_id);if(!r||!t)return;
   const fam=tplFamilyOf(t),latest=fam[0]||t,cur=tplCurLabel(),exist=fam.find(x=>tplVerName(x)===cur);
-  const items=r.equipment_items.map(srEqClean).filter(x=>x.name&&x.quantity>0),now=new Date().toISOString();
+  const items=(Array.isArray(r.equipment_items)?r.equipment_items:(latest.equipment_items||[])).map(srEqClean).filter(x=>x.name&&x.quantity>0),now=new Date().toISOString();
+  const patch={equipment_items:items,updated_at:now};if(r.ref_note!=null)patch.reference_note=String(r.ref_note);
   try{
-    if(exist)await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(exist.id),body:{equipment_items:items,updated_at:now},prefer:'return=minimal'});
+    if(exist)await sb('PATCH','course_templates',{filter:'id=eq.'+encodeURIComponent(exist.id),body:patch,prefer:'return=minimal'});
     else{
       const {id:_i,created_at:_c,...copy}=latest;
-      await sb('POST','course_templates',{body:{...copy,id:'TPL-'+Date.now(),family_id:tplFam(latest),version_label:cur,equipment_items:items,updated_at:now},prefer:'return=minimal'});
+      await sb('POST','course_templates',{body:{...copy,id:'TPL-'+Date.now(),family_id:tplFam(latest),version_label:cur,...patch},prefer:'return=minimal'});
     }
     tplSetAll(await sb('GET','course_templates',{order:'name'}));
     closeModal();showToast(`已存成「${cur}」版`,'success');srRender();
@@ -9763,7 +9773,7 @@ async function srSave(){
     }else{
       const run_date=g('sr-date');if(!/^\d{4}-\d{2}-\d{2}$/.test(run_date)){showToast('請填日期','error');return;}
       const body={...base,run_date,period:g('sr-period')||null,venue:g('sr-venue')||null};
-      if(srEq)body.equipment_items=srEqCollect(t);
+      if(srEq){body.equipment_items=srEqCollect(t);body.ref_note=srNoteCollect(t);}
       if(srCtx&&srCtx.id!=null){
         await sb('PATCH','experiment_runs',{filter:'id=eq.'+encodeURIComponent(srCtx.id),body,prefer:'return=minimal'});
         const r=srRuns.find(x=>x.id===srCtx.id);if(r)Object.assign(r,body);
