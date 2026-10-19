@@ -1,7 +1,7 @@
 // ── 實驗室借用系統 Service Worker ──────────────────────────
 // 每次「功能更新、要讓使用者抓到新版本」時，把下面這個版本號 +1
 // 例如 v1 → v2，Service Worker 會自動清掉舊快取、抓新檔案
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = 'lab-borrow-' + CACHE_VERSION;
 
 // 開啟 App 時，這些檔案會優先從本機快取讀取，達到「不白屏、開啟快」的效果
@@ -47,8 +47,12 @@ self.addEventListener('fetch', event => {
 
   // 其餘的（HTML、manifest、圖示）採用「network first，失敗才退回快取」
   // 這樣只要有網路，永遠看最新版本；沒網路時才用快取版本，避免白屏
+  // 2026-10-19：HTML 用 cache:'no-cache'，每次都先問伺服器「有沒有新版」，
+  // 不會被瀏覽器自己的 10 分鐘暫存擋住（以前上傳新版後要等 10 分鐘才看得到）
+  const isPage = event.request.mode === 'navigate' || /\.html(\?|$)/.test(url);
+  const req = isPage ? fetch(url, { cache: 'no-cache', credentials: 'same-origin' }) : fetch(event.request);
   event.respondWith(
-    fetch(event.request)
+    req
       .then(response => {
         const clone = response.clone();
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
