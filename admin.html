@@ -2031,12 +2031,12 @@ function renderStats(){
       {num:venuePending,label:'場地待審核',short:'場地待審',color:'#1e40af',tab:'venue'},
       {num:wkN,label:'本週已排（節）',short:'本週節數',color:'#34506b',fn:"setLabUse('week',0)"},
       {num:semN===null?'─':fmt(semN),label:'本學期已用（節）',short:'學期節數',color:'#34506b',fn:"setLabUse('sem')",sub:sem?'':(window._luSemDone?'還沒有啟用中的學期':'讀取學期中…')},
-      {num:semPc===null?'─':semPc+'%',label:'本學期平均使用率',short:'學期使用率',color:'#34506b',fn:"setLabUse('sem')",sub:sem?`5 間實驗室・到今天`:''},
+      {num:semPc===null?'─':semPc+'%',label:'本學期平均使用率',short:'學期使用率',color:'#34506b',fn:"setLabUse('sem')",sub:sem?`五間平均・實際上課 ${semSlots/8} 天`:''},
       {num:top&&top[1]?escH(top[0].replace('實驗室','')):'─',label:'本學期用最多',short:'用最多',color:'#34506b',fn:"setLabUse('sem')",sub:top&&top[1]&&semSlots?`${top[1]} 節・${Math.round(top[1]/semSlots*100)}%`:''},
     ])+
     group('庫存',[
-      {num:fmt(eqPieces),label:'器材總數（件）',short:'器材件數',color:'#1f5b4c',tab:'equipment',sub:`共 ${fmt(eqOn.length)} 品項`},
-      {num:chBottles===null?'─':fmt(chBottles),label:'藥品總數（瓶）',short:'藥品瓶數',color:'#1f5b4c',tab:'chemicals',sub:chOn?`共 ${fmt(chOn.length)} 品項`:'讀取失敗'},
+      {num:fmt(eqOn.length),label:'器材種類',short:'器材種類',color:'#1f5b4c',tab:'equipment',sub:`合計 ${fmt(eqPieces)} 件`},
+      {num:chOn?fmt(chOn.length):'─',label:'藥品種類',short:'藥品種類',color:'#1f5b4c',tab:'chemicals',sub:chOn?`合計 ${fmt(chBottles)} 瓶`:'讀取失敗'},
       {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',short:'90天未盤點',color:'var(--text2)',tab:'equipment'},
       {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',tab:'equipment'},
     ]);
@@ -2107,14 +2107,16 @@ function labUseSemester(){
   if(!ps.length)return null;
   const school=ps.filter(p=>p.type!=='寒假'&&p.type!=='暑假');
   const st=ps.map(p=>p.start_date).sort(),en=ps.map(p=>p.end_date).sort();
-  const isSchool=ds=>school.some(p=>ds>=p.start_date&&ds<=p.end_date);
+  // 上課日＝在上課期間內、而且不是國定假日（國定假日在「學期設定」最下面設定）
+  const isSchool=ds=>school.some(p=>ds>=p.start_date&&ds<=p.end_date)&&!holidayForDate(ds);
   return {name:activeSemester.name||'本學期',start:st[0],end:en[en.length-1],isSchool};
 }
 // 總覽一打開就需要學期資料：還沒讀過就讀一次，讀完重畫統計和這張卡
 function labUseEnsureSem(){
-  if(activeSemester||window._luSemTried)return;
+  if(window._luSemTried)return;
   window._luSemTried=true;
-  Promise.resolve(loadActiveSemester()).catch(()=>{}).finally(()=>{window._luSemDone=true;try{renderStats();renderLabUse();}catch(_){}});
+  const hol=sb('GET','holidays',{order:'start_date'}).then(r=>{if(Array.isArray(r))allHolidays=r;}).catch(()=>{});
+  Promise.all([activeSemester?null:Promise.resolve(loadActiveSemester()).catch(()=>{}),hol]).finally(()=>{window._luSemDone=true;try{renderStats();renderLabUse();}catch(_){}});
 }
 function setLabUse(mode,off){
   labUse.mode=mode;if(off!==undefined)labUse.off=off;
@@ -2131,14 +2133,21 @@ function renderLabUse(){
     const mon=labUseBaseMonday();mon.setDate(mon.getDate()+labUse.off*7);
     const fri=new Date(mon);fri.setDate(mon.getDate()+4);
     const {n}=labUseCount(fmtDate(mon),fmtDate(fri));
+    labUseEnsureSem();
+    // 這週實際上課天數：週一～五，扣掉國定假日；有啟用學期時，學期外、寒暑假也不算
+    const semW=labUseSemester(),offDays=[];let open=0;
+    for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=fmtDate(d),h=holidayForDate(ds);
+      const ok=semW?(ds>=semW.start&&ds<=semW.end&&semW.isSchool(ds)):!h;
+      if(ok)open++;else if(h)offDays.push(`${d.getMonth()+1}/${d.getDate()} ${h.label||'放假'}`);}
+    const slots=open*8;
     const wi=getWeekInfo(mon,activeSemester)||getWeekInfo(fri,activeSemester);
     const tag=labUse.off===0?((new Date().getDay()%6===0)?'下週':'本週'):wi?`第 ${wi.week} 週`:'';
     if(tt)tt.textContent='🏛️ 實驗室使用';
     const total=LABS.reduce((a,[v])=>a+(n[v]||0),0);
     box.innerHTML=`<div class="lu-nav"><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(-1)" aria-label="上一週">‹</button><b>${md(mon)}～${md(fri)}</b><span class="lu-tag">${escH(tag)}${wi&&labUse.off===0?`・第 ${wi.week} 週`:''}${wi&&wi.type&&wi.type!=='開學週期'?`・${escH(wi.label||wi.type)}`:''}</span><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(1)" aria-label="下一週">›</button>${labUse.off?'<button type="button" class="lu-back" onclick="labUse.off=0;renderLabUse()">回本週</button>':''}</div>`+
-      LABS.map(([v,c])=>{const k=n[v]||0,pc=Math.min(100,Math.round(k/LAB_WEEK_SLOTS*100));return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${pc}%</span></div>`;}).join('')+
-      `<div class="lu-sum">這週合計 <b>${total}</b> 節・平均使用率 <b>${Math.round(total/(LAB_WEEK_SLOTS*LABS.length)*100)}%</b></div>`;
-    if(hint)hint.textContent='以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去；已拒絕的不算';
+      LABS.map(([v,c])=>{const k=n[v]||0,pc=slots?Math.min(100,Math.round(k/slots*100)):0;return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${slots?pc+'%':'─'}</span></div>`;}).join('')+
+      `<div class="lu-sum">這週上課 <b>${open}</b> 天${offDays.length?`（${escH(offDays.join('、'))}）`:''}・合計 <b>${total}</b> 節・五間平均使用率 <b>${slots?Math.round(total/(slots*LABS.length)*100)+'%':'─'}</b></div>`;
+    if(hint)hint.textContent='使用率＝這間的節數 ÷（這週上課天數 × 8 節）；國定假日不算上課天；早休、午休、晚上也會算進去；已拒絕的不算';
     return;
   }
   // 學期
@@ -2167,15 +2176,15 @@ function renderLabUse(){
     const k=w.n[v]||0,off=Math.round((w.mon-base)/(7*864e5));
     const op=k?Math.min(1,.18+k/20*.82).toFixed(2):0;
     const cls=w.schoolDays?'':' off',now=today>=w.ms&&today<=w.fs?' now':'';
-    return `<button type="button" class="lu-cell${cls}${now}" title="${w.wk?`第 ${w.wk} 週 `:''}${w.ms.slice(5).replace('-','/')}：${k} 節${w.schoolDays?'':'（放假）'}" onclick="setLabUse('week',${off})"><i style="background:${c};opacity:${op}"></i></button>`;
+    return `<button type="button" class="lu-cell${cls}${now}" title="${w.wk?`第 ${w.wk} 週 `:''}${w.ms.slice(5).replace('-','/')}：${k} 節${w.schoolDays?(w.schoolDays<5?`（上課 ${w.schoolDays} 天）`:''):'（放假）'}" onclick="setLabUse('week',${off})"><i style="background:${c};opacity:${op}"></i></button>`;
   }).join('');
   const totU=LABS.reduce((a,[v])=>a+(used.n[v]||0),0),totP=LABS.reduce((a,[v])=>a+(planned.n[v]||0),0);
-  box.innerHTML=`<div class="lu-nav"><b>${escH(sem.name)}</b><span class="lu-tag">${sem.start.slice(5).replace('-','/')}～${sem.end.slice(5).replace('-','/')}・到今天上課 ${daysSoFar} 天</span></div>
+  box.innerHTML=`<div class="lu-nav"><b>${escH(sem.name)}</b><span class="lu-tag">${sem.start.slice(5).replace('-','/')}～${sem.end.slice(5).replace('-','/')}・到今天實際上課 ${daysSoFar} 天</span></div>
     <div class="lu-sem"><div class="lu-row lu-h"><span>實驗室</span><span>每週使用（點一格看那一週）</span><span class="n">已用</span><span class="n">次數</span><span class="n">使用率</span></div>`+
     LABS.map(([v,c])=>{const u=used.n[v]||0,t=used.t[v]||0,pl=planned.n[v]||0,pc=slotsSoFar?Math.round(u/slotsSoFar*100):0;
       return `<div class="lu-row"><span class="lu-name">${v}</span><span class="lu-strip">${cellsOf(v,c)}</span><span class="n"><span><b>${u}</b> 節</span>${pl>u?`<small>另排 ${pl-u}</small>`:''}</span><span class="n">${t} 次</span><span class="n"><b>${pc}%</b></span></div>`;}).join('')+
-    `</div><div class="lu-sum">全部合計已用 <b>${totU}</b> 節${totP>totU?`（之後還排了 ${totP-totU} 節）`:''}・平均使用率 <b>${slotsSoFar?Math.round(totU/(slotsSoFar*LABS.length)*100):0}%</b></div>`;
-  if(hint)hint.textContent='使用率＝已用節數 ÷（到今天的上課天數 × 8 節）；寒假、暑假不算上課天；同一筆預約同一天算 1 次；顏色越深代表那週用越多節，灰框是放假週';
+    `</div><div class="lu-sum">全部合計已用 <b>${totU}</b> 節${totP>totU?`（之後還排了 ${totP-totU} 節）`:''}・五間平均使用率 <b>${slotsSoFar?Math.round(totU/(slotsSoFar*LABS.length)*100):0}%</b></div>`;
+  if(hint)hint.textContent='使用率＝已用節數 ÷（到今天的實際上課天數 × 8 節）；國定假日、寒暑假不算上課天；五間平均＝五間加總 ÷（上課節數 × 5）；同一筆預約同一天算 1 次；顏色越深代表那週用越多節，灰框是整週放假';
 }
 // 保證金：上方統計
 function renderDepositSummary(){
@@ -2191,7 +2200,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19i';
+const ADMIN_VERSION='2026-10-19j';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3328,6 +3337,7 @@ async function loadHolidays(){
     allHolidays=Array.isArray(allHolidays)?allHolidays:[];
   }catch(e){allHolidays=[];}
   renderHolidayList();
+  try{if(allRecords.length||allVenueBookings.length){renderStats();renderLabUse();}}catch(_){}
 }
 function holidayForDate(dateStr){
   return allHolidays.find(h=>dateStr>=h.start_date&&dateStr<=h.end_date);
