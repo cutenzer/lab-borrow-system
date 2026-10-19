@@ -642,6 +642,8 @@
   .sx-eqrow .x{background:none;border:0;color:var(--text2);}
   .sx-eqrow .qty-num{height:28px;width:52px;font-size:14px;}
   .cb-q .qty-num{height:30px;width:52px;}
+  .sx-notel{display:block;font-size:13px;color:var(--text2);margin:10px 0 4px;}
+  #sxEqNote{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;line-height:1.5;border:1px solid var(--border);border-radius:8px;padding:8px 10px;resize:vertical;}
   .sx-eqtog{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer;}
   .sp-eq{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--surface2);font-size:14.5px;}
   .sp-eq:last-child{border-bottom:none;}
@@ -6048,6 +6050,8 @@ function spOpen(id,ctx){
   window._spCtx=ctx||null;
   const runOwn=ctx&&ctx.tplId!=null&&String(ctx.tplId)===String(t.id);
   const runItems=runOwn&&Array.isArray(ctx.items)?ctx.items:null;
+  const runNote=runOwn&&ctx.refNote!=null?String(ctx.refNote):null;
+  const refNote=runNote!=null?runNote:(t.reference_note||'');
   const items=runItems||(Array.isArray(t.equipment_items)?t.equipment_items:[]);
   const fam=tplFamilyOf(t);
   const vers=fam.length>1?`<div class="sp-vers"><span>版本</span>${fam.map((v,i)=>`<button type="button" class="${String(v.id)===String(t.id)?'on':''}" onclick="spOpen(${ja(v.id)},window._spCtx)">${escH(tplVerName(v))}${i===0?'（最新）':''}${ctx&&String(ctx.tplId)===String(v.id)?'・這次用的':''}</button>`).join('')}</div>`:'';
@@ -6056,9 +6060,9 @@ function spOpen(id,ctx){
   showModal('📅 '+formatTemplateName(t),`
     <div class="sp-dtag" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</div>
     <div class="sp-dmeta">${ctx?`<span>🗓️ ${escH(ctx.when)}${ctx.n?`・${ctx.n} 節`:''}</span>${ctx.cls?`<span>🏫 ${escH(ctx.cls)}</span>`:''}${ctx.who?`<span>👩‍🏫 ${escH(ctx.who)}</span>`:''}`:`<span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}`}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
-    ${vers}${runItems?`<div class="sp-runnote">這次器材有調整，下面是實際用的（和課綱「${escH(tplVerName(t))}」不同）</div>`:''}
+    ${vers}${runItems||runNote!=null?`<div class="sp-runnote">這次${[runItems?'器材':'',runNote!=null?'備註':''].filter(Boolean).join('和')}有調整，下面是實際用的（和課綱「${escH(tplVerName(t))}」不同）</div>`:''}
     <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
-    ${t.reference_note?`<div class="sp-ref">📝 ${escH(t.reference_note)}</div>`:''}
+    ${refNote?`<div class="sp-ref">📝 ${escH(refNote)}</div>`:''}
     <div class="hint" style="margin-top:10px">按「用這個申請」會帶入器材、日期先放課綱那一週，下一頁都可以再改。</div>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'用這個申請 ›',cls:'btn-primary',fn:`spApply(${ja(t.id)})`}]);
 }
@@ -7431,6 +7435,7 @@ function sxWeekItems(w){
     const c=add(key,{subj,type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',title,tpl:t?t.id:null,fixed:false,venues:[]},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',1,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
     if(Array.isArray(r.equipment_items)&&r.equipment_items.length)c.items=r.equipment_items;
+    if(r.ref_note!=null)c.refNote=r.ref_note;
     c.last=c.last&&c.last>r.run_date?c.last:r.run_date;
     if(!r.booking_id&&r.venue&&!c.venues.includes(r.venue))c.venues.push(r.venue);
   });
@@ -7467,7 +7472,7 @@ let sxCardArr=[];
 function sxOpenCard(i){
   const c=sxCardArr[i];if(!c)return;
   const md=d=>{const x=new Date(d+'T00:00:00');return `${x.getMonth()+1}/${x.getDate()}`;};
-  spOpen(c.tpl,{when:c.last&&c.last!==c.date?`${md(c.date)}～${md(c.last)}`:md(c.date),who:c.whos.join('、'),cls:c.grade,n:c.n,tplId:c.tpl,items:c.items||null});
+  spOpen(c.tpl,{when:c.last&&c.last!==c.date?`${md(c.date)}～${md(c.last)}`:md(c.date),who:c.whos.join('、'),cls:c.grade,n:c.n,tplId:c.tpl,items:c.items||null,refNote:c.refNote??null});
 }
 function sxCardHtml(c,mobile){
   const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
@@ -7590,7 +7595,7 @@ function sxFill(bid,a,e){
     <div class="sx-form">
       <div class="hint">${escH([many?sxGradesTxt(ps.map(p=>p.b.grade)):b.grade,sxBkSubj(b),sxTypeTxt(sxBkType(b)),many?'':b.borrower_name].filter(Boolean).join('・'))}</div>
       <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定" onchange="sxEqReset()"></div>
-      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材不一樣？調整器材 ›</button><div id="sxEqBox"></div></div>
+      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材或備註不一樣？調整 ›</button><div id="sxEqBox"></div></div>
       <div class="form-group"><label>哪幾節</label>${ps.map((p,i)=>`<label class="sx-ck"><input type="checkbox" data-i="${i}" checked> ${escH(p.date)} ${escH(p.period)} ${escH(p.venue||'')}${many?` <b>${escH(p.b.grade||'')}</b>`:''}</label>`).join('')}</div>
       <div class="form-group"><label>填的人</label><input id="sx-who" maxlength="30" value="${escH(b.role==='老師'?b.borrower_name||'':sxNameGuess())}"></div>
     </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:`sxFillSave(${ja(bid)},${ja(a)},${ja(e)})`}]);
@@ -7603,8 +7608,8 @@ async function sxFillSave(bid,a,e){
   if(!who){showToast('請填你的名字','error');return;}
   const sel=[...document.querySelectorAll('.sx-form .sx-ck input:checked')].map(x=>ps[+x.dataset.i]).filter(Boolean);
   if(!sel.length){showToast('至少勾一節','error');return;}
-  const items=sxEqCollect(pick);
-  const rows=sel.map(p=>({...(items?{equipment_items:items}:{}),run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(p.b)||null,course_type:sxBkType(p.b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(p.b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:p.b.id}));
+  const items=sxEqCollect(pick),note=sxNoteCollect(pick);
+  const rows=sel.map(p=>({...(items?{equipment_items:items}:{}),...(note!=null?{ref_note:note}:{}),run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(p.b)||null,course_type:sxBkType(p.b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(p.b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:p.b.id}));
   await sxSaveRuns(rows,who);
 }
 function sxLog(tplId){
@@ -7615,7 +7620,7 @@ function sxLog(tplId){
     <div class="sx-form">
       <div class="hint">不借教室的也可以登記（例如帶到班上做的示範實驗）。</div>
       <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）*</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" value="${t?escH(sxTplLabel(t)):''}" placeholder="例如：酸鹼滴定" onchange="sxEqReset()"></div>
-      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材不一樣？調整器材 ›</button><div id="sxEqBox"></div></div>
+      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材或備註不一樣？調整 ›</button><div id="sxEqBox"></div></div>
       <div class="sx-2"><div class="form-group"><label>日期 *</label><input type="date" id="sx-date" value="${escH(todayStr())}"></div>
       <div class="form-group"><label>節次</label><select id="sx-period"><option value="">（不填）</option>${PERIODS.map(p=>`<option>${escH(p)}</option>`).join('')}</select></div></div>
       <div class="sx-2"><div class="form-group"><label>科目 *</label><select id="sx-subj">${SX_SUBJ.map(s=>`<option${s===ts?' selected':''}>${s}</option>`).join('')}</select></div>
@@ -7632,8 +7637,8 @@ async function sxLogSave(){
   if(!date){showToast('請選日期','error');return;}
   if(!who){showToast('請填老師','error');return;}
   const subj=document.getElementById('sx-subj').value;
-  const items=sxEqCollect(pick);
-  await sxSaveRuns([{...(items?{equipment_items:items}:{}),run_date:date,period:document.getElementById('sx-period').value||null,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,
+  const items=sxEqCollect(pick),note=sxNoteCollect(pick);
+  await sxSaveRuns([{...(items?{equipment_items:items}:{}),...(note!=null?{ref_note:note}:{}),run_date:date,period:document.getElementById('sx-period').value||null,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,
     subject:SX_SUBJ.includes(subj)?subj:null,course_type:document.getElementById('sx-type').value||null,grade:document.getElementById('sx-grade').value.trim().slice(0,20)||null,
     teacher:who.slice(0,30),venue:document.getElementById('sx-venue').value.trim().slice(0,30)||null,booking_id:null}],who);
 }
@@ -7645,23 +7650,24 @@ function sxEqKey(list){return JSON.stringify((list||[]).map(sxEqClean).filter(x=
 function sxEqOpen(){
   const pick=sxPickTpl(document.getElementById('sx-exp')?.value);
   if(!pick.tpl){showToast('先從清單選實驗，才帶得出器材','error');return;}
-  if(!sxEq||sxEq.tid!==pick.tpl.id){const base=(Array.isArray(pick.tpl.equipment_items)?pick.tpl.equipment_items:[]).map(sxEqClean).filter(x=>x.name);sxEq={tid:pick.tpl.id,items:base.map(x=>({...x})),base:sxEqKey(base),q:''};}
+  if(!sxEq||sxEq.tid!==pick.tpl.id){const base=(Array.isArray(pick.tpl.equipment_items)?pick.tpl.equipment_items:[]).map(sxEqClean).filter(x=>x.name);const note=String(pick.tpl.reference_note||'');sxEq={tid:pick.tpl.id,items:base.map(x=>({...x})),base:sxEqKey(base),q:'',note,baseNote:note};}
   sxEqRender();
 }
 function sxEqReset(){if(sxEq){sxEq=null;const b=document.getElementById('sxEqBox');if(b)b.innerHTML='';const t=document.getElementById('sxEqTog');if(t)t.style.display='';}}
 function sxEqRender(){
   const box=document.getElementById('sxEqBox'),tog=document.getElementById('sxEqTog');if(!box||!sxEq)return;
   if(tog)tog.style.display='none';
-  const changed=sxEqKey(sxEq.items)!==sxEq.base;
+  const changed=sxEqKey(sxEq.items)!==sxEq.base||sxEq.note!==sxEq.baseNote;
   box.innerHTML=`<div class="sx-eqbox"><div class="hint" style="margin:0 0 4px">只改這幾節的紀錄，不會動到課綱實驗${changed?'・<b style="color:#8a5a00">已調整</b>':''}</div>
     ${sxEq.items.map((it,i)=>`<div class="sx-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="sxEqQty(${i},-1)" aria-label="減少">−</button>${qtyNum(it.quantity,999,`sxEqSet(${i},this.value)`)}<button type="button" onclick="sxEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="sxEqDel(${i})" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
     ${sxEq.items.length<SX_EQ_MAX?`<input type="search" id="sxEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(sxEq.q||'')}" oninput="sxEqSearch(this.value)" style="margin-top:6px"><div id="sxEqHits"></div>`:''}
-    ${changed?`<button type="button" class="sx-eqtog" onclick="sxEqUndo()">還原成課綱的清單</button>`:''}</div>`;
+    <label class="sx-notel">備註（藥品、共用品項、注意事項）</label><textarea id="sxEqNote" rows="5" maxlength="2000" oninput="sxEq.note=this.value">${escH(sxEq.note)}</textarea>
+    ${changed?`<button type="button" class="sx-eqtog" onclick="sxEqUndo()">還原成課綱的清單和備註</button>`:''}</div>`;
 }
 function sxEqQty(i,d){const it=sxEq&&sxEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)sxEq.items.splice(i,1);sxEqRender();}
 function sxEqSet(i,v){const it=sxEq&&sxEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,parseInt(v)||0));if(it.quantity===0)sxEq.items.splice(i,1);sxEqRender();}
 function sxEqDel(i){if(!sxEq)return;sxEq.items.splice(i,1);sxEqRender();}
-function sxEqUndo(){if(!sxEq)return;sxEq.items=JSON.parse(sxEq.base);sxEqRender();}
+function sxEqUndo(){if(!sxEq)return;sxEq.items=JSON.parse(sxEq.base);sxEq.note=sxEq.baseNote;sxEqRender();}
 function sxEqSearch(q){
   if(!sxEq)return;sxEq.q=q;const box=document.getElementById('sxEqHits');if(!box)return;
   const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
@@ -7683,6 +7689,12 @@ function sxEqCollect(pick){
   if(!sxEq||!pick||!pick.tpl||sxEq.tid!==pick.tpl.id)return null;
   const list=sxEq.items.map(sxEqClean).filter(x=>x.name&&x.quantity>0).slice(0,SX_EQ_MAX);
   return JSON.stringify(list)===sxEq.base?null:list;
+}
+// 備註：改過才存（最多 2000 字），沒改回傳 null（照課綱那一版的備註）
+function sxNoteCollect(pick){
+  if(!sxEq||!pick||!pick.tpl||sxEq.tid!==pick.tpl.id)return null;
+  const n=String(sxEq.note||'').slice(0,2000);
+  return n===sxEq.baseNote?null:n;
 }
 async function sxSaveRuns(rows,who){
   const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
