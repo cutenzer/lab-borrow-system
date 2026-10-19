@@ -2002,7 +2002,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19c';
+const ADMIN_VERSION='2026-10-19e';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9268,7 +9268,7 @@ async function doDeleteHighlight(id){
 .sr-wk h4{display:flex;align-items:baseline;gap:8px;margin:14px 0 4px;font-size:15px;padding-bottom:4px;border-bottom:2px solid var(--text)}
 .sr-wk h4 span{font-size:12px;color:var(--text2);font-weight:400}
 .sr-wk h4 em{font-style:normal;font-size:11.5px;background:#1f5b4c;color:#fff;border-radius:5px;padding:1px 7px}
-.sr-row{display:grid;grid-template-columns:96px minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;padding:9px 4px 9px 12px;border-bottom:1px dashed var(--border);border-left:3px solid var(--c)}
+.sr-row{display:grid;grid-template-columns:118px minmax(0,1fr) auto auto;gap:6px 14px;align-items:center;padding:9px 4px 9px 12px;border-bottom:1px dashed var(--border);border-left:3px solid var(--c)}
 .sr-row.sr-empty{border-left-style:dashed}
 .sr-row.dim{opacity:.55}
 .sr-when b{display:block;font-size:13.5px;font-variant-numeric:tabular-nums}
@@ -9277,7 +9277,7 @@ async function doDeleteHighlight(id){
 .sr-row.sr-empty .sr-what b{color:var(--text2);font-weight:500}
 .sr-tags{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
 .sr-tag{font-size:11px;border:1px solid var(--border);border-radius:5px;padding:1px 6px;color:var(--text2);white-space:nowrap}
-.sr-tag.fx{border-color:#b5612a;color:#b5612a}.sr-tag.eq{border-color:#8a5a00;color:#8a5a00;background:#fbf1dc}
+.sr-tag.fx{border-color:#b5612a;color:#b5612a}.sr-tag.mu{border-color:#3d5a99;color:#3d5a99}.sr-tag.eq{border-color:#8a5a00;color:#8a5a00;background:#fbf1dc}
 .sr-eqtog{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer}
 .sr-eqbox{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:6px}
 .sr-eqrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:14px}
@@ -9293,6 +9293,12 @@ async function doDeleteHighlight(id){
 #srEqNote{width:100%;box-sizing:border-box;font:inherit;font-size:13.5px;line-height:1.5;border:1px solid var(--border);border-radius:8px;padding:8px 10px;resize:vertical}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
 .sr-act{display:flex;gap:6px;align-items:center;justify-content:flex-end}
 .sr-show select{width:auto;font-size:12.5px;padding:5px 6px}
+.sr-when{display:grid;grid-template-columns:22px auto;align-items:center;white-space:nowrap}
+.sr-when>b,.sr-when>small{grid-column:2}
+.sr-pick,.sr-pick-sp{grid-row:1/3;grid-column:1}
+.sr-pick{width:16px;height:16px;margin:0;accent-color:var(--accent);cursor:pointer}
+.sr-row.sel{background:#eef5f1}
+.sr-selbar{position:sticky;bottom:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
 .sr-del{border:0;background:none;font:inherit;font-size:13px;color:var(--text2);cursor:pointer;padding:6px}
 .sr-del:hover{color:var(--danger)}
 .sr-form .sr-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -9308,7 +9314,7 @@ async function doDeleteHighlight(id){
 .sr-chain input,.sr-oth input{width:auto}
 .sr-oth small{color:var(--text2);font-size:12px;margin-left:auto}
 @media(max-width:760px){
-  .sr-row{grid-template-columns:72px minmax(0,1fr);padding-left:10px}
+  .sr-row{grid-template-columns:94px minmax(0,1fr);padding-left:10px}
   .sr-tags{grid-column:2;justify-content:flex-start}
   .sr-act{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}
   .sr-add{margin-left:0;width:100%}
@@ -9509,6 +9515,10 @@ function srWeekRows(w){
     if(!ps.length)return;
     rows.push({kind:'bk',b,ps,a,e,date:ps.map(p=>p.date).sort()[0],period:ps.map(p=>p.period).join('、'),title:'',subj:srBkSubj(b),grade:b.grade||'',type:srBkType(b),who:b.borrower_name||'',venue:[...new Set(ps.map(p=>p.venue))].join('、'),fixed:!!b.is_fixed,shown:srShown(b)});
   });
+  // 同一堂做了好幾個實驗：標出來（同一筆預約同一節；沒借教室的看日期＋節次＋老師＋班級）
+  const lk=r=>r.booking_id?`b|${r.booking_id}|${r.run_date}|${r.period||''}`:(r.period?`l|${r.run_date}|${r.period}|${r.teacher||''}|${r.grade||''}`:'r'+r.id);
+  const lc=new Map();rows.forEach(x=>{if(x.kind==='run'){const k=lk(x.r);lc.set(k,(lc.get(k)||0)+1);}});
+  rows.forEach(x=>{if(x.kind==='run')x.multi=lc.get(lk(x.r))||1;});
   const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;};
   return rows.filter(x=>(srSubj==='全部'||x.subj===srSubj)&&(srMode==='all'||(srMode==='empty'?x.kind==='bk':x.kind==='run')))
     .sort((x,y)=>String(x.date).localeCompare(String(y.date))||ord(x.subj)-ord(y.subj));
@@ -9523,6 +9533,7 @@ function srRowHtml(x){
   if(x.kind==='run'){
     tag=x.r.booking_id?(x.fixed?'<span class="sr-tag fx">固定課</span>':'<span class="sr-tag">預約</span>'):'<span class="sr-tag lg">登記</span>';
     if(x.hidden)tag+='<span class="sr-tag hd">前台不顯示</span>';
+    if(x.multi>1)tag+=`<span class="sr-tag mu">同一堂 ${x.multi} 個實驗</span>`;
     const tv=x.r.template_id&&srTpl(x.r.template_id);
     if(tv&&tplFamilyOf(tv).length>1)tag+=`<span class="sr-tag">${escH(tplVerName(tv))}</span>`;
     const adj=(Array.isArray(x.r.equipment_items)||x.r.ref_note!=null)&&tv;
@@ -9534,8 +9545,9 @@ function srRowHtml(x){
     act=`<button type="button" class="btn btn-primary btn-sm" onclick="srFill(${ja(x.b.id)},${ja(x.a)},${ja(x.e)})">填實驗</button>`+
       (x.fixed?'':`<label class="sr-show" title="還沒填實驗時，要不要出現在前台學期頁"><select onchange="srSetShow(${ja(x.b.id)},this.value)" aria-label="前台學期頁"><option value=""${sv===''?' selected':''}>前台：自動（${srShowAuto(x.b)?'顯示':'不顯示'}）</option><option value="1"${sv==='1'?' selected':''}>前台：顯示</option><option value="0"${sv==='0'?' selected':''}>前台：不顯示</option></select></label>`);
   }
-  return `<div class="sr-row${x.kind==='bk'?' sr-empty':''}${x.hidden||(x.kind==='bk'&&!x.shown)?' dim':''}" style="--c:${col}">
-    <div class="sr-when"><b>${srMD(x.date)}（${srWD(x.date)}）</b><small>${escH(x.period||'—')}</small></div>
+  const pick=x.kind==='run'?`<input type="checkbox" class="sr-pick" data-id="${x.r.id}" data-k="${escH(srSameKey(x.r))}"${srSel.has(x.r.id)?' checked':''} onchange="srPick(${x.r.id},this.checked)" aria-label="選取這筆">`:'<span class="sr-pick-sp"></span>';
+  return `<div class="sr-row${x.kind==='bk'?' sr-empty':''}${x.hidden||(x.kind==='bk'&&!x.shown)?' dim':''}${x.kind==='run'&&srSel.has(x.r.id)?' sel':''}" style="--c:${col}">
+    <div class="sr-when">${pick}<b>${srMD(x.date)}（${srWD(x.date)}）</b><small>${escH(x.period||'—')}</small></div>
     <div class="sr-what"><b>${escH(x.title||'未填實驗')}</b><small>${escH(meta)}${meta&&where?'・':''}${escH(where)}</small></div>
     <div class="sr-tags">${tag}</div>
     <div class="sr-act">${act}</div></div>`;
@@ -9560,11 +9572,47 @@ function srRender(){
     </div>
     <div class="sr-sum">已填 ${total} 筆・預約還沒填實驗 ${empty} 筆${cal.real?'':'・學期週次是估計的（學期設定還沒設這學期）'}</div>
     ${body||'<div class="empty"><p>這學期還沒有紀錄</p></div>'}`;
+  srBar();
 }
 async function srSetShow(id,v){
   const val=v==='1'?true:v==='0'?false:null;
   try{await sb('PATCH','venue_bookings',{filter:'id=eq.'+encodeURIComponent(id),body:{semester_show:val},prefer:'return=minimal'});const b=srBks.find(x=>x.id===id);if(b)b.semester_show=val;showToast('已更新','success');srRender();}
   catch(e){showToast('更新失敗：'+e.message,'error');}
+}
+// ── 一次選好幾筆刪除（2026-10-19）：勾一筆後，下方出現操作列，可「加選同一個實驗」再一起刪 ──
+let srSel=new Set();
+function srSameKey(r){const t=r.template_id?srTpl(r.template_id):null;return t?'f:'+tplFam(t):'t:'+String(r.title||'').replace(/\s+/g,'');}
+function srPick(id,on){if(on)srSel.add(id);else srSel.delete(id);document.querySelector(`.sr-pick[data-id="${id}"]`)?.closest('.sr-row')?.classList.toggle('sel',on);srBar();}
+function srSameAdd(){
+  const keys=new Set(srRuns.filter(r=>srSel.has(r.id)).map(srSameKey));
+  document.querySelectorAll('#srRoot .sr-pick').forEach(c=>{if(keys.has(c.dataset.k)){c.checked=true;srSel.add(+c.dataset.id);c.closest('.sr-row')?.classList.add('sel');}});
+  srBar();
+}
+function srSelClear(){srSel.clear();document.querySelectorAll('#srRoot .sr-pick').forEach(c=>{c.checked=false;c.closest('.sr-row')?.classList.remove('sel');});srBar();}
+function srBar(){
+  let bar=document.getElementById('srSelBar');
+  // 只算畫面上還看得到的（換學期、換篩選後看不到的就不算）
+  const vis=new Set([...document.querySelectorAll('#srRoot .sr-pick')].map(c=>+c.dataset.id));
+  [...srSel].forEach(id=>{if(!vis.has(id))srSel.delete(id);});
+  if(!srSel.size){if(bar)bar.remove();return;}
+  if(!bar){bar=document.createElement('div');bar.id='srSelBar';bar.className='sr-selbar';document.getElementById('srRoot')?.appendChild(bar);}
+  const keys=new Set(srRuns.filter(r=>srSel.has(r.id)).map(srSameKey));
+  const sameN=[...document.querySelectorAll('#srRoot .sr-pick')].filter(c=>keys.has(c.dataset.k)&&!c.checked).length;
+  bar.innerHTML=`<b>已選 ${srSel.size} 筆</b>${sameN?`<button type="button" class="btn btn-secondary btn-sm" onclick="srSameAdd()">加選同一個實驗（還有 ${sameN} 筆）</button>`:''}<span style="flex:1"></span><button type="button" class="btn btn-secondary btn-sm" onclick="srSelClear()">取消</button><button type="button" class="btn btn-danger btn-sm" onclick="srBulkDel()">刪除 ${srSel.size} 筆</button>`;
+}
+function srBulkDel(){
+  const rs=srRuns.filter(r=>srSel.has(r.id));if(!rs.length)return;
+  const by=new Map();rs.forEach(r=>{const t=r.template_id?srTpl(r.template_id):null,n=t?t.name:(r.title||'未填實驗');by.set(n,(by.get(n)||0)+1);});
+  showModal('一次刪除實驗紀錄',`<p>確定刪除這 <b>${rs.length}</b> 筆紀錄？</p><ul style="margin:8px 0 0 18px;font-size:14px">${[...by].map(([n,c])=>`<li>${escH(n)} × ${c}</li>`).join('')}</ul><p class="hint" style="margin-top:8px">只刪實驗紀錄；教室預約不受影響，刪掉後那幾節會回到「還沒填實驗」。</p>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:`刪除 ${rs.length} 筆`,cls:'btn-danger',fn:'srBulkDelDo()'}]);
+}
+async function srBulkDelDo(){
+  const ids=[...srSel].filter(id=>Number.isInteger(id));if(!ids.length)return;
+  const btn=document.querySelector('#modalActions .btn-danger');if(btn){btn.disabled=true;btn.textContent='刪除中…';}
+  try{
+    for(let i=0;i<ids.length;i+=100){const part=ids.slice(i,i+100);await sb('DELETE','experiment_runs',{filter:'id=in.('+part.join(',')+')',prefer:'return=minimal'});}
+    srRuns=srRuns.filter(r=>!ids.includes(r.id));srSel.clear();closeModal();showToast(`已刪除 ${ids.length} 筆`,'success');srRender();
+  }catch(e){showToast('刪除失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
 }
 async function srDel(id){
   const r=srRuns.find(x=>x.id===id);if(!r)return;
