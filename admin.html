@@ -1052,6 +1052,16 @@
 .lu-cell.off{background:none;box-shadow:inset 0 0 0 1px var(--border)}
 .lu-cell.now{outline:2px solid var(--text);outline-offset:1px}
 .lu-cell:hover{outline:2px solid var(--accent);outline-offset:1px}
+/* 定期評量週：斜線底，一眼看出「這週本來就不做實驗」 */
+.lu-cell.exam{background:repeating-linear-gradient(135deg,var(--surface2) 0 3px,#d9b25a 3px 5px)}
+.lu-cell.exam i{mix-blend-mode:multiply}
+.lu-exam{font-size:11.5px;font-weight:700;color:#7a5200;background:#fbefd2;border:1px solid #ecd39a;border-radius:6px;padding:1px 7px}
+.lu-exam-bar .ov-bar-track{background:repeating-linear-gradient(135deg,var(--surface2) 0 4px,#efe0b8 4px 7px)}
+.lu-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--text2)}
+.lu-legend span{display:inline-flex;align-items:center;gap:5px}
+.lu-legend .lu-cell{display:inline-block;width:14px;height:12px;flex:none;cursor:default}
+.lu-legend .lu-cell:hover{outline:none}
+.lu-legend .lu-cell.now{outline:2px solid var(--text);outline-offset:1px}
 @media(max-width:700px){.lu-row{grid-template-columns:64px minmax(0,1fr) 56px 44px;font-size:12.5px}.lu-row>:nth-child(4){display:none}}
 </style>
 <style id="venue-split">
@@ -2015,9 +2025,10 @@ function renderStats(){
   const sem=labUseSemester(),today=fmtDate(new Date());
   const semUse=sem?labUseCount(sem.start,today<sem.end?today:sem.end).n:null;
   const semN=semUse?LABS.reduce((a,[v])=>a+(semUse[v]||0),0):null;
-  let semSlots=0;if(sem){const upto=today<sem.end?today:sem.end;for(const d=new Date(sem.start+'T00:00:00');fmtDate(d)<=upto;d.setDate(d.getDate()+1)){const w=d.getDay();if(w>=1&&w<=5&&sem.isSchool(fmtDate(d)))semSlots+=8;}}
-  const semPc=sem&&semSlots?Math.round(semN/(semSlots*LABS.length)*100):null;
-  const top=semUse?LABS.map(([v])=>[v,semUse[v]||0]).sort((a,b)=>b[1]-a[1])[0]:null;
+  const ss=sem?labUseSemStats(sem,today<sem.end?today:sem.end):null,semSlots=ss?ss.rateDays*8:0;
+  const rateTot=ss?LABS.reduce((a,[v])=>a+(ss.rateN[v]||0),0):0;
+  const semPc=sem&&semSlots?Math.round(rateTot/(semSlots*LABS.length)*100):null;
+  const top=semUse?LABS.map(([v])=>[v,semUse[v]||0,ss.rateN[v]||0]).sort((a,b)=>b[1]-a[1])[0]:null;
   const fmt=n=>Number(n).toLocaleString();
   const card=s=>`<div class="stat-card" onclick="${s.fn||`showTab('${s.tab}')`}"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div>${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}</div>`;
   const group=(h,list)=>`<section class="stat-grp" aria-label="${h}"><div class="stat-grp-h">${h}</div><div class="stats-grid">${list.map(card).join('')}</div></section>`;
@@ -2031,8 +2042,8 @@ function renderStats(){
       {num:venuePending,label:'場地待審核',short:'場地待審',color:'#1e40af',tab:'venue'},
       {num:wkN,label:'本週已排（節）',short:'本週節數',color:'#34506b',fn:"setLabUse('week',0)"},
       {num:semN===null?'─':fmt(semN),label:'本學期已用（節）',short:'學期節數',color:'#34506b',fn:"setLabUse('sem')",sub:sem?'':(window._luSemDone?'還沒有啟用中的學期':'讀取學期中…')},
-      {num:semPc===null?'─':semPc+'%',label:'本學期平均使用率',short:'學期使用率',color:'#34506b',fn:"setLabUse('sem')",sub:sem?`五間平均・實際上課 ${semSlots/8} 天`:''},
-      {num:top&&top[1]?escH(top[0].replace('實驗室','')):'─',label:'本學期用最多',short:'用最多',color:'#34506b',fn:"setLabUse('sem')",sub:top&&top[1]&&semSlots?`${top[1]} 節・${Math.round(top[1]/semSlots*100)}%`:''},
+      {num:semPc===null?'─':semPc+'%',label:'本學期平均使用率',short:'學期使用率',color:'#34506b',fn:"setLabUse('sem')",sub:ss?`五間平均・計入 ${ss.rateDays} 天${ss.exam?`（評量 ${ss.exam} 天不計）`:''}`:''},
+      {num:top&&top[1]?escH(top[0].replace('實驗室','')):'─',label:'本學期用最多',short:'用最多',color:'#34506b',fn:"setLabUse('sem')",sub:top&&top[1]&&semSlots?`${top[1]} 節・使用率 ${Math.round(top[2]/semSlots*100)}%`:''},
     ])+
     group('庫存',[
       {num:fmt(eqOn.length),label:'器材種類',short:'器材種類',color:'#1f5b4c',tab:'equipment',sub:`合計 ${fmt(eqPieces)} 件`},
@@ -2091,10 +2102,11 @@ const LABS=[['化學實驗室','#1f5b4c'],['理化實驗室','#34506b'],['物理
 const LAB_WEEK_SLOTS=40;   // 每週 40 節（週一～五，每天 8 節）
 let labUse={mode:'week',off:0};
 function labUseBaseMonday(){const now=new Date(),m=getMondayOf(now);if(now.getDay()===0||now.getDay()===6)m.setDate(m.getDate()+7);return m;} // 週末就看下週
-function labUseCount(from,to){
+function labUseCount(from,to,dayOk){
   const n={},times={};
   allVenueBookings.forEach(b=>(b.periods||[]).forEach(p=>{
     if(!p||p.status==='已拒絕'||!p.date||p.date<from||p.date>to)return;
+    if(dayOk&&!dayOk(p.date))return;
     n[p.venue]=(n[p.venue]||0)+1;
     (times[p.venue]=times[p.venue]||new Set()).add(b.id+'|'+p.date);
   }));
@@ -2109,7 +2121,25 @@ function labUseSemester(){
   const st=ps.map(p=>p.start_date).sort(),en=ps.map(p=>p.end_date).sort();
   // 上課日＝在上課期間內、而且不是國定假日（國定假日在「學期設定」最下面設定）
   const isSchool=ds=>school.some(p=>ds>=p.start_date&&ds<=p.end_date)&&!holidayForDate(ds);
-  return {name:activeSemester.name||'本學期',start:st[0],end:en[en.length-1],isSchool};
+  // 定期評量週：學期設定「特殊週次標註」裡，名稱有評量／段考／期中／期末／考試的那幾週（2026-10-19）
+  const memo={};
+  const examOf=ds=>{
+    if(ds in memo)return memo[ds];
+    const wi=getWeekInfo(new Date(ds+'T00:00:00'),activeSemester),lb=wi?examLabelForWeek(wi.week):'';
+    return memo[ds]=(lb&&/評量|段考|期中|期末|考試|模擬考/.test(lb))?lb:'';
+  };
+  // 計入使用率的日子＝上課日、而且不是定期評量週
+  const rateDay=ds=>isSchool(ds)&&!examOf(ds);
+  return {name:activeSemester.name||'本學期',start:st[0],end:en[en.length-1],isSchool,examOf,rateDay};
+}
+// 學期到某天為止：上課天數、評量週天數、計入使用率的天數，以及（只算非評量週的）各間節數
+function labUseSemStats(sem,upto){
+  let school=0,exam=0;
+  for(const d=new Date(sem.start+'T00:00:00');fmtDate(d)<=upto;d.setDate(d.getDate()+1)){
+    const w=d.getDay(),ds=fmtDate(d);if(w<1||w>5||!sem.isSchool(ds))continue;
+    school++;if(sem.examOf(ds))exam++;
+  }
+  return {school,exam,rateDays:school-exam,rateN:labUseCount(sem.start,upto,sem.rateDay).n};
 }
 // 總覽一打開就需要學期資料：還沒讀過就讀一次，讀完重畫統計和這張卡
 function labUseEnsureSem(){
@@ -2141,13 +2171,14 @@ function renderLabUse(){
       if(ok)open++;else if(h)offDays.push(`${d.getMonth()+1}/${d.getDate()} ${h.label||'放假'}`);}
     const slots=open*8;
     const wi=getWeekInfo(mon,activeSemester)||getWeekInfo(fri,activeSemester);
+    const examLb=semW?(()=>{for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const e=semW.examOf(fmtDate(d));if(e)return e;}return '';})():'';
     const tag=labUse.off===0?((new Date().getDay()%6===0)?'下週':'本週'):wi?`第 ${wi.week} 週`:'';
     if(tt)tt.textContent='🏛️ 實驗室使用';
     const total=LABS.reduce((a,[v])=>a+(n[v]||0),0);
-    box.innerHTML=`<div class="lu-nav"><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(-1)" aria-label="上一週">‹</button><b>${md(mon)}～${md(fri)}</b><span class="lu-tag">${escH(tag)}${wi&&labUse.off===0?`・第 ${wi.week} 週`:''}${wi&&wi.type&&wi.type!=='開學週期'?`・${escH(wi.label||wi.type)}`:''}</span><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(1)" aria-label="下一週">›</button>${labUse.off?'<button type="button" class="lu-back" onclick="labUse.off=0;renderLabUse()">回本週</button>':''}</div>`+
-      LABS.map(([v,c])=>{const k=n[v]||0,pc=slots?Math.min(100,Math.round(k/slots*100)):0;return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${slots?pc+'%':'─'}</span></div>`;}).join('')+
-      `<div class="lu-sum">這週上課 <b>${open}</b> 天${offDays.length?`（${escH(offDays.join('、'))}）`:''}・合計 <b>${total}</b> 節・五間平均使用率 <b>${slots?Math.round(total/(slots*LABS.length)*100)+'%':'─'}</b></div>`;
-    if(hint)hint.textContent='使用率＝這間的節數 ÷（這週上課天數 × 8 節）；國定假日不算上課天；早休、午休、晚上也會算進去；已拒絕的不算';
+    box.innerHTML=`<div class="lu-nav"><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(-1)" aria-label="上一週">‹</button><b>${md(mon)}～${md(fri)}</b><span class="lu-tag">${escH(tag)}${wi&&labUse.off===0?`・第 ${wi.week} 週`:''}${wi&&wi.type&&wi.type!=='開學週期'?`・${escH(wi.label||wi.type)}`:''}</span>${examLb?`<span class="lu-exam">${escH(examLb)}</span>`:''}<button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(1)" aria-label="下一週">›</button>${labUse.off?'<button type="button" class="lu-back" onclick="labUse.off=0;renderLabUse()">回本週</button>':''}</div>`+
+      LABS.map(([v,c])=>{const k=n[v]||0,pc=slots?Math.min(100,Math.round(k/slots*100)):0;return `<div class="ov-bar${examLb?' lu-exam-bar':''}"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${examLb?Math.min(100,Math.round(k/40*100)):pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${slots&&!examLb?pc+'%':'─'}</span></div>`;}).join('')+
+      `<div class="lu-sum">這週上課 <b>${open}</b> 天${offDays.length?`（${escH(offDays.join('、'))}）`:''}・合計 <b>${total}</b> 節・${examLb?'<b>定期評量週，不計入使用率</b>':`五間平均使用率 <b>${slots?Math.round(total/(slots*LABS.length)*100)+'%':'─'}</b>`}</div>`;
+    if(hint)hint.textContent='使用率＝這間的節數 ÷（這週上課天數 × 8 節）；國定假日不算上課天；定期評量週不計使用率（週次在「學期設定 → 特殊週次標註」）；已拒絕的不算';
     return;
   }
   // 學期
@@ -2166,25 +2197,26 @@ function renderLabUse(){
     const f=new Date(m);f.setDate(m.getDate()+4);
     let schoolDays=0;for(let i=0;i<5;i++){const d=new Date(m);d.setDate(m.getDate()+i);const ds=fmtDate(d);if(ds>=sem.start&&ds<=sem.end&&sem.isSchool(ds))schoolDays++;}
     const wi=getWeekInfo(m,activeSemester)||getWeekInfo(f,activeSemester);
-    weeks.push({mon:new Date(m),ms:fmtDate(m),fs:fmtDate(f),schoolDays,wk:wi?wi.week:null,n:labUseCount(fmtDate(m),fmtDate(f)).n});
+    let exam='';for(let i=0;i<5&&!exam;i++){const d=new Date(m);d.setDate(m.getDate()+i);exam=sem.examOf(fmtDate(d));}
+    weeks.push({mon:new Date(m),ms:fmtDate(m),fs:fmtDate(f),schoolDays,exam,wk:wi?wi.week:null,n:labUseCount(fmtDate(m),fmtDate(f)).n});
   }
-  let daysSoFar=0;for(const d=new Date(sem.start+'T00:00:00');fmtDate(d)<=upto;d.setDate(d.getDate()+1)){const w=d.getDay();if(w>=1&&w<=5&&sem.isSchool(fmtDate(d)))daysSoFar++;}
-  const slotsSoFar=daysSoFar*8;
+  const ss=labUseSemStats(sem,upto),daysSoFar=ss.school,slotsSoFar=ss.rateDays*8;
   const used=labUseCount(sem.start,upto),planned=labUseCount(sem.start,sem.end);
   const base=labUseBaseMonday();
   const cellsOf=(v,c)=>weeks.map(w=>{
     const k=w.n[v]||0,off=Math.round((w.mon-base)/(7*864e5));
     const op=k?Math.min(1,.18+k/20*.82).toFixed(2):0;
-    const cls=w.schoolDays?'':' off',now=today>=w.ms&&today<=w.fs?' now':'';
-    return `<button type="button" class="lu-cell${cls}${now}" title="${w.wk?`第 ${w.wk} 週 `:''}${w.ms.slice(5).replace('-','/')}：${k} 節${w.schoolDays?(w.schoolDays<5?`（上課 ${w.schoolDays} 天）`:''):'（放假）'}" onclick="setLabUse('week',${off})"><i style="background:${c};opacity:${op}"></i></button>`;
+    const cls=w.schoolDays?(w.exam?' exam':''):' off',now=today>=w.ms&&today<=w.fs?' now':'';
+    return `<button type="button" class="lu-cell${cls}${now}" title="${w.wk?`第 ${w.wk} 週 `:''}${w.ms.slice(5).replace('-','/')}：${k} 節${w.exam?`・${escH(w.exam)}（不計使用率）`:''}${w.schoolDays?(w.schoolDays<5?`（上課 ${w.schoolDays} 天）`:''):'（放假）'}" onclick="setLabUse('week',${off})"><i style="background:${c};opacity:${op}"></i></button>`;
   }).join('');
   const totU=LABS.reduce((a,[v])=>a+(used.n[v]||0),0),totP=LABS.reduce((a,[v])=>a+(planned.n[v]||0),0);
-  box.innerHTML=`<div class="lu-nav"><b>${escH(sem.name)}</b><span class="lu-tag">${sem.start.slice(5).replace('-','/')}～${sem.end.slice(5).replace('-','/')}・到今天實際上課 ${daysSoFar} 天</span></div>
+  box.innerHTML=`<div class="lu-nav"><b>${escH(sem.name)}</b><span class="lu-tag">${sem.start.slice(5).replace('-','/')}～${sem.end.slice(5).replace('-','/')}・到今天實際上課 ${daysSoFar} 天${ss.exam?`，其中定期評量 ${ss.exam} 天`:''}</span></div>
     <div class="lu-sem"><div class="lu-row lu-h"><span>實驗室</span><span>每週使用（點一格看那一週）</span><span class="n">已用</span><span class="n">次數</span><span class="n">使用率</span></div>`+
-    LABS.map(([v,c])=>{const u=used.n[v]||0,t=used.t[v]||0,pl=planned.n[v]||0,pc=slotsSoFar?Math.round(u/slotsSoFar*100):0;
+    LABS.map(([v,c])=>{const u=used.n[v]||0,t=used.t[v]||0,pl=planned.n[v]||0,pc=slotsSoFar?Math.round((ss.rateN[v]||0)/slotsSoFar*100):0;
       return `<div class="lu-row"><span class="lu-name">${v}</span><span class="lu-strip">${cellsOf(v,c)}</span><span class="n"><span><b>${u}</b> 節</span>${pl>u?`<small>另排 ${pl-u}</small>`:''}</span><span class="n">${t} 次</span><span class="n"><b>${pc}%</b></span></div>`;}).join('')+
-    `</div><div class="lu-sum">全部合計已用 <b>${totU}</b> 節${totP>totU?`（之後還排了 ${totP-totU} 節）`:''}・五間平均使用率 <b>${slotsSoFar?Math.round(totU/(slotsSoFar*LABS.length)*100):0}%</b></div>`;
-  if(hint)hint.textContent='使用率＝已用節數 ÷（到今天的實際上課天數 × 8 節）；國定假日、寒暑假不算上課天；五間平均＝五間加總 ÷（上課節數 × 5）；同一筆預約同一天算 1 次；顏色越深代表那週用越多節，灰框是整週放假';
+    `</div><div class="lu-sum">全部合計已用 <b>${totU}</b> 節${totP>totU?`（之後還排了 ${totP-totU} 節）`:''}・五間平均使用率 <b>${slotsSoFar?Math.round(LABS.reduce((a,[v])=>a+(ss.rateN[v]||0),0)/(slotsSoFar*LABS.length)*100):0}%</b></div>
+    <div class="lu-legend"><span><i class="lu-cell"><i style="background:var(--ink);opacity:.6"></i></i>有使用</span><span><i class="lu-cell exam"></i>定期評量週</span><span><i class="lu-cell off"></i>整週放假</span><span><i class="lu-cell now"></i>本週</span></div>`;
+  if(hint)hint.textContent='使用率＝已用節數 ÷（到今天的實際上課天數 × 8 節），定期評量週的天數和節數都不算進去；國定假日、寒暑假不算上課天；五間平均＝五間加總 ÷（上課節數 × 5）；同一筆預約同一天算 1 次；評量週在「學期設定 → 特殊週次標註」設定';
 }
 // 保證金：上方統計
 function renderDepositSummary(){
@@ -2200,7 +2232,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19j';
+const ADMIN_VERSION='2026-10-19k';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
