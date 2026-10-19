@@ -624,6 +624,19 @@
   .sp-dtag{display:inline-block;font-size:13px;font-weight:700;border-radius:8px;padding:3px 10px;margin-bottom:8px;}
   .sp-dmeta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;color:var(--text2);margin-bottom:10px;}
   .sp-eqs{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .sp-vers{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px;font-size:13px;color:var(--text2);}
+  .sp-vers button{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer;}
+  .sp-vers button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .sp-runnote{font-size:13px;color:#8a5a00;background:#fbf1dc;border-radius:8px;padding:6px 10px;margin-bottom:8px;}
+  .sx-eqbox{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:6px;}
+  .sx-eqrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:14px;}
+  .sx-eqrow:last-of-type{border-bottom:0;}
+  .sx-eqrow .n{flex:1;min-width:0;}.sx-eqrow .n small{color:var(--text2);margin-left:4px;}
+  .sx-eqrow .q{display:flex;align-items:center;gap:4px;}
+  .sx-eqrow .q button,.sx-eqrow .x{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:28px;height:28px;font:inherit;cursor:pointer;}
+  .sx-eqrow .q b{min-width:28px;text-align:center;}
+  .sx-eqrow .x{background:none;border:0;color:var(--text2);}
+  .sx-eqtog{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer;}
   .sp-eq{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--surface2);font-size:14.5px;}
   .sp-eq:last-child{border-bottom:none;}
   .sp-eq>span{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -5699,6 +5712,17 @@ function showToast(msg,type){const t=document.getElementById('toast');t.textCont
 
 // ── 課綱實驗（維持原有邏輯）──────────────────────────────
 let allCourseTemplates=[],appliedTemplate=null;
+// ── 課綱實驗版本（2026-10-19）──
+// 同一個實驗每學年度可以有一版：family_id 相同＝同一條版本線；version_label 空白＝原版。
+// allCourseTemplates 只放每條線的最新版（搜尋、週表、選單用）；tplAllVersions 放全部（看舊版、舊紀錄用）。
+let tplAllVersions=[];
+function tplFam(t){return t?String(t.family_id||t.id):'';}
+function tplVerNum(t){const m=String(t&&t.version_label||'').match(/\d+/);return m?+m[0]:0;}
+function tplVerName(t){return (t&&t.version_label)||'原版';}
+function tplNewer(a,b){return tplVerNum(a)-tplVerNum(b)||String(a.updated_at||'').localeCompare(String(b.updated_at||''));}
+function tplFamilyOf(t){const f=tplFam(t);return tplAllVersions.filter(x=>tplFam(x)===f).sort((a,b)=>tplNewer(b,a));}
+function tplLatestOnly(rows){const m=new Map();rows.forEach(t=>{const o=m.get(tplFam(t));if(!o||tplNewer(t,o)>0)m.set(tplFam(t),t);});return rows.filter(t=>m.get(tplFam(t))===t);}
+function tplById(id){return tplAllVersions.find(x=>String(x.id)===String(id))||allCourseTemplates.find(x=>String(x.id)===String(id));}
 const SUBJECT_FROM_ROOM={'Physics':'物理','Chemistry':'化學','Biology':'生物','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具'};
 const SUBJECTS=['地球科學','物理','化學','生物','地科','理化','數學','資訊','生活科技','國文','英文','歷史','地理','公民'];
 const SPECIAL_TAGS=['科學研究','科研','探究','菁英','選修','資優','實驗班','科學班','先修','專題','加深加廣'];
@@ -5993,16 +6017,23 @@ function spWeekAll(i){
 }
 // 點實驗：看器材、直接申請
 function spOpen(id,ctx){
-  const t=allCourseTemplates.find(x=>String(x.id)===String(id));if(!t)return;
+  const t=tplById(id);if(!t)return;
   const sj=semSubjectOf(t),gc=parseInt(t.group_count)||0;
   const B=spBuild(spTerm||1),s=B.slots.find(x=>x.items.includes(t));
   const when=spWeekRange(t)&&B.real?`學期${spWeekRange(t)}`:s?spSlotTitle(s,true).replace(/^第 (\d+) 週/,(_,w)=>`學期第 ${w} 週`):(semMonthOf(t)?`${semMonthOf(t)} 月`:'沒有填月份');
-  const items=Array.isArray(t.equipment_items)?t.equipment_items:[];
+  // 從實驗紀錄打開、而且看的正是當時那一版：有改過器材就顯示這次實際的清單
+  window._spCtx=ctx||null;
+  const runOwn=ctx&&ctx.tplId!=null&&String(ctx.tplId)===String(t.id);
+  const runItems=runOwn&&Array.isArray(ctx.items)?ctx.items:null;
+  const items=runItems||(Array.isArray(t.equipment_items)?t.equipment_items:[]);
+  const fam=tplFamilyOf(t);
+  const vers=fam.length>1?`<div class="sp-vers"><span>版本</span>${fam.map((v,i)=>`<button type="button" class="${String(v.id)===String(t.id)?'on':''}" onclick="spOpen(${ja(v.id)},window._spCtx)">${escH(tplVerName(v))}${i===0?'（最新）':''}${ctx&&String(ctx.tplId)===String(v.id)?'・這次用的':''}</button>`).join('')}</div>`:'';
   const eq=items.map(it=>{const q=parseInt(it.quantity)||0,per=(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
     return `<div class="sp-eq"><span>${escH(it.name||'')}${it.spec?`<small> ${escH(it.spec)}</small>`:''}</span>${q?`<i class="${per?'pg':'sh'}">${per?`每組 ${per}`:'全班共用'}</i><b>${q} ${escH(it.unit||'')}</b>`:''}</div>`;}).join('');
   showModal('📅 '+formatTemplateName(t),`
     <div class="sp-dtag" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</div>
     <div class="sp-dmeta">${ctx?`<span>🗓️ ${escH(ctx.when)}${ctx.n?`・${ctx.n} 節`:''}</span>${ctx.cls?`<span>🏫 ${escH(ctx.cls)}</span>`:''}${ctx.who?`<span>👩‍🏫 ${escH(ctx.who)}</span>`:''}`:`<span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}`}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
+    ${vers}${runItems?`<div class="sp-runnote">這次器材有調整，下面是實際用的（和課綱「${escH(tplVerName(t))}」不同）</div>`:''}
     <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
     ${t.reference_note?`<div class="sp-ref">📝 ${escH(t.reference_note)}</div>`:''}
     <div class="hint" style="margin-top:10px">按「用這個申請」會帶入器材、日期先放課綱那一週，下一頁都可以再改。</div>`,
@@ -6020,7 +6051,7 @@ const CB_ROOM={'Chemistry':'化學實驗室','Physics Chemistry':'理化實驗�
 const CB_DAY='日一二三四五六';
 const CB_PERIODS=PERIODS.filter(p=>p.startsWith('第')); // 教室只借上課節次
 let cb=null,cbBusy=false;
-function cbTpl(id){return allCourseTemplates.find(x=>String(x.id)===String(id));}
+function cbTpl(id){return tplById(id);}
 function cbAddDays(ds,n){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtDate(d);}
 function cbMonday(ds){return fmtDate(getMondayOf(new Date(ds+'T00:00:00')));}
 function cbMD(ds){const d=new Date(ds+'T00:00:00');return `${d.getMonth()+1}/${d.getDate()}（${CB_DAY[d.getDay()]}）`;}
@@ -6243,7 +6274,7 @@ async function cbSubmit(){
 }
 // ==== 課綱借用頁 結束 ====
 async function loadCourseTemplates(){
-  try{allCourseTemplates=await sb('GET','course_templates',{order:'name'});allCourseTemplates=Array.isArray(allCourseTemplates)?allCourseTemplates:[];renderTemplatePicker();renderSemTable();}catch(e){}
+  try{const rows=await sb('GET','course_templates',{order:'name'});tplAllVersions=Array.isArray(rows)?rows:[];allCourseTemplates=tplLatestOnly(tplAllVersions);renderTemplatePicker();renderSemTable();}catch(e){}
 }
 function renderTemplatePicker(){
   if(!document.getElementById('tplPickerSelect'))return; // 借用單已經不放課綱選單（改到學期實驗）
@@ -6305,7 +6336,7 @@ function tplPickEquip(it,t,want){
   return {pick,info};
 }
 function applyTemplate(id){
-  const t=allCourseTemplates.find(x=>x.id===id);if(!t)return;
+  const t=tplById(id);if(!t)return;
   const av=e=>parseInt(e.available)||0;const added=[];const unmatched=[];
   // 組數判斷：數量是「課綱設定組數」的整數倍 → 視為每組都要（例如 12 組、數量 12 或 24）；其他（例如 1）視為全班共用
   const gc=parseInt(t.group_count)||0;
@@ -7318,7 +7349,7 @@ const SX_SUBJ=['物理','化學','生物','地科','理化'];
 const SX_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','課程':'一般'};
 let sxView='sem',sxRuns=[],sxTypes=[],sxBookings=[],sxLoaded=false,sxLoading=false,sxWeek=null;
 let sxLibQ='',sxLibGrade='全部',sxLibType='全部',sxLibTerm=0,sxLibSubj='化學',sxLibOpen='';
-function sxTpl(id){return allCourseTemplates.find(x=>String(x.id)===String(id));}
+function sxTpl(id){return tplById(id);}
 function sxTplSubj(t){if(!t)return '';if(SX_SUBJ.includes(t.subject))return t.subject;const s=semSubjectOf(t);return SX_SUBJ.includes(s)?s:'';}
 function sxTplType(t){return t&&t.course_type||'';}
 function sxVenueSubj(v){v=String(v||'');return SX_SUBJ.find(s=>v.startsWith(s))||'';}
@@ -7345,7 +7376,7 @@ async function sxLoad(force){
 }
 // 選實驗用的清單（可以打字找）：「名稱｜年級」
 // 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
-function sxTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dup=allCourseTemplates.some(x=>x!==t&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
+function sxTplLabel(t){const n=(t.name||'').trim(),g=(t.grade||'').trim();const dups=allCourseTemplates.filter(x=>x!==t&&(x.name||'').trim()===n&&(x.grade||'').trim()===g);const dup=dups.length>0;if(dup&&t.course_type&&dups.every(x=>(x.course_type||'')!==t.course_type))return `${n}｜${g||'未填年級'}｜${String(t.course_type).trim()}`;return `${n}｜${g||'未填年級'}${dup&&t.teacher?'｜'+String(t.teacher).trim():''}`;}
 function sxDatalist(){
   let dl=document.getElementById('sxTplList');
   if(!dl){dl=document.createElement('datalist');dl.id='sxTplList';document.body.appendChild(dl);}
@@ -7375,6 +7406,7 @@ function sxWeekItems(w){
     const key='x|'+String(title).replace(/\s+/g,'').toLowerCase()+'|'+subj;
     const c=add(key,{subj,type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',title,tpl:t?t.id:null,fixed:false,venues:[]},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',1,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
+    if(Array.isArray(r.equipment_items)&&r.equipment_items.length)c.items=r.equipment_items;
     c.last=c.last&&c.last>r.run_date?c.last:r.run_date;
     if(!r.booking_id&&r.venue&&!c.venues.includes(r.venue))c.venues.push(r.venue);
   });
@@ -7411,7 +7443,7 @@ let sxCardArr=[];
 function sxOpenCard(i){
   const c=sxCardArr[i];if(!c)return;
   const md=d=>{const x=new Date(d+'T00:00:00');return `${x.getMonth()+1}/${x.getDate()}`;};
-  spOpen(c.tpl,{when:c.last&&c.last!==c.date?`${md(c.date)}～${md(c.last)}`:md(c.date),who:c.whos.join('、'),cls:c.grade,n:c.n});
+  spOpen(c.tpl,{when:c.last&&c.last!==c.date?`${md(c.date)}～${md(c.last)}`:md(c.date),who:c.whos.join('、'),cls:c.grade,n:c.n,tplId:c.tpl,items:c.items||null});
 }
 function sxCardHtml(c,mobile){
   const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
@@ -7529,10 +7561,12 @@ function sxFillPs(bid,a,e){
 function sxFill(bid,a,e){
   const ps=sxFillPs(bid,a,e);const b=ps[0]&&ps[0].b;if(!b)return;
   const many=new Set(ps.map(p=>p.b.id)).size>1;
+  sxEq=null;
   showModal('這幾節做了什麼實驗？',`
     <div class="sx-form">
       <div class="hint">${escH([many?sxGradesTxt(ps.map(p=>p.b.grade)):b.grade,sxBkSubj(b),sxTypeTxt(sxBkType(b)),many?'':b.borrower_name].filter(Boolean).join('・'))}</div>
-      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定"></div>
+      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定" onchange="sxEqReset()"></div>
+      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材不一樣？調整器材 ›</button><div id="sxEqBox"></div></div>
       <div class="form-group"><label>哪幾節</label>${ps.map((p,i)=>`<label class="sx-ck"><input type="checkbox" data-i="${i}" checked> ${escH(p.date)} ${escH(p.period)} ${escH(p.venue||'')}${many?` <b>${escH(p.b.grade||'')}</b>`:''}</label>`).join('')}</div>
       <div class="form-group"><label>填的人</label><input id="sx-who" maxlength="30" value="${escH(b.role==='老師'?b.borrower_name||'':sxNameGuess())}"></div>
     </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:`sxFillSave(${ja(bid)},${ja(a)},${ja(e)})`}]);
@@ -7545,16 +7579,19 @@ async function sxFillSave(bid,a,e){
   if(!who){showToast('請填你的名字','error');return;}
   const sel=[...document.querySelectorAll('.sx-form .sx-ck input:checked')].map(x=>ps[+x.dataset.i]).filter(Boolean);
   if(!sel.length){showToast('至少勾一節','error');return;}
-  const rows=sel.map(p=>({run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(p.b)||null,course_type:sxBkType(p.b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(p.b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:p.b.id}));
+  const items=sxEqCollect(pick);
+  const rows=sel.map(p=>({...(items?{equipment_items:items}:{}),run_date:p.date,period:p.period,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,subject:(pick.tpl&&sxTplSubj(pick.tpl))||sxBkSubj(p.b)||null,course_type:sxBkType(p.b)||(pick.tpl&&sxTplType(pick.tpl))||null,grade:(p.b.grade||'').slice(0,20)||null,teacher:who.slice(0,30),venue:(p.venue||'').slice(0,30)||null,booking_id:p.b.id}));
   await sxSaveRuns(rows,who);
 }
 function sxLog(tplId){
   const t=tplId?sxTpl(tplId):null,types=sxTypes.length?sxTypes:['一般','探究','菁英','選修','競賽培訓','科學研究'];
   const ts=t&&sxTplSubj(t),tt=t&&sxTplType(t);
+  sxEq=null;
   showModal('登記實驗',`
     <div class="sx-form">
       <div class="hint">不借教室的也可以登記（例如帶到班上做的示範實驗）。</div>
-      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）*</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" value="${t?escH(sxTplLabel(t)):''}" placeholder="例如：酸鹼滴定"></div>
+      <div class="form-group"><label>實驗（打字找；清單裡沒有就直接寫名稱）*</label><input id="sx-exp" list="sxTplList" maxlength="60" autocomplete="off" value="${t?escH(sxTplLabel(t)):''}" placeholder="例如：酸鹼滴定" onchange="sxEqReset()"></div>
+      <div class="form-group"><button type="button" class="sx-eqtog" id="sxEqTog" onclick="sxEqOpen()">這次器材不一樣？調整器材 ›</button><div id="sxEqBox"></div></div>
       <div class="sx-2"><div class="form-group"><label>日期 *</label><input type="date" id="sx-date" value="${escH(todayStr())}"></div>
       <div class="form-group"><label>節次</label><select id="sx-period"><option value="">（不填）</option>${PERIODS.map(p=>`<option>${escH(p)}</option>`).join('')}</select></div></div>
       <div class="sx-2"><div class="form-group"><label>科目 *</label><select id="sx-subj">${SX_SUBJ.map(s=>`<option${s===ts?' selected':''}>${s}</option>`).join('')}</select></div>
@@ -7571,9 +7608,56 @@ async function sxLogSave(){
   if(!date){showToast('請選日期','error');return;}
   if(!who){showToast('請填老師','error');return;}
   const subj=document.getElementById('sx-subj').value;
-  await sxSaveRuns([{run_date:date,period:document.getElementById('sx-period').value||null,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,
+  const items=sxEqCollect(pick);
+  await sxSaveRuns([{...(items?{equipment_items:items}:{}),run_date:date,period:document.getElementById('sx-period').value||null,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title,
     subject:SX_SUBJ.includes(subj)?subj:null,course_type:document.getElementById('sx-type').value||null,grade:document.getElementById('sx-grade').value.trim().slice(0,20)||null,
     teacher:who.slice(0,30),venue:document.getElementById('sx-venue').value.trim().slice(0,30)||null,booking_id:null}],who);
+}
+// ── 這次器材不一樣：從選的那一版課綱帶入，可以 ＋／−、刪掉、加別的；只存進這幾節的紀錄，不改課綱（2026-10-19）──
+let sxEq=null; // {tid, items:[{name,spec,unit,quantity,room}], base:原本清單的字串}
+const SX_EQ_MAX=60;
+function sxEqClean(it){return {name:String(it.name||'').trim().slice(0,60),spec:String(it.spec||'').trim().slice(0,40),unit:String(it.unit||'個').trim().slice(0,6)||'個',quantity:Math.max(0,Math.min(999,parseInt(it.quantity)||0)),room:String(it.room||'').slice(0,30)};}
+function sxEqKey(list){return JSON.stringify((list||[]).map(sxEqClean).filter(x=>x.name&&x.quantity>0));}
+function sxEqOpen(){
+  const pick=sxPickTpl(document.getElementById('sx-exp')?.value);
+  if(!pick.tpl){showToast('先從清單選實驗，才帶得出器材','error');return;}
+  if(!sxEq||sxEq.tid!==pick.tpl.id){const base=(Array.isArray(pick.tpl.equipment_items)?pick.tpl.equipment_items:[]).map(sxEqClean).filter(x=>x.name);sxEq={tid:pick.tpl.id,items:base.map(x=>({...x})),base:sxEqKey(base),q:''};}
+  sxEqRender();
+}
+function sxEqReset(){if(sxEq){sxEq=null;const b=document.getElementById('sxEqBox');if(b)b.innerHTML='';const t=document.getElementById('sxEqTog');if(t)t.style.display='';}}
+function sxEqRender(){
+  const box=document.getElementById('sxEqBox'),tog=document.getElementById('sxEqTog');if(!box||!sxEq)return;
+  if(tog)tog.style.display='none';
+  const changed=sxEqKey(sxEq.items)!==sxEq.base;
+  box.innerHTML=`<div class="sx-eqbox"><div class="hint" style="margin:0 0 4px">只改這幾節的紀錄，不會動到課綱實驗${changed?'・<b style="color:#8a5a00">已調整</b>':''}</div>
+    ${sxEq.items.map((it,i)=>`<div class="sx-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="sxEqQty(${i},-1)" aria-label="減少">−</button><b>${it.quantity}</b><button type="button" onclick="sxEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="sxEqDel(${i})" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+    ${sxEq.items.length<SX_EQ_MAX?`<input type="search" id="sxEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(sxEq.q||'')}" oninput="sxEqSearch(this.value)" style="margin-top:6px"><div id="sxEqHits"></div>`:''}
+    ${changed?`<button type="button" class="sx-eqtog" onclick="sxEqUndo()">還原成課綱的清單</button>`:''}</div>`;
+}
+function sxEqQty(i,d){const it=sxEq&&sxEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)sxEq.items.splice(i,1);sxEqRender();}
+function sxEqDel(i){if(!sxEq)return;sxEq.items.splice(i,1);sxEqRender();}
+function sxEqUndo(){if(!sxEq)return;sxEq.items=JSON.parse(sxEq.base);sxEqRender();}
+function sxEqSearch(q){
+  if(!sxEq)return;sxEq.q=q;const box=document.getElementById('sxEqHits');if(!box)return;
+  const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
+  window._sxEqHits=(allEquipment||[]).filter(e=>`${e.name||''} ${e.spec||''}`.toLowerCase().includes(k)).slice(0,6);
+  box.innerHTML=window._sxEqHits.map((e,i)=>`<button type="button" class="cb-hit" onclick="sxEqAdd(${i})"><span><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}</small></span></button>`).join('')+
+    `<button type="button" class="cb-hit" onclick="sxEqAdd(-1)"><span>找不到？直接加「${escH(String(q).trim().slice(0,60))}」</span></button>`;
+}
+function sxEqAdd(i){
+  if(!sxEq||sxEq.items.length>=SX_EQ_MAX)return;
+  const e=i>=0?(window._sxEqHits||[])[i]:null;
+  const it=e?sxEqClean({name:e.name,spec:e.spec,unit:e.unit,quantity:1,room:e.room}):sxEqClean({name:sxEq.q,quantity:1});
+  if(!it.name)return;
+  const same=sxEq.items.find(x=>x.name===it.name&&x.spec===it.spec);
+  if(same)same.quantity=Math.min(999,same.quantity+1);else sxEq.items.push(it);
+  sxEq.q='';sxEqRender();setTimeout(()=>document.getElementById('sxEqQ')?.focus(),0);
+}
+// 存檔用：有調整而且還是同一個實驗才回傳清單，沒調整回傳 null（照課綱）
+function sxEqCollect(pick){
+  if(!sxEq||!pick||!pick.tpl||sxEq.tid!==pick.tpl.id)return null;
+  const list=sxEq.items.map(sxEqClean).filter(x=>x.name&&x.quantity>0).slice(0,SX_EQ_MAX);
+  return JSON.stringify(list)===sxEq.base?null:list;
 }
 async function sxSaveRuns(rows,who){
   const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
