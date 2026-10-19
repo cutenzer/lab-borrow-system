@@ -1005,11 +1005,6 @@
   /* 右窗格：按鈕列黏在窗格底部，捲到哪都按得到；「更多」選單改往上開，才不會被窗格底邊切掉 */
   .rec-pane .record-actions{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:12px -16px -14px;padding:10px 16px;border-top:1px solid var(--border);border-radius:0 0 8px 8px}
   .rec-pane .record-actions .act-pop{top:auto;bottom:calc(100% + 4px)}
-  /* 總覽：先看「今天要處理」，統計數字移到下面 */
-  #panel-overview.active{display:flex;flex-direction:column}
-  #panel-overview>.ov-head{order:0}
-  #panel-overview>.ov-grid{order:1}
-  #panel-overview>.stats-grid{order:2;margin-top:16px}
 }
 /* 高度 ≤820：側欄 15 項放不下 → 設定只留器材、藥品，其餘收進「其他設定」；目前所在頁照常顯示 */
 @media(min-width:1100px) and (max-height:820px){
@@ -1018,6 +1013,46 @@
   #tabMoreMenu:not(.side-open) button[data-tab]:not([data-tab=equipment]):not([data-tab=chemicals]):not(.active){display:none!important}
   .side-more-tog{display:flex!important;color:#a8a398!important;font-size:14px!important}
 }
+</style>
+<style id="overview-stats">
+/* 總覽統計：器材借用／場地／庫存分三排（2026-10-19） */
+.stat-groups{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.stat-grp{display:grid;grid-template-columns:72px minmax(0,1fr);align-items:stretch;gap:10px}
+.stat-grp-h{display:flex;align-items:center;font-size:12.5px;font-weight:700;color:var(--text2);letter-spacing:1px;border-right:2px solid var(--border);padding-right:8px}
+.stat-groups .stats-grid{margin:0!important;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.stat-groups .stat-card{padding:14px 16px}
+.stat-groups .stat-num{font-size:28px}
+.stat-sub{font-size:11.5px;color:var(--text2);margin-top:2px}
+@media(max-width:700px){
+  .stat-grp{grid-template-columns:1fr;gap:4px}
+  .stat-grp-h{border:0;padding:0;font-size:11.5px}
+  .stat-groups{gap:8px;margin-bottom:14px}
+  .stat-sub{display:none}
+}
+/* 實驗室使用卡 */
+#labUseCard .card-title{flex-wrap:wrap}
+.lu-seg{margin-left:auto;display:inline-flex;border:1.5px solid var(--border);border-radius:9px;overflow:hidden}
+.lu-seg button{border:0;background:var(--surface);font:inherit;font-size:12.5px;font-weight:600;padding:4px 14px;cursor:pointer;color:var(--text2)}
+.lu-seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.lu-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:14px}
+.lu-nav .btn{min-width:32px;padding:3px 8px;font-size:15px;line-height:1}
+.lu-tag{font-size:12.5px;color:var(--text2)}
+.lu-back{border:0;background:none;font:inherit;font-size:12.5px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer;margin-left:auto}
+.lu-pc{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);width:40px;text-align:right}
+.lu-sum{font-size:13px;color:var(--text2);margin-top:10px;padding-top:8px;border-top:1px dashed var(--border)}
+.lu-sum b{color:var(--text)}
+.lu-sem{display:flex;flex-direction:column}
+.lu-row{display:grid;grid-template-columns:84px minmax(0,1fr) 72px 48px 52px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--surface2);font-size:13.5px}
+.lu-row.lu-h{font-size:11.5px;color:var(--text2);padding:2px 0 4px}
+.lu-row .n{text-align:right;font-family:'DM Mono',monospace;font-size:12.5px;display:flex;flex-direction:column;align-items:flex-end;line-height:1.3}
+.lu-row .n small{font-size:10.5px;color:var(--text2)}
+.lu-strip{display:flex;gap:2px;min-width:0}
+.lu-cell{flex:1 1 0;min-width:4px;height:18px;padding:0;border:0;border-radius:3px;background:var(--surface2);cursor:pointer;position:relative;overflow:hidden}
+.lu-cell i{position:absolute;inset:0}
+.lu-cell.off{background:none;box-shadow:inset 0 0 0 1px var(--border)}
+.lu-cell.now{outline:2px solid var(--text);outline-offset:1px}
+.lu-cell:hover{outline:2px solid var(--accent);outline-offset:1px}
+@media(max-width:700px){.lu-row{grid-template-columns:64px minmax(0,1fr) 56px 44px;font-size:12.5px}.lu-row>:nth-child(4){display:none}}
 </style>
 <style id="venue-split">
 /* 場地：衝突紅框、跳過來時閃一下；電腦版待審核放右邊 */
@@ -1126,14 +1161,14 @@
 
 <div id="panel-overview" class="panel active">
   <div class="ov-head"><div><h2 class="ov-title" id="ovGreeting">總覽</h2><div class="ov-sub" id="ovDate"></div></div></div>
-  <div class="stats-grid" id="statsGrid"></div>
+  <div class="stat-groups" id="statsGrid"></div>
   <div class="ov-grid">
     <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card"><div class="card-title">📌 今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
     <div class="card"><div class="card-title">📦 借出中追蹤</div><div id="ovLoan"></div></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
-    <div class="card"><div class="card-title" id="ovWeekTitle">🏛️ 本週實驗室使用</div><div id="ovWeek"></div><div class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去</div></div>
+    <div class="card" id="labUseCard"><div class="card-title"><span id="ovWeekTitle">🏛️ 實驗室使用</span><span class="lu-seg" role="group" aria-label="切換統計範圍"><button type="button" data-m="week" onclick="setLabUse('week')">週</button><button type="button" data-m="sem" onclick="setLabUse('sem')">學期</button></span></div><div id="ovWeek"></div><div class="hint" id="luHint" style="font-size:12px;color:var(--text2);margin-top:8px"></div></div>
     <div class="card" id="backupCard"><div class="card-title">💾 資料備份</div>
       <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1904,7 +1939,7 @@ async function sb(method,table,opts={},_retried){
   return data||[];
 }
 
-let allRecords=[],allEquipment=[],allVenueBookings=[];
+let allRecords=[],allEquipment=[],allVenueBookings=[],chemTotals=null;
 let currentPurposeFilter={pending:'全部',approved:'全部',all:'全部'};
 let adminWeekOffset=0;
 
@@ -1915,7 +1950,8 @@ async function loadAll(){
       sb('GET','borrow_records',{order:'created_at.desc'}),
       sb('GET','equipment',{order:'room,name'}),
       sb('GET','venue_bookings',{order:'created_at.desc'}),
-      loadAdminPurposeList()
+      loadAdminPurposeList(),
+      sb('GET','chemicals',{select:'id,bottles_left,is_available'}).then(r=>{chemTotals=Array.isArray(r)?r:null;}).catch(()=>{chemTotals=null;})
     ]);
     allEquipment=Array.isArray(equip)?equip:[];
     allVenueBookings=(Array.isArray(venueRows)?venueRows:[]).map(b=>({...b,id:safeId(b.id)}));
@@ -1967,13 +2003,43 @@ function renderStats(){
   const lowStock=allEquipment.filter(e=>e.is_available!==false&&availOf(e)<=2).length;
   const notCounted=allEquipment.filter(e=>e.is_available!==false&&(!e.last_counted_at||new Date(e.last_counted_at).getTime()<cutoff)).length;
   const locMismatch=allEquipment.filter(e=>equipLocationMismatches(e).length>0).length;
-  document.getElementById('statsGrid').innerHTML=[
-    {num:pending,label:'器材待審核',short:'器材待審',color:'#92400e',tab:'pending'},{num:approved,label:'器材借用中',short:'借用中',color:'#065f46',tab:'approved'},
-    {num:overdue,label:'逾期未還',short:'逾期未還',color:'var(--danger)',tab:'return'},{num:venuePending,label:'場地待審核',short:'場地待審',color:'#1e40af',tab:'venue'},
-    {num:depPending,label:'待收保證金',short:'待收保證金',color:'#92400e',tab:'deposit'},{num:depReturn,label:'待退保證金',short:'待退保證金',color:'#1e40af',tab:'deposit'},
-    {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',short:'90天未盤點',color:'var(--text2)',tab:'equipment'},
-    {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',tab:'equipment'},
-  ].map(s=>`<div class="stat-card" onclick="showTab('${s.tab}')"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div></div>`).join('');
+  // 總數：停用的器材／已處理的藥品不算
+  const eqOn=allEquipment.filter(e=>e.is_available!==false);
+  const eqPieces=eqOn.reduce((a,e)=>a+(parseInt(e.total)||0),0);
+  const chOn=Array.isArray(chemTotals)?chemTotals.filter(c=>c.is_available!==false):null;
+  const chBottles=chOn?chOn.reduce((a,c)=>a+(parseInt(c.bottles_left)||0),0):null;
+  // 場地：本週已排、本學期已用（同「實驗室使用」卡的算法）
+  const wkMon=labUseBaseMonday(),wkFri=new Date(wkMon);wkFri.setDate(wkMon.getDate()+4);
+  const wkN=Object.values(labUseCount(fmtDate(wkMon),fmtDate(wkFri)).n).reduce((a,b)=>a+b,0);
+  labUseEnsureSem();
+  const sem=labUseSemester(),today=fmtDate(new Date());
+  const semUse=sem?labUseCount(sem.start,today<sem.end?today:sem.end).n:null;
+  const semN=semUse?LABS.reduce((a,[v])=>a+(semUse[v]||0),0):null;
+  let semSlots=0;if(sem){const upto=today<sem.end?today:sem.end;for(const d=new Date(sem.start+'T00:00:00');fmtDate(d)<=upto;d.setDate(d.getDate()+1)){const w=d.getDay();if(w>=1&&w<=5&&sem.isSchool(fmtDate(d)))semSlots+=8;}}
+  const semPc=sem&&semSlots?Math.round(semN/(semSlots*LABS.length)*100):null;
+  const top=semUse?LABS.map(([v])=>[v,semUse[v]||0]).sort((a,b)=>b[1]-a[1])[0]:null;
+  const fmt=n=>Number(n).toLocaleString();
+  const card=s=>`<div class="stat-card" onclick="${s.fn||`showTab('${s.tab}')`}"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div>${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}</div>`;
+  const group=(h,list)=>`<section class="stat-grp" aria-label="${h}"><div class="stat-grp-h">${h}</div><div class="stats-grid">${list.map(card).join('')}</div></section>`;
+  document.getElementById('statsGrid').innerHTML=
+    group('器材借用',[
+      {num:pending,label:'器材待審核',short:'器材待審',color:'#92400e',tab:'pending'},{num:approved,label:'器材借用中',short:'借用中',color:'#065f46',tab:'approved'},
+      {num:overdue,label:'逾期未還',short:'逾期未還',color:'var(--danger)',tab:'return'},
+      {num:depPending,label:'待收保證金',short:'待收保證金',color:'#92400e',tab:'deposit'},{num:depReturn,label:'待退保證金',short:'待退保證金',color:'#1e40af',tab:'deposit'},
+    ])+
+    group('場地',[
+      {num:venuePending,label:'場地待審核',short:'場地待審',color:'#1e40af',tab:'venue'},
+      {num:wkN,label:'本週已排（節）',short:'本週節數',color:'#34506b',fn:"setLabUse('week',0)"},
+      {num:semN===null?'─':fmt(semN),label:'本學期已用（節）',short:'學期節數',color:'#34506b',fn:"setLabUse('sem')",sub:sem?'':(window._luSemDone?'還沒有啟用中的學期':'讀取學期中…')},
+      {num:semPc===null?'─':semPc+'%',label:'本學期平均使用率',short:'學期使用率',color:'#34506b',fn:"setLabUse('sem')",sub:sem?`5 間實驗室・到今天`:''},
+      {num:top&&top[1]?escH(top[0].replace('實驗室','')):'─',label:'本學期用最多',short:'用最多',color:'#34506b',fn:"setLabUse('sem')",sub:top&&top[1]&&semSlots?`${top[1]} 節・${Math.round(top[1]/semSlots*100)}%`:''},
+    ])+
+    group('庫存',[
+      {num:fmt(eqPieces),label:'器材總數（件）',short:'器材件數',color:'#1f5b4c',tab:'equipment',sub:`共 ${fmt(eqOn.length)} 品項`},
+      {num:chBottles===null?'─':fmt(chBottles),label:'藥品總數（瓶）',short:'藥品瓶數',color:'#1f5b4c',tab:'chemicals',sub:chOn?`共 ${fmt(chOn.length)} 品項`:'讀取失敗'},
+      {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過90天未盤點',short:'90天未盤點',color:'var(--text2)',tab:'equipment'},
+      {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',tab:'equipment'},
+    ]);
   // 分頁紅點：待審核 / 尚未歸還(逾期) / 保證金(待收+待退) / 場地待審核
   setTabBadge('tb-pending',pending);
   setTabBadge('tb-return',overdue);
@@ -2017,17 +2083,99 @@ function renderOverview(){
   renderLoanTracker();
   todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
     :'<div class="empty" style="padding:24px 0"><div class="empty-icon">✅</div><p>今天沒有待處理的事項</p></div>';
-  // 本週各實驗室使用節數
-  // 週末就改看下週
-  const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7)+((now.getDay()===0||now.getDay()===6)?7:0));
-  const fri=new Date(mon);fri.setDate(mon.getDate()+4);
-  const ms=fmtDate(mon),fs=fmtDate(fri);
-  const LABS=[['化學實驗室','#1f5b4c'],['理化實驗室','#34506b'],['物理實驗室','#7a5a1f'],['生物實驗室','#3f6b2f'],['地科實驗室','#2f5f6b']];
-  const cnt={};
-  allVenueBookings.forEach(b=>(b.periods||[]).forEach(p=>{if(p.date>=ms&&p.date<=fs&&p.status!=='已拒絕')cnt[p.venue]=(cnt[p.venue]||0)+1;}));
-  const wt=document.getElementById('ovWeekTitle');if(wt)wt.textContent=((now.getDay()===0||now.getDay()===6)?'🏛️ 下週實驗室使用':'🏛️ 本週實驗室使用')+`（${mon.getMonth()+1}/${mon.getDate()}～${fri.getMonth()+1}/${fri.getDate()}）`;
-  const wk=document.getElementById('ovWeek');
-  if(wk)wk.innerHTML=LABS.map(([v,c])=>{const n=cnt[v]||0,pc=Math.min(100,Math.round(n/40*100));return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${n} 節</span></div>`;}).join('');
+  renderLabUse();
+}
+// ── 實驗室使用（2026-10-19）：可以前後翻週，也可以看整學期 ──
+// 算法：場地預約的每一節算 1 節（已拒絕不算，待審核也算進去）；同一筆預約、同一天、同一間 = 1 次
+const LABS=[['化學實驗室','#1f5b4c'],['理化實驗室','#34506b'],['物理實驗室','#7a5a1f'],['生物實驗室','#3f6b2f'],['地科實驗室','#2f5f6b']];
+const LAB_WEEK_SLOTS=40;   // 每週 40 節（週一～五，每天 8 節）
+let labUse={mode:'week',off:0};
+function labUseBaseMonday(){const now=new Date(),m=getMondayOf(now);if(now.getDay()===0||now.getDay()===6)m.setDate(m.getDate()+7);return m;} // 週末就看下週
+function labUseCount(from,to){
+  const n={},times={};
+  allVenueBookings.forEach(b=>(b.periods||[]).forEach(p=>{
+    if(!p||p.status==='已拒絕'||!p.date||p.date<from||p.date>to)return;
+    n[p.venue]=(n[p.venue]||0)+1;
+    (times[p.venue]=times[p.venue]||new Set()).add(b.id+'|'+p.date);
+  }));
+  const t={};Object.keys(times).forEach(k=>t[k]=times[k].size);
+  return {n,t};
+}
+// 啟用中學期：上課的日期範圍（寒假、暑假不算上課）
+function labUseSemester(){
+  const ps=(activeSemester&&Array.isArray(activeSemester.periods))?activeSemester.periods.filter(p=>p&&p.start_date&&p.end_date):[];
+  if(!ps.length)return null;
+  const school=ps.filter(p=>p.type!=='寒假'&&p.type!=='暑假');
+  const st=ps.map(p=>p.start_date).sort(),en=ps.map(p=>p.end_date).sort();
+  const isSchool=ds=>school.some(p=>ds>=p.start_date&&ds<=p.end_date);
+  return {name:activeSemester.name||'本學期',start:st[0],end:en[en.length-1],isSchool};
+}
+// 總覽一打開就需要學期資料：還沒讀過就讀一次，讀完重畫統計和這張卡
+function labUseEnsureSem(){
+  if(activeSemester||window._luSemTried)return;
+  window._luSemTried=true;
+  Promise.resolve(loadActiveSemester()).catch(()=>{}).finally(()=>{window._luSemDone=true;try{renderStats();renderLabUse();}catch(_){}});
+}
+function setLabUse(mode,off){
+  labUse.mode=mode;if(off!==undefined)labUse.off=off;
+  if(document.querySelector('.panel.active')?.id!=='panel-overview')showTab('overview');
+  renderLabUse();
+  if(mode==='sem'||off!==undefined)document.getElementById('labUseCard')?.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function labUseWeek(delta){labUse.off+=delta;renderLabUse();}
+function renderLabUse(){
+  const box=document.getElementById('ovWeek'),hint=document.getElementById('luHint'),tt=document.getElementById('ovWeekTitle');if(!box)return;
+  document.querySelectorAll('#labUseCard .lu-seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===labUse.mode));
+  const md=d=>`${d.getMonth()+1}/${d.getDate()}`;
+  if(labUse.mode==='week'){
+    const mon=labUseBaseMonday();mon.setDate(mon.getDate()+labUse.off*7);
+    const fri=new Date(mon);fri.setDate(mon.getDate()+4);
+    const {n}=labUseCount(fmtDate(mon),fmtDate(fri));
+    const wi=getWeekInfo(mon,activeSemester)||getWeekInfo(fri,activeSemester);
+    const tag=labUse.off===0?((new Date().getDay()%6===0)?'下週':'本週'):wi?`第 ${wi.week} 週`:'';
+    if(tt)tt.textContent='🏛️ 實驗室使用';
+    const total=LABS.reduce((a,[v])=>a+(n[v]||0),0);
+    box.innerHTML=`<div class="lu-nav"><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(-1)" aria-label="上一週">‹</button><b>${md(mon)}～${md(fri)}</b><span class="lu-tag">${escH(tag)}${wi&&labUse.off===0?`・第 ${wi.week} 週`:''}${wi&&wi.type&&wi.type!=='開學週期'?`・${escH(wi.label||wi.type)}`:''}</span><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(1)" aria-label="下一週">›</button>${labUse.off?'<button type="button" class="lu-back" onclick="labUse.off=0;renderLabUse()">回本週</button>':''}</div>`+
+      LABS.map(([v,c])=>{const k=n[v]||0,pc=Math.min(100,Math.round(k/LAB_WEEK_SLOTS*100));return `<div class="ov-bar"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${pc}%</span></div>`;}).join('')+
+      `<div class="lu-sum">這週合計 <b>${total}</b> 節・平均使用率 <b>${Math.round(total/(LAB_WEEK_SLOTS*LABS.length)*100)}%</b></div>`;
+    if(hint)hint.textContent='以每週 40 節（週一～五，每天 8 節）計算；早休、午休、晚上也會算進去；已拒絕的不算';
+    return;
+  }
+  // 學期
+  if(tt)tt.textContent='🏛️ 實驗室使用';
+  const sem=labUseSemester();
+  if(!sem){
+    box.innerHTML=(window._luSemDone?'<div class="empty" style="padding:18px 0"><p>還沒有「啟用中」的學期，到「學期設定」設好就能看整學期統計</p></div>':'<div class="loading"><div class="spinner"></div>讀取學期中…</div>');
+    if(hint)hint.textContent='';
+    labUseEnsureSem();
+    return;
+  }
+  const today=fmtDate(new Date()),upto=today<sem.end?today:sem.end;
+  // 每一週一格（從學期第一天那週到最後一天那週）
+  const weeks=[];const first=getMondayOf(new Date(sem.start+'T00:00:00')),last=new Date(sem.end+'T00:00:00');
+  for(const m=new Date(first);m<=last;m.setDate(m.getDate()+7)){
+    const f=new Date(m);f.setDate(m.getDate()+4);
+    let schoolDays=0;for(let i=0;i<5;i++){const d=new Date(m);d.setDate(m.getDate()+i);const ds=fmtDate(d);if(ds>=sem.start&&ds<=sem.end&&sem.isSchool(ds))schoolDays++;}
+    const wi=getWeekInfo(m,activeSemester)||getWeekInfo(f,activeSemester);
+    weeks.push({mon:new Date(m),ms:fmtDate(m),fs:fmtDate(f),schoolDays,wk:wi?wi.week:null,n:labUseCount(fmtDate(m),fmtDate(f)).n});
+  }
+  let daysSoFar=0;for(const d=new Date(sem.start+'T00:00:00');fmtDate(d)<=upto;d.setDate(d.getDate()+1)){const w=d.getDay();if(w>=1&&w<=5&&sem.isSchool(fmtDate(d)))daysSoFar++;}
+  const slotsSoFar=daysSoFar*8;
+  const used=labUseCount(sem.start,upto),planned=labUseCount(sem.start,sem.end);
+  const base=labUseBaseMonday();
+  const cellsOf=(v,c)=>weeks.map(w=>{
+    const k=w.n[v]||0,off=Math.round((w.mon-base)/(7*864e5));
+    const op=k?Math.min(1,.18+k/20*.82).toFixed(2):0;
+    const cls=w.schoolDays?'':' off',now=today>=w.ms&&today<=w.fs?' now':'';
+    return `<button type="button" class="lu-cell${cls}${now}" title="${w.wk?`第 ${w.wk} 週 `:''}${w.ms.slice(5).replace('-','/')}：${k} 節${w.schoolDays?'':'（放假）'}" onclick="setLabUse('week',${off})"><i style="background:${c};opacity:${op}"></i></button>`;
+  }).join('');
+  const totU=LABS.reduce((a,[v])=>a+(used.n[v]||0),0),totP=LABS.reduce((a,[v])=>a+(planned.n[v]||0),0);
+  box.innerHTML=`<div class="lu-nav"><b>${escH(sem.name)}</b><span class="lu-tag">${sem.start.slice(5).replace('-','/')}～${sem.end.slice(5).replace('-','/')}・到今天上課 ${daysSoFar} 天</span></div>
+    <div class="lu-sem"><div class="lu-row lu-h"><span>實驗室</span><span>每週使用（點一格看那一週）</span><span class="n">已用</span><span class="n">次數</span><span class="n">使用率</span></div>`+
+    LABS.map(([v,c])=>{const u=used.n[v]||0,t=used.t[v]||0,pl=planned.n[v]||0,pc=slotsSoFar?Math.round(u/slotsSoFar*100):0;
+      return `<div class="lu-row"><span class="lu-name">${v}</span><span class="lu-strip">${cellsOf(v,c)}</span><span class="n"><span><b>${u}</b> 節</span>${pl>u?`<small>另排 ${pl-u}</small>`:''}</span><span class="n">${t} 次</span><span class="n"><b>${pc}%</b></span></div>`;}).join('')+
+    `</div><div class="lu-sum">全部合計已用 <b>${totU}</b> 節${totP>totU?`（之後還排了 ${totP-totU} 節）`:''}・平均使用率 <b>${slotsSoFar?Math.round(totU/(slotsSoFar*LABS.length)*100):0}%</b></div>`;
+  if(hint)hint.textContent='使用率＝已用節數 ÷（到今天的上課天數 × 8 節）；寒假、暑假不算上課天；同一筆預約同一天算 1 次；顏色越深代表那週用越多節，灰框是放假週';
 }
 // 保證金：上方統計
 function renderDepositSummary(){
@@ -2043,7 +2191,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19h';
+const ADMIN_VERSION='2026-10-19i';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
