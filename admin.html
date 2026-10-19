@@ -2002,7 +2002,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19e';
+const ADMIN_VERSION='2026-10-19f';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9264,6 +9264,29 @@ async function doDeleteHighlight(id){
 .sr-jump{border:0;background:none;font:inherit;font-size:13px;color:var(--text2);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .sr-add{margin-left:auto}
 .sr-sum{font-size:12.5px;color:var(--text2);margin-bottom:10px}
+.srg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:10px;margin-top:8px}
+.srg{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--c);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.srg.blank{border-top-style:dashed;background:transparent}
+.srg-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px}
+.srg-h b{color:var(--c);font-size:14px}
+.srg-h em{font-style:normal;font-size:11.5px;font-weight:700;color:#fff;background:var(--c);border-radius:5px;padding:1px 7px}
+.srg-h small{margin-left:auto;color:var(--text2);font-variant-numeric:tabular-nums}
+.srg-t{font-size:16px;font-weight:700;line-height:1.35}
+.srg-none{color:var(--text2);font-weight:500}
+.srg-warn{display:block;font-size:12px;font-weight:500;color:#8a5a00}
+.srg-cls{display:flex;flex-wrap:wrap;gap:4px}
+.srg-cls i{font-style:normal;font-size:13px;font-weight:700;min-width:26px;height:26px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;border:1.5px solid var(--c);color:var(--c)}
+.srg-cls i.done{background:var(--c);color:#fff}
+.srg-cls i.todo{border-style:dashed;color:var(--text2);border-color:var(--border)}
+.srg-cls i.part{background:linear-gradient(135deg,var(--c) 50%,transparent 50%);color:var(--text)}
+.srg-m{font-size:12.5px;color:var(--text2)}
+.srg-m b{color:#8a5a00}
+.srg-a{display:flex;gap:6px;align-items:center;margin-top:2px}
+.srg-a .sr-del{margin-left:auto}
+.srg-detail .sr-row{grid-template-columns:110px minmax(0,1fr) auto}
+.srg-detail .sr-row .sr-tags{grid-column:2}
+.srg-detail .sr-row .sr-act{grid-column:1/-1;justify-content:flex-start}
+.srg-detail .sr-pick,.srg-detail .sr-pick-sp{display:none}
 .sr-wk{margin-bottom:6px;scroll-margin-top:16px}
 .sr-wk h4{display:flex;align-items:baseline;gap:8px;margin:14px 0 4px;font-size:15px;padding-bottom:4px;border-bottom:2px solid var(--text)}
 .sr-wk h4 span{font-size:12px;color:var(--text2);font-weight:400}
@@ -9500,7 +9523,7 @@ async function loadSemRuns(force){
   }catch(e){box.innerHTML=`<div class="empty"><p>載入失敗</p><p style="font-size:12px;color:var(--danger)">${escH(e.message)}</p></div>`;}
 }
 // 這學期每一週的項目：實驗紀錄一筆一列；預約裡還沒填實驗的節次，合成一列
-function srWeekRows(w){
+function srWeekRows(w,raw){
   const a=fmtDate(w.date),e=(()=>{const x=new Date(w.date);x.setDate(x.getDate()+6);return fmtDate(x);})();
   const rows=[],filled=new Set();
   srRuns.filter(r=>r.run_date>=a&&r.run_date<=e).forEach(r=>{
@@ -9520,7 +9543,7 @@ function srWeekRows(w){
   const lc=new Map();rows.forEach(x=>{if(x.kind==='run'){const k=lk(x.r);lc.set(k,(lc.get(k)||0)+1);}});
   rows.forEach(x=>{if(x.kind==='run')x.multi=lc.get(lk(x.r))||1;});
   const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;};
-  return rows.filter(x=>(srSubj==='全部'||x.subj===srSubj)&&(srMode==='all'||(srMode==='empty'?x.kind==='bk':x.kind==='run')))
+  return rows.filter(x=>(srSubj==='全部'||x.subj===srSubj)&&(raw||srMode==='all'||(srMode==='empty'?x.kind==='bk':x.kind==='run')))
     .sort((x,y)=>String(x.date).localeCompare(String(y.date))||ord(x.subj)-ord(y.subj));
 }
 function srMD(d){const x=typeof d==='string'?new Date(d+'T00:00:00'):d;return `${x.getMonth()+1}/${x.getDate()}`;}
@@ -9557,20 +9580,28 @@ function srRender(){
   const cal=semCalendar(srTerm,activeSemester),weeks=cal.weeks;
   const today=new Date();today.setHours(0,0,0,0);
   const nowIdx=weeks.findIndex(w=>{const e=new Date(w.date);e.setDate(e.getDate()+7);return today>=w.date&&today<e;});
-  let total=0,empty=0;
+  let total=0,empty=0;srGroupArr=[];
   const body=weeks.map((w,i)=>{
+    const head=`<h4>W${w.week}<span>${srMD(w.date)} 起</span>${i===nowIdx?'<em>本週</em>':''}</h4>`;
+    if(srView==='card'){
+      const gs=srWeekGroups(w);gs.forEach(g=>{total+=g.runs.length;empty+=g.todo.length;});
+      const shown=gs.filter(g=>srMode==='all'||(srMode==='empty'?g.todo.length:g.runs.length));
+      if(!shown.length)return '';
+      return `<section class="sr-wk${i===nowIdx?' now':''}" id="srw-${w.week}">${head}<div class="srg-grid">${shown.map(srGroupHtml).join('')}</div></section>`;
+    }
     const rows=srWeekRows(w);total+=rows.filter(r=>r.kind==='run').length;empty+=rows.filter(r=>r.kind==='bk').length;
     if(!rows.length)return '';
-    return `<section class="sr-wk${i===nowIdx?' now':''}" id="srw-${w.week}"><h4>W${w.week}<span>${srMD(w.date)} 起</span>${i===nowIdx?'<em>本週</em>':''}</h4>${rows.map(srRowHtml).join('')}</section>`;
+    return `<section class="sr-wk${i===nowIdx?' now':''}" id="srw-${w.week}">${head}${rows.map(srRowHtml).join('')}</section>`;
   }).join('');
   box.innerHTML=`<div class="sr-bar">
       <div class="sr-seg">${[1,2].map(n=>`<button type="button" class="${srTerm===n?'on':''}" onclick="srTerm=${n};srRender()">${n===1?'上學期':'下學期'}</button>`).join('')}</div>
+      <div class="sr-seg" title="卡片：同一週、同年段、同科目合成一張；清單：一節一列">${[['card','卡片'],['list','清單']].map(([k,l])=>`<button type="button" class="${srView===k?'on':''}" onclick="srView='${k}';srSelClear();srRender()">${l}</button>`).join('')}</div>
       <select onchange="srSubj=this.value;srRender()" aria-label="科目">${['全部',...SR_SUBJ].map(s=>`<option value="${s}"${s===srSubj?' selected':''}>${s==='全部'?'全部科目':s}</option>`).join('')}</select>
       <div class="sr-seg">${[['all','全部'],['empty','沒填實驗'],['run','已填']].map(([k,l])=>`<button type="button" class="${srMode===k?'on':''}" onclick="srMode='${k}';srRender()">${l}</button>`).join('')}</div>
       ${nowIdx>=0?`<button type="button" class="sr-jump" onclick="document.getElementById('srw-${weeks[nowIdx].week}')?.scrollIntoView({behavior:'smooth',block:'start'})">跳到本週</button>`:''}
       <button type="button" class="btn btn-primary btn-sm sr-add" onclick="srEdit()">＋ 新增實驗紀錄</button>
     </div>
-    <div class="sr-sum">已填 ${total} 筆・預約還沒填實驗 ${empty} 筆${cal.real?'':'・學期週次是估計的（學期設定還沒設這學期）'}</div>
+    <div class="sr-sum">${srView==='card'?'同一週、同年段、同科目合成一張卡；同一班這週第二次上課，算第二個實驗・':''}已填 ${total} 筆・預約還沒填實驗 ${empty} 筆${cal.real?'':'・學期週次是估計的（學期設定還沒設這學期）'}</div>
     ${body||'<div class="empty"><p>這學期還沒有紀錄</p></div>'}`;
   srBar();
 }
@@ -9579,6 +9610,105 @@ async function srSetShow(id,v){
   try{await sb('PATCH','venue_bookings',{filter:'id=eq.'+encodeURIComponent(id),body:{semester_show:val},prefer:'return=minimal'});const b=srBks.find(x=>x.id===id);if(b)b.semester_show=val;showToast('已更新','success');srRender();}
   catch(e){showToast('更新失敗：'+e.message,'error');}
 }
+// ── 卡片檢視（2026-10-19）：一週裡，同年段（國一、高二…）＋同科目＝同一個實驗 ──
+// 規則：依日期、節次排好；同一班這週第一次出現＝第 1 個實驗，同一班第二次出現（另一天）＝第 2 個實驗。
+// 例如 高三丙丁戊己 高三丙丁戊己 → 前四班是第 1 個、後四班是第 2 個。同一班同一天的連堂算同一次。
+let srView='card',srGroupArr=[];
+const SR_CLS='甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥忠孝仁愛信義和平真善美';
+function srClsOf(g){
+  g=String(g||'').trim();const lv=srLevel(g);
+  const rest=lv?g.replace(/^(國|高)\s*[一二三123]/,''):g;
+  const cs=[...new Set([...rest].filter(c=>SR_CLS.includes(c)))];
+  return {lv,cls:cs.length?cs:[rest||g||'？']};
+}
+function srWeekGroups(w){
+  const items=[];
+  srWeekRows(w,true).forEach(x=>{
+    if(x.kind==='run')items.push({run:x.r,row:x,date:x.r.run_date,period:x.r.period||'',grade:x.r.grade||(x.b&&x.b.grade)||'',subj:x.subj,type:x.type});
+    else if(x.shown!==false)x.ps.forEach(p=>items.push({bk:x.b,p,row:x,date:p.date,period:p.period||'',grade:x.b.grade||'',subj:x.subj,type:x.type}));
+  });
+  const pi=v=>{const i=PERIODS.indexOf(v);return i<0?99:i;};
+  items.sort((a,b)=>String(a.date).localeCompare(String(b.date))||pi(a.period)-pi(b.period));
+  const seen=new Map(),groups=new Map();
+  items.forEach(it=>{
+    const c=srClsOf(it.grade),base=(c.lv||it.grade||'其他')+'|'+(it.subj||'');
+    let round=1;
+    c.cls.forEach(ch=>{const k=base+'|'+ch,ds=seen.get(k)||[];let i=ds.indexOf(it.date);if(i<0){ds.push(it.date);i=ds.length-1;seen.set(k,ds);}round=Math.max(round,i+1);});
+    it.cls=c.cls;
+    const gk=base+'|'+round;
+    const g=groups.get(gk)||{lv:c.lv||it.grade||'',subj:it.subj||'',round,items:[],runs:[],todo:[]};
+    g.items.push(it);(it.run?g.runs:g.todo).push(it);groups.set(gk,g);
+  });
+  const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;},lvo=l=>{const i=['國一','國二','國三','高一','高二','高三'].indexOf(l);return i<0?9:i;};
+  return [...groups.values()].sort((a,b)=>ord(a.subj)-ord(b.subj)||lvo(a.lv)-lvo(b.lv)||a.round-b.round);
+}
+function srGroupHtml(g){
+  const gi=srGroupArr.push(g)-1,col=SR_COL[g.subj]||'#6b7280';
+  const titles=new Map();g.runs.forEach(it=>{const t=it.run.template_id?srTpl(it.run.template_id):null,n=t?(t.name||'').trim():(it.run.title||'');if(n)titles.set(n,(titles.get(n)||0)+1);});
+  const tl=[...titles.keys()];
+  // 每一班的狀態：都填了／還沒填／一部分
+  const cs=new Map();g.items.forEach(it=>it.cls.forEach(ch=>{const s=cs.get(ch)||{run:0,todo:0};it.run?s.run++:s.todo++;cs.set(ch,s);}));
+  const chips=[...cs].sort((a,b)=>{const x=SR_CLS.indexOf(a[0]),y=SR_CLS.indexOf(b[0]);return (x<0?99:x)-(y<0?99:y);})
+    .map(([ch,s])=>`<i class="${s.todo?(s.run?'part':'todo'):'done'}" title="${s.todo?`還沒填 ${s.todo} 節`:'已填'}">${escH(ch)}</i>`).join('');
+  const ds=[...new Set(g.items.map(it=>it.date))].sort(),when=ds.length>1?`${srMD(ds[0])}～${srMD(ds[ds.length-1])}`:srMD(ds[0]);
+  const whos=[...new Set(g.items.map(it=>it.run?it.run.teacher:it.bk.borrower_name).filter(Boolean))];
+  const types=[...new Set(g.items.map(it=>it.type).filter(t=>t&&t!=='一般'))];
+  const adj=g.runs.filter(it=>Array.isArray(it.run.equipment_items)||it.run.ref_note!=null).length;
+  const n=g.items.length;
+  return `<div class="srg${g.todo.length&&!g.runs.length?' blank':''}" style="--c:${col}">
+    <div class="srg-h"><b>${escH(g.lv)}${escH(g.subj)}</b>${types.map(t=>`<span class="sr-tag">${escH(t)}</span>`).join('')}${g.round>1?`<em>第 ${g.round} 個實驗</em>`:''}<small>${escH(when)}</small></div>
+    <div class="srg-t">${tl.length?escH(tl.join('／')):'<span class="srg-none">還沒填實驗</span>'}${tl.length>1?'<span class="srg-warn">這組有不同實驗，請確認</span>':''}</div>
+    <div class="srg-cls">${chips}</div>
+    <div class="srg-m">${escH(whos.slice(0,3).join('、')+(whos.length>3?' 等':''))}${whos.length?'・':''}${n} 節${g.todo.length?`・<b>${g.todo.length} 節還沒填</b>`:''}${adj?`・器材／備註有調整 ${adj} 筆`:''}</div>
+    <div class="srg-a"><button type="button" class="btn btn-${g.todo.length?'primary':'secondary'} btn-sm" onclick="srGFill(${gi})">${!g.runs.length?'填實驗':g.todo.length?`補填 ${g.todo.length} 節`:'換實驗'}</button><button type="button" class="btn btn-secondary btn-sm" onclick="srGOpen(${gi})">明細</button>${g.runs.length?`<button type="button" class="sr-del" onclick="srGDel(${gi})">刪除</button>`:''}</div>
+  </div>`;
+}
+// 明細：這張卡裡每一節（可以個別修改、刪除、升級版本）
+function srGOpen(gi){
+  const g=srGroupArr[gi];if(!g)return;
+  const rows=[...new Set(g.items.map(it=>it.row))];
+  showModal(`${g.lv}${g.subj}${g.round>1?`・第 ${g.round} 個實驗`:''}`,`<div class="srg-detail">${rows.map(srRowHtml).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+}
+// 一起填／換實驗：沒填的節次新增紀錄；已填的可以一起改成這個實驗
+function srGFill(gi){
+  const g=srGroupArr[gi];if(!g)return;window._srG=g;
+  const ids=[...new Set(g.runs.map(it=>it.run.template_id).filter(Boolean))],t=ids.length===1?srTpl(ids[0]):null;
+  const cur=[...new Set(g.runs.map(it=>{const x=it.run.template_id?srTpl(it.run.template_id):null;return x?(x.name||'').trim():(it.run.title||'');}).filter(Boolean))].join('／');
+  const lab=it=>`${srMD(it.date)}（${srWD(it.date)}）${escH(it.period)}　<b>${escH(it.grade||'')}</b>`;
+  showModal(`${g.lv}${g.subj}${g.round>1?`・第 ${g.round} 個實驗`:''}：${g.runs.length?'換實驗／補填':'填實驗'}`,`<div class="sr-form">
+    <div class="form-group"><label>實驗（打字找課綱實驗；找不到就直接打名稱）</label><input id="srg-tpl" list="srTplList" maxlength="60" autocomplete="off" value="${escH(t?srTplLabel(t):'')}" placeholder="例如：酵素的作用">
+    <datalist id="srTplList">${allTemplates.filter(x=>x.name).map(x=>`<option value="${escH(srTplLabel(x))}">`).join('')}</datalist></div>
+    ${g.todo.length?`<div class="form-group"><label>還沒填的 ${g.todo.length} 節</label><div class="sr-ps">${g.todo.map((it,i)=>`<label><input type="checkbox" data-t="${i}" checked> ${lab(it)}</label>`).join('')}</div></div>`:''}
+    ${g.runs.length?`<div class="form-group"><label class="sr-ck"><input type="checkbox" id="srg-re"${g.todo.length?'':' checked'}> 已填的 ${g.runs.length} 節也改成這個實驗（現在是：${escH(cur||'—')}）</label><div class="hint" style="margin-top:4px">改實驗後，那幾節「這次的器材／備註調整」會清掉，改回照課綱。</div></div>`:''}
+  </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'srGFillSave()'}]);
+}
+async function srGFillSave(){
+  const g=window._srG;if(!g)return;
+  const tv=(document.getElementById('srg-tpl')?.value||'').trim();
+  if(!tv){showToast('請填實驗','error');return;}
+  const t=allTemplates.find(x=>srTplLabel(x)===tv)||(()=>{const m=allTemplates.filter(x=>(x.name||'').trim()===tv);return m.length===1?m[0]:null;})();
+  const exp={template_id:t?String(t.id):null,title:t?null:tv.slice(0,60)};
+  const todo=[...document.querySelectorAll('.sr-ps input[data-t]:checked')].map(i=>g.todo[+i.dataset.t]).filter(Boolean);
+  const re=!!document.getElementById('srg-re')?.checked;
+  if(!todo.length&&!re){showToast('沒有要填的節次','error');return;}
+  const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  try{
+    if(todo.length){
+      const body=todo.map(it=>({...exp,run_date:it.date,period:it.period||null,venue:(it.p.venue||'').slice(0,30)||null,booking_id:String(it.bk.id),
+        subject:SR_SUBJ.includes(it.subj)?it.subj:(SR_SUBJ.includes(srBkSubj(it.bk))?srBkSubj(it.bk):null),course_type:srBkType(it.bk)||null,
+        grade:String(it.bk.grade||'').slice(0,20)||null,teacher:String(it.bk.borrower_name||'未填').slice(0,30),note:null,is_hidden:false}));
+      const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
+      if(Array.isArray(res))srRuns.push(...res);
+    }
+    if(re&&g.runs.length){
+      const ids=g.runs.map(it=>it.run.id).filter(Number.isInteger),patch={...exp,equipment_items:null,ref_note:null};
+      for(let i=0;i<ids.length;i+=100)await sb('PATCH','experiment_runs',{filter:'id=in.('+ids.slice(i,i+100).join(',')+')',body:patch,prefer:'return=minimal'});
+      srRuns.forEach(r=>{if(ids.includes(r.id))Object.assign(r,patch);});
+    }
+    closeModal();showToast('已儲存','success');srRender();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
+}
+function srGDel(gi){const g=srGroupArr[gi];if(!g||!g.runs.length)return;srSel=new Set(g.runs.map(it=>it.run.id));srBulkDel();}
 // ── 一次選好幾筆刪除（2026-10-19）：勾一筆後，下方出現操作列，可「加選同一個實驗」再一起刪 ──
 let srSel=new Set();
 function srSameKey(r){const t=r.template_id?srTpl(r.template_id):null;return t?'f:'+tplFam(t):'t:'+String(r.title||'').replace(/\s+/g,'');}
