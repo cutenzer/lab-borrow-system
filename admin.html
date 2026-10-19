@@ -2002,7 +2002,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19a';
+const ADMIN_VERSION='2026-10-19b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -9285,6 +9285,8 @@ async function doDeleteHighlight(id){
 .sr-eqrow .q{display:flex;align-items:center;gap:4px}.sr-eqrow .q b{min-width:28px;text-align:center}
 .sr-eqrow .q button,.sr-eqrow .x{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:28px;height:28px;font:inherit;cursor:pointer}
 .sr-eqrow .x{background:none;border:0;color:var(--text2)}
+.sr-qn{width:52px;height:28px;text-align:center;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:0 2px;font:inherit;font-weight:700;-moz-appearance:textfield}
+.sr-qn::-webkit-outer-spin-button,.sr-qn::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 .sr-eqhit{display:flex;gap:6px;align-items:baseline;width:100%;text-align:left;border:0;border-bottom:1px solid var(--surface2);background:none;padding:8px 2px;font:inherit;cursor:pointer;color:var(--text)}
 .sr-eqhit small{color:var(--text2)}.sr-tag.lg{border-color:#1f5b4c;color:#1f5b4c}.sr-tag.hd{background:#f3f0e8}
 .sr-act{display:flex;gap:6px;align-items:center;justify-content:flex-end}
@@ -9684,11 +9686,12 @@ function srEqRender(){
   if(tog)tog.style.display='none';
   const changed=srEqKey(srEq.items)!==srEq.base;
   box.innerHTML=`<div class="sr-eqbox"><div class="hint" style="margin:0 0 4px">課綱「${escH(srEq.ver)}」的清單${changed?'・<b style="color:#8a5a00">這次已調整</b>':''}</div>
-    ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><b>${it.quantity}</b><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+    ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><input type="number" class="sr-qn" inputmode="numeric" min="0" max="999" value="${it.quantity}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="srEqSet(${i},this.value)"><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
     ${srEq.items.length<SR_EQ_MAX?`<input type="search" id="srEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(srEq.q||'')}" oninput="srEqSearch(this.value)" style="margin-top:6px"><div id="srEqHits"></div>`:''}
     ${changed?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEqRender()">還原成課綱的清單</button>`:''}</div>`;
 }
 function srEqQty(i,d){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
+function srEqSet(i,v){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,parseInt(v)||0));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
 function srEqSearch(q){
   if(!srEq)return;srEq.q=q;const box=document.getElementById('srEqHits');if(!box)return;
   const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
