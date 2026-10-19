@@ -101,6 +101,11 @@
   .loc-chip small{color:var(--text2);margin-left:4px;}
   .loc-chip:hover{background:var(--accent);color:#fff;}
   .loc-chip:hover small{color:#fff;}
+  .loc-chip.on{background:var(--accent);color:#fff;}.loc-chip.on small{color:#fff;}
+  .loc-search .hr-locbox{margin:10px -6px 0;padding:8px 6px;}
+  .loc-search .hr-loch{padding:0 6px;}
+  .loc-search .search-dropdown{border:0;box-shadow:none;margin:0;max-height:none;}
+  .loc-search .search-result-item{padding:10px 6px;gap:10px;}
   /* 選修課專用器材 */
   .eq-tag.elective{background:#f3e8ff;color:#7e22ce;font-weight:700;}
   .elective-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:#faf5ff;border:1px solid #e9d5ff;color:#581c87;font-size:13.5px;line-height:1.6;}
@@ -2717,7 +2722,11 @@ function renderHomeEquipList(){
 function openEquipDetail(src,i){
   const map={feat:window._featItems,home:window._homeEqItems,browse:window._browseItems};
   const e=(map[src]||[])[i];if(!e)return;
-  window._detailEq=e;
+  openEquipDetailFor(e,src==='browse'?applyEquipBrowseFilter:null);
+}
+// 器材資料卡（任何清單都用這個開）；onChange：卡片裡改數量後，原本那份清單要跟著更新
+function openEquipDetailFor(e,onChange){
+  window._detailEq=e;window._detailOnChange=onChange||null;
   showModal('🔬 器材資料','',[
     {label:'🛒 查看借用清單',cls:'btn-secondary',fn:'closeModal();openCart()'},
     {label:'關閉',cls:'btn-primary',fn:'closeModal()'}
@@ -2751,6 +2760,7 @@ function detailQty(d){
   // changeQty 可能改跳「本科還有現貨」的詢問視窗，那種情況就不要蓋掉它
   if(document.getElementById('modalTitle')?.textContent==='🔬 器材資料')renderEquipDetail();
   renderHomeEquipList();
+  if(typeof window._detailOnChange==='function')window._detailOnChange();
 }
 function homeEqAdd(i,d){
   const e=(window._homeEqItems||[])[i];if(!e)return;
@@ -4465,9 +4475,8 @@ function searchResultRowHTML(listName,e,i,withBorrower){
   const img=safeUrl(e.image_url);
   const imgHtml=img?`<img class="sr-thumb" src="${escH(img)}" loading="lazy" onclick="srZoom('${listName}',${i})" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
   const hasLoc=!!e.location;
-  const nameHtml=hasLoc
-    ?`<div class="sr-name sr-link" title="點我看平面圖位置" onclick="srLoc('${listName}',${i})">${escH(e.name)}</div>`
-    :`<div class="sr-name">${escH(e.name)}</div>`;
+  // 名稱 → 器材資料卡；📍位置 → 平面圖（2026-10-19）
+  const nameHtml=`<div class="sr-name sr-link" title="點我看器材資料" onclick="srDetail('${listName}',${i})">${escH(e.name)}</div>`;
   const locHtml=hasLoc?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="srLoc('${listName}',${i})">📍${escH(e.location)}</span>`:'';
   return `<div class="search-result-item">
     ${imgHtml}
@@ -4489,9 +4498,11 @@ function srRefresh(l){
   else if(l==='bp'){doBorrowPageSearch(document.getElementById('borrowPageSearchInput').value,true);}
   else if(l==='side'){renderBorrowSidePanel();}
   else if(l==='hero'||l==='heroLoc'){heroSearchLive(document.getElementById('heroSearch').value);}
+  else if(l==='loc'){applyEquipBrowseFilter();}
 }
 function srQty(l,i,d){const e=srItem(l,i);if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);srRefresh(l);}
 function srSet(l,i,v){const e=srItem(l,i);if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);srRefresh(l);}
+function srDetail(l,i){const e=srItem(l,i);if(e)openEquipDetailFor(e,()=>srRefresh(l));}
 function srZoom(l,i){const e=srItem(l,i);if(e&&safeUrl(e.image_url))openLightbox(safeUrl(e.image_url),e.name);}
 function srLoc(l,i){
   const e=srItem(l,i);if(!e)return;
@@ -4539,7 +4550,7 @@ function renderCart(){
     const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
     const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">📍${escH(equip.location)}</span>`:'';
     return `<div class="cart-item">${imgHtml}
-      <div class="cart-item-info"><div class="cart-item-name ${equip?.location?'sr-link':''}" ${equip?.location?`onclick="cartItemLoc(${idx})" title="點我看平面圖位置"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">📦 套組・${k.length} 項</span>`:'';})()}</div>
+      <div class="cart-item-info"><div class="cart-item-name ${equip?'sr-link':''}" ${equip?`onclick="cartItemDetail(${idx})" title="點我看器材資料"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">📦 套組・${k.length} 項</span>`:'';})()}</div>
         ${isPackUnit(i.unit)?`<div class="loose-toggle" role="group" aria-label="借用方式">
           <button type="button" class="${i.loose?'':'on'}" onclick="cartSetLoose(${idx},false)">整${escH(i.unit)}借</button>
           <button type="button" class="${i.loose?'on':''}" onclick="cartSetLoose(${idx},true)">只拿幾個</button></div>`:''}</div>
@@ -4592,6 +4603,11 @@ function itemCount(i){return i&&i._isChem?1:(parseInt(i?.quantity)||0);}
 // 藥品要改瓶數／濃度：重新打開申請視窗，送出後會取代原本那一筆
 function editChemItem(i){const id=chemIdOfItem(i);if(!id)return;closeCart();openChemRequestModal(id);}
 function cartItemRemove(idx){const i=(window._cartItems||[])[idx];if(!i)return;removeItem(itemKey(i));renderCart();}
+function cartItemDetail(idx){
+  const i=(window._cartItems||[])[idx];if(!i)return;
+  const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
+  if(equip)openEquipDetailFor(equip,renderCart);
+}
 function cartItemLoc(idx){
   const i=(window._cartItems||[])[idx];if(!i)return;
   const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
@@ -5424,11 +5440,24 @@ function renderLocSearchSection(q,roomFilter){
   window._locSearchHits=list;
   if(!list.length){box.innerHTML='';return 0;}
   const LIMIT=8;
-  box.innerHTML=`<div class="loc-search"><div class="loc-search-title">📍 櫃位（點了直接看平面圖位置和裡面有什麼）</div>
-    <div class="loc-search-list">${list.slice(0,LIMIT).map((m,i)=>`<button type="button" class="loc-chip" onclick="locSearchGo(${i})"><strong>${escH(m.code)}</strong><small>${escH(rn(m.room))}・${m.count?m.count+' 項':'未登記器材'}</small> ›</button>`).join('')}
-    ${list.length>LIMIT?`<span class="hint" style="align-self:center">還有 ${list.length-LIMIT} 個，打完整一點可以縮小範圍</span>`:''}</div></div>`;
+  // 搜尋櫃位想看的是「裡面有什麼」：只找到一個、或打的剛好是某個櫃位 → 直接展開；其他的點一下展開（和首頁搜尋一樣）（2026-10-19）
+  const Q=String(q||'').trim().toUpperCase(),key=Q+'|'+roomFilter;
+  if(window._locOpenQ!==key){window._locOpenQ=key;const ex=list.findIndex(m=>m.code===Q);window._locOpen=list.length===1?0:ex;}
+  const oi=window._locOpen,L=oi>=0&&oi<LIMIT?list[oi]:null;
+  let inner='';
+  if(L){
+    const its=(allEquipment||[]).filter(e=>e.room===L.room&&locCodeMatches(e.location,L.code));
+    window._srLists.loc=its;
+    inner=`<div class="hr-locbox"><div class="hr-loch"><span><b>${escH(L.code)}</b> ${escH(rn(L.room))}・裡面有什麼</span><button type="button" class="hr-locmap" onclick="locSearchGo(${oi})">在平面圖看位置 ›</button></div>`+
+      (its.length?`<div class="search-dropdown">${its.map((e,j)=>searchResultRowHTML('loc',e,j,false)).join('')}</div>`:'<div class="hint" style="padding:6px 2px">這個櫃位目前沒有登記器材</div>')+'</div>';
+  }
+  box.innerHTML=`<div class="loc-search"><div class="loc-search-title">📍 櫃位</div>
+    <div class="loc-search-list">${list.slice(0,LIMIT).map((m,i)=>`<button type="button" class="loc-chip${i===oi?' on':''}" aria-expanded="${i===oi}" onclick="locSearchToggle(${i})"><strong>${escH(m.code)}</strong><small>${escH(rn(m.room))}・${m.count?m.count+' 項':'未登記器材'}</small> ${i===oi?'▴':'▾'}</button>`).join('')}
+    ${list.length>LIMIT?`<span class="hint" style="align-self:center">還有 ${list.length-LIMIT} 個，打完整一點可以縮小範圍</span>`:''}</div>${inner}</div>`;
+  window._locExpanded=!!L;
   return list.length;
 }
+function locSearchToggle(i){window._locOpen=window._locOpen===i?-1:i;applyEquipBrowseFilter();}
 function locSearchGo(i){
   const m=(window._locSearchHits||[])[i];if(!m)return;
   jumpToFloorplanLocation(m.room,m.code,'櫃位 '+m.code+' ');
@@ -5457,7 +5486,7 @@ function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
   const pager=document.getElementById('equipPagination');
   if(!items.length){
-    grid.innerHTML=window._locHitCount?'<div class="hint" style="padding:6px 2px;grid-column:1/-1">沒有名稱符合的器材；要找櫃子裡的東西，點上面的櫃位就會列出來</div>':'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';
+    grid.innerHTML=window._locHitCount?(window._locExpanded?'':'<div class="hint" style="padding:6px 2px;grid-column:1/-1">點上面的櫃位，就會列出裡面的器材</div>'):'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';
     if(pager)pager.innerHTML='';
     return;
   }
