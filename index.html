@@ -269,6 +269,10 @@
   .equip-row-qty{display:flex;align-items:center;gap:4px;flex-shrink:0;}
   .qty-btn{width:40px;height:40px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;font-weight:700;transition:all 0.1s;flex-shrink:0;}
   .qty-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .qty-num{width:52px;height:34px;text-align:center;font-weight:700;font-size:15px;border:1px solid var(--border);border-radius:8px;background:var(--surface,#fff);color:var(--text);padding:0 2px;font-family:inherit;-moz-appearance:textfield;flex-shrink:0;}
+  .qty-num.big{width:72px;height:40px;font-size:18px;}
+  .qty-num::-webkit-outer-spin-button,.qty-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .qty-num:focus{outline:2px solid var(--accent);outline-offset:1px;}
   .qty-input{width:44px;text-align:center;padding:8px 4px;border:1px solid var(--border);border-radius:6px;font-size:14px;height:40px;flex-shrink:0;}
 
   /* ── 單一浮動按鈕（購物車，搜尋已整合進購物車面板內）── */
@@ -636,6 +640,8 @@
   .sx-eqrow .q button,.sx-eqrow .x{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:28px;height:28px;font:inherit;cursor:pointer;}
   .sx-eqrow .q b{min-width:28px;text-align:center;}
   .sx-eqrow .x{background:none;border:0;color:var(--text2);}
+  .sx-eqrow .qty-num{height:28px;width:52px;font-size:14px;}
+  .cb-q .qty-num{height:30px;width:52px;}
   .sx-eqtog{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer;}
   .sp-eq{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--surface2);font-size:14.5px;}
   .sp-eq:last-child{border-bottom:none;}
@@ -2727,7 +2733,7 @@ function renderHomeEquipList(){
     const thumb=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy">`:`<div class="home-eq-thumb">🔬</div>`;
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">借出中</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
-      :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="homeEqAdd(${i},-1)">−</button><span style="min-width:28px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="homeEqAdd(${i},1)">+</button></div>`
+      :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="homeEqAdd(${i},-1)">−</button>${qtyNum(qty,avail,`homeEqSet(${i},this.value)`)}<button type="button" class="qty-btn" onclick="homeEqAdd(${i},1)">+</button></div>`
       :`<button type="button" class="home-eq-add" onclick="homeEqAdd(${i},1)">加入</button>`;
     return `<div class="home-eq-row ${qty>0?'added':''}"><span onclick="openEquipDetail('home',${i})" style="cursor:pointer">${thumb}</span><div class="home-eq-info" onclick="openEquipDetail('home',${i})" style="cursor:pointer"><div class="home-eq-name">${escH(e.name)}</div>${e.spec?`<div class="home-eq-spec">${escH(e.spec)}</div>`:''}${pill}${e.restricted_note?' '+electiveTagHtml(e.room,e.name):''}</div>${action}</div>`;
   }).join('');
@@ -2755,7 +2761,7 @@ function renderEquipDetail(){
   const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
   const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">📍${escH(e.location)}　看平面圖位置 ›</span>`:'';
   const action=avail<=0?`<button type="button" class="home-eq-add" disabled style="width:100%">目前無法借用</button>`
-    :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button><span style="min-width:44px;text-align:center;font-weight:700;font-size:18px">${qty}</span><button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
+    :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button>${qtyNum(qty,avail,'detailSet(this.value)',true)}<button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
     :`<button type="button" class="home-eq-add" style="width:100%" onclick="detailQty(1)">加入借用清單</button>`;
   box.innerHTML=`${photo}
     <div style="font-size:19px;font-weight:700;margin-top:10px">${escH(e.name)}</div>
@@ -2766,6 +2772,13 @@ function renderEquipDetail(){
     ${getBorrowerInfo(e.name,e.room)}
     <div style="margin-top:14px">${action}</div>`;
 }
+function detailSet(v){
+  const e=window._detailEq;if(!e)return;
+  const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
+  setQty(e.room,e.name,e.spec||'',e.unit,parseInt(cur.available)||0,v);
+  if(document.getElementById('modalTitle')?.textContent==='🔬 器材資料')renderEquipDetail();
+  renderHomeEquipList();if(typeof window._detailOnChange==='function')window._detailOnChange();
+}
 function detailQty(d){
   const e=window._detailEq;if(!e)return;
   const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
@@ -2775,6 +2788,7 @@ function detailQty(d){
   renderHomeEquipList();
   if(typeof window._detailOnChange==='function')window._detailOnChange();
 }
+function homeEqSet(i,v){const e=(window._homeEqItems||[])[i];if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);renderHomeEquipList();}
 function homeEqAdd(i,d){
   const e=(window._homeEqItems||[])[i];if(!e)return;
   changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);
@@ -3002,7 +3016,7 @@ function renderFloorplanLocModalBody(){
         </div>
         ${avail>0?`<div class="equip-row-qty" style="margin-top:8px">
           <button class="qty-btn" onclick="event.stopPropagation();fpQty(${i},-1)">−</button>
-          <span style="min-width:28px;text-align:center;font-weight:700">${qty}</span>
+          ${qtyNum(qty,avail,`fpSet(${i},this.value)`)}
           <button class="qty-btn" onclick="event.stopPropagation();fpQty(${i},1)">+</button>
           <span style="font-size:12px;color:var(--text2);margin-left:4px">加入借用清單</span>
         </div>`:''}
@@ -3016,6 +3030,7 @@ function renderFloorplanLocModalBody(){
   syncFpSheetH();
 }
 function fpQty(i,d){const e=(window._fpItems||[])[i];if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);renderFloorplanLocModalBody();}
+function fpSet(i,v){const e=(window._fpItems||[])[i];if(!e)return;setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);renderFloorplanLocModalBody();}
 function fpZoom(i){const e=(window._fpItems||[])[i];if(e&&safeUrl(e.image_url))openLightbox(safeUrl(e.image_url),e.name);}
 function toggleFloorplanEquipRow(rowId){
   floorplanExpandedRowId=(floorplanExpandedRowId===rowId)?null:rowId;
@@ -4417,7 +4432,7 @@ function renderBorrowSidePanel(){
     const img=safeUrl(eq?.image_url);
     return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph">🔬</div>'}
       <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
-      <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button><span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}${i.loose?`<small style="font-weight:400">${escH(itemUnitLabel(i))}</small>`:''}</span><button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
+      <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button>${i._isChem?`<span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span>`:qtyNum(i.quantity,null,`sideItemSet(${idx},this.value)`)+(i.loose?`<small>${escH(itemUnitLabel(i))}</small>`:'')}<button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
   }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「找器材」分頁挑</div>';
   box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
@@ -4439,6 +4454,11 @@ function sideItemQty(idx,d){
   if(i._isChem){editChemItem(i);return;}
   const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name),avail=parseInt(eq?.available)||0;
   changeQty(i.room,i.name,i.spec||'',i.unit,avail,d);
+}
+function sideItemSet(idx,v){
+  const i=(window._sideItems||[])[idx];if(!i||i._isChem)return;
+  const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
+  setQty(i.room,i.name,i.spec||'',i.unit,parseInt(eq?.available)||0,v);
 }
 function sideItemLoc(idx){
   const i=(window._sideItems||[])[idx];if(!i)return;
@@ -4759,6 +4779,8 @@ function _addQty(room,name,spec,unit,avail,delta){
   if(next===0)delete selectedItems[key];else selectedItems[key]=Object.assign({},old||{},{room,name,spec,unit,quantity:next});
   renderEquipList();updateCartBadge();calcDeposit();applyEquipBrowseFilter();
 }
+// 數量格：直接打數字（點一下會全選，打完按 Enter 或點別處就生效）；＋／− 照樣能用（2026-10-19）
+function qtyNum(val,max,onchange,big){return `<input type="number" class="qty-num${big?' big':''}" inputmode="numeric" min="0"${max!=null?` max="${parseInt(max)||0}"`:''} value="${parseInt(val)||0}" aria-label="數量" onclick="event.stopPropagation()" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="${onchange}">`;}
 function setQty(room,name,spec,unit,avail,val){
   const key=room+'__'+name,old=selectedItems[key];
   if(old&&old.loose)avail=LOOSE_MAX;
@@ -5521,7 +5543,7 @@ function renderEquipBrowse(items){
     const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">📍${escH(e.location)}</span>`:'';
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
-      :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button><span style="min-width:28px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
+      :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button>${qtyNum(qty,avail,`browseSet(${i},this.value)`)}<button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
       :`<button type="button" class="home-eq-add" onclick="browseQty(${i},1)">加入</button>`;
     return `<div class="home-eq-row ${qty>0?'added':''}">${img}<div class="home-eq-info"><div class="home-eq-name" onclick="openEquipDetail('browse',${i})" style="cursor:pointer">${escH(e.name)}</div><div class="home-eq-spec">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">${pill}${loc}${tags.join('')}</div>${getBorrowerInfo(e.name,e.room)}</div>${action}</div>`;
   }).join('');
@@ -5536,6 +5558,7 @@ function renderEquipBrowse(items){
   }
 }
 function browseQty(i,d){const e=(window._browseItems||[])[i];if(e)changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);}
+function browseSet(i,v){const e=(window._browseItems||[])[i];if(e)setQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,v);}
 function browseZoom(i){const e=(window._browseItems||[])[i];if(e&&e.image_url)openLightbox(e.image_url,e.name);}
 function browseLoc(i){const e=(window._browseItems||[])[i];if(e)jumpToFloorplanLocation(e.room,e.location,e.name);}
 function goEquipPage(p){
@@ -6123,6 +6146,7 @@ function cbGroups(d){cb.groups=Math.max(1,Math.min(30,(cb.groups||1)+d));
   const {list}=cbItems();list.forEach(o=>{if(o.per)delete cb.over[o.key];});cbRender();}
 function cbQty(key,d){const {list}=cbItems(),o=list.find(x=>x.key===key);if(!o)return;
   const n=Math.max(0,Math.min(999,o.qty+d));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
+function cbSet(key,v){const n=Math.max(0,Math.min(999,parseInt(v)||0));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
 function cbSearch(q){
   cb.q=q;const box=document.getElementById('cbSearchRes');if(!box)return;
   const k=q.trim().toLowerCase();if(!k){box.innerHTML='';return;}
@@ -6177,7 +6201,7 @@ function cbRender(){
   // 器材
   h+=`<div class="card cb-card"><div class="cb-ct">🧪 要借的器材${groupsUsed?'<small>「每組」的數量跟著組數變</small>':''}</div>`;
   if(groupsUsed)h+=`<div class="cb-grp"><span>👥 組數</span><button type="button" onclick="cbGroups(-1)" aria-label="少一組">−</button><b>${cb.groups}</b><button type="button" onclick="cbGroups(1)" aria-label="多一組">＋</button></div>`;
-  h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button><b>${o.qty}</b><button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
+  h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button>${qtyNum(o.qty,999,`cbSet(${ja(o.key)},this.value)`)}<button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
   if(miss.length)h+=`<div class="cb-warn">⚠️ 庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
   h+=`<div class="cb-add"><input type="search" id="cbSearch" placeholder="＋ 這次還要加借別的器材（輸入名稱）" value="${escH(cb.q)}" oninput="cbSearch(this.value)" autocomplete="off" maxlength="40"><div id="cbSearchRes"></div></div></div>`;
   // 課綱備註（數量待確認、怎麼擺放…）：借的人送出前也要看得到
@@ -7630,11 +7654,12 @@ function sxEqRender(){
   if(tog)tog.style.display='none';
   const changed=sxEqKey(sxEq.items)!==sxEq.base;
   box.innerHTML=`<div class="sx-eqbox"><div class="hint" style="margin:0 0 4px">只改這幾節的紀錄，不會動到課綱實驗${changed?'・<b style="color:#8a5a00">已調整</b>':''}</div>
-    ${sxEq.items.map((it,i)=>`<div class="sx-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="sxEqQty(${i},-1)" aria-label="減少">−</button><b>${it.quantity}</b><button type="button" onclick="sxEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="sxEqDel(${i})" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+    ${sxEq.items.map((it,i)=>`<div class="sx-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="sxEqQty(${i},-1)" aria-label="減少">−</button>${qtyNum(it.quantity,999,`sxEqSet(${i},this.value)`)}<button type="button" onclick="sxEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="sxEqDel(${i})" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
     ${sxEq.items.length<SX_EQ_MAX?`<input type="search" id="sxEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(sxEq.q||'')}" oninput="sxEqSearch(this.value)" style="margin-top:6px"><div id="sxEqHits"></div>`:''}
     ${changed?`<button type="button" class="sx-eqtog" onclick="sxEqUndo()">還原成課綱的清單</button>`:''}</div>`;
 }
 function sxEqQty(i,d){const it=sxEq&&sxEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)sxEq.items.splice(i,1);sxEqRender();}
+function sxEqSet(i,v){const it=sxEq&&sxEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,parseInt(v)||0));if(it.quantity===0)sxEq.items.splice(i,1);sxEqRender();}
 function sxEqDel(i){if(!sxEq)return;sxEq.items.splice(i,1);sxEqRender();}
 function sxEqUndo(){if(!sxEq)return;sxEq.items=JSON.parse(sxEq.base);sxEqRender();}
 function sxEqSearch(q){
