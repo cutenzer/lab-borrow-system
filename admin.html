@@ -118,6 +118,8 @@
   .record-actions .act-more{margin-left:auto;}
   /* 批次核准 */
   .bsel-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;margin-bottom:10px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);font-size:13px;}
+.bsel-float{display:flex;align-items:center;gap:10px;flex:1;}
+.bsel-bar:not(.on) .bsel-on-only{display:none;}
   .bsel-bar label{display:flex;align-items:center;gap:6px;cursor:pointer;}
   .bsel{display:inline-flex;align-items:center;margin-right:8px;vertical-align:middle;}
   .bsel input,.bsel-bar input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
@@ -263,8 +265,8 @@
   @media(min-width:1100px){
     .chem-ws{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(400px,1fr);gap:16px;align-items:start;}
     .chem-tabs .ct-cab{display:none;}
-    .chem-left{display:block!important;position:sticky;top:76px;max-height:calc(100vh - 96px);overflow:auto;border-radius:14px;}
-    .chem-right .chem-sec.on{max-height:calc(100vh - 150px);overflow:auto;border-radius:14px;}
+    .chem-left{display:block!important;position:sticky;top:20px;max-height:calc(100vh - 40px);overflow:auto;border-radius:14px;}
+    .chem-right .chem-sec.on{max-height:calc(100vh - 94px);overflow:auto;border-radius:14px;}
   }
   @media(max-width:1099px){
     /* 手機：分頁列放最上面、捲動時黏在頂端 */
@@ -302,6 +304,7 @@
   .record-card.overdue{border-color:var(--danger);border-width:2px;}
   .record-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
   .record-id{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.rc-name{font-size:14px;margin-top:2px;}
   .record-meta{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;font-size:12.5px;margin-top:8px;}
   .record-meta-item{display:flex;flex-direction:column;gap:1px;}
   .record-meta-label{font-size:10px;color:var(--text2);font-weight:500;}
@@ -846,7 +849,7 @@
   #panel-chemicals span,#panel-chemicals div,#panel-chemicals strong{overflow-wrap:anywhere;word-break:break-word;min-width:0;}
 
   /* 熱區校正卡片：只有大螢幕才固定在上方，手機或矮螢幕照一般捲動，避免蓋住下面的代碼欄位 */
-  @media(min-width:1100px) and (min-height:900px){.calib-sticky{position:sticky;top:64px;z-index:20;}}
+  @media(min-width:1100px) and (min-height:900px){.calib-sticky{position:sticky;top:8px;z-index:20;}}
   /* 器材管理卡片（手機）：按鈕改成底部一排，左右比較平衡 */
   @media(max-width:700px){
     #adminEquipList .record-card>div:first-child,.eq-card-row{flex-wrap:wrap!important;}
@@ -880,7 +883,25 @@
 @media(min-width:1100px){
   main{max-width:none;margin:0;}  /* 2026-10-19：不再限 1480px，螢幕多寬就用多寬（側欄右邊全部給內容） */
   header .header-logout{display:none;}
+  /* 2026-10-20 版型統一：頂端黑條只剩「重新整理」，搬到側欄底後整條拿掉，多出 56px */
+  #adminWrap>header{display:none;}
+  main{padding:28px 36px 40px;}
+  /* 方格紙只留登入頁；資料頁本身線就多，底再加格線會很花 */
+  body.in-admin{background-image:none;}
+  /* 每一頁同一種頁首：24px 標題（跟側欄同名）＋一行說明，左上角永遠在同一個位置 */
+  .pg-head{display:block;grid-column:1/-1;margin:0 0 18px;}
+  .pg-head h2{font-size:24px;font-weight:700;letter-spacing:.5px;line-height:1.2;margin:0;}
+  .pg-head p{font-size:13px;color:var(--text2);margin:4px 0 0;}
+  /* 頁首已經寫了頁名，卡片裡重複的標題拿掉 */
+  #panel-purposes>.pg-head+.card>.card-title,#panel-semruns .card>.card-title,#calibStickyCard>.card-title{display:none;}
+  /* 卡片統一：細框、不加陰影 */
+  main .card{border-radius:12px;box-shadow:none;}
+  .side-foot .sf-btns{display:flex;gap:6px;}
 }
+@media(max-width:1099px){.pg-head{display:none;}}  /* 手機維持原樣：頁首只在電腦版出現 */
+/* 總覽：數字是 0 或「—」的卡變淡，有事要處理的卡才跳出來 */
+.stat-card.is-zero{background:transparent;border-style:dashed;}
+.stat-card.is-zero .stat-num{color:#b3ad9f!important;}
 </style>
 <style id="eq-split">
 /* 器材頁：電腦版左清單、右窗格 */
@@ -888,7 +909,7 @@
 .eq-flags{display:none}
 @media(min-width:1100px){
   .eq-ws{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
-  .eq-pane{display:block;position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
+  .eq-pane{display:block;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px}
   .eq-pane>.card{margin:0!important;padding:0;border:0;box-shadow:none;background:none}
   .eq-pane>.card>div[style*="grid-template-columns"]{grid-template-columns:1fr 1fr!important}
   .eq-pane .record-card{margin:0;padding:0;background:none!important;border:0!important}
@@ -956,10 +977,19 @@
 /* 借用單：電腦版一筆一行＋右窗格 */
 @media(min-width:1100px){
   .rec-ws{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:16px;align-items:start}
-  .rec-rows{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+  .rec-rows{border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow:clip;background:var(--surface)}  /* clip：一樣切圓角，但不會擋住欄位標題的 sticky */
   .rec-row{display:grid;grid-template-columns:28px minmax(150px,1.1fr) minmax(0,1.6fr) 118px 96px;align-items:center;gap:12px;padding:7px 12px;border-bottom:1px solid var(--border);cursor:pointer;min-height:48px}
   .rec-row:last-child{border-bottom:0}
   .rec-row:hover{background:var(--surface2)}
+  /* 欄位標題：捲動時黏在畫面頂端 */
+  .rec-colhead{display:grid;grid-template-columns:28px minmax(150px,240px) minmax(0,1fr) 118px 96px;gap:12px;padding:8px 12px;font-size:12px;font-weight:700;color:var(--text2);letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1}
+  .rec-colhead span:last-child{text-align:right}
+  /* 這一頁沒有可勾選的列：不留 28px 空白勾選欄 */
+  .rec-rows.no-chk .rec-row,.rec-rows.no-chk .rec-colhead{grid-template-columns:minmax(150px,240px) minmax(0,1fr) 118px 96px}
+  .rec-rows.no-chk .rr-chk,.rec-rows.no-chk .rec-colhead .ch{display:none}
+  /* 窗格：單號藏起來，姓名當標題 */
+  .rec-pane .record-id{display:none}
+  .rec-pane .rc-name{font-size:19px;margin-top:0}
   .rec-row.sel{background:#e3eee9;box-shadow:inset 3px 0 0 var(--accent)}
   .rec-row.bsel-on .rr-who b{color:var(--accent)}
   .rec-row.overdue .rr-date{color:var(--danger);font-weight:700}
@@ -974,7 +1004,7 @@
   .rr-od{font-size:11px;color:var(--danger);font-weight:700}
   .rr-dep{display:flex;flex-direction:column;align-items:flex-end;font-family:'DM Mono',monospace;font-size:13px}
   .rr-dep small{font-family:inherit;font-size:11px;color:var(--text2)}
-  .rec-pane{position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto}
+  .rec-pane{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
   .rec-pane>.record-card{margin:0}
   .rec-pane-empty{color:var(--text2);font-size:13.5px;padding:16px}
   .rec-stock{margin-top:10px;border:1px solid var(--border);border-radius:10px;background:var(--surface);padding:10px 12px}
@@ -993,18 +1023,22 @@
 .side-more-tog{display:none!important}
 @media(min-width:1100px){
   /* 待審核／已核准：標題和用途篩選放同一列，批次列變細 */
-  #panel-pending>.card,#panel-approved>.card{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:16px;padding-top:14px}
-  #panel-pending>.card>.card-title,#panel-approved>.card>.card-title{margin:0;padding:0;border:0}
-  #panel-pending>.card>.purpose-tabs,#panel-approved>.card>.purpose-tabs{margin:0}
-  #pendingList,#approvedList{grid-column:1/-1;margin-top:12px}
+  /* 2026-10-20：借用單五頁拿掉外層大白卡（頁首已寫頁名），框線從四層剩兩層：清單、窗格 */
+  #panel-pending>.card,#panel-approved>.card,#panel-return>.card,#panel-deposit>.card,#panel-all>.card{background:transparent;border:0;box-shadow:none;padding:0}
+  #panel-pending>.card>.card-title,#panel-approved>.card>.card-title,#panel-return>.card>.card-title,#panel-deposit>.card>.card-title,#panel-all>.card>.card-title{display:none}
+  #panel-pending .purpose-tabs,#panel-approved .purpose-tabs,#panel-all .purpose-tabs{margin:0 0 10px}
   #pendingList .bsel-bar{padding:4px 2px;margin-bottom:8px;border:0;background:none;min-height:32px}
   /* 寬螢幕（2026-10-19）：多出來的寬度一部分給右窗格；清單的姓名欄不再無限變寬，器材欄可以多顯示幾項 */
   .rec-ws{grid-template-columns:minmax(0,1fr) clamp(400px,30%,560px)}
   .eq-ws,main .venue-ws{grid-template-columns:minmax(0,1fr) clamp(360px,28%,520px)}
-  .rec-row{grid-template-columns:28px minmax(150px,240px) minmax(0,1fr) 118px 96px}
+  .rec-row,.rec-colhead{grid-template-columns:28px minmax(150px,240px) minmax(0,1fr) 118px 96px}
   /* 右窗格：按鈕列黏在窗格底部，捲到哪都按得到；「更多」選單改往上開，才不會被窗格底邊切掉 */
   .rec-pane .record-actions{position:sticky;bottom:0;z-index:2;background:var(--surface);margin:12px -16px -14px;padding:10px 16px;border-top:1px solid var(--border);border-radius:0 0 8px 8px}
   .rec-pane .record-actions .act-pop{top:auto;bottom:calc(100% + 4px)}
+  /* 有勾選時：「已選 n 筆＋核准」浮在畫面底部，不必捲回最上面按 */
+  #pendingList .bsel-bar.on .bsel-float{position:fixed;left:256px;bottom:16px;z-index:60;display:flex;align-items:center;gap:10px;padding:8px 10px 8px 16px;border-radius:12px;background:var(--ink);color:#fff;box-shadow:0 6px 24px rgba(0,0,0,.22)}
+  #pendingList .bsel-bar.on .bsel-float #bselCount{color:#e9e5dc!important}
+  #pendingList .bsel-bar.on .bsel-float .btn-secondary{background:var(--ink2);color:#e9e5dc;border-color:#3a4043}
 }
 /* 高度 ≤820：側欄 15 項放不下 → 設定只留器材、藥品，其餘收進「其他設定」；目前所在頁照常顯示 */
 @media(min-width:1100px) and (max-height:820px){
@@ -1072,7 +1106,7 @@
 .vp-show{display:none}
 @media(min-width:1100px){
   .venue-ws{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
-  .venue-ws>.venue-pend-card{grid-column:2;grid-row:1;position:sticky;top:72px;max-height:calc(100vh - 88px);overflow:auto;margin-bottom:0!important;padding:16px}
+  .venue-ws>.venue-pend-card{grid-column:2;grid-row:1;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;margin-bottom:0!important;padding:16px}
   .venue-ws>.card:not(.venue-pend-card){grid-column:1;grid-row:1;margin-bottom:0!important}
   .venue-pend-card .venue-request-card{padding:12px}
   .venue-pend-card .period-manage-row{flex-wrap:wrap;gap:4px 8px;font-size:13px}
@@ -1090,7 +1124,7 @@
   #panel-purposes>.card,#panel-teachers>.card,#panel-semester>.card{margin:0!important}
   #panel-teachers.active{grid-template-columns:minmax(360px,.8fr) minmax(0,1.2fr)}
   #panel-purposes.active{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  #panel-purposes>.card:first-child{grid-row:span 2}
+  #panel-purposes>.pg-head+.card{grid-row:span 2}
   #panel-purposes>.save-bar{grid-column:1/-1}
 }
 .save-bar{display:none;position:sticky;bottom:0;z-index:30;align-items:center;justify-content:flex-end;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 16px rgba(34,38,42,.08)}
@@ -1199,27 +1233,27 @@
     </div>
   </div>
 </div>
-<div id="panel-pending" class="panel">
+<div id="panel-pending" class="panel"><div class="pg-head"><h2>待審核</h2><p>看器材夠不夠，再核准或拒絕；可以勾多筆一次核准</p></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">⏳ 待審核器材申請</div>
   <div class="purpose-tabs" id="pendingPurposeTabs"></div>
   <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
 </div>
-<div id="panel-approved" class="panel">
+<div id="panel-approved" class="panel"><div class="pg-head"><h2>已核准</h2><p>已核准、還沒借出的申請</p></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">✅ 已核准器材申請</div>
   <div class="purpose-tabs" id="approvedPurposeTabs"></div>
   <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
-<div id="panel-return" class="panel">
+<div id="panel-return" class="panel"><div class="pg-head"><h2>尚未歸還</h2><p>借出中的器材，到期未還的排最前面</p></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">📬 尚未歸還</div>
   <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
 </div>
-<div id="panel-deposit" class="panel">
+<div id="panel-deposit" class="panel"><div class="pg-head"><h2>保證金</h2><p>收保證金、歸還後退保證金</p></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">💰 保證金管理</div>
   <div class="dep-sum" id="depositSummary"></div>
   <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
 </div>
 
-<div id="panel-venue" class="panel">
+<div id="panel-venue" class="panel"><div class="pg-head"><h2>場地管理</h2><p>實驗室每週課表與場地申請</p></div>
   <div class="venue-ws">
   <div class="card venue-pend-card" style="margin-bottom:16px">
     <div class="card-title">⏳ 待審核場地申請</div>
@@ -1252,7 +1286,7 @@
   </div>
 </div>
 
-<div id="panel-purposes" class="panel no-pane">
+<div id="panel-purposes" class="panel no-pane"><div class="pg-head"><h2>借用目的與保證金</h2><p>前台可選的借用目的，以及哪些要收保證金</p></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">💰 借用目的與保證金</div>
     <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
@@ -1283,7 +1317,7 @@
     <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">💾 儲存全部</button>
   </div>
 </div>
-<div id="panel-teachers" class="panel no-pane">
+<div id="panel-teachers" class="panel no-pane"><div class="pg-head"><h2>教師管理</h2><p>老師與任教科目（場地課表會依科目上色）</p></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">👩‍🏫 新增 / 編輯教師科目</div>
     <div class="info-box">在這裡登記每位老師固定教授的科目，之後在「場地管理」新增課程時，只要輸入老師姓名，系統就會自動依此判斷顏色分類（生物/化學/物理/地科/理化）。若某筆場地預約需要不同分類，也可以在該筆記錄上手動指定科目或探究/選修/菁英/社團/其他。</div>
@@ -1310,8 +1344,8 @@
   </div>
 </div>
 
-<div id="panel-semruns" class="panel no-pane"><div class="card"><div class="card-title">📅 學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
-<div id="panel-semester" class="panel no-pane">
+<div id="panel-semruns" class="panel no-pane"><div class="pg-head"><h2>學期實驗紀錄</h2><p>前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</p></div><div class="card"><div class="card-title">📅 學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
+<div id="panel-semester" class="panel no-pane"><div class="pg-head"><h2>學期設定</h2><p>學期週次、假日與定期評量週</p></div>
   <div class="card" style="margin-bottom:16px">
     <div class="card-title">📆 新增 / 編輯學期</div>
     <div class="info-box">設定各個「期間」的日期範圍與起始週次，系統會依此計算每個日期屬於第幾週，或顯示為寒假／寒輔／暑假／暑輔等標籤。設為「啟用中」的學期會用於前台週次顯示。</div>
@@ -1437,7 +1471,7 @@
   <div id="emView" class="em-view"></div>
 </div>
 
-<div id="panel-floorplan" class="panel">
+<div id="panel-floorplan" class="panel"><div class="pg-head"><h2>平面圖校正</h2><p>在平面圖上框出櫃位熱區</p></div>
   <div class="card calib-sticky" id="calibStickyCard" style="background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
     <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
@@ -1508,7 +1542,7 @@
   </div>
 </div>
 
-<div id="panel-chemicals" class="panel">
+<div id="panel-chemicals" class="panel"><div class="pg-head"><h2>藥品管理</h2><p>藥品櫃位、瓶數與分類</p></div>
   <!-- 藥品頁：電腦左邊固定是藥品櫃、右邊用分頁切換（清單／新增／大類／未分類／匯入）；手機每次只顯示一個區塊 -->
   <div class="chem-ws">
     <div class="chem-left chem-sec" data-sec="cab">
@@ -1785,7 +1819,7 @@
     </div>
   </details>
 </div>
-<div id="panel-all" class="panel">
+<div id="panel-all" class="panel"><div class="pg-head"><h2>全部記錄</h2><p>所有器材借用單，可搜尋姓名、學號、器材</p></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
   <input type="search" id="allSearch" class="rec-search" maxlength="40" placeholder="搜尋姓名、學號、單號或器材…" oninput="clearTimeout(window._allSearchT);window._allSearchT=setTimeout(()=>renderWithFilter('all'),200)">
@@ -1820,6 +1854,7 @@ function saveSession(data){
 function enterAdmin(){
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('adminWrap').style.display='block';
+  document.body.classList.add('in-admin');
   document.getElementById('pwInput').value='';
   if(document.activeElement)document.activeElement.blur(); // 收起手機鍵盤
   window.scrollTo(0,0);
@@ -1895,7 +1930,7 @@ async function checkPw(){
     document.getElementById('pwInput').value='';
   }
 }
-function logout(){ACCESS_TOKEN=null;REFRESH_TOKEN=null;TOKEN_EXP=0;try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
+function logout(){ACCESS_TOKEN=null;REFRESH_TOKEN=null;TOKEN_EXP=0;try{sessionStorage.removeItem(SESSION_KEY);}catch(e){}document.body.classList.remove('in-admin');document.getElementById('adminWrap').style.display='none';document.getElementById('loginWrap').style.display='flex';document.getElementById('pwInput').value='';}
 
 // ── 修正：讀 text() 再 parse，避免 204 / 201 空 body 爆炸 ──
 // ── GET 自動分頁 ──
@@ -2030,7 +2065,7 @@ function renderStats(){
   const semPc=sem&&semSlots?Math.round(rateTot/(semSlots*LABS.length)*100):null;
   const top=semUse?LABS.map(([v])=>[v,semUse[v]||0,ss.rateN[v]||0]).sort((a,b)=>b[1]-a[1])[0]:null;
   const fmt=n=>Number(n).toLocaleString();
-  const card=s=>`<div class="stat-card" onclick="${s.fn||`showTab('${s.tab}')`}"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div>${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}</div>`;
+  const card=s=>`<div class="stat-card${/[1-9]/.test(String(s.num))?'':' is-zero'}" onclick="${s.fn||`showTab('${s.tab}')`}"><div class="stat-num" style="color:${s.color}">${s.num}</div><div class="stat-label"><span class="sl-full">${s.label}</span><span class="sl-short">${s.short}</span></div>${s.sub?`<div class="stat-sub">${s.sub}</div>`:''}</div>`;
   const group=(h,list)=>`<section class="stat-grp" aria-label="${h}"><div class="stat-grp-h">${h}</div><div class="stats-grid">${list.map(card).join('')}</div></section>`;
   document.getElementById('statsGrid').innerHTML=
     group('器材借用',[
@@ -2232,8 +2267,8 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-19k';
-function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button>`;}
+const ADMIN_VERSION='2026-10-20a';
+function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
 // 手機／平板的選單：所有分頁（含數字提醒）都在這裡，最底下是登入帳號＋登出
@@ -2541,15 +2576,19 @@ function renderList(records,container,mode){
   if(mode==='pending'){
     const ids=records.filter(r=>r.status==='待審核').map(r=>String(r.id));
     [...batchSel].forEach(id=>{if(!ids.includes(id))batchSel.delete(id);});
-    if(ids.length>1)bar=`<div class="bsel-bar"><label><input type="checkbox" id="bselAll" ${batchSel.size===ids.length?'checked':''} onchange="batchSelectAll(this.checked)">全選</label>
-      <span id="bselCount" style="color:var(--text2)">已選 ${batchSel.size} 筆</span>
-      <button type="button" class="btn btn-primary btn-sm" id="bselGo" style="margin-left:auto" ${batchSel.size?'':'disabled'} onclick="confirmBatchApprove()">核准選取的 ${batchSel.size} 筆</button></div>`;
+    // 2026-10-20：沒勾任何一筆時只留「全選」；勾了才出現「已選 n 筆＋核准」（電腦版浮在畫面底部）
+    if(ids.length>1)bar=`<div class="bsel-bar${batchSel.size?' on':''}"><label><input type="checkbox" id="bselAll" ${batchSel.size===ids.length?'checked':''} onchange="batchSelectAll(this.checked)">全選</label>
+      <div class="bsel-float bsel-on-only"><span id="bselCount" style="color:var(--text2)">已選 ${batchSel.size} 筆</span>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="batchSelectAll(false)">取消勾選</button>
+      <button type="button" class="btn btn-primary btn-sm" id="bselGo" ${batchSel.size?'':'disabled'} onclick="confirmBatchApprove()">核准選取的 ${batchSel.size} 筆</button></div></div>`;
   }
   if(recWide()){
     // 電腦版：左邊一筆一行，右邊看選到的那筆（詳情＋核准／歸還等動作）
     recLists[mode]=records;
     if(!records.some(r=>String(r.id)===String(recSel[mode])))recSel[mode]=String(records[0].id);
-    container.innerHTML=bar+`<div class="rec-ws"><div class="rec-rows" role="list">${records.map(r=>recRowHtml(r,mode)).join('')}</div><aside class="rec-pane" id="recPane-${mode}" aria-label="申請詳情">${recPaneHtml(mode)}</aside></div>`;
+    const hasChk=mode==='pending'&&records.some(r=>r.status==='待審核');
+    const colhead=`<div class="rec-colhead" aria-hidden="true"><span class="ch"></span><span>申請人</span><span>器材</span><span>借用期間</span><span>${mode==='deposit'?'保證金':'狀態'}</span></div>`;
+    container.innerHTML=bar+`<div class="rec-ws"><div class="rec-rows${hasChk?'':' no-chk'}" role="list">${colhead}${records.map(r=>recRowHtml(r,mode)).join('')}</div><aside class="rec-pane" id="recPane-${mode}" aria-label="申請詳情">${recPaneHtml(mode)}</aside></div>`;
     return;
   }
   container.innerHTML=bar+'<div class="record-list">'+records.map(r=>renderRecord(r,mode)).join('')+'</div>';
@@ -2714,6 +2753,7 @@ function updateBatchBar(){
   const n=batchSel.size,total=document.querySelectorAll('#pendingList .bsel input:not(.rec-pane *)').length;
   const c=document.getElementById('bselCount');if(c)c.textContent=`已選 ${n} 筆`;
   const g=document.getElementById('bselGo');if(g){g.disabled=!n;g.textContent=`核准選取的 ${n} 筆`;}
+  const bar=document.querySelector('#pendingList .bsel-bar');if(bar)bar.classList.toggle('on',n>0);
   const a=document.getElementById('bselAll');if(a)a.checked=n>0&&n===total;
 }
 function confirmBatchApprove(){
@@ -2816,7 +2856,7 @@ function renderRecord(r,mode,inPane){
   return `<div class="record-card ${r.status==='逾期'?'overdue':''} ${bOn?'bsel-on':''}" data-rid="${escH(r.id)}">
     <div class="record-header">
       <div>${canBatch&&!inPane?`<label class="bsel" title="勾選後可一次核准"><input type="checkbox" data-rid="${escH(r.id)}" ${bOn?'checked':''} onchange="batchToggle(this.dataset.rid,this.checked)"></label>`:''}<span class="record-id">${escH(r.id)}</span>
-        <div style="font-size:14px;font-weight:700;margin-top:2px">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
+        <div class="rc-name" style="font-weight:700">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
         <div style="font-size:12px;color:var(--text2)">${escH(r.role||'學生')}${r.studentId?' ・ '+escH(r.studentId):''}</div>
         ${isProxyRecord(r)?'<span class="proxy-badge">👩‍🏫 老師代借：學生需另填表單＋繳保證金</span>':''}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
@@ -2829,7 +2869,7 @@ function renderRecord(r,mode,inPane){
       <div class="record-meta-item"><span class="record-meta-label">借用日期</span><span class="record-meta-value">${escH(r.borrowDate||'─')}</span></div>
       <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${escH(r.returnDate||'─')}</span></div>
       ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${escH(r.actualReturn)}</span></div>`:''}
-      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.depositAmount)||0} / ${escH(r.depositStatus)}</span></div>`:''}
+      ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.depositAmount)||0}${r.depositStatus?' / '+escH(r.depositStatus):''}</span></div>`:''}
     </div>
     ${(()=>{
       const stock=inPane&&['pending','approved','return'].includes(mode)?recStockHtml(r,mode):'';
