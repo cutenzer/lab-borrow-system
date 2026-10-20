@@ -9788,7 +9788,11 @@ const SR_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修
 let srRuns=[],srBks=[],srTerm=null,srSubj='全部',srMode='all',srLoaded=false;
 function srTpl(id){return tplById(id);}
 function srVenueSubj(v){v=String(v||'');return SR_SUBJ.find(s=>v.startsWith(s))||'';}
-function srBkSubj(b){return SR_SUBJ.includes(b.lab_subject)?b.lab_subject:srVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
+// 科目＝這堂「課」的科目，不是借哪間實驗室（國一生物借理化教室上課，還是算生物）（2026-10-20）
+// 順序：預約上填的科目 → 實驗室 → 教室名稱
+function srBkSubj(b){return SR_SUBJ.includes(b.subject)?b.subject:SR_SUBJ.includes(b.lab_subject)?b.lab_subject:srVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
+// 套了課綱實驗，就以課綱實驗的科目為準
+function srTplSubj(t){return t&&SR_SUBJ.includes(t.subject)?t.subject:'';}
 function srBkType(b){return b.course_type||SR_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
 function srShowAuto(b){return !!srBkType(b);}
 function srShown(b){return b.semester_show===true||(b.semester_show!==false&&srShowAuto(b));}
@@ -9817,7 +9821,7 @@ function srWeekRows(w,raw){
     if(r.booking_id)filled.add(`${r.booking_id}|${r.run_date}|${r.period||''}`);
     const t=r.template_id?srTpl(r.template_id):null,b=r.booking_id?srBks.find(x=>x.id===r.booking_id):null;
     rows.push({kind:'run',r,b,date:r.run_date,period:r.period||'',title:t?(t.name||'').trim():(r.title||''),tplGrade:t&&t.grade,
-      subj:r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:r.course_type||(b&&srBkType(b))||(t&&t.course_type)||'',who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
+      subj:srTplSubj(t)||r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:r.course_type||(b&&srBkType(b))||(t&&t.course_type)||'',who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
   });
   srBks.forEach(b=>{
     if(b.status==='已拒絕')return;
@@ -9987,7 +9991,7 @@ async function srGFillSave(){
   try{
     if(todo.length){
       const body=todo.map(it=>({...exp,run_date:it.date,period:it.period||null,venue:(it.p.venue||'').slice(0,30)||null,booking_id:String(it.bk.id),
-        subject:SR_SUBJ.includes(it.subj)?it.subj:(SR_SUBJ.includes(srBkSubj(it.bk))?srBkSubj(it.bk):null),course_type:srBkType(it.bk)||null,
+        subject:srTplSubj(t)||(SR_SUBJ.includes(it.subj)?it.subj:(SR_SUBJ.includes(srBkSubj(it.bk))?srBkSubj(it.bk):null)),course_type:srBkType(it.bk)||null,
         grade:String(it.bk.grade||'').slice(0,20)||null,teacher:String(it.bk.borrower_name||'未填').slice(0,30),note:null,is_hidden:false}));
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
@@ -10057,7 +10061,7 @@ function srFormHtml(r,ps){
       <div class="form-group"><label>節次</label><select id="sr-period"><option value="">不填</option>${pOpts(r.period||'')}</select></div></div>`}
     <div class="form-group"><label>實驗（打字找課綱實驗；找不到就直接打名稱）</label><input id="sr-tpl" list="srTplList" maxlength="60" autocomplete="off" value="${escH(t?srTplLabel(t):(r.title||''))}" onchange="srTplFill()" placeholder="例如 酸鹼滴定"></div>
     <datalist id="srTplList">${allTemplates.filter(x=>x.name).map(x=>`<option value="${escH(srTplLabel(x))}">`).join('')}</datalist>
-    <div class="sr-2"><div class="form-group"><label>科目 *</label><select id="sr-subj"><option value="">（選）</option>${SR_SUBJ.map(s=>`<option${s===r.subject?' selected':''}>${s}</option>`).join('')}</select></div>
+    <div class="sr-2"><div class="form-group"><label>科目 *</label><select id="sr-subj"><option value="">（選）</option>${SR_SUBJ.map(s=>`<option${s===(srTplSubj(t)||r.subject)?' selected':''}>${s}</option>`).join('')}</select></div>
       <div class="form-group"><label>類型</label><select id="sr-type"><option value="">不填</option>${types.map(n=>`<option${n===r.course_type?' selected':''}>${escH(n)}</option>`).join('')}</select></div></div>
     <div class="sr-2"><div class="form-group"><label>班級／年級</label><input id="sr-grade" maxlength="20" value="${escH(r.grade||'')}" placeholder="例如 高一戊"></div>
       <div class="form-group"><label>老師 *</label><input id="sr-teacher" maxlength="30" list="srTeacherList" value="${escH(r.teacher||'')}"></div></div>
