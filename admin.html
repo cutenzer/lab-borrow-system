@@ -9817,7 +9817,7 @@ function srWeekRows(w,raw){
     if(r.booking_id)filled.add(`${r.booking_id}|${r.run_date}|${r.period||''}`);
     const t=r.template_id?srTpl(r.template_id):null,b=r.booking_id?srBks.find(x=>x.id===r.booking_id):null;
     rows.push({kind:'run',r,b,date:r.run_date,period:r.period||'',title:t?(t.name||'').trim():(r.title||''),tplGrade:t&&t.grade,
-      subj:r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:r.course_type||'',who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
+      subj:r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:r.course_type||(b&&srBkType(b))||(t&&t.course_type)||'',who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
   });
   srBks.forEach(b=>{
     if(b.status==='已拒絕')return;
@@ -9918,17 +9918,23 @@ function srWeekGroups(w){
   items.sort((a,b)=>String(a.date).localeCompare(String(b.date))||pi(a.period)-pi(b.period));
   const seen=new Map(),groups=new Map();
   items.forEach(it=>{
-    const c=srClsOf(it.grade),base=(c.lv||it.grade||'其他')+'|'+(it.subj||'');
+    // 課程類型也要分開：高二化學（一般）、高二菁英化學、高二探究化學 是不同的課，不能合成一張（2026-10-20）
+    const c=srClsOf(it.grade),ty=srTypeKey(it.type),base=(c.lv||it.grade||'其他')+'|'+(it.subj||'')+'|'+ty;
     let round=1;
     c.cls.forEach(ch=>{const k=base+'|'+ch,ds=seen.get(k)||[];let i=ds.indexOf(it.date);if(i<0){ds.push(it.date);i=ds.length-1;seen.set(k,ds);}round=Math.max(round,i+1);});
     it.cls=c.cls;
     const gk=base+'|'+round;
-    const g=groups.get(gk)||{lv:c.lv||it.grade||'',subj:it.subj||'',round,items:[],runs:[],todo:[]};
+    const g=groups.get(gk)||{lv:c.lv||it.grade||'',subj:it.subj||'',type:ty,round,items:[],runs:[],todo:[]};
     g.items.push(it);(it.run?g.runs:g.todo).push(it);groups.set(gk,g);
   });
   const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;},lvo=l=>{const i=['國一','國二','國三','高一','高二','高三'].indexOf(l);return i<0?9:i;};
-  return [...groups.values()].sort((a,b)=>ord(a.subj)-ord(b.subj)||lvo(a.lv)-lvo(b.lv)||a.round-b.round);
+  return [...groups.values()].sort((a,b)=>ord(a.subj)-ord(b.subj)||lvo(a.lv)-lvo(b.lv)||srTypeOrd(a.type)-srTypeOrd(b.type)||a.round-b.round);
 }
+// 「一般」和沒填類型當成同一種；其他（菁英、探究、選修…）各自一組
+function srTypeKey(t){t=String(t||'').trim();return t==='一般'?'':t;}
+function srTypeOrd(t){const i=['','探究','選修','菁英','競賽培訓'].indexOf(t);return i<0?9:i;}
+// 卡片、明細、填實驗視窗的標題：高二化學／高二菁英化學／高二探究化學
+function srGName(g){return `${g.lv}${g.type||''}${g.subj}${g.round>1?`・第 ${g.round} 個實驗`:''}`;}
 function srGroupHtml(g){
   const gi=srGroupArr.push(g)-1,col=SR_COL[g.subj]||'#6b7280';
   const titles=new Map();g.runs.forEach(it=>{const t=it.run.template_id?srTpl(it.run.template_id):null,n=t?(t.name||'').trim():(it.run.title||'');if(n)titles.set(n,(titles.get(n)||0)+1);});
@@ -9939,11 +9945,10 @@ function srGroupHtml(g){
     .map(([ch,s])=>`<i class="${s.todo?(s.run?'part':'todo'):'done'}" title="${s.todo?`還沒填 ${s.todo} 節`:'已填'}">${escH(ch)}</i>`).join('');
   const ds=[...new Set(g.items.map(it=>it.date))].sort(),when=ds.length>1?`${srMD(ds[0])}～${srMD(ds[ds.length-1])}`:srMD(ds[0]);
   const whos=[...new Set(g.items.map(it=>it.run?it.run.teacher:it.bk.borrower_name).filter(Boolean))];
-  const types=[...new Set(g.items.map(it=>it.type).filter(t=>t&&t!=='一般'))];
   const adj=g.runs.filter(it=>Array.isArray(it.run.equipment_items)||it.run.ref_note!=null).length;
   const n=g.items.length;
   return `<div class="srg${g.todo.length&&!g.runs.length?' blank':''}" style="--c:${col}">
-    <div class="srg-h"><b>${escH(g.lv)}${escH(g.subj)}</b>${types.map(t=>`<span class="sr-tag">${escH(t)}</span>`).join('')}${g.round>1?`<em>第 ${g.round} 個實驗</em>`:''}<small>${escH(when)}</small></div>
+    <div class="srg-h"><b>${escH(g.lv)}${escH(g.type||'')}${escH(g.subj)}</b>${g.round>1?`<em>第 ${g.round} 個實驗</em>`:''}<small>${escH(when)}</small></div>
     <div class="srg-t">${tl.length?escH(tl.join('／')):'<span class="srg-none">還沒填實驗</span>'}${tl.length>1?'<span class="srg-warn">這組有不同實驗，請確認</span>':''}</div>
     <div class="srg-cls">${chips}</div>
     <div class="srg-m">${escH(whos.slice(0,3).join('、')+(whos.length>3?' 等':''))}${whos.length?'・':''}${n} 節${g.todo.length?`・<b>${g.todo.length} 節還沒填</b>`:''}${adj?`・器材／備註有調整 ${adj} 筆`:''}</div>
@@ -9954,7 +9959,7 @@ function srGroupHtml(g){
 function srGOpen(gi){
   const g=srGroupArr[gi];if(!g)return;
   const rows=[...new Set(g.items.map(it=>it.row))];
-  showModal(`${g.lv}${g.subj}${g.round>1?`・第 ${g.round} 個實驗`:''}`,`<div class="srg-detail">${rows.map(srRowHtml).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+  showModal(srGName(g),`<div class="srg-detail">${rows.map(srRowHtml).join('')}</div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
 // 一起填／換實驗：沒填的節次新增紀錄；已填的可以一起改成這個實驗
 function srGFill(gi){
@@ -9962,7 +9967,7 @@ function srGFill(gi){
   const ids=[...new Set(g.runs.map(it=>it.run.template_id).filter(Boolean))],t=ids.length===1?srTpl(ids[0]):null;
   const cur=[...new Set(g.runs.map(it=>{const x=it.run.template_id?srTpl(it.run.template_id):null;return x?(x.name||'').trim():(it.run.title||'');}).filter(Boolean))].join('／');
   const lab=it=>`${srMD(it.date)}（${srWD(it.date)}）${escH(it.period)}　<b>${escH(it.grade||'')}</b>`;
-  showModal(`${g.lv}${g.subj}${g.round>1?`・第 ${g.round} 個實驗`:''}：${g.runs.length?'換實驗／補填':'填實驗'}`,`<div class="sr-form">
+  showModal(`${srGName(g)}：${g.runs.length?'換實驗／補填':'填實驗'}`,`<div class="sr-form">
     <div class="form-group"><label>實驗（打字找課綱實驗；找不到就直接打名稱）</label><input id="srg-tpl" list="srTplList" maxlength="60" autocomplete="off" value="${escH(t?srTplLabel(t):'')}" placeholder="例如：酵素的作用">
     <datalist id="srTplList">${allTemplates.filter(x=>x.name).map(x=>`<option value="${escH(srTplLabel(x))}">`).join('')}</datalist></div>
     ${g.todo.length?`<div class="form-group"><label>還沒填的 ${g.todo.length} 節</label><div class="sr-ps">${g.todo.map((it,i)=>`<label><input type="checkbox" data-t="${i}" checked> ${lab(it)}</label>`).join('')}</div></div>`:''}
