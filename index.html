@@ -7456,9 +7456,11 @@ function sxWeekItems(w){
     const multi=combo.length>1;
     // 用實驗名稱合併（課綱實驗裡有同名重複的也算同一個）；同一堂做好幾個實驗 → 合成一張「A＋B」
     const cardTitle=multi?combo.join('＋'):title;
-    const key='x|'+String(cardTitle).replace(/\s+/g,'').toLowerCase()+'|'+subj;
+    // 同名實驗也要依課程類型分開（菁英、探究、一般可能取一樣的名字）（2026-10-20）
+    const rtype=r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'';
+    const key='x|'+String(cardTitle).replace(/\s+/g,'').toLowerCase()+'|'+subj+'|'+sxTypeTxt(rtype);
     const first=!lessonSeen.has(lk);lessonSeen.add(lk);
-    const c=add(key,{subj,type:r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'',title:cardTitle,tpl:multi?null:(t?t.id:null),fixed:false,venues:[],parts:multi?new Map():null},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',first?1:0,r.run_date);
+    const c=add(key,{subj,type:rtype,title:cardTitle,tpl:multi?null:(t?t.id:null),fixed:false,venues:[],parts:multi?new Map():null},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',first?1:0,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
     if(c.parts){const p=c.parts.get(title)||{title,tpl:t?t.id:null};if(Array.isArray(r.equipment_items)&&r.equipment_items.length)p.items=r.equipment_items;if(r.ref_note!=null)p.refNote=r.ref_note;c.parts.set(title,p);}
     else{
@@ -7473,7 +7475,7 @@ function sxWeekItems(w){
     const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!latest.has(`${b.id}|${p.date}|${p.period}`));
     if(!ps.length)return;
     const subj=sxBkSubj(b),type=sxBkType(b);
-    const c=add('u|'+subj+'|'+type+'|'+sxGradeKey(b.grade),{subj,type,title:'',tpl:null,fixed:false,venues:[],bids:[],a,e},b.grade||'',b.borrower_name||'',ps.length,ps.map(p=>p.date).sort()[0]);
+    const c=add('u|'+subj+'|'+sxTypeTxt(type)+'|'+sxGradeKey(b.grade),{subj,type,title:'',tpl:null,fixed:false,venues:[],bids:[],a,e},b.grade||'',b.borrower_name||'',ps.length,ps.map(p=>p.date).sort()[0]);
     if(!c.bids.includes(b.id))c.bids.push(b.id);
   });
   cards.forEach(c=>{c.grade=sxGradesTxt(c.grades);c.who=c.whos.length>2?c.whos.slice(0,2).join('、')+' 等':c.whos.join('、');c.venue=c.venues.join('、');if(c.bids)c.bid=c.bids.join(',');});
