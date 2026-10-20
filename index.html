@@ -6111,6 +6111,7 @@ function cbOpen(id){
       name:(v&&v.n)||lastSubmittedName||'',note:'',ack:false,q:''};
   cbSetMode('today',true); // 預設今天借；要照課綱那週再點「課綱那週」
   showPage('coursebook');cbRender();
+  if(!cbChemReady())sb('GET','chemicals',{order:'category,name_zh'}).then(r=>{if(Array.isArray(r)&&r.length&&!allChemicals.length)allChemicals=r;if(cb)cbRender();}).catch(()=>{});
 }
 function cbSetMode(mode,silent){
   const r=mode==='today'?cbToday():mode==='course'?cbCourseWeek():mode==='this'?cbThisWeek():mode==='next'?cbNextWeek():null;
@@ -6138,7 +6139,15 @@ function cbItems(){
       const want=parseInt(it.quantity)||0;if(want<=0)return;
       const per=(gc>1&&want>=gc&&want%gc===0)?want/gc:0;
       const q=per&&cb.groups>0?per*cb.groups:want;
-      const m=tplPickEquip(it,t,q);
+      // 藥品（課綱裡科別選「藥品」，或名稱跟藥品庫一樣）：照課綱數量，不跟組數變；送出格式跟購物車的藥品一樣
+      const isChemRow=it.room==='chemicals';
+      const m=isChemRow?null:tplPickEquip(it,t,q),c=(isChemRow||!m)?cbChemOf(it.name):null;
+      if(c){
+        const ck='CHEM__'+c.id,u=it.unit&&it.unit!=='個'?it.unit:'瓶',b=parseInt(c.bottles_left);
+        const o=map[ck]||(map[ck]={key:ck,chem:true,miss:false,room:'chemicals',name:String(c.name_zh||it.name),spec:it.spec||'',unit:u,auto:0,per:0,avail:u==='瓶'&&Number.isFinite(b)?b:Infinity});
+        o.auto+=want;return;
+      }
+      if(isChemRow&&cbChemReady()){const k='miss:'+norm(it.name)+'|'+norm(it.spec);const o=map[k]||(map[k]={key:k,miss:true,room:'chemicals',name:String(it.name||''),spec:it.spec||'',unit:it.unit||'瓶',auto:0,per:0,avail:0});o.auto+=want;return;}
       const key=m?m.pick.room+'__'+m.pick.name:'miss:'+norm(it.name)+'|'+norm(it.spec);
       const o=map[key]||(map[key]={key,miss:!m,room:m?m.pick.room:'',name:m?m.pick.name:String(it.name||''),spec:(m&&m.pick.spec)||it.spec||'',unit:it.unit||(m&&m.pick.unit)||'個',auto:0,per:0,avail:m?(parseInt(m.pick.available)||0):0});
       o.auto+=q;o.per+=per;
@@ -6148,12 +6157,18 @@ function cbItems(){
   const list=Object.values(map).map(o=>Object.assign(o,{qty:cb.over[o.key]!=null?cb.over[o.key]:(o.auto||1)})).filter(o=>o.qty>0);
   return {list,groupsUsed};
 }
+// 藥品比對：中文名、英文名、俗名完全一樣才算（「硫酸」不會對到「硫酸銅」）
+function cbChemReady(){return Array.isArray(allChemicals)&&allChemicals.length>0;}
+function cbChemOf(name){
+  const k=String(name||'').toLowerCase().replace(/[\s（）()]/g,'');if(!k||!cbChemReady())return null;
+  return allChemicals.find(c=>[c.name_zh,c.name_en,...String(c.alias||'').split(/[、,，/／]/)].some(n=>n&&String(n).toLowerCase().replace(/[\s（）()]/g,'')===k))||null;
+}
 function cbGroups(d){cb.groups=Math.max(1,Math.min(30,(cb.groups||1)+d));
   // 改組數：「每組」的器材重新算，手動改過的數量也一起重算
   const {list}=cbItems();list.forEach(o=>{if(o.per)delete cb.over[o.key];});cbRender();}
 function cbQty(key,d){const {list}=cbItems(),o=list.find(x=>x.key===key);if(!o)return;
-  const n=Math.max(0,Math.min(999,o.qty+d));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
-function cbSet(key,v){const n=Math.max(0,Math.min(999,parseInt(v)||0));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
+  const n=Math.max(0,Math.min(o.chem?99999:999,o.qty+d));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
+function cbSet(key,v){const n=Math.max(0,Math.min(String(key).startsWith('CHEM__')?99999:999,parseInt(v)||0));cb.over[key]=n;if(n===0&&cb.extra[key])delete cb.extra[key];cbRender();}
 function cbSearch(q){
   cb.q=q;const box=document.getElementById('cbSearchRes');if(!box)return;
   const k=q.trim().toLowerCase();if(!k){box.innerHTML='';return;}
@@ -6208,7 +6223,7 @@ function cbRender(){
   // 器材
   h+=`<div class="card cb-card"><div class="cb-ct">🧪 要借的器材${groupsUsed?'<small>「每組」的數量跟著組數變</small>':''}</div>`;
   if(groupsUsed)h+=`<div class="cb-grp"><span>👥 組數</span><button type="button" onclick="cbGroups(-1)" aria-label="少一組">−</button><b>${cb.groups}</b><button type="button" onclick="cbGroups(1)" aria-label="多一組">＋</button></div>`;
-  h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button>${qtyNum(o.qty,999,`cbSet(${ja(o.key)},this.value)`)}<button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
+  h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.chem?`<i class="tg sh">藥品・${escH(o.unit)}</i>`:o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button>${qtyNum(o.qty,o.chem?99999:999,`cbSet(${ja(o.key)},this.value)`)}<button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
   if(miss.length)h+=`<div class="cb-warn">⚠️ 庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
   h+=`<div class="cb-add"><input type="search" id="cbSearch" placeholder="＋ 這次還要加借別的器材（輸入名稱）" value="${escH(cb.q)}" oninput="cbSearch(this.value)" autocomplete="off" maxlength="40"><div id="cbSearchRes"></div></div></div>`;
   // 課綱備註（數量待確認、怎麼擺放…）：借的人送出前也要看得到
@@ -6232,7 +6247,7 @@ function cbRender(){
   h+=`<div class="cb-sep"></div>
     <label class="cb-f">姓名<input type="text" value="${escH(cb.name)}" oninput="cb.name=this.value" maxlength="30" autocomplete="name" placeholder="例如：陳老師"></label>
     <label class="cb-f">備註（可不填）<textarea rows="2" maxlength="500" oninput="cb.note=this.value" placeholder="例如：要多一組備用">${escH(cb.note)}</textarea></label>
-    <div class="cb-sum"><span>器材</span><b>${got.length} 項・${got.reduce((s,o)=>s+o.qty,0)} 件${miss.length?`＋待確認 ${miss.length} 項`:''}</b></div>
+    <div class="cb-sum"><span>器材</span><b>${got.length} 項${got.some(o=>!o.chem)?`・${got.filter(o=>!o.chem).reduce((s,o)=>s+o.qty,0)} 件`:''}${got.some(o=>o.chem)?`（含藥品 ${got.filter(o=>o.chem).length} 項）`:''}${miss.length?`＋待確認 ${miss.length} 項`:''}</b></div>
     ${cb.venueOn?`<div class="cb-sum"><span>教室</span><b>${cb.periods.length?escH(cb.room)+' '+cb.periods.length+' 節':'還沒選節次'}</b></div>`:''}
     <div class="cb-sum"><span>保證金</span><b>老師免</b></div>
     <button type="button" class="btn btn-primary cb-go" id="cbSubmitBtn" onclick="cbSubmit()">送出借用申請</button>
@@ -6374,7 +6389,10 @@ function applyTemplate(id){
   const perOf=q=>(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
   (t.equipment_items||[]).forEach(it=>{
     const want=parseInt(it.quantity)||0;if(want<=0)return;
-    const m=tplPickEquip(it,t,want);
+    // 藥品：放進購物車的藥品格式（跟「藥品」頁加入的一樣）
+    const ch=(it.room==='chemicals'||!tplPickEquip(it,t,want))?cbChemOf(it.name):null;
+    if(ch){const u=it.unit&&it.unit!=='個'?it.unit:'瓶';selectedItems['CHEM__'+ch.id]={room:'chemicals',name:ch.name_zh,spec:it.spec||'',unit:u,quantity:want,note:'',_isChem:true};return;}
+    const m=it.room==='chemicals'?null:tplPickEquip(it,t,want);
     if(m){
       const pick=m.pick,info=m.info;
       const room=pick.room,name=pick.name,spec=pick.spec||it.spec||'',unit=it.unit||pick.unit||'個';
