@@ -101,15 +101,25 @@
   .tpl-filter button.z{opacity:.45;}
   .tplc{display:flex;flex-direction:column;gap:12px;}
   .tplc-nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
-  .tplc-gh{font-size:12px;font-weight:700;color:var(--text2);padding:0 2px 0 6px;}
+  .tplc-gh{font-size:15px;font-weight:800;color:var(--text);letter-spacing:1px;padding:0 2px 0 6px;}
+  .tsj{display:inline-flex;align-items:center;gap:6px;color:var(--sc);font-weight:700;}
+  .tsj::before{content:'';width:9px;height:9px;border-radius:50%;background:var(--sc);flex:0 0 auto;}
+  .ttp{font-style:normal;font-size:11.5px;font-weight:700;line-height:1.5;color:var(--tc);background:var(--tb);border:1px solid color-mix(in srgb,var(--tc) 35%,transparent);border-radius:6px;padding:0 6px;margin-left:6px;white-space:nowrap;vertical-align:1px;}
+  .tgh{font-size:22px;font-weight:800;margin-right:10px;color:var(--text);}
+  .tplc-sec h3 .tsj{font-size:20px;}
+  .tplc-sec h3 .tsj::before{width:11px;height:11px;}
+  .tpl-cls.tpl-cls-s{background:color-mix(in srgb,var(--sc) 12%,transparent);color:var(--sc);}
+  .tpl-filter button.tgf-s{color:var(--sc);font-weight:700;border-color:color-mix(in srgb,var(--sc) 40%,var(--border));}
+  .tpl-filter button.tgf-s::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sc);margin-right:6px;vertical-align:1px;}
+  .tpl-filter button.tgf-s.on{background:var(--sc);border-color:var(--sc);color:#fff;}
+  .tpl-filter button.tgf-s.on::before{background:#fff;}
   .tplc-g{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:5px 10px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--text);text-align:left;}
   .tplc-g span{display:inline-flex;align-items:center;gap:4px;min-width:0;}
-  .tplc-g i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--accent);background:#e7efe9;border-radius:6px;padding:0 5px;}
   .tplc-g b{font-family:'DM Mono',monospace;font-weight:500;font-size:12.5px;color:var(--text2);margin-left:auto;}
   .tplc-g em{font-style:normal;font-size:11px;font-weight:700;color:#b45309;}
-  .tplc-g.on{background:var(--text);border-color:var(--text);color:var(--surface);}
+  .tplc-g.on{background:var(--surface2);border-color:var(--text);}
   .tplc-g.on b,.tplc-g.on em{color:inherit;}
-  .tplc-g.on i{background:rgba(255,255,255,.18);color:#fff;}
+  .tplc-g.on{box-shadow:inset 4px 0 0 var(--accent);}
   .tplc-sec h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:17px;margin:6px 2px 2px;}
   .tplc-sec h3 span{font-size:12.5px;font-weight:400;color:var(--text2);}
   .tplc-sec+.tplc-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);}
@@ -119,7 +129,12 @@
     .tplc-gh{padding:10px 8px 4px;}
     .tplc-g{border-color:transparent;background:none;width:100%;padding:7px 10px;}
     .tplc-g:hover{background:var(--surface2);}
-    .tplc-g.on{background:var(--text);}
+    .tplc-g.on{background:var(--surface2);border-color:transparent;}
+    .tplc-g{padding-left:18px;}
+    /* 兩欄各自捲動：外框高度由 tplFitHeight() 算，裡面左右兩欄填滿 */
+    .tplc{grid-template-rows:minmax(0,1fr);}
+    .tplc-nav{position:static;max-height:none;height:100%;overscroll-behavior:contain;}
+    .tplc-body{height:100%;overflow:auto;padding-right:6px;overscroll-behavior:contain;}
   }
   .tpl-month{font-size:13px;font-weight:700;color:var(--text2);margin:14px 2px 6px;display:flex;align-items:center;gap:8px;}
   .tpl-month::after{content:'';flex:1;height:1px;background:var(--border);}
@@ -2307,7 +2322,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-20c';
+const ADMIN_VERSION='2026-10-20d';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2515,7 +2530,7 @@ function showTab(tab,opts){
   if(tab==='venue')loadAdminVenue();
   if(tab==='teachers')loadTeachers();
   if(tab==='semester'){loadSemesters();loadHolidays();}
-  if(tab==='templates')loadTemplates();
+  if(tab==='templates'){loadTemplates();requestAnimationFrame(tplFitHeight);}
   if(tab==='semruns')loadSemRuns();
   if(tab==='floorplan')loadFloorplanCalibration();
   if(tab==='chemicals')loadAdminChems();
@@ -5147,6 +5162,12 @@ async function loadTemplates(){
 const TPL_GRADES=['國一','國二','國三','高一','高二','高三','沒填年級'];
 const TPL_SUBJ_ORDER=['物理','化學','生物','地科','理化','沒填科目'];
 const TPL_TYPE_ORDER=['一般','菁英','探究','選修','科學研究','競賽培訓'];
+const TPL_SC={'物理':'#3b5b8a','化學':'#b35c1e','生物':'#2e7d4f','地科':'#1f7a7a','理化':'#7b4fa0'};
+const TPL_TC={'菁英':['#7a5200','#fbefd2'],'探究':['#a3355a','#fbe3ea'],'選修':['#2f5868','#dfedf2'],'科學研究':['#6b4f2a','#efe5d6'],'競賽培訓':['#b42318','#fde4e1']};
+const tplSC=s=>TPL_SC[s]||'#7a7a7a';
+// 科目：圓點＋科目色字；類型：有底色的小標籤（顏色只從上面固定清單取，文字一律跳脫）
+function tplSubjHtml(s){return `<span class="tsj" style="--sc:${tplSC(s)}">${escH(s)}</span>`;}
+function tplTypeHtml(t){if(!t||t==='一般')return '';const c=TPL_TC[t]||['#555','#ececec'];return `<i class="ttp" style="--tc:${c[0]};--tb:${c[1]}">${escH(t)}</i>`;}
 function tplGroupOf(t){
   const raw=String(t.grade||'')+' '+String(t.name||'').split(/[-－]/)[0];
   const gm=raw.match(/[國高][一二三]/),grade=gm?gm[0]:'沒填年級';
@@ -5160,6 +5181,18 @@ function tplGroupOf(t){
 let tplGradeF=(()=>{try{return localStorage.getItem('tplGradeF')||'all';}catch(_){return 'all';}})();
 let tplSubjF=(()=>{try{return localStorage.getItem('tplSubjF')||'all';}catch(_){return 'all';}})();
 let tplGroupSel=(()=>{try{return localStorage.getItem('tplGroupSel')||null;}catch(_){return null;}})();
+function tplHeadHtml(g){return `<b class="tgh">${escH(g.grade)}</b>${tplSubjHtml(g.subject)}${tplTypeHtml(g.type)}`;}
+// 電腦版：課程清單、實驗清單各自在框裡捲動，整頁不動；高度＝畫面底部到框頂（篩選列換行時也會重算）
+function tplFitHeight(){
+  const w=document.querySelector('#templateList .tplc');if(!w)return;
+  if(window.innerWidth<1100){w.style.height='';return;}
+  const top=w.getBoundingClientRect().top+window.scrollY;
+  let h=Math.max(300,window.innerHeight-top-28);w.style.height=h+'px';
+  // 下面還有卡片內距、頁面底部留白：量一次實際多出來多少，再扣掉，讓整頁剛好不用捲
+  const over=document.documentElement.scrollHeight-window.innerHeight;
+  if(over>0&&h>300){h=Math.max(300,h-over);w.style.height=h+'px';}
+}
+window.addEventListener('resize',()=>{if(document.getElementById('panel-templates')?.classList.contains('active'))tplFitHeight();});
 function tplSetF(kind,v){
   if(kind==='grade'){tplGradeF=TPL_GRADES.includes(v)?v:'all';try{localStorage.setItem('tplGradeF',tplGradeF);}catch(_){}}
   else{tplSubjF=TPL_SUBJ_ORDER.includes(v)?v:'all';try{localStorage.setItem('tplSubjF',tplSubjF);}catch(_){}}
@@ -5168,7 +5201,8 @@ function tplSetF(kind,v){
 function tplPickGroup(k){
   tplGroupSel=String(k);try{localStorage.setItem('tplGroupSel',tplGroupSel);}catch(_){}
   renderTemplateList();
-  const b=document.querySelector('#templateList .tplc-body');if(b&&window.innerWidth<1100)b.scrollIntoView({block:'start',behavior:'smooth'});
+  const b=document.querySelector('#templateList .tplc-body');if(!b)return;
+  if(window.innerWidth<1100)b.scrollIntoView({block:'start',behavior:'smooth'});else b.scrollTop=0;
 }
 function renderTemplateList(){
   const list=document.getElementById('templateList');if(!list)return;
@@ -5201,12 +5235,12 @@ function renderTemplateList(){
   const gOf=x=>tplGroupOf(x.t);
   const gcnt={},scnt={};
   pool.forEach(x=>{const g=gOf(x);if(tplSubjF==='all'||g.subject===tplSubjF)gcnt[g.grade]=(gcnt[g.grade]||0)+1;if(tplGradeF==='all'||g.grade===tplGradeF)scnt[g.subject]=(scnt[g.subject]||0)+1;});
-  const chip=(on,txt,n,fn)=>`<button type="button" class="${on?'on':''}${n?'':' z'}" onclick="${fn}">${escH(txt)}<span class="tgf-n">${n}</span></button>`;
+  const chip=(on,txt,n,fn,c)=>`<button type="button" class="${on?'on':''}${n?'':' z'}${c?' tgf-s':''}" ${c?`style="--sc:${c}"`:''} onclick="${fn}">${escH(txt)}<span class="tgf-n">${n}</span></button>`;
   const gf=document.getElementById('tplGF');
   if(gf){
     const gs=TPL_GRADES.filter(g=>gcnt[g]),ss=TPL_SUBJ_ORDER.filter(x=>scnt[x]);
     gf.innerHTML=`<div class="tgf-row"><span class="tgf-h">年級</span>${chip(tplGradeF==='all','全部',Object.values(gcnt).reduce((a,c)=>a+c,0),"tplSetF('grade','all')")}${gs.map(g=>chip(tplGradeF===g,g,gcnt[g],`tplSetF('grade','${g}')`)).join('')}</div>
-      <div class="tgf-row"><span class="tgf-h">科目</span>${chip(tplSubjF==='all','全部',Object.values(scnt).reduce((a,c)=>a+c,0),"tplSetF('subj','all')")}${ss.map(x=>chip(tplSubjF===x,x,scnt[x],`tplSetF('subj','${x}')`)).join('')}</div>`;
+      <div class="tgf-row"><span class="tgf-h">科目</span>${chip(tplSubjF==='all','全部',Object.values(scnt).reduce((a,c)=>a+c,0),"tplSetF('subj','all')")}${ss.map(x=>chip(tplSubjF===x,x,scnt[x],`tplSetF('subj','${x}')`,tplSC(x))).join('')}</div>`;
   }
   const shown=pool.filter(x=>{const g=gOf(x);return (tplGradeF==='all'||g.grade===tplGradeF)&&(tplSubjF==='all'||g.subject===tplSubjF);});
   if(!shown.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
@@ -5221,15 +5255,18 @@ function renderTemplateList(){
   glist.forEach(g=>{
     if(g.grade!==lastG){nav+=`<div class="tplc-gh">${escH(g.grade)}</div>`;lastG=g.grade;}
     const dup=g.items.some(x=>iss.get(x.t).name);
-    nav+=`<button type="button" class="tplc-g${sel===g.key?' on':''}" onclick="tplPickGroup(${ja(g.key)})"><span>${escH(g.subject)}${g.type!=='一般'?`<i>${escH(g.type)}</i>`:''}</span>${dup?'<em title="這門課裡有可能重複的實驗">重複?</em>':''}<b>${g.items.length}</b></button>`;
+    nav+=`<button type="button" class="tplc-g${sel===g.key?' on':''}" onclick="tplPickGroup(${ja(g.key)})"><span>${tplSubjHtml(g.subject)}${tplTypeHtml(g.type)}</span>${dup?'<em title="這門課裡有可能重複的實驗">重複?</em>':''}<b>${g.items.length}</b></button>`;
   });
   // 右邊：選到的那門課，依月份、週次排好；「全部列出」時每門課一段
   const block=(arr)=>{let h='',lastM='§';arr.slice().sort((a,b)=>{const x=tplSortKey(a.t),y=tplSortKey(b.t);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2],'zh-Hant');}).forEach(({t,miss})=>{const m=tplMonthNum(t);if(m!==lastM){h+=`<div class="tpl-month">${m==null?'沒填月份':m+' 月'}</div>`;lastM=m;}h+=tplRowHtml(t,miss,iss.get(t));});return h;};
   let body='';
   if(tplFilterMode==='bad'&&typeof emGroups==='function'){const gn=emGroups().filter(g=>!g.no).length;if(gn)body+=`<div class="em-cta">這些實驗裡共有 <b>${gn}</b> 種器材名稱對不到庫存<button type="button" class="btn btn-primary btn-sm" onclick="openEqMap()">一次對名稱 ›</button></div>`;}
-  if(sel==='*')glist.forEach(g=>{body+=`<div class="tplc-sec"><h3>${escH(g.label)}<span>${g.items.length} 個</span></h3>${block(g.items)}</div>`;});
-  else{const g=groups.get(sel);body+=`<div class="tplc-sec"><h3>${escH(g.label)}<span>${g.items.length} 個・依週次排列，名稱相近的就是可能重複</span></h3>${block(g.items)}</div>`;}
+  if(sel==='*')glist.forEach(g=>{body+=`<div class="tplc-sec"><h3>${tplHeadHtml(g)}<span>${g.items.length} 個</span></h3>${block(g.items)}</div>`;});
+  else{const g=groups.get(sel);body+=`<div class="tplc-sec"><h3>${tplHeadHtml(g)}<span>${g.items.length} 個・依週次排列，名稱相近的就是可能重複</span></h3>${block(g.items)}</div>`;}
   list.innerHTML=`<div class="tplc"><nav class="tplc-nav" aria-label="課程">${nav}</nav><div class="tplc-body">${body}</div></div>`;
+  if(window.innerWidth>=1100)window.scrollTo(0,0);  // 電腦版整頁固定在最上面，捲動交給左右兩個框
+  tplFitHeight();
+  const on=list.querySelector('.tplc-g.on');if(on&&window.innerWidth>=1100)on.scrollIntoView({block:'nearest'});
 }
 function tplRowHtml(t,miss,I){
     const roomLabel=(TPL_ROOM_OPTIONS.find(([v])=>v===t.default_room)||['',''])[1];
@@ -5243,7 +5280,7 @@ function tplRowHtml(t,miss,I){
       :'');  // 器材都對得到時不再多佔一行，只有對不到才提示
     return `<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
-      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}${(()=>{const n=tplFamilyOf(t).length;return t.version_label||n>1?`<span class="tpl-cls ver">${escH(tplVerName(t))}${n>1?`・共 ${n} 版`:''}</span>`:'';})()}</div>
+      <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls tpl-cls-s" style="--sc:${tplSC(t.subject)}">${escH(t.subject)}</span>${tplTypeHtml(tplGroupOf(t).type)}`:`<span class="tpl-cls miss">沒填科目</span>`}${(()=>{const n=tplFamilyOf(t).length;return t.version_label||n>1?`<span class="tpl-cls ver">${escH(tplVerName(t))}${n>1?`・共 ${n} 版`:''}</span>`:'';})()}</div>
         ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
         <div class="sub">${sub}${when?`<span class="tpl-when">・${escH(when)}</span>`:''}</div>${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
