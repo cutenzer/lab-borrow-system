@@ -7385,7 +7385,8 @@ function sxTpl(id){return tplById(id);}
 function sxTplSubj(t){if(!t)return '';if(SX_SUBJ.includes(t.subject))return t.subject;const s=semSubjectOf(t);return SX_SUBJ.includes(s)?s:'';}
 function sxTplType(t){return t&&t.course_type||'';}
 function sxVenueSubj(v){v=String(v||'');return SX_SUBJ.find(s=>v.startsWith(s))||'';}
-function sxBkSubj(b){return SX_SUBJ.includes(b.lab_subject)?b.lab_subject:sxVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
+// 科目＝這堂課的科目，不是實驗室（國一生物在理化教室上，還是生物）（2026-10-20）
+function sxBkSubj(b){return SX_SUBJ.includes(b.subject)?b.subject:SX_SUBJ.includes(b.lab_subject)?b.lab_subject:sxVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
 function sxBkType(b){return b.course_type||SX_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
 // 沒填實驗的預約要不要出現：後台設了就照設的；沒設＝有課程類型（課程、探究、菁英…）才出現，純借場地的不出現
 function sxShow(b){return b.semester_show===true||(b.semester_show!==false&&!!sxBkType(b));}
@@ -7451,7 +7452,7 @@ function sxWeekItems(w){
   runs.forEach(r=>{
     const t=r.template_id?sxTpl(r.template_id):null,b=r.booking_id?sxBookings.find(x=>x.id===r.booking_id):null;
     const title=sxRunTitle(r);
-    const subj=r.subject||(t&&sxTplSubj(t))||(b&&sxBkSubj(b))||'';
+    const subj=(t&&sxTplSubj(t))||r.subject||(b&&sxBkSubj(b))||'';
     const lk=sxLessonKey(r),combo=[...(lessonTitles.get(lk)||[])].filter(Boolean).sort((x,y)=>x.localeCompare(y,'zh-Hant'));
     const multi=combo.length>1;
     // 用實驗名稱合併（課綱實驗裡有同名重複的也算同一個）；同一堂做好幾個實驗 → 合成一張「A＋B」
