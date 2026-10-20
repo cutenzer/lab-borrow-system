@@ -93,6 +93,34 @@
   .tpl-filter button{border:1.5px solid var(--border);background:var(--surface);color:var(--text2);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;}
   .tpl-filter button.on{background:var(--text);border-color:var(--text);color:var(--surface);font-weight:700;}
   .tpl-filter button.warn.on{background:#b45309;border-color:#b45309;color:#fff;}
+  /* 課綱實驗：年級／科目篩選＋左邊課程清單（2026-10-20）*/
+  .tpl-gf{display:flex;flex-direction:column;gap:6px;}
+  .tgf-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .tgf-h{font-size:12px;font-weight:700;color:var(--text2);width:34px;flex:0 0 auto;}
+  .tpl-filter button .tgf-n{font-family:'DM Mono',monospace;font-size:11.5px;margin-left:5px;opacity:.75;}
+  .tpl-filter button.z{opacity:.45;}
+  .tplc{display:flex;flex-direction:column;gap:12px;}
+  .tplc-nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .tplc-gh{font-size:12px;font-weight:700;color:var(--text2);padding:0 2px 0 6px;}
+  .tplc-g{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--border);background:var(--surface);border-radius:10px;padding:5px 10px;font:inherit;font-size:13.5px;cursor:pointer;color:var(--text);text-align:left;}
+  .tplc-g span{display:inline-flex;align-items:center;gap:4px;min-width:0;}
+  .tplc-g i{font-style:normal;font-size:11.5px;font-weight:700;color:var(--accent);background:#e7efe9;border-radius:6px;padding:0 5px;}
+  .tplc-g b{font-family:'DM Mono',monospace;font-weight:500;font-size:12.5px;color:var(--text2);margin-left:auto;}
+  .tplc-g em{font-style:normal;font-size:11px;font-weight:700;color:#b45309;}
+  .tplc-g.on{background:var(--text);border-color:var(--text);color:var(--surface);}
+  .tplc-g.on b,.tplc-g.on em{color:inherit;}
+  .tplc-g.on i{background:rgba(255,255,255,.18);color:#fff;}
+  .tplc-sec h3{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:17px;margin:6px 2px 2px;}
+  .tplc-sec h3 span{font-size:12.5px;font-weight:400;color:var(--text2);}
+  .tplc-sec+.tplc-sec{margin-top:18px;padding-top:12px;border-top:1px solid var(--border);}
+  @media(min-width:1100px){
+    .tplc{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start;}
+    .tplc-nav{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:2px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:8px;border:1px solid var(--border);border-radius:12px;background:var(--surface);}
+    .tplc-gh{padding:10px 8px 4px;}
+    .tplc-g{border-color:transparent;background:none;width:100%;padding:7px 10px;}
+    .tplc-g:hover{background:var(--surface2);}
+    .tplc-g.on{background:var(--text);}
+  }
   .tpl-month{font-size:13px;font-weight:700;color:var(--text2);margin:14px 2px 6px;display:flex;align-items:center;gap:8px;}
   .tpl-month::after{content:'';flex:1;height:1px;background:var(--border);}
   .tpl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:6px;}
@@ -1473,8 +1501,9 @@
     <div id="tplParseMsg" style="font-size:13px;color:var(--text2)"></div>
     <div id="tplImportMsg" style="font-size:13px;color:var(--text2)"></div>
     <div class="tpl-tools">
-      <input type="search" id="tplSearch" placeholder="🔍 找課程名稱、老師、年級…" oninput="renderTemplateList()" autocomplete="off">
+      <input type="search" id="tplSearch" placeholder="🔍 找課程名稱、老師、年級…" oninput="tplGroupSel=null;renderTemplateList()" autocomplete="off">
       <div class="tpl-filter" id="tplFilter"></div>
+      <div class="tpl-gf tpl-filter" id="tplGF"></div>
     </div>
     <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p></div></div>
   </div>
@@ -2278,7 +2307,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-20b';
+const ADMIN_VERSION='2026-10-20c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4995,12 +5024,12 @@ function tplIssuesAll(){
   const names={},byWeek={},map=new Map();
   // 重複的判斷：名稱＋年級＋學期三個都一樣才算（同一個實驗高一、高二都做，或上下學期都做，是不同的實驗）
   const termOf=t=>{const m=semMonthOf(t);return m?semTermOfMonth(m):actTerm;};
-  const dupKey=t=>{const k=norm(t.name);return k?k+'|'+norm(t.grade)+'|'+termOf(t):'';};
+  const dupKey=t=>{const k=norm(t.name);return k?k+'|'+tplGroupOf(t).key+'|'+termOf(t):'';};
   allTemplates.forEach(t=>{const k=dupKey(t);if(k)(names[k]=names[k]||[]).push(t);});
   allTemplates.forEach(t=>{
     const term=termOf(t),p=semPlace(t,cal[term]);
     const same=names[dupKey(t)]||[];
-    const info={date:p.issues.slice(),name:same.length>1?`名稱、年級、學期都一樣的有 ${same.length} 筆（${t.grade?String(t.grade):'沒填年級'}・${term===1?'上':'下'}學期），可能重複匯入`:'',term,weeks:p.weeks,cal:cal[term]};
+    const info={date:p.issues.slice(),name:same.length>1?`同一門課、同一學期、名稱一樣的有 ${same.length} 筆（${tplGroupOf(t).label}・${term===1?'上':'下'}學期），可能重複匯入`:'',term,weeks:p.weeks,cal:cal[term]};
     p.weeks.forEach(w=>{const k=term+'-'+w;(byWeek[k]=byWeek[k]||[]).push(t);});
     map.set(t,info);
   });
@@ -5112,6 +5141,35 @@ async function loadTemplates(){
     renderTemplateList();
   }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${escH(e.message)}</p></div>`;}
 }
+// ── 課綱實驗分組（2026-10-20）──
+// 「年級」欄位以前是自由填寫（高一菁英(化學)、高一菁英（化學）、高一化學…），這裡只取出「國一～高三」；
+// 科目用「科目」欄位；課程類型沒填時，從年級文字裡找「菁英／探究／選修／競賽／科學研究」，都沒有就是「一般」
+const TPL_GRADES=['國一','國二','國三','高一','高二','高三','沒填年級'];
+const TPL_SUBJ_ORDER=['物理','化學','生物','地科','理化','沒填科目'];
+const TPL_TYPE_ORDER=['一般','菁英','探究','選修','科學研究','競賽培訓'];
+function tplGroupOf(t){
+  const raw=String(t.grade||'')+' '+String(t.name||'').split(/[-－]/)[0];
+  const gm=raw.match(/[國高][一二三]/),grade=gm?gm[0]:'沒填年級';
+  const subject=TPL_SUBJ.includes(t.subject)?t.subject:'沒填科目';
+  let type=String(t.course_type||'').trim();
+  if(!type){const tm=String(t.grade||'').match(/菁英|探究|選修|競賽|科學研究/);type=tm?(tm[0]==='競賽'?'競賽培訓':tm[0]):'一般';}
+  const ti=TPL_TYPE_ORDER.indexOf(type);
+  return {grade,subject,type,key:grade+'|'+subject+'|'+type,label:grade+subject+(type==='一般'?'':'・'+type),
+    order:[TPL_GRADES.indexOf(grade),TPL_SUBJ_ORDER.indexOf(subject),ti<0?99:ti]};
+}
+let tplGradeF=(()=>{try{return localStorage.getItem('tplGradeF')||'all';}catch(_){return 'all';}})();
+let tplSubjF=(()=>{try{return localStorage.getItem('tplSubjF')||'all';}catch(_){return 'all';}})();
+let tplGroupSel=(()=>{try{return localStorage.getItem('tplGroupSel')||null;}catch(_){return null;}})();
+function tplSetF(kind,v){
+  if(kind==='grade'){tplGradeF=TPL_GRADES.includes(v)?v:'all';try{localStorage.setItem('tplGradeF',tplGradeF);}catch(_){}}
+  else{tplSubjF=TPL_SUBJ_ORDER.includes(v)?v:'all';try{localStorage.setItem('tplSubjF',tplSubjF);}catch(_){}}
+  tplGroupSel=null;renderTemplateList();
+}
+function tplPickGroup(k){
+  tplGroupSel=String(k);try{localStorage.setItem('tplGroupSel',tplGroupSel);}catch(_){}
+  renderTemplateList();
+  const b=document.querySelector('#templateList .tplc-body');if(b&&window.innerWidth<1100)b.scrollIntoView({block:'start',behavior:'smooth'});
+}
 function renderTemplateList(){
   const list=document.getElementById('templateList');if(!list)return;
   const q=(document.getElementById('tplSearch')?.value||'').trim().toLowerCase();
@@ -5122,11 +5180,11 @@ function renderTemplateList(){
   const noCls=t=>!TPL_SUBJ.includes(t.subject),classN=allTemplates.filter(noCls).length;
   // 篩選籤：全部／對不到器材（健檢）
   const fb=document.getElementById('tplFilter');
-  if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';renderTemplateList()">全部 ${allTemplates.length}</button>`+
-    (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
-    (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
-    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';renderTemplateList()">👯 可能重複 ${nameN}</button>`:'')+
-    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';renderTemplateList()">📝 沒填科目 ${classN}</button>`:'');
+  if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';tplGroupSel=null;renderTemplateList()">全部 ${allTemplates.length}</button>`+
+    (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';tplGroupSel=null;renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
+    (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';tplGroupSel=null;renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';tplGroupSel=null;renderTemplateList()">👯 可能重複 ${nameN}</button>`:'')+
+    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';tplGroupSel=null;renderTemplateList()">📝 沒填科目 ${classN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
@@ -5138,30 +5196,58 @@ function renderTemplateList(){
     return [t.name,t.grade,t.teacher,t.category,t.subject,t.course_type,...(Array.isArray(t.aliases)?t.aliases:[])].some(v=>String(v||'').toLowerCase().includes(q));
   });
   items.sort((a,b)=>{const x=tplSortKey(a.t),y=tplSortKey(b.t);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2],'zh-Hant');});
-  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
-  let html='',lastM='§';
-  if(tplFilterMode==='bad'&&typeof emGroups==='function'){const gn=emGroups().filter(g=>!g.no).length;if(gn)html+=`<div class="em-cta">這些實驗裡共有 <b>${gn}</b> 種器材名稱對不到庫存<button type="button" class="btn btn-primary btn-sm" onclick="openEqMap()">一次對名稱 ›</button></div>`;}
-  items.forEach(({t,miss})=>{
-    const m=tplMonthNum(t);
-    if(m!==lastM){html+=`<div class="tpl-month">${m==null?'沒填月份':m+' 月'}</div>`;lastM=m;}
+  // ── 年級／科目篩選＋依「課程」分組（2026-10-20）──
+  const pool=items;
+  const gOf=x=>tplGroupOf(x.t);
+  const gcnt={},scnt={};
+  pool.forEach(x=>{const g=gOf(x);if(tplSubjF==='all'||g.subject===tplSubjF)gcnt[g.grade]=(gcnt[g.grade]||0)+1;if(tplGradeF==='all'||g.grade===tplGradeF)scnt[g.subject]=(scnt[g.subject]||0)+1;});
+  const chip=(on,txt,n,fn)=>`<button type="button" class="${on?'on':''}${n?'':' z'}" onclick="${fn}">${escH(txt)}<span class="tgf-n">${n}</span></button>`;
+  const gf=document.getElementById('tplGF');
+  if(gf){
+    const gs=TPL_GRADES.filter(g=>gcnt[g]),ss=TPL_SUBJ_ORDER.filter(x=>scnt[x]);
+    gf.innerHTML=`<div class="tgf-row"><span class="tgf-h">年級</span>${chip(tplGradeF==='all','全部',Object.values(gcnt).reduce((a,c)=>a+c,0),"tplSetF('grade','all')")}${gs.map(g=>chip(tplGradeF===g,g,gcnt[g],`tplSetF('grade','${g}')`)).join('')}</div>
+      <div class="tgf-row"><span class="tgf-h">科目</span>${chip(tplSubjF==='all','全部',Object.values(scnt).reduce((a,c)=>a+c,0),"tplSetF('subj','all')")}${ss.map(x=>chip(tplSubjF===x,x,scnt[x],`tplSetF('subj','${x}')`)).join('')}</div>`;
+  }
+  const shown=pool.filter(x=>{const g=gOf(x);return (tplGradeF==='all'||g.grade===tplGradeF)&&(tplSubjF==='all'||g.subject===tplSubjF);});
+  if(!shown.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
+  // 分組：年級 → 科目 → 課程類型（菁英、探究、選修是不同的課，分開放）
+  const groups=new Map();
+  shown.forEach(x=>{const g=gOf(x);if(!groups.has(g.key))groups.set(g.key,{...g,items:[]});groups.get(g.key).items.push(x);});
+  const glist=[...groups.values()].sort((x,y)=>x.order[0]-y.order[0]||x.order[1]-y.order[1]||x.order[2]-y.order[2]||x.type.localeCompare(y.type,'zh-Hant'));
+  const autoAll=!!q||tplFilterMode!=='all';
+  const sel=groups.has(tplGroupSel)||tplGroupSel==='*'?tplGroupSel:(autoAll||glist.length<2?'*':glist[0].key);
+  // 左邊：課程清單（依年級分段），一眼看出每門課放了幾個
+  let nav=`<button type="button" class="tplc-g${sel==='*'?' on':''}" onclick="tplPickGroup('*')"><span>全部列出</span><b>${shown.length}</b></button>`,lastG='';
+  glist.forEach(g=>{
+    if(g.grade!==lastG){nav+=`<div class="tplc-gh">${escH(g.grade)}</div>`;lastG=g.grade;}
+    const dup=g.items.some(x=>iss.get(x.t).name);
+    nav+=`<button type="button" class="tplc-g${sel===g.key?' on':''}" onclick="tplPickGroup(${ja(g.key)})"><span>${escH(g.subject)}${g.type!=='一般'?`<i>${escH(g.type)}</i>`:''}</span>${dup?'<em title="這門課裡有可能重複的實驗">重複?</em>':''}<b>${g.items.length}</b></button>`;
+  });
+  // 右邊：選到的那門課，依月份、週次排好；「全部列出」時每門課一段
+  const block=(arr)=>{let h='',lastM='§';arr.slice().sort((a,b)=>{const x=tplSortKey(a.t),y=tplSortKey(b.t);return x[0]-y[0]||x[1]-y[1]||x[2].localeCompare(y[2],'zh-Hant');}).forEach(({t,miss})=>{const m=tplMonthNum(t);if(m!==lastM){h+=`<div class="tpl-month">${m==null?'沒填月份':m+' 月'}</div>`;lastM=m;}h+=tplRowHtml(t,miss,iss.get(t));});return h;};
+  let body='';
+  if(tplFilterMode==='bad'&&typeof emGroups==='function'){const gn=emGroups().filter(g=>!g.no).length;if(gn)body+=`<div class="em-cta">這些實驗裡共有 <b>${gn}</b> 種器材名稱對不到庫存<button type="button" class="btn btn-primary btn-sm" onclick="openEqMap()">一次對名稱 ›</button></div>`;}
+  if(sel==='*')glist.forEach(g=>{body+=`<div class="tplc-sec"><h3>${escH(g.label)}<span>${g.items.length} 個</span></h3>${block(g.items)}</div>`;});
+  else{const g=groups.get(sel);body+=`<div class="tplc-sec"><h3>${escH(g.label)}<span>${g.items.length} 個・依週次排列，名稱相近的就是可能重複</span></h3>${block(g.items)}</div>`;}
+  list.innerHTML=`<div class="tplc"><nav class="tplc-nav" aria-label="課程">${nav}</nav><div class="tplc-body">${body}</div></div>`;
+}
+function tplRowHtml(t,miss,I){
     const roomLabel=(TPL_ROOM_OPTIONS.find(([v])=>v===t.default_room)||['',''])[1];
     const n=(Array.isArray(t.equipment_items)?t.equipment_items:[]).length;
     const wk=String(t.week??'').trim();
-    const I=iss.get(t),when=tplWhenText(I.weeks,I.cal);
+    const when=tplWhenText(I.weeks,I.cal);
     const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>📅 ${escH(x)}</span>`).join('')}${I.name?`<span>👯 ${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
     const sub=[t.grade,t.teacher,t.class_count?t.class_count+' 班':'',t.group_count?t.group_count+' 組':'',`器材 ${n} 項`].filter(Boolean).map(escH).join('・');
     const health=!tplEqIndex?'':(miss.length
       ?`<div class="tpl-health bad">⚠ 對不到庫存品名 ${miss.length} 項：${miss.slice(0,4).map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}${miss.length>4?'…':''}</div>`
-      :(n?'<div class="tpl-health ok">✔ 器材都對得到庫存</div>':''));
-    html+=`<div class="tpl-row">
+      :'');  // 器材都對得到時不再多佔一行，只有對不到才提示
+    return `<div class="tpl-row">
       <div class="tpl-wk">${wk?`<b>${escH(wk.replace(/^第|週$/g,''))}</b>週`:'—'}</div>
       <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls">${escH(t.subject)}${t.course_type&&t.course_type!=='一般'?'・'+escH(t.course_type):''}</span>`:`<span class="tpl-cls miss">沒填科目</span>`}${(()=>{const n=tplFamilyOf(t).length;return t.version_label||n>1?`<span class="tpl-cls ver">${escH(tplVerName(t))}${n>1?`・共 ${n} 版`:''}</span>`:'';})()}</div>
         ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
-        <div class="sub">${sub}</div>${when?`<div class="tpl-when">🗓️ ${escH(when)}</div>`:''}${health}${issHtml}</div>
+        <div class="sub">${sub}${when?`<span class="tpl-when">・${escH(when)}</span>`:''}</div>${health}${issHtml}</div>
       <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
     </div>`;
-  });
-  list.innerHTML=html;
 }
 // ── 課綱實驗 匯出／匯入（備份、批次編輯用）──────────────────
 async function exportTemplatesXlsx(){
