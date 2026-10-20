@@ -7463,6 +7463,8 @@ function sxWeekItems(w){
     const first=!lessonSeen.has(lk);lessonSeen.add(lk);
     const c=add(key,{subj,type:rtype,title:cardTitle,tpl:multi?null:(t?t.id:null),fixed:false,venues:[],parts:multi?new Map():null},r.grade||(b&&b.grade)||(t&&t.grade)||'',r.teacher||(b&&b.borrower_name)||'',first?1:0,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
+    // 有好幾個版本時，卡片上標出用的是哪一版（例如 115學年度）
+    if(!multi&&t&&tplFamilyOf(t).length>1)c.ver=tplVerName(t);
     if(c.parts){const p=c.parts.get(title)||{title,tpl:t?t.id:null};if(Array.isArray(r.equipment_items)&&r.equipment_items.length)p.items=r.equipment_items;if(r.ref_note!=null)p.refNote=r.ref_note;c.parts.set(title,p);}
     else{
       if(Array.isArray(r.equipment_items)&&r.equipment_items.length)c.items=r.equipment_items;
@@ -7520,7 +7522,7 @@ function sxCardHtml(c,mobile){
   const ci=sxCardArr.push(c)-1;
   const on=(c.tpl||c.parts)?`sxOpenCard(${ci})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
   return `<button type="button" class="${mobile?'pm-item':'ps-chip'}${c.title?'':' noexp'}" style="--c:${col};--t:${tint}" ${on?`onclick="${on}"`:'disabled'}>
-    <span class="sx-ct"><b>${escH(c.title||'未填實驗')}${c.fixed&&!mobile?'<em>固定</em>':''}</b><small>${escH(sxCardSub(c))}</small></span>${c.fixed&&mobile?'<em>固定課</em>':''}</button>`;
+    <span class="sx-ct"><b>${escH(c.title||'未填實驗')}${c.ver?`<span style="font-weight:400;opacity:.7;font-size:.85em"> ${escH(c.ver)}</span>`:''}${c.fixed&&!mobile?'<em>固定</em>':''}</b><small>${escH(sxCardSub(c))}</small></span>${c.fixed&&mobile?'<em>固定課</em>':''}</button>`;
 }
 function sxSemHtml(mobile){
   const cal=semCalendar(spTerm,activeSemester),weeks=cal.weeks;
