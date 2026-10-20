@@ -4672,11 +4672,11 @@ function addTplEquipRow(data){
   div.id='ter-'+id;
   if(data.no_stock){div.dataset.ns='1';div.dataset.nsName=data.name||'';}
   div.innerHTML=`
-    <div class="te-nw"><input type="text" id="te-name-${id}" placeholder="器材名稱（打字會列出庫存品名）" autocomplete="off" value="${escH(data.name||'')}" oninput="teInput(${id})" onfocus="teDrop(${id})" onkeydown="teKey(${id},event)" onblur="teBlur(${id})"><div class="te-dd" id="te-dd-${id}" hidden></div></div>
+    <div class="te-nw"><input type="text" id="te-name-${id}" placeholder="器材或藥品名稱（打字會列出庫存）" autocomplete="off" value="${escH(data.name||'')}" oninput="teInput(${id})" onfocus="teDrop(${id})" onkeydown="teKey(${id},event)" onblur="teBlur(${id})"><div class="te-dd" id="te-dd-${id}" hidden></div></div>
     <input type="text" id="te-spec-${id}" placeholder="規格" style="flex:1;min-width:70px" value="${escH(data.spec||'')}">
     <input type="number" id="te-qty-${id}" placeholder="數量" min="0" style="flex:0 0 70px" value="${escH(data.quantity??'')}">
     <input type="text" id="te-unit-${id}" placeholder="單位" style="flex:0 0 60px" value="${escH(data.unit||'個')}">
-    <select id="te-room-${id}" style="flex:1;min-width:80px">${TPL_ROOM_OPTIONS.map(([v,l])=>`<option value="${escH(v)}" ${v===data.room?'selected':''}>${escH(l)}</option>`).join('')}</select>
+    <select id="te-room-${id}" style="flex:1;min-width:80px" onchange="teStatus(${id})">${TE_ROOM_OPTS.map(([v,l])=>`<option value="${escH(v)}" ${v===data.room?'selected':''}>${escH(l)}</option>`).join('')}</select>
     <input type="text" id="te-note-${id}" placeholder="備註" style="flex:1;min-width:80px" value="${escH(data.note||'')}">
     <button class="period-setting-remove" onclick="removeTplEquipRow(${id})">✕</button>
     <div class="te-st" id="te-st-${id}"></div>`;
@@ -4759,6 +4759,7 @@ function ctMove(i,d){
   });
 }
 function newTemplate(){
+  tplChemsEnsure();
   clearTemplateForm();
   tplSheet(true);setTimeout(()=>document.getElementById('tpl-name')?.focus(),300);
 }
@@ -5008,10 +5009,28 @@ function tplBuildEqIndex(eqs){
   const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
   return {norm,list:(Array.isArray(eqs)?eqs:[]).map(e=>({n:norm(e.name),full:norm(e.name)+norm(e.spec)}))};
 }
+// ── 課綱實驗也可以放藥品（2026-10-20）：器材那一列的「科別」選「藥品」，或名稱跟藥品庫一模一樣 ──
+// 藥品比對：中文名、英文名、俗名（用、或,分開）完全一樣才算，避免「硫酸」對到「硫酸銅」
+const TE_ROOM_OPTS=[...TPL_ROOM_OPTIONS,['chemicals','藥品']];
+let tplChems=null;
+async function tplLoadChems(force){
+  if(tplChems&&!force)return tplChems;
+  try{const r=await sb('GET','chemicals',{order:'name_zh'});tplChems=Array.isArray(r)?r:null;}catch(_){tplChems=null;}
+  return tplChems;
+}
+// 編輯視窗打開時藥品清單還沒載入：載入後重新檢查每一列
+function tplChemsEnsure(){if(tplChems||tplChemList().length)return;tplLoadChems().then(()=>tplEquipRows.forEach(teStatus));}
+function tplChemList(){return (typeof allAdminChems!=='undefined'&&Array.isArray(allAdminChems)&&allAdminChems.length)?allAdminChems:(tplChems||[]);}
+function tplChemNames(c){return [c.name_zh,c.name_en,...String(c.alias||'').split(/[、,，/／]/)].map(x=>String(x||'').trim()).filter(Boolean);}
+function tplChemOf(name){const k=emKey(name);if(!k)return null;return tplChemList().find(c=>tplChemNames(c).some(n=>emKey(n)===k))||null;}
+function tplChemLine(c){const b=parseInt(c.bottles_left);return `藥品${c.is_available===false?'・停用':''}${Number.isFinite(b)?'・剩 '+b+' 瓶':''}`;}
 function tplMissItems(t){
   if(!tplEqIndex)return [];
-  const {norm,list}=tplEqIndex;
-  return (Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>{const n=norm(it&&it.name);if(!n||it.no_stock)return false;return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));});
+  const {norm,list}=tplEqIndex,chemOn=tplChemList().length>0;
+  return (Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>{const n=norm(it&&it.name);if(!n||it.no_stock)return false;
+    if(chemOn&&tplChemOf(it.name))return false;
+    if(it.room==='chemicals')return chemOn; // 標成藥品但藥品庫找不到
+    return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));});
 }
 async function loadTemplates(){
   const list=document.getElementById('templateList');
@@ -5019,7 +5038,8 @@ async function loadTemplates(){
   try{
     const [rows,eqs]=await Promise.all([
       sb('GET','course_templates',{order:'created_at.desc'}),
-      (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null)
+      (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null),
+      tplLoadChems()
     ]);
     tplSetAll(rows);
     await loadCourseTypes();
@@ -5091,7 +5111,7 @@ async function exportTemplatesXlsx(){
     ws.addRow(headers);
     ws.getRow(1).font={bold:true};
     headers.forEach((h,i)=>{ws.getColumn(i+1).width=Math.max(10,h.length*2);});
-    const roomLabel=r=>(TPL_ROOM_OPTIONS.find(([v])=>v===r)||['',r||''])[1];
+    const roomLabel=r=>(TE_ROOM_OPTS.find(([v])=>v===r)||['',r||''])[1];
     templates.forEach(t=>{
       const items=Array.isArray(t.equipment_items)?t.equipment_items:[];
       const base=[t.id,t.name||'',t.category||'',t.grade||'',t.teacher||'',t.month||'',t.week||'',t.class_count??'',t.group_count??'',roomLabel(t.default_room)];
@@ -5114,7 +5134,7 @@ async function exportTemplatesXlsx(){
   }catch(e){showToast('匯出失敗：'+e.message,'error');}
 }
 function tplRoomLabelToCode(label){
-  const found=TPL_ROOM_OPTIONS.find(([,l])=>l===(label||'').trim());
+  const found=TE_ROOM_OPTS.find(([,l])=>l===(label||'').trim());
   return found?found[0]:'';
 }
 function handleTemplateImport(input){
@@ -5209,6 +5229,7 @@ async function confirmTemplateImport(){
 }
 function editTemplate(id){
   const t=tplById(id);if(!t)return;
+  tplChemsEnsure();
   editingTemplateId=id;
   document.getElementById('tpl-name').value=t.name||'';
   document.getElementById('tpl-category').value=t.category||'';
@@ -9738,47 +9759,59 @@ async function emUndoNo(k){
 // ── 課綱實驗編輯：器材名稱邊打邊找庫存，並標出有沒有對到 ──
 const TE_ROOM_SHORT={'Chemistry':'化學','Biology':'生物','Physics':'物理','Geoscience':'地科','Physics Chemistry':'理化','TeachingMaterialRoom':'教具室'};
 let teHi={};
-function teFind(q,lim){
-  const eqn=emEqNames(),k=emKey(q),c=emCanon(q);if(!k)return [];
-  return eqn.map(e=>{const ek=emKey(e.name);let s=ek===k?2:ek.startsWith(k)?1.6:ek.includes(k)?1.3:emScore(c,e.canon);return {e,s};})
-    .filter(x=>x.s>=0.45).sort((a,b)=>b.s-a.s||b.e.avail-a.e.avail).slice(0,lim||8).map(x=>x.e);
+function teFind(q,lim,room){
+  const eqn=room==='chemicals'?[]:emEqNames(),k=emKey(q),c=emCanon(q);if(!k)return [];
+  const eq=eqn.map(e=>{const ek=emKey(e.name);let s=ek===k?2:ek.startsWith(k)?1.6:ek.includes(k)?1.3:emScore(c,e.canon);return {e,s};});
+  // 藥品：中文名、英文名、俗名、CAS 號都可以找
+  const ch=tplChemList().map(x=>{const ns=tplChemNames(x).map(emKey);let s=ns.includes(k)?2.1:ns.some(n=>n.startsWith(k))?1.7:ns.some(n=>n.includes(k))?1.35:(x.cas&&String(x.cas).replace(/\s/g,'').includes(q.trim())?1.5:0);
+    return {e:{name:(x.name_zh||'').trim(),chem:x,avail:parseInt(x.bottles_left)||0},s};}).filter(x=>x.e.name);
+  return [...eq,...ch].filter(x=>x.s>=0.45).sort((a,b)=>b.s-a.s||b.e.avail-a.e.avail).slice(0,lim||8).map(x=>x.e);
 }
-function teEqLine(e){return `${[...e.rooms].map(r=>TE_ROOM_SHORT[r]||r).join('・')}・可借 ${e.avail}`;}
+function teEqLine(e){return e.chem?tplChemLine(e.chem):`${[...e.rooms].map(r=>TE_ROOM_SHORT[r]||r).join('・')}・可借 ${e.avail}`;}
 function teStatus(id){
   const inp=document.getElementById('te-name-'+id),st=document.getElementById('te-st-'+id),row=document.getElementById('ter-'+id);
   if(!inp||!st)return;
   const n=inp.value.trim();
   if(!n){st.innerHTML='';st.className='te-st';return;}
-  const eqn=emEqNames(),exact=eqn.find(e=>e.name===n);
+  const eqn=emEqNames(),room=document.getElementById('te-room-'+id)?.value,chem=tplChemOf(n),exact=room==='chemicals'?null:eqn.find(e=>e.name===n);
+  if(chem&&(room==='chemicals'||!exact)){st.className='te-st ok';st.innerHTML=`✓ 藥品庫有：${escH(chem.name_zh||n)}・${escH(tplChemLine(chem))}${room!=='chemicals'?`　<button type="button" onclick="teSetChem(${id})">科別改成藥品</button>`:''}`;return;}
   if(row&&row.dataset.ns==='1'&&row.dataset.nsName===n){st.className='te-st no';st.innerHTML=`庫存沒有（已標記，老師借用時會請他自備）`;return;}
   if(exact){st.className='te-st ok';st.innerHTML=`✓ 庫存有：${escH(teEqLine(exact))}`;return;}
-  const sug=teFind(n,3);
-  const loose=!tplMissItems({equipment_items:[{name:n}]}).length;
+  const sug=teFind(n,3,room);
+  const loose=!tplMissItems({equipment_items:[{name:n,room}]}).length;
   st.className='te-st '+(loose?'warn':'bad');
-  st.innerHTML=`${loose?'名稱跟庫存不完全一樣':'⚠ 庫存找不到'}${sug.length?'，是不是：':''}${sug.map(e=>`<button type="button" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)})">${escH(e.name)}</button>`).join('')}`;
+  st.innerHTML=`${loose?'名稱跟庫存不完全一樣':room==='chemicals'?'⚠ 藥品庫找不到':'⚠ 庫存找不到'}${sug.length?'，是不是：':''}${sug.map(e=>`<button type="button" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)})">${escH(e.name)}</button>`).join('')}`;
 }
 function teInput(id){teHi[id]=0;teDrop(id);teStatus(id);}
 function teDrop(id){
   const inp=document.getElementById('te-name-'+id),dd=document.getElementById('te-dd-'+id);if(!inp||!dd)return;
-  const q=inp.value.trim(),list=q?teFind(q,8):[];
+  const q=inp.value.trim(),list=q?teFind(q,8,document.getElementById('te-room-'+id)?.value):[];
   if(!list.length||(list.length===1&&list[0].name===q)){dd.hidden=true;dd.innerHTML='';return;}
   const hi=Math.min(teHi[id]||0,list.length-1);
-  dd.innerHTML=list.map((e,i)=>`<button type="button" class="${i===hi?'hi':''}" data-n="${escH(e.name)}" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)})"><b>${escH(e.name)}</b><small>${escH(teEqLine(e))}</small></button>`).join('');
+  dd.innerHTML=list.map((e,i)=>`<button type="button" class="${i===hi?'hi':''}" data-n="${escH(e.name)}" data-c="${e.chem?1:''}" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)},${e.chem?1:0})"><b>${e.chem?'🧪 ':''}${escH(e.name)}</b><small>${escH(teEqLine(e))}</small></button>`).join('');
   dd.hidden=false;
 }
 function teKey(id,ev){
   const dd=document.getElementById('te-dd-'+id);if(!dd||dd.hidden)return;
   const n=dd.children.length;
   if(ev.key==='ArrowDown'||ev.key==='ArrowUp'){ev.preventDefault();teHi[id]=((teHi[id]||0)+(ev.key==='ArrowDown'?1:-1)+n)%n;teDrop(id);}
-  else if(ev.key==='Enter'){ev.preventDefault();const b=dd.children[teHi[id]||0];if(b)tePick(id,b.dataset.n);}
+  else if(ev.key==='Enter'){ev.preventDefault();const b=dd.children[teHi[id]||0];if(b)tePick(id,b.dataset.n,b.dataset.c?1:0);}
   else if(ev.key==='Escape'){ev.stopPropagation();dd.hidden=true;}
 }
 function teBlur(id){setTimeout(()=>{const dd=document.getElementById('te-dd-'+id);if(dd)dd.hidden=true;},120);}
-function tePick(id,name){
+function tePick(id,name,chem){
   const inp=document.getElementById('te-name-'+id);if(!inp)return;
   inp.value=name;const dd=document.getElementById('te-dd-'+id);if(dd)dd.hidden=true;
+  if(chem){teSetChem(id);return;}
   const e=emEqNames().find(x=>x.name===name),sel=document.getElementById('te-room-'+id);
+  if(sel&&sel.value==='chemicals')sel.value='';
   if(e&&sel&&e.rooms.size===1){const r=[...e.rooms][0];if([...sel.options].some(o=>o.value===r))sel.value=r;}
+  teStatus(id);
+}
+// 這一列改成藥品：科別設成「藥品」；單位還是預設的「個」就改成「瓶」
+function teSetChem(id){
+  const sel=document.getElementById('te-room-'+id),u=document.getElementById('te-unit-'+id);
+  if(sel)sel.value='chemicals';if(u&&(!u.value.trim()||u.value.trim()==='個'))u.value='瓶';
   teStatus(id);
 }
 // ── 學期實驗紀錄（後台）：這學期每一週做了什麼實驗；可以新增、補填、修改、刪除，也可以決定預約要不要出現在前台學期頁 ──
