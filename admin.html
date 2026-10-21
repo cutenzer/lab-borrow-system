@@ -1816,6 +1816,7 @@
       </label>
     </div>
     <div id="stkBar"></div>
+    <div id="eqQuickBar"></div>
     <div id="adminEquipList"><div class="empty"><div class="empty-icon">📦</div><p>點重新整理載入</p></div></div>
     <div class="stk-savebar" id="stkSaveBar">
       <button class="btn btn-secondary btn-sm" onclick="markPageSame()" title="這一頁還沒改數量、也還沒按過的，全部當作數量沒變">✓ 本頁其餘都無變動</button>
@@ -2099,7 +2100,8 @@ function renderStats(){
   });
   const availOf=e=>Math.max(0,(parseInt(e.total)||0)-(borrowedMap[e.room+'__'+e.name]||0));
   const cutoff=Date.now()-STK_CYCLE_DAYS*864e5;
-  const lowStock=allEquipment.filter(e=>e.is_available!==false&&availOf(e)<=2).length;
+  // 跟器材頁「只看耗材庫存不足」同一個規則，數字才對得起來（2026-10-21）
+  const lowStock=allEquipment.filter(e=>e.is_available!==false&&adminIsStockTracked(e)&&availOf(e)<=Math.max(2,Math.ceil((parseInt(e.total)||0)*0.2))).length;
   const notCounted=allEquipment.filter(e=>e.is_available!==false&&eqCountedMs(e)<cutoff).length;
   const locMismatch=allEquipment.filter(e=>equipLocationMismatches(e).length>0).length;
   // 總數：停用的器材／已處理的藥品不算
@@ -2137,8 +2139,8 @@ function renderStats(){
     group('庫存',[
       {num:fmt(eqOn.length),label:'器材種類',short:'器材種類',color:'#1f5b4c',tab:'equipment',sub:`合計 ${fmt(eqPieces)} 件`},
       {num:chOn?fmt(chOn.length):'─',label:'藥品種類',short:'藥品種類',color:'#1f5b4c',tab:'chemicals',sub:chOn?`合計 ${fmt(chBottles)} 瓶`:'讀取失敗'},
-      {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',tab:'equipment'},{num:notCounted,label:'超過一年未盤點',short:'一年未盤點',color:'var(--text2)',tab:'equipment'},
-      {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',tab:'equipment'},
+      {num:lowStock,label:'庫存不足器材',short:'庫存不足',color:'#c2410c',fn:"eqJump('low')"},{num:notCounted,label:'超過一年未盤點',short:'一年未盤點',color:'var(--text2)',fn:"eqJump('old')"},
+      {num:locMismatch,label:'位置代碼異常',short:'位置異常',color:'var(--danger)',fn:"eqJump('loc')"},
     ]);
   // 分頁紅點：待審核 / 尚未歸還(逾期) / 保證金(待收+待退) / 場地待審核
   // 器材借用（側欄一項）：要處理的＝待審核＋逾期＋保證金待收／待退；各自的數字在進去後的分頁上
@@ -8269,6 +8271,17 @@ function equipLocationMismatches(e){
   return bad;
 }
 let inlineEditEquipId=null;
+// 總覽「庫存」卡片點進來：清掉原本的搜尋／房間，套上對應的篩選，並切到「全部」
+// （原本只切到器材頁，會停在「待盤點」而且沒篩選，看起來像跑錯地方）（2026-10-21）
+let eqQuick='';
+function eqJump(kind){
+  const q=document.getElementById('adminEquipSearch'),rm=document.getElementById('adminEquipRoomFilter'),low=document.getElementById('adminEquipLowStock');
+  if(q)q.value='';if(rm)rm.value='';if(low)low.checked=kind==='low';
+  eqQuick=kind==='low'?'':kind;
+  stkView='all';adminEquipPage=1;   // 不寫進 localStorage，下次自己進器材頁還是原本習慣的分頁
+  showTab('equipment');
+  window.scrollTo({top:0});
+}
 function filterAdminEquip(){
   const q=(document.getElementById('adminEquipSearch')?.value||'').toLowerCase();
   const room=document.getElementById('adminEquipRoomFilter')?.value||'';
@@ -8277,10 +8290,14 @@ function filterAdminEquip(){
     if(room&&e.room!==room)return false;
     if(q&&!((e.name||'').toLowerCase().includes(q)||(e.spec||'').toLowerCase().includes(q)||(e.alias||'').toLowerCase().includes(q)))return false;
     if(lowStockOnly&&!adminIsLowStock(e))return false;
+    if(eqQuick==='old'&&!(e.is_available!==false&&eqCountedMs(e)<Date.now()-STK_CYCLE_DAYS*864e5))return false;
+    if(eqQuick==='loc'&&!equipLocationMismatches(e).length)return false;
     return true;
   });
   const doneN=base.filter(stkIsDone).length;
   renderStkBar(doneN,base.length);
+  const qb=document.getElementById('eqQuickBar');
+  if(qb)qb.innerHTML=eqQuick?`<div class="eq-quick">只顯示：<b>${eqQuick==='old'?'超過一年未盤點':'位置代碼開頭跟房間對不上'}</b>（${base.length} 項）<button type="button" class="btn btn-secondary btn-sm" onclick="eqQuick='';adminEquipPage=1;filterAdminEquip()">✕ 顯示全部</button></div>`:'';
   const items=base.filter(e=>stkView==='all'?true:(stkView==='done'?stkIsDone(e):!stkIsDone(e)));
   if(stkSort==='loc')items.sort(stkLocCompare);
   window._stkItems=items;
@@ -9782,6 +9799,7 @@ async function doDeleteHighlight(id){
 .srg-m b{color:#8a5a00}
 .srg-a{display:flex;gap:6px;align-items:center;margin-top:2px}
 .srg-a .sr-del{margin-left:auto}
+.eq-quick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;background:#fbf1dc;border-radius:8px;padding:6px 10px;margin-bottom:8px}
 .srg-detail .sr-row{grid-template-columns:110px minmax(0,1fr) auto}
 .srg-detail .sr-row .sr-tags{grid-column:2}
 .srg-detail .sr-row .sr-act{grid-column:1/-1;justify-content:flex-start}
@@ -9804,6 +9822,11 @@ async function doDeleteHighlight(id){
 .sr-eqbox{border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-top:6px}
 .sr-eqrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:14px}
 .sr-eqrow .n{flex:1;min-width:0}.sr-eqrow .n small{color:var(--text2);margin-left:4px}
+.sr-df{font-style:normal;font-size:11px;border-radius:5px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.sr-df.add{background:#e6f2ea;color:#1f5b4c}.sr-df.chg{background:#fbf1dc;color:#8a5a00}
+.sr-gone{font-size:12.5px;color:var(--text2);margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.sr-gone button{font:inherit;font-size:12.5px;border:1px dashed var(--border);background:none;border-radius:6px;padding:2px 7px;color:var(--text2);cursor:pointer;text-decoration:line-through}
+.sr-gone button:hover{text-decoration:none;color:var(--text)}
 .sr-eqrow .q{display:flex;align-items:center;gap:4px}.sr-eqrow .q b{min-width:28px;text-align:center}
 .sr-eqrow .q button,.sr-eqrow .x{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:28px;height:28px;font:inherit;cursor:pointer}
 .sr-eqrow .x{background:none;border:0;color:var(--text2)}
@@ -10180,7 +10203,7 @@ function srGroupHtml(g){
     <div class="srg-t">${tl.length?escH(tl.join('／')):'<span class="srg-none">還沒填實驗</span>'}${tl.length>1?'<span class="srg-warn">這組有不同實驗，請確認</span>':''}</div>
     <div class="srg-cls">${chips}</div>
     <div class="srg-m">${escH(whos.slice(0,3).join('、')+(whos.length>3?' 等':''))}${whos.length?'・':''}${n} 節${g.todo.length?`・<b>${g.todo.length} 節還沒填</b>`:''}${adj?`・器材／備註有調整 ${adj} 筆`:''}</div>
-    <div class="srg-a"><button type="button" class="btn btn-${g.todo.length?'primary':'secondary'} btn-sm" onclick="srGFill(${gi})">${!g.runs.length?'填實驗':g.todo.length?`補填 ${g.todo.length} 節`:'換實驗'}</button><button type="button" class="btn btn-secondary btn-sm" onclick="srGOpen(${gi})">明細</button>${g.runs.length?`<button type="button" class="sr-del" onclick="srGDel(${gi})">刪除</button>`:''}</div>
+    <div class="srg-a"><button type="button" class="btn btn-${g.todo.length?'primary':'secondary'} btn-sm" onclick="srGFill(${gi})">${!g.runs.length?'填實驗':g.todo.length?`補填 ${g.todo.length} 節`:'換實驗'}</button>${g.runs.length?`<button type="button" class="btn btn-secondary btn-sm" onclick="srGEq(${gi})" title="這次用了哪些器材、跟課綱差在哪；可以直接改">器材</button>`:''}<button type="button" class="btn btn-secondary btn-sm" onclick="srGOpen(${gi})">明細</button>${g.runs.length?`<button type="button" class="sr-del" onclick="srGDel(${gi})">刪除</button>`:''}</div>
   </div>`;
 }
 // 明細：這張卡裡每一節（可以個別修改、刪除、升級版本）
@@ -10226,6 +10249,70 @@ async function srGFillSave(){
       srRuns.forEach(r=>{if(ids.includes(r.id))Object.assign(r,patch);});
     }
     closeModal();showToast('已儲存','success');srRender();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
+}
+// ── 卡片上的「器材」（2026-10-21）：這組（同一週、同年段、同科目）這次用了哪些器材、跟課綱差在哪，可以直接改 ──
+// 1. 套了課綱實驗：從這次的清單（沒調整過就是課綱的）開始改；存檔＝這組每一節都用這份
+// 2. 只有打名稱、沒套課綱實驗：可以直接加器材，存檔時用這個名稱建一個新的課綱實驗，這組改成套用它
+//    （已經有同名、同年段的課綱實驗，就直接套那個，不重複建）
+const SR_SUBJ_ROOM={'物理':'Physics','化學':'Chemistry','生物':'Biology','地科':'Geoscience','理化':'Physics Chemistry'};
+async function srEqPoolLoad(){
+  // 器材頁沒開過時另外抓一份精簡清單（不動器材頁自己的資料）
+  if(!(allAdminEquipment||[]).length&&!window._srEqPool){try{const rows=await sb('GET','equipment',{select:'name,spec,unit,room'});window._srEqPool=Array.isArray(rows)?rows:[];}catch(_){window._srEqPool=[];}}
+}
+async function srGEq(gi){
+  const g=srGroupArr[gi];if(!g||!g.runs.length)return;
+  const runs=g.runs.map(it=>it.run);
+  const tids=[...new Set(runs.map(r=>r.template_id).filter(Boolean).map(String))];
+  const titles=[...new Set(runs.filter(r=>!r.template_id).map(r=>String(r.title||'').trim()).filter(Boolean))];
+  if(tids.length+titles.length>1){showToast('這組有不同實驗：先用「換實驗」統一，或到「明細」一筆一筆改','error');return;}
+  await srEqPoolLoad();
+  let t=tids.length?srTpl(tids[0]):null,newName='';
+  if(!t){
+    newName=titles[0]||'';if(!newName){showToast('這組還沒填實驗名稱','error');return;}
+    const same=tplSameAs(newName,g.lv,g.type);if(same.length){t=same[0];newName='';}
+  }
+  const link=!!t&&!tids.length;   // 原本只有名稱，找到同名課綱實驗 → 存檔時改成套用它
+  const base=t?(Array.isArray(t.equipment_items)?t.equipment_items:[]).map(srEqClean).filter(x=>x.name):[];
+  const baseNote=t?String(t.reference_note||''):'';
+  // 這組每一節自己的調整；都一樣就用那份，不一樣先拿第一筆，提醒存檔後會統一
+  const owns=t&&!link?runs.filter(r=>Array.isArray(r.equipment_items)||r.ref_note!=null):[];
+  const sig=r=>srEqKey(Array.isArray(r.equipment_items)?r.equipment_items:base)+'|'+(r.ref_note!=null?r.ref_note:baseNote);
+  const mixed=new Set(runs.map(sig)).size>1;
+  const first=owns[0];
+  const items=first&&Array.isArray(first.equipment_items)?first.equipment_items.map(srEqClean):base;
+  const note=first&&first.ref_note!=null?String(first.ref_note):baseNote;
+  srEq={tid:t?t.id:null,items:items.map(x=>({...x})),base:srEqKey(base),q:'',ver:t?tplVerName(t):'',note,baseNote,newName,link,mixed:t&&!link&&mixed?runs.length:0,tname:t?(t.name||'').trim():''};
+  window._srEqG=g;
+  showModal(`${srGName(g)}：器材`,`<div class="hint" style="margin-bottom:4px">共 ${runs.length} 節・${escH(t?(t.name||'').trim():newName)}　存檔後這 ${runs.length} 節都用這份清單</div><div id="srEqBox"></div>`,
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:newName?'建立課綱實驗並儲存':'儲存',cls:'btn-primary',fn:'srGEqSave()'}]);
+  srEqRender();
+}
+async function srGEqSave(){
+  const g=window._srEqG;if(!g||!srEq)return;
+  const ids=g.runs.map(it=>it.run.id).filter(Number.isInteger);if(!ids.length)return;
+  const list=srEq.items.map(srEqClean).filter(x=>x.name&&x.quantity>0).slice(0,SR_EQ_MAX);
+  const note=String(srEq.note||'').slice(0,2000);
+  const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  try{
+    let patch;
+    if(srEq.newName){
+      if(!list.length&&!note.trim()){showToast('至少加一項器材或寫備註','error');if(btn){btn.disabled=false;btn.textContent='建立課綱實驗並儲存';}return;}
+      const id='TPL-'+Date.now(),r0=g.runs[0].run;
+      await sb('POST','course_templates',{body:{id,family_id:id,name:srEq.newName.slice(0,60),subject:SR_SUBJ.includes(g.subj)?g.subj:null,course_type:g.type||null,
+        grade:g.lv||String(r0.grade||'').slice(0,20),teacher:String(r0.teacher||'').slice(0,30),default_room:SR_SUBJ_ROOM[g.subj]||'',
+        equipment_items:list,reference_note:note,version_label:tplCurLabel(new Date(r0.run_date+'T00:00:00')),updated_at:new Date().toISOString()},prefer:'return=minimal'});
+      tplSetAll(await sb('GET','course_templates',{order:'name'}));
+      // 新的課綱實驗就是這份清單，紀錄本身不用再存調整
+      patch={template_id:id,title:null,equipment_items:null,ref_note:null};
+    }else{
+      // 跟課綱一樣 → 清掉調整（照課綱）
+      patch={equipment_items:srEqKey(list)===srEq.base?null:list,ref_note:note===srEq.baseNote?null:note};
+      if(srEq.link)Object.assign(patch,{template_id:String(srEq.tid),title:null});
+    }
+    for(let i=0;i<ids.length;i+=100)await sb('PATCH','experiment_runs',{filter:'id=in.('+ids.slice(i,i+100).join(',')+')',body:patch,prefer:'return=minimal'});
+    srRuns.forEach(r=>{if(ids.includes(r.id))Object.assign(r,patch);});
+    closeModal();showToast(srEq.newName?`已建立課綱實驗「${srEq.newName}」，這 ${ids.length} 節已套用`:'已儲存','success');srEq=null;srRender();
   }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
 }
 function srGDel(gi){const g=srGroupArr[gi];if(!g||!g.runs.length)return;srSel=new Set(g.runs.map(it=>it.run.id));srBulkDel();}
@@ -10372,9 +10459,8 @@ function srEqTpl(){
   return (own&&srTplLabel(own)===tv)?own:allTemplates.find(x=>srTplLabel(x)===tv)||null;
 }
 async function srEqOpen(){
-  // 器材頁沒開過時另外抓一份精簡清單（不動器材頁自己的資料）
-  if(!(allAdminEquipment||[]).length&&!window._srEqPool){try{const rows=await sb('GET','equipment',{select:'name,spec,unit,room'});window._srEqPool=Array.isArray(rows)?rows:[];}catch(_){window._srEqPool=[];}}
-  const t=srEqTpl();if(!t){showToast('先選課綱實驗，才帶得出器材','error');return;}
+  await srEqPoolLoad();
+  const t=srEqTpl();if(!t){showToast(document.getElementById('sr-tpl')?.value.trim()?'這個名稱還沒有課綱實驗：回到卡片按「器材」，可以直接加器材並建立':'先選課綱實驗，才帶得出器材','error');return;}
   const r=srCtx&&srCtx.id!=null?srRuns.find(x=>x.id===srCtx.id):null;
   const base=(Array.isArray(t.equipment_items)?t.equipment_items:[]).map(srEqClean).filter(x=>x.name);
   const mine=r&&String(r.template_id)===String(t.id)&&Array.isArray(r.equipment_items)?r.equipment_items.map(srEqClean):null;
@@ -10386,11 +10472,26 @@ function srEqRender(){
   const box=document.getElementById('srEqBox'),tog=document.getElementById('srEqTog');if(!box||!srEq)return;
   if(tog)tog.style.display='none';
   const changed=srEqKey(srEq.items)!==srEq.base||srEq.note!==srEq.baseNote;
-  box.innerHTML=`<div class="sr-eqbox"><div class="hint" style="margin:0 0 4px">課綱「${escH(srEq.ver)}」的清單${changed?'・<b style="color:#8a5a00">這次已調整</b>':''}</div>
-    ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><input type="number" class="sr-qn" inputmode="numeric" min="0" max="999" value="${it.quantity}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="srEqSet(${i},this.value)"><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+  // 跟課綱比：哪些是這次加的、數量改了、這次沒用（2026-10-21）
+  const ik=it=>it.name+'|'+(it.spec||'');
+  const baseList=srEq.newName?[]:JSON.parse(srEq.base||'[]'),bm=new Map(baseList.map(it=>[ik(it),it])),im=new Set(srEq.items.map(ik));
+  const mark=it=>{if(srEq.newName)return '';const o=bm.get(ik(it));return !o?'<em class="sr-df add">這次加的</em>':o.quantity!==it.quantity?`<em class="sr-df chg">課綱 ${o.quantity}</em>`:'';};
+  const gone=baseList.filter(it=>!im.has(ik(it)));
+  const head=srEq.newName?`「${escH(srEq.newName)}」還沒有課綱實驗。加好器材後存檔，會用這個名稱建一個新的課綱實驗，這組改成套用它。`
+    :`課綱「${escH(srEq.tname?srEq.tname+'・':'')}${escH(srEq.ver)}」的清單${changed?'・<b style="color:#8a5a00">這次已調整</b>':''}${srEq.link?'<br>這組原本只有名稱，找到同名的課綱實驗，存檔後會改成套用它。':''}${srEq.mixed?`<br><b style="color:#8a5a00">這組 ${srEq.mixed} 節的調整不一樣</b>，下面是第一筆的；存檔後全部統一成這份。`:''}`;
+  box.innerHTML=`<div class="sr-eqbox"><div class="hint" style="margin:0 0 4px">${head}</div>
+    ${srEq.items.map((it,i)=>`<div class="sr-eqrow"><span class="n">${escH(it.name)}${it.spec?`<small>${escH(it.spec)}</small>`:''}${mark(it)}</span><span class="q"><button type="button" onclick="srEqQty(${i},-1)" aria-label="減少">−</button><input type="number" class="sr-qn" inputmode="numeric" min="0" max="999" value="${it.quantity}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="srEqSet(${i},this.value)"><button type="button" onclick="srEqQty(${i},1)" aria-label="增加">+</button></span><button type="button" class="x" onclick="srEqQty(${i},-9999)" aria-label="刪掉">✕</button></div>`).join('')||'<div class="hint">沒有器材</div>'}
+    ${gone.length?`<div class="sr-gone">這次沒用（課綱有）：${gone.map((it,i)=>`<button type="button" onclick="srEqBack(${i})" title="加回來">${escH(it.name)}×${it.quantity} ＋</button>`).join('')}</div>`:''}
     ${srEq.items.length<SR_EQ_MAX?`<input type="search" id="srEqQ" placeholder="＋ 加別的器材（輸入名稱）" maxlength="40" autocomplete="off" value="${escH(srEq.q||'')}" oninput="srEqSearch(this.value)" style="margin-top:6px"><div id="srEqHits"></div>`:''}
     <label class="sr-notel">備註（藥品、共用品項、注意事項）</label><textarea id="srEqNote" rows="5" maxlength="2000" oninput="srEq.note=this.value">${escH(srEq.note)}</textarea>
-    ${changed?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEq.note=srEq.baseNote;srEqRender()">還原成課綱的清單和備註</button>`:''}</div>`;
+    ${changed&&!srEq.newName?`<button type="button" class="sr-eqtog" onclick="srEq.items=JSON.parse(srEq.base);srEq.note=srEq.baseNote;srEqRender()">還原成課綱的清單和備註</button>`:''}</div>`;
+}
+// 課綱有、這次被刪掉的：點一下加回來（照課綱的數量）
+function srEqBack(i){
+  if(!srEq||srEq.newName||srEq.items.length>=SR_EQ_MAX)return;
+  const ik=it=>it.name+'|'+(it.spec||''),im=new Set(srEq.items.map(ik));
+  const it=JSON.parse(srEq.base||'[]').filter(x=>!im.has(ik(x)))[i];if(!it)return;
+  srEq.items.push(srEqClean(it));srEqRender();
 }
 function srEqQty(i,d){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,it.quantity+d));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
 function srEqSet(i,v){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Math.max(0,Math.min(999,parseInt(v)||0));if(it.quantity===0)srEq.items.splice(i,1);srEqRender();}
