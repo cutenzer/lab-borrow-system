@@ -10220,7 +10220,7 @@ function srPlanTableHtml(L){
   const colsN=L.cols.reduce((a,c)=>a+c.heads.length,0);
   const head=`<tr><th class="m">月份</th><th class="w">週次</th>${L.cols.map(c=>c.heads.map(h=>`<th>${escH(h)}</th>`).join('')).join('')}<th class="nt">備註</th></tr>`;
   const body=L.rows.map((r,i)=>{
-    let h='<tr>';
+    let h=`<tr${r.exam?' class="exam"':''}>`;
     if(i===0||L.rows[i-1].mon!==r.mon){let n=1;while(L.rows[i+n]&&L.rows[i+n].mon===r.mon)n++;h+=`<td class="m" rowspan="${n}">${escH(r.mon)}</td>`;}
     h+=`<td class="w">${escH(r.name)}</td>`;
     L.cols.forEach(c=>c.grid.forEach(g=>{
@@ -10237,8 +10237,10 @@ const SRP_CSS=`.srp{border-collapse:collapse;width:100%;table-layout:fixed;font-
 .srp th{background:#e9edf1;font-weight:700;text-align:center}
 .srp .m,.srp .w{text-align:center;white-space:nowrap;width:64px}.srp td.m{color:#555}.srp .nt{width:72px;text-align:center;color:#8a5a00}
 .srp td.ex{line-height:1.35}.srp td.span{background:#f3f5f7}
-.srp td.ex div+div{border-top:1px dashed #c8cdd2;margin-top:2px;padding-top:2px}`;
+.srp td.ex div+div{border-top:1px dashed #c8cdd2;margin-top:2px;padding-top:2px}
+.srp tr.exam td:not(.span):not(.m){background:#fbecd0}.srp tr.exam td.nt{font-weight:700}`;
 function srPlanRender(box,cal){
+  if(!document.getElementById('srpCss')){const st=document.createElement('style');st.id='srpCss';st.textContent=SRP_CSS;document.head.appendChild(st);}
   const L=srPlanLayout(srView==='grade'?'grade':'wk');
   const warn=L.todo?`<b style="color:#8a5a00">還有 ${L.todo} 節沒填實驗</b>，不會出現在表上・<button type="button" class="sr-jump" onclick="srView='card';srMode='empty';srRender()">去補填</button>`:'✓ 這學期的預約都填好實驗了';
   box.innerHTML=`${srBarHtml(-1,cal.weeks)}
@@ -10246,7 +10248,6 @@ function srPlanRender(box,cal){
       <span style="flex:1"></span>
       <button type="button" class="btn btn-secondary btn-sm" onclick="srPlanExcel()">下載 Excel</button>
       <button type="button" class="btn btn-primary btn-sm" onclick="srPlanPrint()">列印（A3 橫式）</button></div>
-    ${document.getElementById('srpCss')?'':`<style id="srpCss">${SRP_CSS}</style>`}
     ${L.groups?`<div class="srp-wrap"><div class="srp-title">${escH(L.title)}</div>${srPlanTableHtml(L)}</div>`:'<div class="empty"><p>這學期還沒有已填的實驗</p></div>'}`;
 }
 // 列印：另外開一個只有表格的隱藏頁面印，不會把後台的選單一起印出來
@@ -10281,6 +10282,9 @@ async function srPlanExcel(){
     const R=i+3;
     for(let k=1;k<=nC;k++){const c=ws.getCell(R,k);c.border=all;c.alignment={vertical:'middle',horizontal:k<=2||k===nC?'center':'left',wrapText:true};}
     ws.getCell(R,2).value=r.name;ws.getCell(R,nC).value=r.exam||null;
+    // 定期評量那週：整列淡色（跨好幾週的合併格、月份格不塗，免得整塊變色）
+    if(r.exam){const ex={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBECD0'}};let k=3;ws.getCell(R,2).fill=ex;ws.getCell(R,nC).fill=ex;ws.getCell(R,nC).font={bold:true};
+      L.cols.forEach(c=>c.grid.forEach(g=>{const x=g[i];if(x!=='skip'&&!(x&&x.span>1))ws.getCell(R,k).fill=ex;k++;}));}
     if(i===0||L.rows[i-1].mon!==r.mon){let n=1;while(L.rows[i+n]&&L.rows[i+n].mon===r.mon)n++;ws.getCell(R,1).value=r.mon;if(n>1)ws.mergeCells(R,1,R+n-1,1);}
     let col=3;
     L.cols.forEach(c=>c.grid.forEach(g=>{
