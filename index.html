@@ -2771,6 +2771,7 @@ function renderEquipDetail(){
   box.innerHTML=`${photo}
     <div style="font-size:19px;font-weight:700;margin-top:10px">${escH(e.name)}</div>
     <div class="hint" style="margin-top:2px">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}</div>
+    ${(cur.alias||e.alias)?`<div class="hint" style="margin-top:2px">別名：${escH(String(cur.alias||e.alias).split(/[、,，;；/／]/).map(s=>s.trim()).filter(Boolean).join('、'))}</div>`:''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">${pill}${loc}</div>
     ${electiveBoxHtml(e.room,e.name)}
     ${kitLinesOf(e).length?`<div class="kit-list"><strong>📦 整盒借出，盒內有：</strong><ul>${kitLinesOf(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:''}
