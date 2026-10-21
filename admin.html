@@ -558,6 +558,9 @@
   @supports (overflow:clip){html,body{overflow-x:clip;}}
   /* 借用人照片：瀏覽器看不懂的格式（例如舊的 HEIC）不要只顯示「？」，改成可以點開原檔的方塊 */
   .bp-thumb{border:none;background:none;padding:0;cursor:zoom-in;}
+  /* 縮圖一律固定大小（2026-10-21：修改器材視窗的照片沒設尺寸，會用原圖大小撐滿整個視窗）*/
+  .bp-thumb img{display:block;width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);}
+  .ie-photos .bp-thumb img{width:72px;height:72px;}
   .bp-thumb .bp-fallback{display:none;}
   .loose-note{display:block;font-size:10.5px;color:var(--text2);font-weight:400;font-family:inherit;}
   /* 照片放大檢視：在原頁面上蓋一層，點一下或按返回就關 */
@@ -1768,6 +1771,7 @@
       <div class="form-group"><label>總數 *</label><input type="number" id="eq-total" min="0" value="0"></div>
       <div class="form-group"><label>櫃位編碼</label><input type="text" id="eq-location" placeholder="例如：BB01-1"></div>
       <div class="form-group"><label>別名（搜尋用，選填）</label><input type="text" id="eq-alias" placeholder="例如：beaker、燒杯仔"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>財產編號（選填；多個用「、」分開，連號寫「起～迄」）</label><input type="text" id="eq-asset" maxlength="500" placeholder="例如：5010101-03-0001～0010、5010101-03-0023"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="eq-available" checked style="width:auto">
         <label for="eq-available" style="color:var(--text)">開放借用</label>
@@ -1800,7 +1804,7 @@
     </div>
     <div class="info-box">現場點貨：只點<b>架上</b>的數量，借出中的系統會自動加回總數。數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「💾 儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「✏️ 編輯」。</div>
     <div class="eq-filter-row" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
-      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1 1 260px;min-width:0">
+      <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名／財產編號…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1 1 260px;min-width:0">
       <select id="adminEquipRoomFilter" onchange="adminEquipPage=1;filterAdminEquip()">
         <option value="">全部房間</option>
         <option value="Physics">物理</option>
@@ -2324,7 +2328,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-20d';
+const ADMIN_VERSION='2026-10-21a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2659,7 +2663,7 @@ function ieRender(){
       <button type="button" class="ie-x" onclick="ieDel(${k})" aria-label="刪除" title="刪除">✕</button>`}
     </div>`;}).join('')||'<div class="hint" style="padding:8px 0">還沒有器材，用下面搜尋加入</div>';
   const shortN=st.items.filter(i=>!i._del&&!i.loose&&!i._isChem&&(()=>{const av=ieAvail(r,i.room,i.name);return av!==null&&(parseInt(i.quantity)||0)>av;})()).length;
-  box.innerHTML=`${photos.length?`<div class="ie-photos">${photos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" alt="借用人上傳的照片"></button>`).join('')}<span class="hint">點照片放大，對照著加</span></div>`:''}
+  box.innerHTML=`${photos.length?`<div class="ie-photos">${photos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" alt="借用人上傳的照片" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()"></button>`).join('')}<span class="hint">點照片放大，對照著加</span></div>`:''}
     <div class="ie-list">${rows}</div>
     ${st.items.filter(i=>!i._del).length<IE_MAX?`<input type="search" id="ieQ" class="ie-search" placeholder="＋ 加器材（輸入名稱、規格或別名）" maxlength="40" autocomplete="off" value="${escH(st.q)}" oninput="ieSearch(this.value)"><div id="ieHits"></div>`:''}
     ${shortN?`<div class="ie-warn">${shortN} 項超過可借數量${out?'。這筆已經借出去了，仍可以儲存（東西確實在老師那裡），之後記得核對庫存':'，核准時會再提醒'}</div>`:''}
@@ -2675,7 +2679,7 @@ function ieSearch(q,keep){
   const st=ieState;if(!st)return;st.q=q;
   const box=document.getElementById('ieHits');if(!box)return;
   const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
-  window._ieHits=allEquipment.filter(e=>e.is_available!==false&&`${e.name||''} ${e.spec||''} ${e.alias||''}`.toLowerCase().includes(k))
+  window._ieHits=allEquipment.filter(e=>e.is_available!==false&&(`${e.name||''} ${e.spec||''} ${e.alias||''}`.toLowerCase().includes(k)||assetHit(e.asset_no,k)))
     .sort((a,b)=>((a.name||'').toLowerCase().startsWith(k)?0:1)-((b.name||'').toLowerCase().startsWith(k)?0:1)).slice(0,8);
   const r=allRecords.find(x=>String(x.id)===st.id);
   box.innerHTML=window._ieHits.length?window._ieHits.map((e,i)=>{const av=r?ieAvail(r,e.room,e.name):null;return `<button type="button" class="ie-hit" onclick="ieAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}${e.location?'・'+escH(e.location):''}${av!==null?'・可借 '+av:''}</small><span>＋</span></button>`;}).join('')
@@ -8054,6 +8058,7 @@ function eqPaneRender(){
       <dt>櫃位</dt><dd>${e.location?escH(e.location):'<span class="mut">未填</span>'}</dd>
       <dt>單位</dt><dd>${escH(e.unit||'個')}</dd>
       ${e.alias?`<dt>別名</dt><dd>${escH(e.alias)}</dd>`:''}
+      <dt>財產編號</dt><dd>${e.asset_no?escH(e.asset_no):'<span class="mut">未填</span>'}</dd>
       ${e.restricted_note?`<dt>選修專用</dt><dd style="color:#7e22ce">${escH(e.restricted_note)}</dd>`:''}
       <dt>上次盤點</dt><dd>${e.last_counted_at?escH(new Date(e.last_counted_at).toLocaleDateString('zh-TW')):'<span class="mut">建檔時已點（2026/9/30）</span>'}</dd>
     </dl>
@@ -8155,6 +8160,7 @@ function renderInlineEditEquip(e){
       <div class="form-group"><label>單位</label><input type="text" id="ie-unit-${e.id}" value="${escH(e.unit||'個')}"></div>
       <div class="form-group"><label>櫃位編碼</label><input type="text" id="ie-location-${e.id}" value="${escH(e.location||'')}"></div>
       <div class="form-group"><label>別名</label><input type="text" id="ie-alias-${e.id}" value="${escH(e.alias||'')}"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>財產編號（多個用「、」分開，連號寫「起～迄」）</label><input type="text" id="ie-asset-${e.id}" maxlength="500" value="${escH(e.asset_no||'')}" placeholder="例如：5010101-03-0001～0010"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="ie-available-${e.id}" ${e.is_available!==false?'checked':''} style="width:auto">
         <label style="color:var(--text)">開放借用</label>
@@ -8185,6 +8191,7 @@ async function saveInlineEquip(id){
     unit:document.getElementById('ie-unit-'+id).value.trim()||'個',
     location:document.getElementById('ie-location-'+id).value.trim(),
     alias:document.getElementById('ie-alias-'+id).value.trim()||null,
+    asset_no:(document.getElementById('ie-asset-'+id)?.value||'').trim().slice(0,500)||null,
     is_available:document.getElementById('ie-available-'+id).checked,
     featured:document.getElementById('ie-featured-'+id).checked,
     is_consumable:(v=>v===''?null:v==='true')(document.getElementById('ie-consumable-'+id).value),
@@ -8241,6 +8248,7 @@ async function saveEquip(){
     total:parseInt(document.getElementById('eq-total').value)||0,
     location:document.getElementById('eq-location').value.trim(),
     alias:document.getElementById('eq-alias').value.trim()||null,
+    asset_no:document.getElementById('eq-asset').value.trim().slice(0,500)||null,
     is_available:document.getElementById('eq-available').checked,
     featured:document.getElementById('eq-featured').checked,
     is_consumable:(v=>v===''?null:v==='true')(document.getElementById('eq-consumable').value),
@@ -8397,7 +8405,7 @@ function filterAdminEquip(){
   const lowStockOnly=document.getElementById('adminEquipLowStock')?.checked;
   const base=allAdminEquipment.filter(e=>{
     if(room&&e.room!==room)return false;
-    if(q&&!((e.name||'').toLowerCase().includes(q)||(e.spec||'').toLowerCase().includes(q)||(e.alias||'').toLowerCase().includes(q)))return false;
+    if(q&&!((e.name||'').toLowerCase().includes(q)||(e.spec||'').toLowerCase().includes(q)||(e.alias||'').toLowerCase().includes(q)||assetHit(e.asset_no,q)))return false;
     if(lowStockOnly&&!adminIsLowStock(e))return false;
     if(eqQuick==='old'&&!(e.is_available!==false&&eqCountedMs(e)<Date.now()-STK_CYCLE_DAYS*864e5))return false;
     if(eqQuick==='loc'&&!equipLocationMismatches(e).length)return false;
@@ -8432,6 +8440,22 @@ function filterAdminEquip(){
 const ACTIVE_ST=['待審核','已核准','逾期'];
 function activeRecordsUsing(room,name){
   return (allRecords||[]).filter(r=>ACTIVE_ST.includes(r.status)&&(r.items||[]).some(it=>it&&it.room===room&&it.name===name));
+}
+// ── 財產編號（2026-10-21）：一筆器材可以有很多個編號，用「、」或換行分開；連號可以寫成「起～迄」
+// 例：5010101-03-0001～0010 → 搜尋 5010101-03-0007 也找得到。比對時不分大小寫、忽略空白和「-」「/」
+function assetNorm(s){return String(s||'').toUpperCase().replace(/[\s\-－—_/／.]/g,'');}
+function assetHit(raw,q){
+  const qn=assetNorm(q);if(qn.length<3||!raw)return false;
+  return String(raw).split(/[、,，;；\n]+/).some(tok=>{
+    const m=tok.split(/[~～]/);
+    if(m.length===2){
+      const a=assetNorm(m[0]);let b=assetNorm(m[1]);if(!a||!b)return false;
+      if(b.length<a.length)b=a.slice(0,a.length-b.length)+b;   // 迄號只寫尾數：0001～0010
+      if(qn.length===a.length&&a.length===b.length&&qn>=a&&qn<=b)return true;
+      return a.includes(qn)||b.includes(qn);
+    }
+    return assetNorm(tok).includes(qn);
+  });
 }
 function cleanKitText(v){
   const lines=String(v||'').split('\n').map(x=>x.trim()).filter(Boolean).slice(0,60).map(x=>x.slice(0,80));
@@ -8477,6 +8501,7 @@ function renderAdminEquipCard(e){
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
             ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
+            ${e.asset_no?`<span>財產編號：${escH(e.asset_no)}</span>`:''}
           </div>
           ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
           ${kitLines(e).length?`<details class="kit-box eq-x"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
@@ -8990,13 +9015,13 @@ async function exportEquipmentXlsx(){
     const items=Array.isArray(rows)?rows:[];
     const wb=new ExcelJS.Workbook();
     const ws=wb.addWorksheet('器材清單');
-    const headers=['器材ID','房間','名稱','規格','單位','總數','可借數（僅供參考，匯入不會寫入）','櫃位編碼','別名','照片網址'];
+    const headers=['器材ID','房間','名稱','規格','單位','總數','可借數（僅供參考，匯入不會寫入）','櫃位編碼','別名','照片網址','財產編號'];
     ws.addRow(headers);
     ws.getRow(1).font={bold:true};
     headers.forEach((h,i)=>{ws.getColumn(i+1).width=Math.max(10,Math.min(32,h.length));});
     items.forEach(e=>{
       const avail=equipAvailable(e);
-      ws.addRow([e.id,rn(e.room),e.name||'',e.spec||'',e.unit||'',e.total??0,avail,e.location||'',e.alias||'',e.image_url||'']);
+      ws.addRow([e.id,rn(e.room),e.name||'',e.spec||'',e.unit||'',e.total??0,avail,e.location||'',e.alias||'',e.image_url||'',e.asset_no||'']);
     });
     const buf=await wb.xlsx.writeBuffer();
     const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
@@ -9030,7 +9055,7 @@ function handleEquipmentImport(input){
       const header=rows[0]||[];
       const idx=name=>header.indexOf(name);
       const iId=idx('器材ID'),iRoom=idx('房間'),iName=idx('名稱'),iSpec=idx('規格'),iUnit=idx('單位'),
-        iTotal=idx('總數'),iLoc=idx('櫃位編碼'),iAlias=idx('別名'),iImg=idx('照片網址');
+        iTotal=idx('總數'),iLoc=idx('櫃位編碼'),iAlias=idx('別名'),iImg=idx('照片網址'),iAsset=idx('財產編號');
       if(iName<0||iRoom<0){msg.textContent='⚠️ 找不到「房間」或「名稱」欄位，請確認是用「匯出器材清單」產生的檔案格式';return;}
       const gs=v=>(v===null||v===undefined)?'':String(v).trim();
       const parsed=[];
@@ -9048,7 +9073,8 @@ function handleEquipmentImport(input){
           total:iTotal>=0&&row[iTotal]!==null&&row[iTotal]!==''?parseInt(row[iTotal])||0:0,
           location:iLoc>=0?gs(row[iLoc]):'',
           alias:iAlias>=0?gs(row[iAlias]):'',
-          image_url:iImg>=0?gs(row[iImg]):''
+          image_url:iImg>=0?gs(row[iImg]):'',
+          asset_no:iAsset>=0?gs(row[iAsset]).slice(0,500):undefined   // 舊版匯出檔沒有這欄 → 不動資料庫裡的編號
         });
       }
       if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的器材列';return;}
@@ -9076,6 +9102,7 @@ function buildEquipmentDiff(parsed){
     if((p.location||'')!==(existing.location||''))diffs.push(`櫃位：${existing.location||'—'} → ${p.location||'—'}`);
     if((p.alias||'')!==(existing.alias||''))diffs.push(`別名：${existing.alias||'—'} → ${p.alias||'—'}`);
     if(p.image_url&&p.image_url!==(existing.image_url||''))diffs.push(`照片網址已變更`);
+    if(p.asset_no!==undefined&&(p.asset_no||'')!==(existing.asset_no||''))diffs.push(`財產編號：${existing.asset_no||'—'} → ${p.asset_no||'—'}`);
     if(diffs.length)changed.push({newData:p,oldData:existing,diffs});
   });
   allAdminEquipment.forEach(e=>{
@@ -9139,6 +9166,7 @@ async function doApplyEquipDiff(){
     try{
       const body={spec:item.newData.spec,unit:item.newData.unit,total:item.newData.total,location:item.newData.location,alias:item.newData.alias||null};
       if(item.newData.image_url)body.image_url=item.newData.image_url;
+      if(item.newData.asset_no!==undefined)body.asset_no=item.newData.asset_no||null;
       await sb('PATCH','equipment',{filter:'id=eq.'+item.oldData.id,body,prefer:'return=minimal'});ok++;
     }catch(err){fail++;}
   }
@@ -9146,6 +9174,7 @@ async function doApplyEquipDiff(){
     try{
       const body={room:e.room,name:e.name,spec:e.spec,unit:e.unit,total:e.total,location:e.location,alias:e.alias||null};
       if(e.image_url)body.image_url=e.image_url;
+      if(e.asset_no)body.asset_no=e.asset_no;
       await sb('POST','equipment',{body,prefer:'return=minimal'});ok++;
     }catch(err){fail++;}
   }
