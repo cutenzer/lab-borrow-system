@@ -2618,6 +2618,113 @@ async function saveAdminNote(){
     showToast(noCol?'資料庫還沒有「管理員備註」欄位，請先到 Supabase 執行附上的 SQL':'儲存失敗：'+e.message,'error');
   }
 }
+// ── 修改器材（2026-10-21）：老師只拍照、或現場多拿／少拿時，由管理員在這裡補登 ──
+// 存回同一筆紀錄的 items，所以前台的可借數量、「誰借用中」都會自動跟著變；照片不動
+// 每次修改都在管理員備註最前面留一行紀錄（加了什麼、刪了什麼、數量怎麼改）
+const IE_MAX=80;
+let ieState=null;
+function ieKey(i){return `${i.room||''}__${i.name||''}__${i.loose?'L':''}`;}
+// 這筆以外、已借出（已核准／逾期）的數量 → 算可借
+function ieAvail(r,room,name){
+  const e=allEquipment.find(q=>q.room===room&&q.name===name);if(!e)return null;
+  let used=0;
+  allRecords.filter(x=>(x.status==='已核准'||x.status==='逾期')&&String(x.id)!==String(r.id))
+    .forEach(x=>(x.items||[]).forEach(it=>{if(!it.loose&&it.room===room&&it.name===name)used+=parseInt(it.quantity)||0;}));
+  return Math.max(0,(parseInt(e.total)||0)-used);
+}
+function openItemEdit(id){
+  const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
+  if(!['待審核','已核准','逾期'].includes(r.status)){showToast('只有待審核、借用中、逾期的申請能修改器材','error');return;}
+  const orig=(Array.isArray(r.items)?r.items:[]).filter(Boolean).map(i=>({...i}));
+  ieState={id:String(r.id),orig,items:orig.map(i=>({...i,_q0:parseInt(i.quantity)||0})),q:'',confirmShort:false};
+  showModal(`修改器材：${r.name||''}`,'<div id="ieBox"></div>',[
+    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveItemEdit()'}]);
+  ieRender();
+}
+function ieRender(){
+  const box=document.getElementById('ieBox');const st=ieState;if(!box||!st)return;
+  const r=allRecords.find(x=>String(x.id)===st.id);if(!r)return;
+  const photos=(Array.isArray(r.photos)?r.photos:[]).map(safeUrl).filter(Boolean);
+  const out=r.status!=='待審核';
+  const rows=st.items.map((i,k)=>{
+    const q=parseInt(i.quantity)||0,del=!!i._del,av=i.loose||i._isChem?null:ieAvail(r,i.room,i.name);
+    const e=allEquipment.find(x=>x.room===i.room&&x.name===i.name);
+    const short=!del&&av!==null&&q>av;
+    const chg=!del&&i._q0!=null&&q!==i._q0;
+    const tag=i._new?'<em class="ie-t add">這次加的</em>':del?'<em class="ie-t del">刪除</em>':chg?`<em class="ie-t chg">原本 ${i._q0}</em>`:'';
+    return `<div class="ie-row${del?' del':''}${short?' short':''}">
+      <div class="ie-n"><b>${escH(i.name)}</b>${tag}<small>${escH(rn(i.room))}${e&&e.location?'・'+escH(e.location):''}${i.loose?'・散裝':''}${av!==null&&!del?`・<span class="${short?'ie-short':''}">可借 ${av}</span>`:''}</small></div>
+      ${del?`<button type="button" class="btn btn-secondary btn-sm" onclick="ieUndo(${k})">復原</button>`:
+      `<span class="ie-q"><button type="button" onclick="ieQty(${k},-1)" aria-label="減少">−</button><input type="number" min="1" max="999" inputmode="numeric" value="${q}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="ieSet(${k},this.value)"><button type="button" onclick="ieQty(${k},1)" aria-label="增加">+</button></span>
+      <button type="button" class="ie-x" onclick="ieDel(${k})" aria-label="刪除" title="刪除">✕</button>`}
+    </div>`;}).join('')||'<div class="hint" style="padding:8px 0">還沒有器材，用下面搜尋加入</div>';
+  const shortN=st.items.filter(i=>!i._del&&!i.loose&&!i._isChem&&(()=>{const av=ieAvail(r,i.room,i.name);return av!==null&&(parseInt(i.quantity)||0)>av;})()).length;
+  box.innerHTML=`${photos.length?`<div class="ie-photos">${photos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" alt="借用人上傳的照片"></button>`).join('')}<span class="hint">點照片放大，對照著加</span></div>`:''}
+    <div class="ie-list">${rows}</div>
+    ${st.items.filter(i=>!i._del).length<IE_MAX?`<input type="search" id="ieQ" class="ie-search" placeholder="＋ 加器材（輸入名稱、規格或別名）" maxlength="40" autocomplete="off" value="${escH(st.q)}" oninput="ieSearch(this.value)"><div id="ieHits"></div>`:''}
+    ${shortN?`<div class="ie-warn">${shortN} 項超過可借數量${out?'。這筆已經借出去了，仍可以儲存（東西確實在老師那裡），之後記得核對庫存':'，核准時會再提醒'}</div>`:''}
+    <div class="hint" style="margin-top:8px">${out?'這筆已經借出：存檔後前台的可借數量、「誰借用中」立刻更新。':'這筆還在待審核：存檔後照原本的流程核准，核准時才扣庫存。'}修改內容會記在管理員備註。</div>`;
+  if(st.q)ieSearch(st.q,true);
+}
+function ieQty(k,d){const i=ieState&&ieState.items[k];if(!i)return;const q=Math.max(0,Math.min(999,(parseInt(i.quantity)||0)+d));if(q===0){ieDel(k);return;}i.quantity=q;ieRender();}
+function ieSet(k,v){const i=ieState&&ieState.items[k];if(!i)return;const q=Math.max(0,Math.min(999,parseInt(v)||0));if(q===0){ieDel(k);return;}i.quantity=q;ieRender();}
+// 刪除：新加的直接拿掉；原本就有的劃線保留，可以復原
+function ieDel(k){const st=ieState,i=st&&st.items[k];if(!i)return;if(i._new)st.items.splice(k,1);else{i._del=true;}ieRender();}
+function ieUndo(k){const i=ieState&&ieState.items[k];if(!i)return;i._del=false;if(!(parseInt(i.quantity)>0))i.quantity=i._q0||1;ieRender();}
+function ieSearch(q,keep){
+  const st=ieState;if(!st)return;st.q=q;
+  const box=document.getElementById('ieHits');if(!box)return;
+  const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
+  window._ieHits=allEquipment.filter(e=>e.is_available!==false&&`${e.name||''} ${e.spec||''} ${e.alias||''}`.toLowerCase().includes(k))
+    .sort((a,b)=>((a.name||'').toLowerCase().startsWith(k)?0:1)-((b.name||'').toLowerCase().startsWith(k)?0:1)).slice(0,8);
+  const r=allRecords.find(x=>String(x.id)===st.id);
+  box.innerHTML=window._ieHits.length?window._ieHits.map((e,i)=>{const av=r?ieAvail(r,e.room,e.name):null;return `<button type="button" class="ie-hit" onclick="ieAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}${e.location?'・'+escH(e.location):''}${av!==null?'・可借 '+av:''}</small><span>＋</span></button>`;}).join('')
+    :'<div class="hint" style="padding:6px 2px">找不到這個器材（要先在「器材」頁新增，前台才找得到位置）</div>';
+  if(!keep){}
+}
+function ieAdd(i){
+  const st=ieState,e=(window._ieHits||[])[i];if(!st||!e)return;
+  const same=st.items.find(x=>!x.loose&&x.room===e.room&&x.name===e.name);
+  if(same){if(same._del){same._del=false;same.quantity=1;}else same.quantity=Math.min(999,(parseInt(same.quantity)||0)+1);}
+  else st.items.push({name:e.name,room:e.room,spec:e.spec||'',unit:e.unit||'個',quantity:1,by_admin:true,_new:true});
+  st.q='';ieRender();
+  setTimeout(()=>document.getElementById('ieQ')?.focus(),0);
+}
+// 變動摘要：加了什麼、刪了什麼、數量怎麼改（寫進備註）
+function ieDiff(st){
+  const add=[],del=[],chg=[];
+  st.items.forEach(i=>{
+    const q=parseInt(i.quantity)||0;
+    if(i._new){if(q>0)add.push(`${i.name}×${q}`);}
+    else if(i._del)del.push(`${i.name}×${i._q0}`);
+    else if(q!==i._q0)chg.push(`${i.name} ${i._q0}→${q}`);
+  });
+  return {add,del,chg,any:add.length+del.length+chg.length>0};
+}
+async function saveItemEdit(){
+  const st=ieState;if(!st)return;
+  const r=allRecords.find(x=>String(x.id)===st.id);if(!r)return;
+  const d=ieDiff(st);
+  if(!d.any){closeModal();showToast('沒有變動','success');return;}
+  const items=st.items.filter(i=>!i._del&&(parseInt(i.quantity)||0)>0).map(i=>{const {_q0,_new,_del,...rest}=i;rest.quantity=parseInt(i.quantity)||0;return rest;});
+  if(!items.length&&!(r.photos||[]).length&&!confirm('器材全部刪掉、也沒有照片，這筆申請就沒有內容了。確定要儲存？'))return;
+  const now=new Date(),stamp=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const log=`［${stamp} 修改器材］${[d.add.length?'加 '+d.add.join('、'):'',d.del.length?'刪 '+d.del.join('、'):'',d.chg.length?'改 '+d.chg.join('、'):''].filter(Boolean).join('；')}`;
+  // 備註最多 500 字：太長時先砍舊的修改紀錄，管理員自己寫的備註不動
+  let note=(log+'\n'+(r.adminNote||'')).trim();
+  while(note.length>500){const lines=note.split('\n'),k=lines.map((l,i)=>i).reverse().find(i=>i>0&&/^［.*修改器材］/.test(lines[i]));if(k==null){note=note.slice(0,500);break;}lines.splice(k,1);note=lines.join('\n');}
+  const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  try{
+    // 防止同時有人改：存之前確認狀態沒變
+    const cur=await sb('GET','borrow_records',{filter:'id=eq.'+encodeURIComponent(st.id),select:'status,items'});
+    const c=Array.isArray(cur)&&cur[0];
+    if(!c){throw new Error('找不到這筆申請，可能已被刪除');}
+    if(c.status!==r.status||JSON.stringify(c.items||[])!==JSON.stringify(st.orig)){showToast('這筆申請剛剛被改過（狀態或器材），請重新整理後再改','error');if(btn){btn.disabled=false;btn.textContent='儲存';}return;}
+    await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(st.id),body:{items,admin_note:note},prefer:'return=minimal'});
+    r.items=items;r.adminNote=note;ieState=null;
+    closeModal();showToast('器材已更新','success');loadAll();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
+}
 // 老師借用不收保證金：舊的申請（改規則前送出的）可以一鍵改成免收
 async function waiveDeposit(id){
   const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
@@ -2887,11 +2994,12 @@ function renderRecord(r,mode,inPane){
   const items=Array.isArray(r.items)?r.items:[];
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
-  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}</span></div>`).join('')}</div>`:'';
+  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}${i.by_admin?'<small class="loose-note">管理員補登</small>':''}</span></div>`).join('')}</div>`:'';
   const photos=Array.isArray(r.photos)?r.photos:[];
   const safePhotos=photos.map(safeUrl).filter(Boolean);
   // 只附照片、沒選器材的申請（借用人找不到品名，拍照代替）
-  const photoOnlyHtml=!items.length&&safePhotos.length?'<div class="admin-note" style="background:#eef4ff;border-color:#c7d7f5">📷 這張申請沒有選器材，只附了照片，請看照片確認要借什麼</div>':'';
+  const canEditItems=['待審核','已核准','逾期'].includes(r.status);
+  const photoOnlyHtml=!items.length&&safePhotos.length?`<div class="admin-note ie-photo-only" style="background:#eef4ff;border-color:#c7d7f5"><span>📷 這張申請沒有選器材，只附了照片，請看照片確認要借什麼</span>${canEditItems?`<button type="button" class="btn btn-primary btn-sm" onclick="openItemEdit(${ja(r.id)})">補器材</button>`:''}</div>`:'';
   const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽</span></button>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   let actions='';
@@ -2916,6 +3024,7 @@ function renderRecord(r,mode,inPane){
     if(r.sheetPrintedAt&&!r.sheetSignedAt)more.push({label:'✍️ 紀錄表已簽回',fn:`markSheetSigned(${ja(r.id)},true)`});
     if(r.sheetSignedAt)more.push({label:'↩️ 取消「已簽回」',fn:`markSheetSigned(${ja(r.id)},false)`});
   }
+  if(canEditItems)more.push({label:'✏️ 修改器材',fn:`openItemEdit(${ja(r.id)})`});
   if(r.status==='已核准'||r.status==='逾期')more.push({label:'📅 延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
   more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
   more.push('hr');
@@ -9803,6 +9912,24 @@ async function doDeleteHighlight(id){
 .srp-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;padding:12px;background:#fff;color:#222}
 .srp-wrap .srp{min-width:900px}
 .srp-title{font-size:16px;font-weight:700;text-align:center;margin-bottom:8px}
+.ie-photo-only{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.ie-photos{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.ie-list{border:1px solid var(--border);border-radius:10px;padding:2px 10px}
+.ie-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--surface2)}
+.ie-row:last-child{border-bottom:0}
+.ie-row.del .ie-n b{text-decoration:line-through;color:var(--text2)}
+.ie-n{flex:1;min-width:0}.ie-n b{font-size:14.5px}.ie-n small{display:block;font-size:12px;color:var(--text2)}
+.ie-t{font-style:normal;font-size:11px;border-radius:5px;padding:0 5px;margin-left:6px;white-space:nowrap}
+.ie-t.add{background:#e6f2ea;color:#1f5b4c}.ie-t.chg{background:#fbf1dc;color:#8a5a00}.ie-t.del{background:#fde8e8;color:#b42318}
+.ie-short{color:var(--danger);font-weight:700}
+.ie-q{display:flex;align-items:center;gap:4px}
+.ie-q button{border:1px solid var(--border);background:var(--surface2);border-radius:6px;width:30px;height:30px;font:inherit;cursor:pointer}
+.ie-q input{width:52px;height:30px;text-align:center;font:inherit;font-weight:700;border:1px solid var(--border);border-radius:6px;padding:0 2px}
+.ie-x{border:0;background:none;color:var(--text2);width:28px;height:30px;font:inherit;cursor:pointer}
+.ie-search{width:100%;box-sizing:border-box;margin-top:8px}
+.ie-hit{display:flex;gap:6px;align-items:baseline;width:100%;text-align:left;border:0;border-bottom:1px solid var(--surface2);background:none;padding:8px 2px;font:inherit;cursor:pointer;color:var(--text)}
+.ie-hit small{color:var(--text2);flex:1;min-width:0}.ie-hit span{color:var(--accent);font-weight:700}
+.ie-warn{margin-top:8px;font-size:13px;background:#fde8e8;color:#b42318;border-radius:8px;padding:6px 10px}
 .eq-quick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;background:#fbf1dc;border-radius:8px;padding:6px 10px;margin-bottom:8px}
 .srg-detail .sr-row{grid-template-columns:110px minmax(0,1fr) auto}
 .srg-detail .sr-row .sr-tags{grid-column:2}
