@@ -1054,6 +1054,7 @@
   .forms-dl{margin:0 0 14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .forms-dl summary{cursor:pointer;font-weight:700;font-size:14.5px;list-style:none;display:flex;align-items:center;gap:8px}
 .forms-dl summary::-webkit-details-marker{display:none}
+.rec-adm{display:inline-block;font-size:11px;font-weight:700;line-height:1.5;color:#8a5a00;background:#fbf1dc;border-radius:20px;padding:0 7px;vertical-align:1px;white-space:nowrap}
 .forms-dl summary::after{content:'▾';margin-left:auto;color:var(--text2);transition:transform .15s}
 .forms-dl[open] summary::after{transform:rotate(180deg)}
 .forms-dl summary small{font-weight:400;color:var(--text2);font-size:12.5px}
@@ -1844,7 +1845,7 @@ body.wk-open{overflow:hidden}
   <div class="proxy-notice" id="proxyNotice" style="display:none"></div>
   <!-- 紙本表單（2026-10-21）：學校規定要交紙本的情況，直接在這裡下載列印 -->
   <details class="forms-dl" id="formsDl">
-    <summary>📄 紙本表單下載列印 <small>科展、競賽借實驗室，或社團借器材時要交</small></summary>
+    <summary>📄 紙本表單 <small>只有科展、競賽借實驗室，或社團借用才要交</small></summary>
     <div class="forms-list">
       <a href="forms/lab-application.pdf" target="_blank" rel="noopener"><b>實驗室（學生競賽）申請表暨切結書</b><span>借實驗室做科展、競賽時填寫，至少 3 天前提出，須繳保證金</span><i>下載 PDF ›</i></a>
       <a href="forms/lab-plan.pdf" target="_blank" rel="noopener"><b>科展／競賽借用實驗室計畫書</b><span>和申請表一起交，寫實驗目的、器材、步驟與預定時間</span><i>下載 PDF ›</i></a>
@@ -5384,7 +5385,7 @@ function renderRecordListHTML(rows){
         <div class="record-meta-item"><span class="record-meta-label">預計歸還</span><span class="record-meta-value">${escH(r.return_date||'─')}</span></div>
         ${r.deposit_amount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.deposit_amount)||0}</span></div>`:''}
       </div>
-      <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${escH(rn(i.room))} ${escH(i.name)} × ${parseInt(i.quantity)||0}${escH(i.unit||'')}${i.loose?`（從${escH(i.pack_unit||'盒')}裡拿）`:''}`).join('<br>')}</div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text2);line-height:1.8">${items.map((i,idx)=>`${idx+1}. ${escH(rn(i.room))} ${escH(i.name)} × ${parseInt(i.quantity)||0}${escH(i.unit||'')}${i.loose?`（從${escH(i.pack_unit||'盒')}裡拿）`:''}${i.by_admin?' <span class="rec-adm" title="借用時沒有選到，管理員依照片或現場狀況補上的">管理員補登</span>':''}`).join('<br>')}</div>
       ${(()=>{
         // 備註：拿掉系統標記（課綱備註），拒絕原因另外顯示
         const raw=String(r.note||'');
