@@ -136,6 +136,9 @@
     .tplc-nav{position:static;max-height:none;height:100%;overscroll-behavior:contain;}
     .tplc-body{height:100%;overflow:auto;padding-right:6px;overscroll-behavior:contain;}
   }
+  /* 同名：紅色比日期警告更醒目；名稱很像：橘色提醒（2026-10-22）*/
+  .tpl-iss span.iss-dup{background:#fde4e1!important;color:#b42318!important;border-color:#f3b3ab!important;font-weight:700}
+  .tpl-iss span.iss-like{background:#fff4e0!important;color:#8a5a00!important}
   .tpl-month{font-size:13px;font-weight:700;color:var(--text2);margin:14px 2px 6px;display:flex;align-items:center;gap:8px;}
   .tpl-month::after{content:'';flex:1;height:1px;background:var(--border);}
   .tpl-row{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:6px;}
@@ -2339,7 +2342,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-22a';
+const ADMIN_VERSION='2026-10-22b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -5187,29 +5190,49 @@ function semPlace(t,cal){
 // ==== 學期週曆（前台、後台共用）結束 ====
 // ==== 課綱實驗：健檢＋快速改日期＋編輯面板 開始 ====
 // 健檢：每一筆課綱實驗找出「可能填錯」的地方，清單上直接標出來，點「改日期」就能修
-//   日期：沒填月份／週次、看不懂、週次跟月份對不上、超出學期、同一週擠太多
-//   名稱：名稱、年級、學期都一樣的有好幾筆（可能重複匯入）；只是年級或學期不同，算不同的實驗
-const TPL_CROWD=10; // 同一週超過這麼多個實驗，多半是日期填錯
+//   日期：沒填月份／週次、看不懂、週次跟月份對不上、超出學期
+//   名稱（2026-10-22 加強）：同一門課（年級＋科目＋課程類型）、同一學期裡
+//     ・名稱一樣 → 可能重複匯入（全形半形、空白、括號寫法不同也算一樣）
+//     ・名稱很像（只差一兩個字，或一個名稱包含另一個）→ 提醒看一下是不是同一個實驗
+//   不同課程、不同學期出現同名實驗是正常的（例如高一、高二都做），不提醒
+//   以前還會提醒「同一週實驗太多」，但同一週本來就可能有很多實驗，已拿掉
+function tplNameNorm(s){
+  return String(s||'').normalize('NFKC').toLowerCase()
+    .replace(/[\s　()（）\[\]［］【】「」『』〈〉《》.,，、。:：;；!！?？\-－—~～_/／&＆+＋]/g,'')
+    .replace(/示範/g,'').replace(/(實驗|的實驗)$/,'');   // 「（示範）」「…實驗」不影響是不是同一個
+}
+// 兩個名稱差幾個字（編輯距離）；名稱短的時候只看差 1 個字
+function tplNameDist(a,b){
+  if(a===b)return 0;if(Math.abs(a.length-b.length)>2)return 9;
+  let prev=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){const cur=[i];for(let j=1;j<=b.length;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur;}
+  return prev[b.length];
+}
+function tplNameLike(a,b){
+  if(!a||!b||a===b)return false;
+  // 系列實驗不算：浮力與表面張力(一)／(二)、上／下、1／2
+  const stem=x=>x.replace(/[一二三四五六上下\d]+$/,'');
+  if(stem(a)===stem(b))return false;
+  const short=Math.min(a.length,b.length);if(short<3)return false;
+  if(short>=4&&(a.includes(b)||b.includes(a)))return true;
+  return tplNameDist(a,b)<=(short>=6?2:1);
+}
 function tplIssuesAll(){
   const cal={1:semCalendar(1,activeSemester),2:semCalendar(2,activeSemester)};
   const actTerm=cal[1].real?1:cal[2].real?2:semTermOfMonth(new Date().getMonth()+1);
-  const norm=s=>String(s||'').replace(/\s+/g,'');
-  const names={},byWeek={},map=new Map();
-  // 重複的判斷：名稱＋年級＋學期三個都一樣才算（同一個實驗高一、高二都做，或上下學期都做，是不同的實驗）
+  const map=new Map(),groups={};
   const termOf=t=>{const m=semMonthOf(t);return m?semTermOfMonth(m):actTerm;};
-  const dupKey=t=>{const k=norm(t.name);return k?k+'|'+tplGroupOf(t).key+'|'+termOf(t):'';};
-  allTemplates.forEach(t=>{const k=dupKey(t);if(k)(names[k]=names[k]||[]).push(t);});
+  // 先依「同一門課＋同一學期」分組，只在組內比對名稱
+  allTemplates.forEach(t=>{const g=tplGroupOf(t).key+'|'+termOf(t);(groups[g]=groups[g]||[]).push(t);});
   allTemplates.forEach(t=>{
     const term=termOf(t),p=semPlace(t,cal[term]);
-    const same=names[dupKey(t)]||[];
-    const info={date:p.issues.slice(),name:same.length>1?`同一門課、同一學期、名稱一樣的有 ${same.length} 筆（${tplGroupOf(t).label}・${term===1?'上':'下'}學期），可能重複匯入`:'',term,weeks:p.weeks,cal:cal[term]};
-    p.weeks.forEach(w=>{const k=term+'-'+w;(byWeek[k]=byWeek[k]||[]).push(t);});
-    map.set(t,info);
-  });
-  Object.entries(byWeek).forEach(([k,arr])=>{
-    if(arr.length<TPL_CROWD)return;
-    const [term,w]=k.split('-');
-    arr.forEach(t=>map.get(t).date.push(`${term==='1'?'上':'下'}學期第 ${w} 週有 ${arr.length} 個實驗，太擠了，日期可能填錯`));
+    const n=tplNameNorm(t.name),mates=(groups[tplGroupOf(t).key+'|'+term]||[]).filter(x=>x!==t);
+    const same=n?mates.filter(x=>tplNameNorm(x.name)===n):[];
+    const like=n&&!same.length?mates.filter(x=>tplNameLike(n,tplNameNorm(x.name))):[];
+    const where=`${tplGroupOf(t).label}・${term===1?'上':'下'}學期`;
+    const name=same.length?`同一門課、同一學期，名稱一樣的有 ${same.length+1} 筆（${where}），可能重複匯入`
+      :like.length?`同一門課、同一學期，名稱很像：${like.slice(0,3).map(x=>'「'+String(x.name||'').trim()+'」').join('、')}，確認是不是同一個實驗`:'';
+    map.set(t,{date:p.issues.slice(),name,dup:same.length>0,term,weeks:p.weeks,cal:cal[term]});
   });
   return map;
 }
@@ -5375,7 +5398,7 @@ function renderTemplateList(){
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';tplGroupSel=null;renderTemplateList()">全部 ${allTemplates.length}</button>`+
     (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';tplGroupSel=null;renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
     (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';tplGroupSel=null;renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
-    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';tplGroupSel=null;renderTemplateList()">👯 可能重複 ${nameN}</button>`:'')+
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';tplGroupSel=null;renderTemplateList()">👯 同名／名稱很像 ${nameN}</button>`:'')+
     (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';tplGroupSel=null;renderTemplateList()">📝 沒填科目 ${classN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
   if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
@@ -5431,7 +5454,7 @@ function tplRowHtml(t,miss,I){
     const n=(Array.isArray(t.equipment_items)?t.equipment_items:[]).length;
     const wk=String(t.week??'').trim();
     const when=tplWhenText(I.weeks,I.cal);
-    const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>📅 ${escH(x)}</span>`).join('')}${I.name?`<span>👯 ${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
+    const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>📅 ${escH(x)}</span>`).join('')}${I.name?`<span class="${I.dup?'iss-dup':'iss-like'}">👯 ${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
     const sub=[t.grade,t.teacher,t.class_count?t.class_count+' 班':'',t.group_count?t.group_count+' 組':'',`器材 ${n} 項`].filter(Boolean).map(escH).join('・');
     const health=!tplEqIndex?'':(miss.length
       ?`<div class="tpl-health bad">⚠ 對不到庫存品名 ${miss.length} 項：${miss.slice(0,4).map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}${miss.length>4?'…':''}</div>`
