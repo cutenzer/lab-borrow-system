@@ -2161,11 +2161,12 @@ function renderStats(){
     ]);
   // 分頁紅點：待審核 / 尚未歸還(逾期) / 保證金(待收+待退) / 場地待審核
   // 器材借用（側欄一項）：要處理的＝待審核＋逾期＋保證金待收／待退；各自的數字在進去後的分頁上
-  setTabBadge('tb-borrow',pending+overdue+depPending+depReturn);
+  // 2026-10-22：側欄、手機選單的數字都只算「待審核」，跟總覽、分頁上的數字一致（逾期、保證金在總覽「今天要處理」）
+  setTabBadge('tb-borrow',pending);
   borrowCounts={pending,approved,return:approved+overdue,overdue,deposit:depPending+depReturn};
   renderBorrowSubtabs();
   setTabBadge('tb-venue',venuePending);
-  setTabBadge('menuBadge',pending+overdue+venuePending);
+  setTabBadge('menuBadge',pending+venuePending);
 }
 
 // ── 總覽：今天要處理＋本週使用率 ─────────────────────────
@@ -2193,6 +2194,9 @@ function renderOverview(){
   if(lendToday.length)rows.push({lv:'ok',t:`今天要借出 ${lendToday.length} 筆`,s:lendToday.slice(0,3).map(r=>escH(r.name)).join('、'),tab:'approved',b:'查看'});
   if(pending.length)rows.push({lv:'warn',t:`${pending.length} 筆借用待審核`,s:waitDays>=1?`最舊的一筆已等 ${waitDays} 天`:'都是今天送出的',tab:'pending',b:'去審核'});
   if(venuePend.length)rows.push({lv:'warn',t:`${venuePend.length} 筆場地待審核`,s:'待審核的時段在課表上是虛線框',tab:'venue',b:'場地管理'});
+  // 管理員補登時器材頁還沒有的品名：提醒之後補建（器材頁建了同名器材就不再提醒）
+  const unreg=[...new Set(allRecords.filter(r=>['待審核','已核准','逾期'].includes(r.status)).flatMap(r=>(Array.isArray(r.items)?r.items:[]).filter(ieIsUnreg).map(i=>i.name)))];
+  if(unreg.length)rows.push({lv:'warn',t:`${unreg.length} 項器材還沒建檔`,s:unreg.slice(0,3).map(escH).join('、')+(unreg.length>3?'…':'')+'（補登時加的）',tab:'equipment',b:'去建檔'});
   if(depIn.length)rows.push({lv:'mute',t:`${depIn.length} 筆保證金待收`,s:'NT$'+depIn.reduce((a,r)=>a+(parseInt(r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
   if(depOut.length)rows.push({lv:'mute',t:`${depOut.length} 筆保證金待退`,s:'NT$'+depOut.reduce((a,r)=>a+(parseInt(r.finalRefund??r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
   // 備份提醒：超過 30 天沒備份（這台電腦記錄的）就提醒
@@ -2342,7 +2346,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-22b';
+const ADMIN_VERSION='2026-10-22c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2459,7 +2463,7 @@ async function runPhotoBackup(onlyNew){
     if(onlyNew&&since)files=files.filter(f=>f.created&&new Date(f.created).getTime()>since);
     if(!files.length){showToast(onlyNew&&since?'上次備份之後沒有新照片':'沒有找到任何照片','success');return;}
     const totalMB=files.reduce((a,f)=>a+(f.size||0),0)/1048576;
-    if(totalMB>400&&!confirm(`共有 ${files.length} 張、約 ${Math.round(totalMB)} MB，檔案很大，下載會比較久（手機可能記憶體不足）。要繼續嗎？`))return;
+    if(totalMB>400&&!await uiConfirm(`共有 ${files.length} 張、約 ${Math.round(totalMB)} MB，檔案很大，下載會比較久（手機可能記憶體不足）。要繼續嗎？`,'繼續下載'))return;
     const zip=new JSZip();
     let done=0,failed=0,idx=0;
     const worker=async()=>{
@@ -2641,6 +2645,9 @@ async function saveAdminNote(){
 // 每次修改都在管理員備註最前面留一行紀錄（加了什麼、刪了什麼、數量怎麼改）
 const IE_MAX=80;
 let ieState=null;
+// 2026-10-22：改成在原本的卡片／右窗格裡切換「編輯模式」，不再另開彈窗把清單蓋住
+//   ieState.mode／pane：在哪一個清單、是不是右窗格（同一筆可能同時出現在好幾個分頁，只有開始編輯的那一張會變成編輯模式）
+//   找不到卡片時（例如從別的頁面呼叫）才退回用彈窗
 function ieKey(i){return `${i.room||''}__${i.name||''}__${i.loose?'L':''}`;}
 // 這筆以外、已借出（已核准／逾期）的數量 → 算可借
 function ieAvail(r,room,name){
@@ -2650,70 +2657,141 @@ function ieAvail(r,room,name){
     .forEach(x=>(x.items||[]).forEach(it=>{if(!it.loose&&it.room===room&&it.name===name)used+=parseInt(it.quantity)||0;}));
   return Math.max(0,(parseInt(e.total)||0)-used);
 }
-function openItemEdit(id){
-  const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
-  if(!['待審核','已核准','逾期'].includes(r.status)){showToast('只有待審核、借用中、逾期的申請能修改器材','error');return;}
+// 未建檔：管理員補登時器材頁還沒有這一項；器材頁之後建了同名器材，提醒就自動消失
+function ieIsUnreg(i){return !!(i&&i.unregistered)&&!allEquipment.some(e=>e.name===i.name);}
+function ieCanEdit(r){return ['待審核','已核准','逾期'].includes(r.status);}
+function ieIsPhotoOnly(r){return !(Array.isArray(r.items)&&r.items.length)&&(Array.isArray(r.photos)?r.photos:[]).map(safeUrl).filter(Boolean).length>0;}
+function ieBegin(r,mode,pane,modal){
   const orig=(Array.isArray(r.items)?r.items:[]).filter(Boolean).map(i=>({...i}));
-  ieState={id:String(r.id),orig,items:orig.map(i=>({...i,_q0:parseInt(i.quantity)||0})),q:'',confirmShort:false};
-  showModal(`修改器材：${r.name||''}`,'<div id="ieBox"></div>',[
-    {label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveItemEdit()'}]);
-  ieRender();
+  ieState={id:String(r.id),orig,items:orig.map(i=>({...i,_q0:parseInt(i.quantity)||0})),q:'',mode:mode||null,pane:!!pane,modal:!!modal};
+}
+function ieEditingHere(r,mode,inPane){return !!(ieState&&!ieState.modal&&ieState.id===String(r.id)&&ieState.mode===mode&&ieState.pane===!!inPane);}
+function ieVisibleCard(id){return [...document.querySelectorAll('.record-card[data-rid]')].find(c=>c.dataset.rid===String(id)&&c.dataset.mode&&c.offsetParent!==null);}
+async function openItemEdit(id){
+  const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
+  if(!ieCanEdit(r)){showToast('只有待審核、借用中、逾期的申請能修改器材','error');return;}
+  if(ieState&&ieState.id!==String(id)&&ieDiff(ieState).any){
+    if(!await uiConfirm(`「${(allRecords.find(x=>String(x.id)===ieState.id)||{}).name||'另一筆'}」還有器材修改沒儲存\n繼續的話，那些修改會放棄。`,'放棄那筆的修改',true))return;
+  }
+  const prev=ieState&&ieState.id;
+  const card=ieVisibleCard(id);
+  if(!card){
+    ieBegin(r,null,false,true);
+    showModal(`修改器材：${r.name||''}`,'<div id="ieBox"></div>',[
+      {label:'取消',cls:'btn-secondary',fn:'ieCancel()'},{label:'儲存',cls:'btn-primary',fn:'saveItemEdit()'}]);
+    ieRender();return;
+  }
+  ieBegin(r,card.dataset.mode,card.dataset.pane==='1',false);
+  if(prev&&prev!==String(id))ieRefreshCards(prev);
+  ieRefreshCards(id);
+  setTimeout(()=>{const c=document.querySelector('.record-card.ie-editing');if(!c)return;c.scrollIntoView({block:'nearest',behavior:'smooth'});if(!ieState.items.length)c.querySelector('.ie-search')?.focus({preventScroll:true});},0);
+}
+// 重畫某一筆的卡片（清單裡的卡片和右窗格都會重畫；捲動位置保留）
+function ieRefreshCards(id){
+  document.querySelectorAll('.record-card[data-rid]').forEach(c=>{
+    if(c.dataset.rid!==String(id)||!c.dataset.mode)return;
+    const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
+    const pane=c.closest('.rec-pane'),st=pane?pane.scrollTop:0;
+    c.outerHTML=renderRecord(r,c.dataset.mode,c.dataset.pane==='1');
+    if(pane)pane.scrollTop=st;
+  });
+}
+function ieCancel(){
+  const st=ieState;ieState=null;if(!st)return;
+  if(st.modal){closeModal();return;}
+  ieRefreshCards(st.id);
+}
+// 編輯區的內容（照片、清單、搜尋、超量提醒）
+function ieBodyHtml(r){
+  const st=ieState;
+  const photos=(Array.isArray(r.photos)?r.photos:[]).map(safeUrl).filter(Boolean);
+  const shortNames=[];
+  const rows=st.items.map((i,k)=>{
+    const q=parseInt(i.quantity)||0,del=!!i._del,unreg=ieIsUnreg(i);
+    const av=i.loose||i._isChem||i.unregistered?null:ieAvail(r,i.room,i.name);
+    const e=i.unregistered?null:allEquipment.find(x=>x.room===i.room&&x.name===i.name);
+    const short=!del&&av!==null&&q>av;if(short)shortNames.push(i.name);
+    const chg=!del&&i._q0!=null&&q!==i._q0;
+    const tag=(i._new?'<em class="ie-t add">這次加的</em>':del?'<em class="ie-t del">刪除</em>':chg?`<em class="ie-t chg">原本 ${i._q0}</em>`:'')+(unreg?'<em class="ie-t unreg">未建檔</em>':'');
+    const sub=unreg?'器材頁還沒有這一項，之後記得補建':[escH(rn(i.room)),e&&e.location?`<span class="ie-loc">${escH(e.location)}</span>`:'',i.loose?'散裝':'',av!==null&&!del?`<span class="${short?'ie-short':''}">可借 ${av}</span>`:''].filter(Boolean).join('・');
+    return `<div class="ie-row${del?' del':''}${short?' short':''}">
+      <div class="ie-n"><b>${escH(i.name)}</b>${tag}<small>${sub}</small></div>
+      ${del?`<button type="button" class="btn btn-secondary btn-sm" onclick="ieUndo(${k})">復原</button>`:
+      `<span class="ie-q"><button type="button" onclick="ieQty(${k},-1)" aria-label="減少">−</button><input type="number" min="1" max="999" inputmode="numeric" value="${q}" aria-label="${escH(i.name)} 數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="ieSet(${k},this.value)"><button type="button" onclick="ieQty(${k},1)" aria-label="增加">+</button></span>
+      <button type="button" class="ie-x" onclick="ieDel(${k})" aria-label="刪除 ${escH(i.name)}" title="刪除">✕</button>`}
+    </div>`;}).join('')||'<div class="hint" style="padding:8px 0">還沒有器材，用下面搜尋加入</div>';
+  const out=r.status!=='待審核';
+  return `${photos.length?`<div class="ie-photos">${photos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" alt="借用人上傳的照片" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()"></button>`).join('')}<span class="hint">點照片放大，對照著加</span></div>`:''}
+    <div class="ie-list">${rows}</div>
+    ${st.items.filter(i=>!i._del).length<IE_MAX?`<input type="search" class="ie-search" placeholder="＋ 加器材（名稱、規格、別名、財產編號）" maxlength="40" autocomplete="off" aria-label="搜尋要加的器材" value="${escH(st.q)}" oninput="ieSearch(this.value)"><div class="ie-hits"></div>`:''}
+    ${shortNames.length?`<div class="ie-warn">${shortNames.map(escH).join('、')}超過可借數量${out?'（已借出，仍可儲存，之後核對庫存）':''}</div>`:''}`;
+}
+// 編輯模式的按鈕列：有變動才出現「取消｜儲存（n 項變更）」；沒變動時保留原本的動作（核准、歸還…）
+function ieBarHtml(normal){
+  const d=ieDiff(ieState),n=d.add.length+d.del.length+d.chg.length;
+  if(n)return `<div class="record-actions ie-bar"><span class="ie-cnt">${n} 項變更還沒儲存</span><button type="button" class="btn btn-secondary btn-sm" onclick="ieCancel()">取消</button><button type="button" class="btn btn-primary btn-sm" onclick="saveItemEdit()">儲存（${n} 項變更）</button></div>`;
+  return `<div class="record-actions ie-bar"><button type="button" class="btn btn-secondary btn-sm" onclick="ieCancel()">結束編輯</button>${normal||''}</div>`;
 }
 function ieRender(){
-  const box=document.getElementById('ieBox');const st=ieState;if(!box||!st)return;
+  const st=ieState;if(!st)return;
   const r=allRecords.find(x=>String(x.id)===st.id);if(!r)return;
-  const photos=(Array.isArray(r.photos)?r.photos:[]).map(safeUrl).filter(Boolean);
-  const out=r.status!=='待審核';
-  const rows=st.items.map((i,k)=>{
-    const q=parseInt(i.quantity)||0,del=!!i._del,av=i.loose||i._isChem?null:ieAvail(r,i.room,i.name);
-    const e=allEquipment.find(x=>x.room===i.room&&x.name===i.name);
-    const short=!del&&av!==null&&q>av;
-    const chg=!del&&i._q0!=null&&q!==i._q0;
-    const tag=i._new?'<em class="ie-t add">這次加的</em>':del?'<em class="ie-t del">刪除</em>':chg?`<em class="ie-t chg">原本 ${i._q0}</em>`:'';
-    return `<div class="ie-row${del?' del':''}${short?' short':''}">
-      <div class="ie-n"><b>${escH(i.name)}</b>${tag}<small>${escH(rn(i.room))}${e&&e.location?'・'+escH(e.location):''}${i.loose?'・散裝':''}${av!==null&&!del?`・<span class="${short?'ie-short':''}">可借 ${av}</span>`:''}</small></div>
-      ${del?`<button type="button" class="btn btn-secondary btn-sm" onclick="ieUndo(${k})">復原</button>`:
-      `<span class="ie-q"><button type="button" onclick="ieQty(${k},-1)" aria-label="減少">−</button><input type="number" min="1" max="999" inputmode="numeric" value="${q}" aria-label="數量" onfocus="this.select()" onkeydown="if(event.key==='Enter')this.blur()" onchange="ieSet(${k},this.value)"><button type="button" onclick="ieQty(${k},1)" aria-label="增加">+</button></span>
-      <button type="button" class="ie-x" onclick="ieDel(${k})" aria-label="刪除" title="刪除">✕</button>`}
-    </div>`;}).join('')||'<div class="hint" style="padding:8px 0">還沒有器材，用下面搜尋加入</div>';
-  const shortN=st.items.filter(i=>!i._del&&!i.loose&&!i._isChem&&(()=>{const av=ieAvail(r,i.room,i.name);return av!==null&&(parseInt(i.quantity)||0)>av;})()).length;
-  box.innerHTML=`${photos.length?`<div class="ie-photos">${photos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" alt="借用人上傳的照片" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()"></button>`).join('')}<span class="hint">點照片放大，對照著加</span></div>`:''}
-    <div class="ie-list">${rows}</div>
-    ${st.items.filter(i=>!i._del).length<IE_MAX?`<input type="search" id="ieQ" class="ie-search" placeholder="＋ 加器材（輸入名稱、規格或別名）" maxlength="40" autocomplete="off" value="${escH(st.q)}" oninput="ieSearch(this.value)"><div id="ieHits"></div>`:''}
-    ${shortN?`<div class="ie-warn">${shortN} 項超過可借數量${out?'。這筆已經借出去了，仍可以儲存（東西確實在老師那裡），之後記得核對庫存':'，核准時會再提醒'}</div>`:''}
-    <div class="hint" style="margin-top:8px">${out?'這筆已經借出：存檔後前台的可借數量、「誰借用中」立刻更新。':'這筆還在待審核：存檔後照原本的流程核准，核准時才扣庫存。'}修改內容會記在管理員備註。</div>`;
-  if(st.q)ieSearch(st.q,true);
+  if(st.modal){const box=document.getElementById('ieBox');if(box)box.innerHTML=ieBodyHtml(r);}
+  else{
+    const c=[...document.querySelectorAll('.record-card.ie-editing')].find(x=>x.dataset.rid===st.id);
+    if(!c){ieRefreshCards(st.id);}
+    else{
+      const box=c.querySelector('.ie-box');if(box)box.innerHTML=ieBodyHtml(r);
+      const bar=c.querySelector('.ie-bar');if(bar)bar.outerHTML=ieBarHtml(recActionsHtml(r,st.mode));
+    }
+  }
+  if(st.q)ieSearch(st.q);
 }
+function ieRoot(){const st=ieState;if(!st)return null;return st.modal?document.getElementById('ieBox'):[...document.querySelectorAll('.record-card.ie-editing')].find(x=>x.dataset.rid===st.id)||null;}
 function ieQty(k,d){const i=ieState&&ieState.items[k];if(!i)return;const q=Math.max(0,Math.min(999,(parseInt(i.quantity)||0)+d));if(q===0){ieDel(k);return;}i.quantity=q;ieRender();}
 function ieSet(k,v){const i=ieState&&ieState.items[k];if(!i)return;const q=Math.max(0,Math.min(999,parseInt(v)||0));if(q===0){ieDel(k);return;}i.quantity=q;ieRender();}
 // 刪除：新加的直接拿掉；原本就有的劃線保留，可以復原
 function ieDel(k){const st=ieState,i=st&&st.items[k];if(!i)return;if(i._new)st.items.splice(k,1);else{i._del=true;}ieRender();}
 function ieUndo(k){const i=ieState&&ieState.items[k];if(!i)return;i._del=false;if(!(parseInt(i.quantity)>0))i.quantity=i._q0||1;ieRender();}
-function ieSearch(q,keep){
-  const st=ieState;if(!st)return;st.q=q;
-  const box=document.getElementById('ieHits');if(!box)return;
-  const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
+function ieSearch(q){
+  const st=ieState;if(!st)return;st.q=String(q||'').slice(0,40);
+  const root=ieRoot(),box=root&&root.querySelector('.ie-hits');if(!box)return;
+  const k=st.q.trim().toLowerCase();if(!k){box.innerHTML='';return;}
   window._ieHits=allEquipment.filter(e=>e.is_available!==false&&(`${e.name||''} ${e.spec||''} ${e.alias||''}`.toLowerCase().includes(k)||assetHit(e.asset_no,k)))
     .sort((a,b)=>((a.name||'').toLowerCase().startsWith(k)?0:1)-((b.name||'').toLowerCase().startsWith(k)?0:1)).slice(0,8);
   const r=allRecords.find(x=>String(x.id)===st.id);
-  box.innerHTML=window._ieHits.length?window._ieHits.map((e,i)=>{const av=r?ieAvail(r,e.room,e.name):null;return `<button type="button" class="ie-hit" onclick="ieAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}${e.location?'・'+escH(e.location):''}${av!==null?'・可借 '+av:''}</small><span>＋</span></button>`;}).join('')
-    :'<div class="hint" style="padding:6px 2px">找不到這個器材（要先在「器材」頁新增，前台才找得到位置）</div>';
-  if(!keep){}
+  const exact=window._ieHits.some(e=>(e.name||'').trim().toLowerCase()===k);
+  box.innerHTML=window._ieHits.map((e,i)=>{const av=r?ieAvail(r,e.room,e.name):null;return `<button type="button" class="ie-hit" onclick="ieAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}${e.location?'・<span class="ie-loc">'+escH(e.location)+'</span>':''}${av!==null?'・可借 '+av:''}</small><span>＋</span></button>`;}).join('')
+    +(exact?'':`<button type="button" class="ie-hit ie-new" onclick="ieAddNew()"><b>加入「${escH(st.q.trim())}」</b><small>器材頁還沒有，先記下來、之後補建</small><span>＋</span></button>`);
 }
+function ieFocusSearch(){setTimeout(()=>ieRoot()?.querySelector('.ie-search')?.focus({preventScroll:true}),0);}
 function ieAdd(i){
   const st=ieState,e=(window._ieHits||[])[i];if(!st||!e)return;
   const same=st.items.find(x=>!x.loose&&x.room===e.room&&x.name===e.name);
   if(same){if(same._del){same._del=false;same.quantity=1;}else same.quantity=Math.min(999,(parseInt(same.quantity)||0)+1);}
   else st.items.push({name:e.name,room:e.room,spec:e.spec||'',unit:e.unit||'個',quantity:1,by_admin:true,_new:true});
-  st.q='';ieRender();
-  setTimeout(()=>document.getElementById('ieQ')?.focus(),0);
+  st.q='';ieRender();ieFocusSearch();
+}
+// 器材頁還沒建檔的：只記品名，房間留空、不算可借，標「未建檔」
+function ieAddNew(){
+  const st=ieState;if(!st)return;
+  const name=String(st.q||'').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,40);if(!name)return;
+  if(st.items.filter(i=>!i._del).length>=IE_MAX){showToast(`最多 ${IE_MAX} 項`,'error');return;}
+  const same=st.items.find(x=>x.unregistered&&x.name===name);
+  if(same){if(same._del){same._del=false;same.quantity=1;}else same.quantity=Math.min(999,(parseInt(same.quantity)||0)+1);}
+  else st.items.push({name,room:'',spec:'',unit:'個',quantity:1,by_admin:true,unregistered:true,_new:true});
+  st.q='';ieRender();ieFocusSearch();
+}
+// 到器材頁補建：打開「新增器材」並帶入品名
+function ieGoCreate(name){
+  showTab('equipment');
+  setTimeout(()=>{toggleEqAdd(true);setTimeout(()=>{const n=document.getElementById('eq-name');if(n&&!n.value){n.value=String(name||'').slice(0,40);n.focus();}},120);},80);
 }
 // 變動摘要：加了什麼、刪了什麼、數量怎麼改（寫進備註）
 function ieDiff(st){
   const add=[],del=[],chg=[];
   st.items.forEach(i=>{
     const q=parseInt(i.quantity)||0;
-    if(i._new){if(q>0)add.push(`${i.name}×${q}`);}
+    if(i._new){if(q>0)add.push(`${i.name}×${q}${i.unregistered?'（未建檔）':''}`);}
     else if(i._del)del.push(`${i.name}×${i._q0}`);
     else if(q!==i._q0)chg.push(`${i.name} ${i._q0}→${q}`);
   });
@@ -2723,30 +2801,33 @@ async function saveItemEdit(){
   const st=ieState;if(!st)return;
   const r=allRecords.find(x=>String(x.id)===st.id);if(!r)return;
   const d=ieDiff(st);
-  if(!d.any){closeModal();showToast('沒有變動','success');return;}
+  if(!d.any){ieCancel();showToast('沒有變動','success');return;}
   const items=st.items.filter(i=>!i._del&&(parseInt(i.quantity)||0)>0).map(i=>{const {_q0,_new,_del,...rest}=i;rest.quantity=parseInt(i.quantity)||0;return rest;});
-  if(!items.length&&!(r.photos||[]).length&&!confirm('器材全部刪掉、也沒有照片，這筆申請就沒有內容了。確定要儲存？'))return;
+  if(!items.length&&!(r.photos||[]).length&&!await uiConfirm('器材全部刪掉、也沒有照片\n這筆申請就沒有內容了。','仍要儲存',true))return;
   const now=new Date(),stamp=`${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   const log=`［${stamp} 修改器材］${[d.add.length?'加 '+d.add.join('、'):'',d.del.length?'刪 '+d.del.join('、'):'',d.chg.length?'改 '+d.chg.join('、'):''].filter(Boolean).join('；')}`;
   // 備註最多 500 字：太長時先砍舊的修改紀錄，管理員自己寫的備註不動
   let note=(log+'\n'+(r.adminNote||'')).trim();
   while(note.length>500){const lines=note.split('\n'),k=lines.map((l,i)=>i).reverse().find(i=>i>0&&/^［.*修改器材］/.test(lines[i]));if(k==null){note=note.slice(0,500);break;}lines.splice(k,1);note=lines.join('\n');}
-  const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  const root=st.modal?document.getElementById('modalActions'):ieRoot();
+  const btn=root&&root.querySelector('.btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+  const fail=t=>{if(btn){btn.disabled=false;btn.textContent=t;}};
   try{
     // 防止同時有人改：存之前確認狀態沒變
     const cur=await sb('GET','borrow_records',{filter:'id=eq.'+encodeURIComponent(st.id),select:'status,items'});
     const c=Array.isArray(cur)&&cur[0];
     if(!c){throw new Error('找不到這筆申請，可能已被刪除');}
-    if(c.status!==r.status||JSON.stringify(c.items||[])!==JSON.stringify(st.orig)){showToast('這筆申請剛剛被改過（狀態或器材），請重新整理後再改','error');if(btn){btn.disabled=false;btn.textContent='儲存';}return;}
+    if(c.status!==r.status||JSON.stringify(c.items||[])!==JSON.stringify(st.orig)){showToast('這筆申請剛剛被改過（狀態或器材），請重新整理後再改','error');fail('儲存');return;}
     await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(st.id),body:{items,admin_note:note},prefer:'return=minimal'});
     r.items=items;r.adminNote=note;ieState=null;
-    closeModal();showToast('器材已更新','success');loadAll();
-  }catch(e){showToast('儲存失敗：'+e.message,'error');if(btn){btn.disabled=false;btn.textContent='再試一次';}}
+    if(st.modal)closeModal();
+    showToast('器材已更新','success');loadAll();
+  }catch(e){showToast('儲存失敗：'+e.message,'error');fail('再試一次');}
 }
 // 老師借用不收保證金：舊的申請（改規則前送出的）可以一鍵改成免收
 async function waiveDeposit(id){
   const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
-  if(!confirm(`把「${r.name}」這筆的保證金改成免收？\n（老師借用不收保證金）`))return;
+  if(!await uiConfirm(`把「${r.name}」這筆的保證金改成免收？\n（老師借用不收保證金）`,'改成免收'))return;
   try{
     await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(id),body:{deposit_amount:0,deposit_status:'不需要'},prefer:'return=minimal'});
     showToast('已改成免收保證金','success');loadAll();
@@ -2814,12 +2895,14 @@ function recStockHtml(r,mode){
   const used={};
   allRecords.filter(x=>(x.status==='已核准'||x.status==='逾期')&&String(x.id)!==String(r.id)).forEach(x=>(x.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;used[k]=(used[k]||0)+(parseInt(it.quantity)||0);}));
   const rows=items.map(i=>{
+    if(i.unregistered){const need=parseInt(i.quantity)||0;return `<tr><td>${escH(i.name)} ${ieIsUnreg(i)?`<button type="button" class="unreg-tag" onclick="ieGoCreate(${ja(i.name)})" title="到器材頁補建">未建檔・補建</button>`:''}</td><td><span class="mut">─</span></td><td class="n">${need}</td>${full?'<td class="n"><span class="mut">─</span></td>':''}</tr>`;}
     const e=allEquipment.find(q=>q.room===i.room&&q.name===i.name),need=parseInt(i.quantity)||0;
     const av=e?Math.max(0,(parseInt(e.total)||0)-(used[i.room+'__'+i.name]||0)):null,short=av!==null&&av<need;
     return `<tr class="${full&&short?'short':''}"><td>${escH(i.name)}</td><td>${e&&e.location?escH(e.location):'<span class="mut">─</span>'}</td><td class="n">${need}</td>${full?`<td class="n">${av===null?'<span class="mut">找不到</span>':av}</td>`:''}</tr>`;
   }).join('');
   const h=full?'到哪裡拿、夠不夠':mode==='return'?'放回哪裡':'到哪裡拿';
-  return `<div class="rec-stock"><div class="rs-h">${h}</div><table><thead><tr><th>器材</th><th>櫃位</th><th class="n">${full?'要借':'數量'}</th>${full?'<th class="n">可借</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  const eb=ieCanEdit(r)?`<button type="button" class="ie-edit-btn" onclick="openItemEdit(${ja(r.id)})">編輯</button>`:'';
+  return `<div class="rec-stock"><div class="rs-h">${h}${eb}</div><table><thead><tr><th>器材</th><th>櫃位</th><th class="n">${full?'要借':'數量'}</th>${full?'<th class="n">可借</th>':''}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 // 這筆申請哪些器材不夠（散裝不算）；用畫面上已載入的資料估算
 function recShortList(r){
@@ -2827,7 +2910,7 @@ function recShortList(r){
   allRecords.filter(x=>(x.status==='已核准'||x.status==='逾期')&&String(x.id)!==String(r.id)).forEach(x=>(x.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;used[k]=(used[k]||0)+(parseInt(it.quantity)||0);}));
   const out=[];
   (Array.isArray(r.items)?r.items:[]).forEach(i=>{
-    if(!i||i.loose)return;
+    if(!i||i.loose||i.unregistered)return;
     const e=allEquipment.find(q=>q.room===i.room&&q.name===i.name);if(!e)return;
     const av=Math.max(0,(parseInt(e.total)||0)-(used[i.room+'__'+i.name]||0)),need=parseInt(i.quantity)||0;
     if(av<need)out.push({name:i.name,lack:need-av});
@@ -2837,10 +2920,18 @@ function recShortList(r){
 function recPaneHtml(mode){
   const r=(recLists[mode]||[]).find(x=>String(x.id)===String(recSel[mode]));
   if(!r)return '<div class="rec-pane-empty">點左邊一筆看詳情</div>';
+  // 只附照片的單：打開就在編輯模式，方便對照照片補登；不補也照樣能核准
+  if(ieCanEdit(r)&&ieIsPhotoOnly(r)&&!(ieState&&ieState.id===String(r.id))&&!(ieState&&ieDiff(ieState).any))ieBegin(r,mode,true,false);
   return renderRecord(r,mode,true);
 }
-function recPick(ev,mode,id){
+async function recPick(ev,mode,id){
   if(ev&&ev.target.closest('input,button,a,label,details,select,textarea'))return;
+  // 窗格裡正在編輯器材：有沒存的變動先問；沒變動就直接結束編輯
+  if(ieState&&!ieState.modal&&ieState.pane&&ieState.mode===mode&&ieState.id!==String(id)){
+    const d=ieDiff(ieState);
+    if(d.any&&!await uiConfirm(`器材還有 ${d.add.length+d.del.length+d.chg.length} 項變更沒儲存\n換到別筆的話，這些變更會放棄。`,'放棄變更',true))return;
+    ieState=null;
+  }
   recSel[mode]=String(id);
   const box=document.getElementById(mode+'List');if(!box)return;
   box.querySelectorAll('.rec-row').forEach(x=>x.classList.toggle('sel',x.dataset.rid===String(id)));
@@ -3012,14 +3103,25 @@ function renderRecord(r,mode,inPane){
   const items=Array.isArray(r.items)?r.items:[];
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
   const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
-  const itemListHtml=items.length?`<div class="item-list"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用器材清單</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}${i.by_admin?'<small class="loose-note">管理員補登</small>':''}</span></div>`).join('')}</div>`:'';
+  const canEditItems=ieCanEdit(r);
+  const editBtn=canEditItems?`<button type="button" class="ie-edit-btn" onclick="openItemEdit(${ja(r.id)})">編輯</button>`:'';
+  const itemListHtml=items.length?`<div class="item-list"><div class="il-h">借用器材清單${editBtn}</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}${i.by_admin?'<small class="loose-note">管理員補登</small>':''}${ieIsUnreg(i)?`<button type="button" class="unreg-tag" onclick="ieGoCreate(${ja(i.name)})" title="到器材頁補建">未建檔・補建</button>`:''}</span></div>`).join('')}</div>`:'';
   const photos=Array.isArray(r.photos)?r.photos:[];
   const safePhotos=photos.map(safeUrl).filter(Boolean);
   // 只附照片、沒選器材的申請（借用人找不到品名，拍照代替）
-  const canEditItems=['待審核','已核准','逾期'].includes(r.status);
+  const editing=ieEditingHere(r,mode,inPane);
   const photoOnlyHtml=!items.length&&safePhotos.length?`<div class="admin-note ie-photo-only" style="background:#eef4ff;border-color:#c7d7f5"><span>📷 這張申請沒有選器材，只附了照片，請看照片確認要借什麼</span>${canEditItems?`<button type="button" class="btn btn-primary btn-sm" onclick="openItemEdit(${ja(r.id)})">補器材</button>`:''}</div>`:'';
   const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽</span></button>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
+  const actions=editing?'':recActionsHtml(r,mode);
+  const canBatch=mode==='pending'&&r.status==='待審核';
+  const bOn=canBatch&&batchSel.has(String(r.id));
+  return recCardHtml(r,mode,inPane,{sc,items,overdueDays,itemListHtml,photoOnlyHtml,photosHtml,damageHtml,actions,canBatch,bOn,editing});
+}
+// 卡片下方的動作按鈕（核准、歸還、保證金…＋「⋯ 更多」）；編輯模式沒變動時也用這一組
+function recActionsHtml(r,mode){
+  const items=Array.isArray(r.items)?r.items:[];
+  const photos=(Array.isArray(r.photos)?r.photos:[]).map(safeUrl).filter(Boolean);
   let actions='';
   if(mode==='pending'&&r.status==='待審核'){
     const sh=recShortList(r);
@@ -3042,15 +3144,18 @@ function renderRecord(r,mode,inPane){
     if(r.sheetPrintedAt&&!r.sheetSignedAt)more.push({label:'✍️ 紀錄表已簽回',fn:`markSheetSigned(${ja(r.id)},true)`});
     if(r.sheetSignedAt)more.push({label:'↩️ 取消「已簽回」',fn:`markSheetSigned(${ja(r.id)},false)`});
   }
-  if(canEditItems)more.push({label:'✏️ 修改器材',fn:`openItemEdit(${ja(r.id)})`});
+  // 修改器材的入口在器材清單的表頭；沒有清單、也沒有照片時才放在這裡
+  if(ieCanEdit(r)&&!items.length&&!photos.length)more.push({label:'✏️ 加器材',fn:`openItemEdit(${ja(r.id)})`});
   if(r.status==='已核准'||r.status==='逾期')more.push({label:'📅 延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
   more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
   more.push('hr');
   more.push({label:'🗑️ 刪除這筆',fn:`deleteBorrowRecord(${ja(r.id)})`,danger:true});
   actions+=moreMenuHtml(more);
-  const canBatch=mode==='pending'&&r.status==='待審核';
-  const bOn=canBatch&&batchSel.has(String(r.id));
-  return `<div class="record-card ${r.status==='逾期'?'overdue':''} ${bOn?'bsel-on':''}" data-rid="${escH(r.id)}">
+  return actions;
+}
+function recCardHtml(r,mode,inPane,o){
+  const {sc,items,overdueDays,itemListHtml,photoOnlyHtml,photosHtml,damageHtml,actions,canBatch,bOn,editing}=o;
+  return `<div class="record-card ${r.status==='逾期'?'overdue':''} ${bOn?'bsel-on':''}${editing?' ie-editing':''}" data-rid="${escH(r.id)}" data-mode="${escH(mode||'')}" data-pane="${inPane?1:0}">
     <div class="record-header">
       <div>${canBatch&&!inPane?`<label class="bsel" title="勾選後可一次核准"><input type="checkbox" data-rid="${escH(r.id)}" ${bOn?'checked':''} onchange="batchToggle(this.dataset.rid,this.checked)"></label>`:''}<span class="record-id">${escH(r.id)}</span>
         <div class="rc-name" style="font-weight:700">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
@@ -3068,11 +3173,11 @@ function renderRecord(r,mode,inPane){
       ${r.actualReturn?`<div class="record-meta-item"><span class="record-meta-label">實際歸還</span><span class="record-meta-value">${escH(r.actualReturn)}</span></div>`:''}
       ${r.depositAmount>0?`<div class="record-meta-item"><span class="record-meta-label">保證金</span><span class="record-meta-value">NT$${parseInt(r.depositAmount)||0}${r.depositStatus?' / '+escH(r.depositStatus):''}</span></div>`:''}
     </div>
-    ${(()=>{
+    ${editing?`<div class="ie-box">${ieBodyHtml(r)}</div>`:(()=>{
       const stock=inPane&&['pending','approved','return'].includes(mode)?recStockHtml(r,mode):'';
       if(!stock)return itemListHtml;
       return items.some(i=>i&&i.loose)?itemListHtml+stock:stock;
-    })()}${photoOnlyHtml}${photosHtml}${damageHtml}
+    })()}${editing?'':photoOnlyHtml+photosHtml}${damageHtml}
     ${r.adminNote?`<div class="admin-note">🗒️ 管理員備註：${escH(r.adminNote)}</div>`:''}
     ${(()=>{
       if(!r.note)return '';
@@ -3106,7 +3211,7 @@ function renderRecord(r,mode,inPane){
       }
       return html;
     })()}
-    ${actions?`<div class="record-actions">${actions}</div>`:''}
+    ${editing?ieBarHtml(recActionsHtml(r,mode)):actions?`<div class="record-actions">${actions}</div>`:''}
   </div>`;
 }
 
@@ -3242,7 +3347,7 @@ function renderVenuePending(){
       <div class="period-manage-list">
         ${periods.map((p,i)=>`
           <div class="period-manage-row ${p.status==='已核准'?'approved':p.status==='已拒絕'?'rejected':'pending'}">
-            <input type="checkbox" id="pck-${b.id}-${i}" ${p.status==='待審核'?'checked':''} ${p.status!=='待審核'?'disabled':''} style="width:auto;flex-shrink:0">
+            <input type="checkbox" id="pck-${escH(b.id)}-${i}" ${p.status==='待審核'?'checked':''} ${p.status!=='待審核'?'disabled':''} style="width:auto;flex-shrink:0">
             <span style="flex:1;font-weight:600">${escH(p.date)}</span>
             <span style="color:var(--text2)">${escH(p.period)}</span>
             <span style="color:var(--accent)">${escH(p.venue)}</span>
@@ -3465,7 +3570,7 @@ async function loadSemesters(){
     if(!allSemesters.length){list.innerHTML='<div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div>';return;}
     list.innerHTML='<div class="record-list">'+allSemesters.map(s=>{
       const periods=Array.isArray(s.periods)?s.periods:[];
-      const periodSummary=periods.map(p=>`<div style="font-size:12px;color:var(--text2)">${p.type}${p.label&&p.label!==p.type?'（'+p.label+'）':''}：${p.start_date} ～ ${p.end_date}　第${p.week_start||1}週起</div>`).join('');
+      const periodSummary=periods.map(p=>`<div style="font-size:12px;color:var(--text2)">${escH(p.type)}${p.label&&p.label!==p.type?'（'+escH(p.label)+'）':''}：${escH(p.start_date)} ～ ${escH(p.end_date)}　第${parseInt(p.week_start)||1}週起</div>`).join('');
       return `
       <div class="record-card" style="${s.is_active?'border-color:var(--accent);border-width:2px':''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -3891,7 +3996,7 @@ function clickAdminBooking(bookingId,date,period,venue){
     <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${escH(booking.role||'')}${booking.student_id?' ・ '+escH(booking.student_id):''}</div>
     <div style="font-size:13px;margin-bottom:10px">${escH(venue)}　${escH(period)}　狀態：<strong>${escH(target?.status||booking.status)}</strong></div>
     ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${escH(booking.note)}</div>`:''}
-    ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${rec.week_start}～${rec.week_end}週・每週${DAYS[rec.day_of_week-1]}（共 ${periods.length} 個時段）</div>`:''}
+    ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${parseInt(rec.week_start)||'?'}～${parseInt(rec.week_end)||'?'}週・每週${escH(DAYS[rec.day_of_week-1]||'')}（共 ${periods.length} 個時段）</div>`:''}
     <div style="font-size:12px;color:var(--text2);margin-top:8px">此預約單共 ${periods.length} 個時段，「刪除此時段」僅移除這一筆。</div>
   `,[
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'},
@@ -3944,7 +4049,7 @@ async function setPeriodStatus(bookingId,date,period,venue,status,force){
   if(status==='已核准'&&!force){
     const conf=venueSlotConflict(date,period,venue,bookingId);
     if(conf){
-      showModal('⚠️ 時段衝突',`<p>此時段已有 <strong>${escH(conf.borrower_name)}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${date} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+      showModal('⚠️ 時段衝突',`<p>此時段已有 <strong>${escH(conf.borrower_name)}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${escH(date)} ${escH(period)} ${escH(venue)}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准',true)`}
       ]);
@@ -4188,7 +4293,7 @@ async function doApprove(id,force){
     (Array.isArray(approved)?approved:[]).forEach(r=>{(r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;borrowedMap[k]=(borrowedMap[k]||0)+(parseInt(it.quantity)||0);});});
     const shortage=[];
     (rec.items||[]).forEach(it=>{
-      if(it.loose)return; // 散裝只拿幾個，不檢查整盒庫存
+      if(it.loose||it.unregistered)return; // 散裝只拿幾個，不檢查整盒庫存；未建檔的沒有庫存可比
       const eq=allEquipment.find(e=>e.room===it.room&&e.name===it.name);
       const total=eq?parseInt(eq.total)||0:0;
       const already=borrowedMap[it.room+'__'+it.name]||0;
@@ -4632,6 +4737,29 @@ function calcSettle(deposit){const comp=parseInt(document.getElementById('settle
 async function doSettle(id,depositAmount){const comp=parseInt(document.getElementById('settleComp')?.value)||0,note=document.getElementById('settleNote')?.value||'',refund=Math.max(0,depositAmount-comp);closeModal();try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'已退還',damage_note:note,final_refund:refund},prefer:'return=minimal'});showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();}catch(e){showToast('結算失敗：'+e.message,'error');}}
 
 function showModal(title,body,actions){document.getElementById('modalTitle').textContent=title;document.getElementById('modalBody').innerHTML=body;document.getElementById('modalActions').innerHTML=actions.map(a=>`<button class="btn ${a.cls}" onclick="${a.fn}">${a.label}</button>`).join('');document.getElementById('modalOverlay').classList.add('show');}
+// ── 頁內確認視窗（2026-10-22）：取代瀏覽器的 confirm()；第一行是問題，其餘是說明；按鈕寫明動作 ──
+function uiConfirm(msg,okLabel,danger){
+  return new Promise(res=>{
+    let ov=document.getElementById('uiConfirm');
+    if(!ov){ov=document.createElement('div');ov.id='uiConfirm';ov.className='uic-ov';ov.setAttribute('role','alertdialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','uicT');document.body.appendChild(ov);}
+    if(ov.classList.contains('show')){res(false);return;}
+    ov.innerHTML=`<div class="uic-box"><div class="uic-t" id="uicT"></div><div class="uic-b"></div><div class="uic-a"><button type="button" class="btn btn-secondary btn-sm" data-v="0">取消</button><button type="button" class="btn ${danger?'btn-danger':'btn-primary'} btn-sm" data-v="1"></button></div></div>`;
+    const lines=String(msg??'').split('\n');
+    ov.querySelector('.uic-t').textContent=lines.shift();
+    const b=ov.querySelector('.uic-b');lines.filter(l=>l.trim()).forEach(l=>{const p=document.createElement('p');p.textContent=l;b.appendChild(p);});
+    ov.querySelector('[data-v="1"]').textContent=okLabel||'確定';
+    const prev=document.activeElement;
+    const key=e=>{
+      if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();done(false);}
+      else if(e.key==='Tab'){const bs=[...ov.querySelectorAll('button')];const i=bs.indexOf(document.activeElement);e.preventDefault();bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}
+    };
+    function done(v){ov.classList.remove('show');window.removeEventListener('keydown',key,true);try{if(prev&&prev.isConnected)prev.focus({preventScroll:true});}catch(_){}res(v);}
+    ov.onclick=e=>{const t=e.target.closest('[data-v]');if(t)done(t.dataset.v==='1');else if(e.target===ov)done(false);};
+    window.addEventListener('keydown',key,true);
+    ov.classList.add('show');
+    setTimeout(()=>ov.querySelector(danger?'[data-v="0"]':'[data-v="1"]').focus(),0);
+  });
+}
 function closeModal(event){if(!event||event.target===document.getElementById('modalOverlay'))document.getElementById('modalOverlay').classList.remove('show');}
 
 /* ── 手機「返回鍵」支援 ──────────────────────────────
@@ -4694,8 +4822,10 @@ function initBackButton(){
         const top=NAV_OVERLAYS.find(navIsOpen);
         if(top){
           // 表單填到一半按返回：先問，按「取消」就把剛剛退掉的紀錄補回去，視窗維持原樣
-          if(top[0]==='modalOverlay'&&navModalDirty()&&!confirm('視窗裡填的內容還沒送出，確定要關閉嗎？')){
+          if(top[0]==='modalOverlay'&&navModalDirty()){
+            // 先把返回補回去、視窗維持原樣，再用頁內確認問要不要關
             setTimeout(()=>{NAV.busy=false;navPush('modalOverlay');},0);
+            uiConfirm('視窗裡填的內容還沒送出\n關掉的話，剛剛填的會不見。','關閉不存',true).then(ok=>{if(ok)closeModal();});
             return;
           }
           top[2]();changed=true;
@@ -6160,11 +6290,11 @@ async function saveTray(){
   if(clash){showToast(`跟「${clash.name}」重疊了，請調整寬度或高度`,'error');return;}
   // 清單裡沒有的藥品：問一次，一起新增
   const missing=[...new Set(rows.filter(x=>x.kind==='chem'&&!chemByExactName(x.nm)).map(x=>x.nm))];
-  if(missing.length&&!confirm(`藥品清單裡還沒有：${missing.join('、')}\n\n儲存時會一起新增到藥品清單（之後可以再補分子式、分類、警示）。\n要繼續嗎？`))return;
+  if(missing.length&&!await uiConfirm(`藥品清單裡還沒有：${missing.join('、')}\n\n儲存時會一起新增到藥品清單（之後可以再補分子式、分類、警示）。\n要繼續嗎？`,'一起新增'))return;
   const covered=allChemLocs.filter(l=>l.cab===ctx.cab&&l.layer>=ctx.layer&&l.layer<=L2&&l.col>=a&&l.col<=b);
   if(covered.length){
     const eg=covered.slice(0,3).map(l=>(allAdminChems.find(c=>String(c.id)===String(l.chem_id))?.name_zh||'?')+'（'+l.layer+'-'+l.col+'）').join('、');
-    if(!confirm(`這個範圍裡登記了 ${covered.length} 個藥品位置，例如 ${eg}。\n放盆之後它們會被盆蓋住，櫃子圖上看不到（搜尋還找得到）。\n\n建議先把它們搬走或移除。仍要繼續嗎？`))return;
+    if(!await uiConfirm(`這個範圍裡登記了 ${covered.length} 個藥品位置，例如 ${eg}。\n放盆之後它們會被盆蓋住，櫃子圖上看不到（搜尋還找得到）。\n\n建議先把它們搬走或移除。仍要繼續嗎？`,'仍要放盆'))return;
   }
   cabBusy=true;
   try{
@@ -6191,7 +6321,7 @@ async function saveTray(){
 }
 async function deleteTray(){
   const ctx=window._trayEdit;if(!ctx||!ctx.id)return;
-  if(!confirm('刪除這個藥品盆？（盆裡登記的內容會一起刪掉；藥品清單本身不受影響）'))return;
+  if(!await uiConfirm('刪除這個藥品盆？（盆裡登記的內容會一起刪掉；藥品清單本身不受影響）','刪除這個盆',true))return;
   try{await sb('DELETE','chem_trays',{filter:'id=eq.'+encodeURIComponent(ctx.id),prefer:'return=minimal'});closeModal();showToast('已刪除藥品盆','success');await loadAdminChems();adminCabUI.select(ctx.cab,ctx.layer,null,null);}
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
@@ -6236,7 +6366,7 @@ async function saveZone(){
 }
 async function deleteZone(){
   const ctx=window._zoneEdit;if(!ctx||!ctx.id)return;
-  if(!confirm('刪除這個分區？（櫃子裡的藥品不會受影響）'))return;
+  if(!await uiConfirm('刪除這個分區？（櫃子裡的藥品不會受影響）','刪除分區',true))return;
   try{await sb('DELETE','chem_cab_labels',{filter:'id=eq.'+encodeURIComponent(ctx.id),prefer:'return=minimal'});closeModal();showToast('已刪除分區','success');await loadAdminChems();adminCabUI.select(ctx.cab,ctx.L,null,null);}
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
@@ -6259,7 +6389,7 @@ async function cabQuickBottles(locId,d){
 async function cabQuickRemove(locId){
   const l=allChemLocs.find(x=>String(x.id)===String(locId));if(!l)return;
   const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
-  if(!confirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這一格不再有它）`))return;
+  if(!await uiConfirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這一格不再有它）`,'從這格移除',true))return;
   try{
     await sb('DELETE','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),prefer:'return=minimal'});
     showToast('已移除','success');await loadAdminChems();adminCabUI.select(l.cab,l.layer,l.col,null);
@@ -6308,7 +6438,7 @@ function renderChemCabOrphans(){
 }
 async function clearChemCabOrphans(){
   const o=chemCabOrphans();if(!o.length)return;
-  if(!confirm(`確定清掉 ${o.length} 個找不到藥品的櫃位？`))return;
+  if(!await uiConfirm(`確定清掉 ${o.length} 個找不到藥品的櫃位？`,'清掉這些櫃位',true))return;
   try{
     for(let i=0;i<o.length;i+=100){
       const ids=o.slice(i,i+100).map(l=>parseInt(l.id)).filter(n=>Number.isFinite(n));
@@ -6581,7 +6711,7 @@ async function pcRecheck(ids){
   const want=new Set((Array.isArray(ids)?ids:[ids]).map(String));
   const list=allAdminChems.filter(c=>want.has(String(c.id)));
   if(!list.length){showToast('還沒有勾選藥品','error');return;}
-  if(list.length>100&&!confirm(`要重查 ${list.length} 筆？每筆約 10 秒，大約要 ${Math.ceil(list.length/6)} 分鐘。`))return;
+  if(list.length>100&&!await uiConfirm(`要重查 ${list.length} 筆？每筆約 10 秒，大約要 ${Math.ceil(list.length/6)} 分鐘。`,'開始重查'))return;
   await pcRunList(list);
 }
 async function pcRunList(list){
@@ -6622,7 +6752,7 @@ async function pcConfirm(id,useCas){
 async function pcConfirmAllMatch(){
   const ids=[...PC.results.values()].filter(r=>r.status==='match').map(r=>r.chem_id);
   if(!ids.length)return;
-  if(!confirm(`把 ${ids.length} 個「對得上」的藥品全部確認？（會存入結構式；CAS 只有 PubChem 只列一個時才會自動存）`))return;
+  if(!await uiConfirm(`把 ${ids.length} 個「對得上」的藥品全部確認？（會存入結構式；CAS 只有 PubChem 只列一個時才會自動存）`,'全部確認'))return;
   for(const id of ids)await pcConfirm(id,true);
   showToast('已確認 '+ids.length+' 個','success');
 }
@@ -6950,7 +7080,7 @@ async function saveCabEdit(){
     if(nameChanged||Object.keys(extra).length){
       if(nameChanged){
         const dup=chemNameClash(c.id,zh,en);
-        if(dup&&!confirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「🔎 相似名稱」合併）`))return;
+        if(dup&&!await uiConfirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「🔎 相似名稱」合併）`,'仍要這樣改'))return;
       }
       try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body:{name_zh:zh,name_en:en||null,...extra,updated_at:new Date().toISOString()},prefer:'return=minimal'});Object.assign(c,{name_zh:zh,name_en:en||null},extra);}
       catch(e){showToast('藥品資料更新失敗：'+e.message,'error');return;}
@@ -6973,7 +7103,7 @@ async function saveCabEdit(){
 async function deleteCabLoc(){
   const l=allChemLocs.find(x=>x.id===window._cabEdit);if(!l)return;
   const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
-  if(!confirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這個位置不再有它）`))return;
+  if(!await uiConfirm(`把「${c?c.name_zh:'這個藥品'}」從 ${cabText(l)} 移除？\n（藥品資料本身會保留，只是這個位置不再有它）`,'移除這個位置',true))return;
   try{
     await sb('DELETE','chem_locations',{filter:'id=eq.'+encodeURIComponent(l.id),prefer:'return=minimal'});
     closeModal();showToast('已移除','success');await loadAdminChems();adminCabUI.select(l.cab,l.layer,l.col,null);
@@ -7136,7 +7266,7 @@ async function mergeSimilarGroup(gi){
   const involved=[keep,...others];
   const anyLocs=involved.some(c=>chemLocsOf(c.id).length);
   const lost=anyLocs?others.filter(c=>!chemLocsOf(c.id).length&&(parseInt(c.bottles_left)||0)>0):[];
-  if(!confirm(`保留「${keep.name_zh}」，把 ${others.map(c=>'「'+c.name_zh+'」').join('、')} 合併進來後刪除？${lost.length?`\n\n注意：${lost.map(c=>'「'+c.name_zh+'」'+c.bottles_left+' 瓶').join('、')}沒有登記在藥品櫃，瓶數不會自動加進來，合併後請到藥品櫃補上位置。`:''}`))return;
+  if(!await uiConfirm(`保留「${keep.name_zh}」，把 ${others.map(c=>'「'+c.name_zh+'」').join('、')} 合併進來後刪除？${lost.length?`\n\n注意：${lost.map(c=>'「'+c.name_zh+'」'+c.bottles_left+' 瓶').join('、')}沒有登記在藥品櫃，瓶數不會自動加進來，合併後請到藥品櫃補上位置。`:''}`,'合併後刪除',true))return;
   try{
     for(const o of others){
       if(chemLocsOf(o.id).length)await sb('PATCH','chem_locations',{filter:'chem_id=eq.'+encodeURIComponent(o.id),body:{chem_id:keep.id},prefer:'return=minimal'});
@@ -7153,7 +7283,7 @@ async function mergeSimilarGroup(gi){
 async function deleteSimilarOne(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
   const n=chemLocsOf(c.id).length;
-  if(!confirm(`刪除「${c.name_zh}」？${n?`\n它在藥品櫃有 ${n} 個位置，也會一起刪掉。如果只是名字重複，建議改用「合併」。`:''}`))return;
+  if(!await uiConfirm(`刪除「${c.name_zh}」？${n?`\n它在藥品櫃有 ${n} 個位置，也會一起刪掉。如果只是名字重複，建議改用「合併」。`:''}`,'刪除藥品',true))return;
   try{await deleteChemLocsOf(c.id);await sb('DELETE','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),prefer:'return=minimal'});showToast('已刪除','success');await loadAdminChems();checkChemSimilarFiltered();}
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
@@ -7306,7 +7436,7 @@ async function runCabImport(){
   const mode=document.querySelector('input[name="cabImpMode"]:checked')?.value||'append';
   const cabs=plan.grid?plan.grid.cabs:[1,2,3,4];
   const curN=allChemLocs.filter(l=>cabs.includes(l.cab)).length;
-  if(mode==='replace'&&curN&&!confirm(`確定要先清空${plan.grid?cabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前 ${curN} 筆位置嗎？`))return;
+  if(mode==='replace'&&curN&&!await uiConfirm(`確定要先清空${plan.grid?cabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前 ${curN} 筆位置嗎？`,'清空後匯入',true))return;
   cabBusy=true;const msg=document.getElementById('chemCabMsg');
   try{
     closeModal();if(msg)msg.textContent='匯入中…';
@@ -8478,7 +8608,9 @@ function filterAdminEquip(){
     return true;
   });
   const doneN=base.filter(stkIsDone).length;
-  renderStkBar(doneN,base.length);
+  // 本輪進度固定看全部器材；有篩選（搜尋、房間、總覽快速篩選）時另外寫「目前篩選 n / m」（2026-10-22）
+  const filtered=base.length!==allAdminEquipment.length;
+  renderStkBar(allAdminEquipment.filter(stkIsDone).length,allAdminEquipment.length,filtered?{done:doneN,total:base.length}:null);
   const qb=document.getElementById('eqQuickBar');
   if(qb)qb.innerHTML=eqQuick?`<div class="eq-quick">只顯示：<b>${eqQuick==='old'?'超過一年未盤點':'位置代碼開頭跟房間對不上'}</b>（${base.length} 項）<button type="button" class="btn btn-secondary btn-sm" onclick="eqQuick='';adminEquipPage=1;filterAdminEquip()">✕ 顯示全部</button></div>`:'';
   const items=base.filter(e=>stkView==='all'?true:(stkView==='done'?stkIsDone(e):!stkIsDone(e)));
@@ -8565,10 +8697,14 @@ function renderAdminEquipCard(e){
               <button type="button" class="stk-same ${stkSameOn?'on':''}" id="stks-${e.id}" style="${stkChanged?'display:none':''}" onclick="toggleStkSame(${ja(e.id)})">${stkSameOn?'✓ 無變動':'無變動'}</button>
               ${equipOut(e)?`<span style="font-size:11.5px;color:var(--text2);white-space:nowrap">總數 ${parseInt(e.total)||0}，借出中 ${equipOut(e)}，只點架上的</span>`:''}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
-            ${e.location?`<span>📍 ${escH(e.location)}</span>`:''}
+            ${e.location&&!(stkSort==='loc'&&String(e.location).trim()===stkCabinet(e))?`<span>📍 ${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
-            ${e.asset_no?`<span>財產編號：${escH(e.asset_no)}</span>`:''}
           </div>
+          ${(()=>{ // 財產編號平常放在詳細資料；搜尋是因為財產編號才找到時，在這裡說明為什麼搜得到
+            const q=(document.getElementById('adminEquipSearch')?.value||'').trim(),ql=q.toLowerCase();
+            if(!q||!e.asset_no||[e.name,e.spec,e.alias].some(x=>String(x||'').toLowerCase().includes(ql))||!assetHit(e.asset_no,q))return '';
+            return `<div class="eq-asset-hit">財產編號符合 ${escH(q)}</div>`;
+          })()}
           ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
           ${kitLines(e).length?`<details class="kit-box eq-x"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
           <div class="eq-x">${equipUsageHtml(e)}</div>
@@ -8631,7 +8767,7 @@ async function compressExistingEquipPhotos(){
   const items=(allAdminEquipment||[]).filter(e=>typeof e.image_url==='string'&&e.image_url.startsWith(prefix));
   const msg=document.getElementById('photoCompressMsg');
   if(!items.length){showToast('目前沒有可以處理的器材照片（先到下方清單載入器材）','error');return;}
-  if(!confirm(`要檢查 ${items.length} 張器材照片，超過 400KB 的會縮小後重新上傳並換上新網址。\n原檔不會刪除。過程中請不要關閉這個頁面，要繼續嗎？`))return;
+  if(!await uiConfirm(`要檢查 ${items.length} 張器材照片，超過 400KB 的會縮小後重新上傳並換上新網址。\n原檔不會刪除。過程中請不要關閉這個頁面，要繼續嗎？`,'開始檢查'))return;
   let done=0,shrunk=0,skipped=0,failed=0,saved=0;
   for(const e of items){
     done++;
@@ -8857,7 +8993,7 @@ async function createStkLink(){
 function copyStkUrl(){const u=window._lastStkUrl;if(!u)return;(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>showToast('已複製','success')).catch(()=>{prompt('請長按複製：',u);});}
 function shareStkUrl(){const u=window._lastStkUrl;if(u&&navigator.share)navigator.share({title:'器材盤點連結',url:u}).catch(()=>{});}
 async function revokeStkLink(id){
-  if(!confirm('作廢這個連結？對方之後就不能再用了（已經存好的盤點結果不會被刪掉）。'))return;
+  if(!await uiConfirm('作廢這個連結？對方之後就不能再用了（已經存好的盤點結果不會被刪掉）。','作廢連結',true))return;
   try{await sb('PATCH','stocktake_links',{filter:'id=eq.'+encodeURIComponent(id),body:{revoked:true},prefer:'return=minimal'});showToast('已作廢','success');loadStkLinks();}
   catch(e){showToast('作廢失敗：'+e.message,'error');}
 }
@@ -8886,10 +9022,10 @@ async function undoStkLog(id){
     if(g.action==='count'){
       if(!e){showToast('這項器材已經不存在了','error');return;}
       const warn=(parseInt(e.total)!==parseInt(g.new_total))?`\n注意：目前數量是 ${e.total}，之後又被改過了。`:'';
-      if(!confirm(`把「${g.name}」的數量改回 ${g.old_total}？${warn}`))return;
+      if(!await uiConfirm(`把「${g.name}」的數量改回 ${g.old_total}？${warn}`,'改回原數量'))return;
       await sb('PATCH','equipment',{filter:'id=eq.'+g.equipment_id,body:{total:g.old_total},prefer:'return=minimal'});
     }else if(g.action==='add'){
-      if(e&&!confirm(`刪除幫手新增的「${g.name}」？`))return;
+      if(e&&!await uiConfirm(`刪除幫手新增的「${g.name}」？`,'刪除這項',true))return;
       if(e)await sb('DELETE','equipment',{filter:'id=eq.'+g.equipment_id,prefer:'return=minimal'});
     }else return;
     await sb('PATCH','stocktake_log',{filter:'id=eq.'+encodeURIComponent(g.id),body:{undone:true},prefer:'return=minimal'});
@@ -8957,24 +9093,25 @@ function setStkRoundStart(v){
   try{localStorage.setItem('stkRoundStart',v);}catch(_){}
   adminEquipPage=1;filterAdminEquip();
 }
-function startNewStkRound(){
-  if(!confirm('開始新一輪盤點？\n所有器材會回到「待盤點」（以前的盤點時間紀錄不會刪掉）。'))return;
+async function startNewStkRound(){
+  if(!await uiConfirm('開始新一輪盤點？\n所有器材會回到「待盤點」（以前的盤點時間紀錄不會刪掉）。','開始新一輪'))return;
   const t=new Date(),v=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
   setStkRoundStart(v);
 }
-function renderStkBar(done,total){
+function renderStkBar(done,total,f){
   const box=document.getElementById('stkBar');if(!box)return;
   const pct=total?Math.round(done*100/total):0,rs=stkRoundStartStr();
+  const vd=f?f.done:done,vt=f?f.total:total;   // 下面「待盤點／已盤點」分頁的數字跟著篩選
   box.innerHTML=`<div class="stk-bar">
-    <div class="stk-prog-row"><strong>本輪進度</strong><span>${done} / ${total} 項（${pct}%）</span><div class="stk-prog"><i style="width:${pct}%"></i></div></div>
+    <div class="stk-prog-row"><strong>本輪</strong><span>${done} / ${total} 項（${pct}%）${f?`<span class="stk-f">・目前篩選 ${f.done} / ${f.total}</span>`:''}</span><div class="stk-prog"><i style="width:${pct}%"></i></div></div>
     <div class="stk-round">本輪從 <input type="date" value="${rs}" onchange="setStkRoundStart(this.value)"> 起算
       <button type="button" class="btn btn-secondary btn-sm" onclick="startNewStkRound()">🔄 今天開始新一輪</button></div>
     <div class="stk-round">排序
       <select onchange="setStkSort(this.value)" style="width:auto;padding:3px 6px;font-size:12.5px"><option value="loc" ${stkSort==='loc'?'selected':''}>依櫃位（照現場走的順序）</option><option value="name" ${stkSort==='name'?'selected':''}>依名稱</option></select>
       <button type="button" class="btn btn-secondary btn-sm" onclick="printStocktakeSheet()">🖨️ 列印這份清單</button></div>
     <div class="stk-views">
-      <button type="button" class="${stkView==='todo'?'on':''}" onclick="setStkView('todo')">待盤點（${total-done}）</button>
-      <button type="button" class="${stkView==='done'?'on':''}" onclick="setStkView('done')">已盤點（${done}）</button>
+      <button type="button" class="${stkView==='todo'?'on':''}" onclick="setStkView('todo')">待盤點（${vt-vd}）</button>
+      <button type="button" class="${stkView==='done'?'on':''}" onclick="setStkView('done')">已盤點（${vd}）</button>
       <button type="button" class="${stkView==='all'?'on':''}" onclick="setStkView('all')">全部</button>
     </div></div>`;
 }
@@ -9255,7 +9392,7 @@ function openWriteoffModal(id){
   const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
   const avail=equipAvailable(e);
   showModal(`♻️ 報廢 — ${e.name}`,`
-    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${rn(e.room)}${e.spec?' ・ '+e.spec:''}　目前總數 ${e.total??0}，可借 ${avail}</div>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}　目前總數 ${e.total??0}，可借 ${avail}</div>
     <div class="form-group"><label>報廢數量 *</label><input type="number" id="wo-qty" min="1" max="${e.total??0}" value="1"></div>
     <div class="form-group"><label>原因 *</label>
       <select id="wo-reason">${WRITEOFF_REASONS.map(r=>`<option value="${r}">${r}</option>`).join('')}</select>
@@ -9385,7 +9522,7 @@ function renderCalibOverlay(){
     const x=h.left_pct/100*VW,y=h.top_pct/100*VH,w=h.width_pct/100*VW,ht=h.height_pct/100*VH;
     return `<g id="calib-hs-${h.id}" class="calib-existing-hotspot" style="pointer-events:auto;cursor:pointer" onclick="openCalibLocEditor(${h.id})">
       <rect x="${x}" y="${y}" width="${w}" height="${ht}" rx="3" style="fill:rgba(42,107,79,0.12);stroke:rgba(42,107,79,0.6);stroke-width:2"></rect>
-      <text x="${x+4}" y="${y+14}" style="fill:#fff;font-size:14px;font-weight:700" stroke="rgba(42,107,79,0.9)" stroke-width="3" paint-order="stroke">${h.code}</text>
+      <text x="${x+4}" y="${y+14}" style="fill:#fff;font-size:14px;font-weight:700" stroke="rgba(42,107,79,0.9)" stroke-width="3" paint-order="stroke">${escH(h.code)}</text>
     </g>`;
   }).join('');
 }
@@ -9692,7 +9829,7 @@ async function checkCalibDuplicates(){
     const rowsHtml=dupGroups.map(g=>{
       const sorted=[...g].sort((a,b)=>a.id-b.id); // 舊的在前，最新一筆（通常是你後來校正的）在後
       return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff5f5">
-        <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:6px">${roomLabel(sorted[0].room)}・${sorted[0].code}　共 ${sorted.length} 筆</div>
+        <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:6px">${escH(roomLabel(sorted[0].room))}・${escH(sorted[0].code)}　共 ${sorted.length} 筆</div>
         ${sorted.map((h,i)=>`
           <label style="display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;font-size:12.5px;cursor:pointer;margin-bottom:2px;background:var(--surface2)">
             <input type="checkbox" class="calibdup-del" data-id="${h.id}" ${i<sorted.length-1?'checked':''} style="width:auto;flex-shrink:0">
@@ -9739,7 +9876,7 @@ async function checkCalibOversized(){
     const rowsHtml=bad.map(h=>`
       <label style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#fff5f5;margin-bottom:4px;font-size:13px;cursor:pointer">
         <input type="checkbox" class="calibbad-del" data-id="${h.id}" checked style="width:auto;flex-shrink:0">
-        <span style="flex:1"><strong>${roomLabel(h.room)}・${h.code}</strong>　寬:${h.width_pct}% 高:${h.height_pct}%（#${h.id}）</span>
+        <span style="flex:1"><strong>${escH(roomLabel(h.room))}・${escH(h.code)}</strong>　寬:${h.width_pct}% 高:${h.height_pct}%（#${h.id}）</span>
         <span style="font-size:11px;color:var(--danger)">建議刪除</span>
       </label>`).join('');
     showModal(`⚠️ 發現 ${bad.length} 筆異常尺寸熱區`,
@@ -10025,6 +10162,32 @@ async function doDeleteHighlight(id){
 .ie-hit{display:flex;gap:6px;align-items:baseline;width:100%;text-align:left;border:0;border-bottom:1px solid var(--surface2);background:none;padding:8px 2px;font:inherit;cursor:pointer;color:var(--text)}
 .ie-hit small{color:var(--text2);flex:1;min-width:0}.ie-hit span{color:var(--accent);font-weight:700}
 .ie-warn{margin-top:8px;font-size:13px;background:#fde8e8;color:#b42318;border-radius:8px;padding:6px 10px}
+.stk-f{color:var(--text2);font-weight:400;margin-left:2px}
+.eq-asset-hit{font-size:12px;color:var(--accent);font-family:'DM Mono',monospace;margin-top:2px}
+/* 2026-10-22 修改器材：卡片／窗格內的編輯模式 */
+.ie-row.short{background:#fde8e8;margin:0 -10px;padding-left:10px;padding-right:10px}
+.ie-row.short+.ie-row.short{border-top:1px solid #f6caca}
+.ie-loc{white-space:nowrap;font-family:'DM Mono',monospace}
+.ie-t.unreg{background:#efe9f6;color:#5b3f86}
+.ie-new b{color:var(--accent)}
+.ie-box{margin-top:10px}
+.record-card.ie-editing{outline:2px solid var(--accent);outline-offset:-1px}
+.ie-bar{align-items:center}
+.ie-cnt{font-size:12.5px;color:#8a5a00;margin-right:auto}
+.ie-edit-btn{margin-left:auto;border:0;background:none;color:var(--accent);font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;padding:2px 4px;border-radius:5px}
+.ie-edit-btn:hover{background:var(--surface2)}
+.ie-edit-btn:focus-visible,.unreg-tag:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.il-h{display:flex;align-items:center;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px}
+.rs-h{display:flex;align-items:center}
+.unreg-tag{border:0;font:inherit;font-size:11px;font-weight:700;color:#5b3f86;background:#efe9f6;border-radius:20px;padding:0 8px;margin-left:6px;cursor:pointer;white-space:nowrap;vertical-align:1px}
+@media (max-width:560px){.ie-q button{width:28px}.ie-q input{width:44px}.ie-x{width:24px}}
+/* 頁內確認視窗：取代瀏覽器的 confirm() */
+.uic-ov{position:fixed;inset:0;z-index:500;background:rgba(20,22,24,.45);display:none;align-items:center;justify-content:center;padding:16px}
+.uic-ov.show{display:flex}
+.uic-box{background:var(--surface);border-radius:12px;width:100%;max-width:420px;padding:16px 18px;box-shadow:0 12px 32px rgba(0,0,0,.22)}
+.uic-t{font-weight:700;font-size:15.5px;line-height:1.5;margin-bottom:6px}
+.uic-b p{font-size:13.5px;line-height:1.6;color:var(--text2);margin:0 0 4px}
+.uic-a{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;flex-wrap:wrap}
 .eq-quick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13.5px;background:#fbf1dc;border-radius:8px;padding:6px 10px;margin-bottom:8px}
 .srg-detail .sr-row{grid-template-columns:110px minmax(0,1fr) auto}
 .srg-detail .sr-row .sr-tags{grid-column:2}
@@ -10397,16 +10560,18 @@ function srPlanLayout(kind){
     const titles=[...new Set(g.runs.map(it=>{const t=it.run.template_id?srTpl(it.run.template_id):null;return t?(t.name||'').trim():String(it.run.title||'').trim();}).filter(Boolean))];
     const title=titles.join('／')||'（未填名稱）',lv=g.lv||'其他',ty=g.type||'';
     let ck,tag;
-    if(kind==='grade'){ck=lv;tag=(SR_SUBJ_SHORT[g.subj]||g.subj||'')+srTypeShort(ty);}
-    else{ck=ty==='探究'?'探究':(g.subj||'其他');tag=(SR_LV_SHORT[lv]||lv)+(ty==='探究'?'':srTypeShort(ty));}
+    const sk=ty==='探究'?'探究':(g.subj||'其他');
+    // 年級表（2026-10-22）：年級底下再分科目欄，同一科連續幾週就一定能合併，不會同一格上下疊兩個實驗
+    if(kind==='grade'){ck=lv+'|'+sk;tag=ty==='探究'?'':srTypeShort(ty);}
+    else{ck=sk;tag=(SR_LV_SHORT[lv]||lv)+(ty==='探究'?'':srTypeShort(ty));}
     const key=[lv,g.subj,ty,title].join('|');
-    const c=cols.get(ck)||{key:ck,cells:new Map()};
+    const c=cols.get(ck)||{key:ck,lv,sk,cells:new Map()};
     const x=c.cells.get(key)||{key,tag,title,subj:g.subj,type:ty,wis:new Set()};
     x.wis.add(wi);c.cells.set(key,x);cols.set(ck,c);
   }));
-  const order=kind==='grade'?SR_LV:SR_PLAN_COLS,oi=k=>{const i=order.indexOf(k);return i<0?99:i;};
+  const oi=(arr,k)=>{const i=arr.indexOf(k);return i<0?99:i;};
   const ov=(a,b)=>a.s<=b.e&&b.s<=a.e;
-  const out=[...cols.values()].sort((a,b)=>oi(a.key)-oi(b.key)||a.key.localeCompare(b.key,'zh-Hant')).map(c=>{
+  const out=[...cols.values()].sort((a,b)=>(kind==='grade'?oi(SR_LV,a.lv)-oi(SR_LV,b.lv)||String(a.lv).localeCompare(String(b.lv),'zh-Hant'):0)||oi(SR_PLAN_COLS,a.sk)-oi(SR_PLAN_COLS,b.sk)||String(a.sk).localeCompare(String(b.sk),'zh-Hant')).map(c=>{
     // 連續的週合成一段
     const blocks=[];
     c.cells.forEach(x=>{const ws=[...x.wis].sort((a,b)=>a-b);let s=ws[0],p=ws[0];
@@ -10426,29 +10591,45 @@ function srPlanLayout(kind){
       if(k===0)singles.forEach((list,i)=>{g[i]={span:1,items:list.sort((a,b)=>a.tag.localeCompare(b.tag,'zh-Hant'))};});
       return g;
     });
-    const label=kind==='grade'?c.key:c.key==='探究'?'探究實作':c.key;
+    const label=kind==='grade'?(c.sk==='探究'?'探究':(SR_SUBJ_SHORT[c.sk]||c.sk)):c.key==='探究'?'探究實作':c.key;
     // 多開的欄：裡面都是同一種類型就標出來（高二探究(1)、高二探究(2)）
     const heads=lanes.map((ln,k)=>{if(!k)return label;const ts=[...new Set(ln.map(b=>b.type))];return label+(ts.length===1&&ts[0]&&!label.includes(ts[0])?ts[0]:'');});
     const dup=new Map();heads.forEach(h=>dup.set(h,(dup.get(h)||0)+1));
     const seen=new Map();
-    return {label,heads:heads.map(h=>dup.get(h)>1?`${h}(${seen.set(h,(seen.get(h)||0)+1).get(h)})`:h),grid,subj:c.key};
+    return {label,heads:heads.map(h=>dup.get(h)>1?`${h}(${seen.set(h,(seen.get(h)||0)+1).get(h)})`:h),grid,subj:c.sk,grp:kind==='grade'?c.lv:null};
   });
-  const rows=weeks.map(w=>{const d=semThu(w.date);return {name:srWeekName(w,weeks),mon:`${d.getFullYear()}/${d.getMonth()+1}`,exam:cal.real?examLabelForWeek(w.week):''};});
+  const rows=weeks.map(w=>{const d=semThu(w.date);return {name:srWeekName(w,weeks),range:srWeekRange(w),mon:`${d.getFullYear()}/${d.getMonth()+1}`,exam:cal.real?examLabelForWeek(w.week):''};});
   const yr=weeks.length?tplCurLabel(semThu(weeks[0].date)):tplCurLabel();
   const title=`${yr} 第${srTerm===1?'一':'二'}學期　${kind==='grade'?'各年級':'各週次'}實驗安排表${srSubj!=='全部'?`（${srSubj}）`:''}`;
   return {title,rows,cols:out,todo,groups,real:cal.real};
 }
+// 週次旁的日期：週一～週五，例如 9/7–11、9/28–10/2
+function srWeekRange(w){
+  const a=new Date(w.date);if(isNaN(a))return '';const b=new Date(a);b.setDate(a.getDate()+4);
+  return `${a.getMonth()+1}/${a.getDate()}–${b.getMonth()!==a.getMonth()?(b.getMonth()+1)+'/':''}${b.getDate()}`;
+}
+// 科目底色（物藍、化橙、生綠、地紫、理化青）；探究用斜紋。A3 黑白印也看得出深淺不同
+const SRP_SUBJ_CLS={'物理':'s-phy','化學':'s-chem','生物':'s-bio','地科':'s-geo','理化':'s-pc'};
+const SRP_SUBJ_ARGB={'s-phy':'FFD6E4F5','s-chem':'FFFBE3C8','s-bio':'FFDCEFD5','s-geo':'FFE7DEF3','s-pc':'FFD3ECEA','s-inq':'FFEEF0F2'};
+function srpCellCls(x){const b=x.items[0]||{};return b.type==='探究'?'s-inq':(SRP_SUBJ_CLS[b.subj]||'');}
 function srPlanTableHtml(L){
   const colsN=L.cols.reduce((a,c)=>a+c.heads.length,0);
-  const head=`<tr><th class="m">月份</th><th class="w">週次</th>${L.cols.map(c=>c.heads.map(h=>`<th>${escH(h)}</th>`).join('')).join('')}<th class="nt">備註</th></tr>`;
+  const two=L.cols.some(c=>c.grp);
+  let head;
+  if(two){
+    // 第一列年級（合併）、第二列科目
+    const grps=[];L.cols.forEach(c=>{const last=grps[grps.length-1];if(last&&last.g===c.grp)last.n+=c.heads.length;else grps.push({g:c.grp,n:c.heads.length});});
+    head=`<tr><th class="m" rowspan="2">月份</th><th class="w" rowspan="2">週次</th>${grps.map(x=>`<th colspan="${x.n}">${escH(x.g)}</th>`).join('')}<th class="nt" rowspan="2">備註</th></tr>`
+      +`<tr class="sub">${L.cols.map(c=>c.heads.map(h=>`<th class="${c.subj==='探究'?'s-inq':(SRP_SUBJ_CLS[c.subj]||'')}">${escH(h)}</th>`).join('')).join('')}</tr>`;
+  }else head=`<tr><th class="m">月份</th><th class="w">週次</th>${L.cols.map(c=>c.heads.map(h=>`<th>${escH(h)}</th>`).join('')).join('')}<th class="nt">備註</th></tr>`;
   const body=L.rows.map((r,i)=>{
     let h=`<tr${r.exam?' class="exam"':''}>`;
     if(i===0||L.rows[i-1].mon!==r.mon){let n=1;while(L.rows[i+n]&&L.rows[i+n].mon===r.mon)n++;h+=`<td class="m" rowspan="${n}">${escH(r.mon)}</td>`;}
-    h+=`<td class="w">${escH(r.name)}</td>`;
+    h+=`<td class="w">${escH(r.name)}${r.range?`<small>${escH(r.range)}</small>`:''}</td>`;
     L.cols.forEach(c=>c.grid.forEach(g=>{
       const x=g[i];if(x==='skip')return;
       if(!x){h+='<td></td>';return;}
-      h+=`<td class="ex${x.span>1?' span':''}"${x.span>1?` rowspan="${x.span}"`:''}>${x.items.map(b=>`<div><b>${escH(b.tag)}</b> ${escH(b.title)}</div>`).join('')}</td>`;
+      h+=`<td class="ex${x.span>1?' span':''} ${srpCellCls(x)}"${x.span>1?` rowspan="${x.span}"`:''}>${x.items.map(b=>`<div>${b.tag?`<b>${escH(b.tag)}</b> `:''}${escH(b.title)}</div>`).join('')}</td>`;
     }));
     return h+`<td class="nt">${escH(r.exam)}</td></tr>`;
   }).join('');
@@ -10460,7 +10641,12 @@ const SRP_CSS=`.srp{border-collapse:collapse;width:100%;table-layout:fixed;font-
 .srp .m,.srp .w{text-align:center;white-space:nowrap;width:64px}.srp td.m{color:#555}.srp .nt{width:72px;text-align:center;color:#8a5a00}
 .srp td.ex{line-height:1.35}.srp td.span{background:#f3f5f7}
 .srp td.ex div+div{border-top:1px dashed #c8cdd2;margin-top:2px;padding-top:2px}
-.srp tr.exam td:not(.span):not(.m){background:#fbecd0}.srp tr.exam td.nt{font-weight:700}`;
+.srp tr.exam td:not(.ex):not(.m){background:#fbecd0}.srp tr.exam td.nt{font-weight:700}
+.srp tr.exam td,.srp tr.exam th{border-top:2px solid #333}
+.srp td.w small{display:block;font-size:.82em;color:#666;font-weight:400}
+.srp tr.sub th{font-size:.92em}
+.srp td.s-phy,.srp th.s-phy{background:#d6e4f5}.srp td.s-chem,.srp th.s-chem{background:#fbe3c8}.srp td.s-bio,.srp th.s-bio{background:#dcefd5}.srp td.s-geo,.srp th.s-geo{background:#e7def3}.srp td.s-pc,.srp th.s-pc{background:#d3ecea}
+.srp td.s-inq,.srp th.s-inq{background:repeating-linear-gradient(135deg,#eef0f2 0 5px,#fff 5px 10px)}`;
 function srPlanRender(box,cal){
   if(!document.getElementById('srpCss')){const st=document.createElement('style');st.id='srpCss';st.textContent=SRP_CSS;document.head.appendChild(st);}
   const L=srPlanLayout(srView==='grade'?'grade':'wk');
@@ -10499,21 +10685,33 @@ async function srPlanExcel(){
   ws.columns=[{width:9},{width:9},...lanes.map(()=>({width:Math.max(14,Math.min(26,Math.floor(150/lanes.length)))})),{width:10}];
   const bd={style:'thin',color:{argb:'FF9AA3AD'}},all={top:bd,left:bd,bottom:bd,right:bd};
   ws.mergeCells(1,1,1,nC);const t=ws.getCell(1,1);t.value=L.title;t.font={bold:true,size:16};t.alignment={horizontal:'center'};
-  ['月份','週次',...lanes,'備註'].forEach((h,i)=>{const c=ws.getCell(2,i+1);c.value=h;c.font={bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=all;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE9EDF1'}};});
+  const two=L.cols.some(c=>c.grp),H=two?3:2;   // 年級表：第 2 列年級、第 3 列科目
+  const hcell=(R,C,v)=>{const c=ws.getCell(R,C);c.value=v;c.font={bold:true};c.alignment={horizontal:'center',vertical:'middle',wrapText:true};c.border=all;c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE9EDF1'}};return c;};
+  if(two){
+    hcell(2,1,'月份');hcell(2,2,'週次');hcell(2,nC,'備註');[1,2,nC].forEach(C=>{hcell(3,C,null);ws.mergeCells(2,C,3,C);});
+    let C=3;L.cols.forEach(c=>c.heads.forEach(h=>{const x=hcell(3,C,h);const k=c.subj==='探究'?'s-inq':SRP_SUBJ_CLS[c.subj];if(k)x.fill={type:'pattern',pattern:'solid',fgColor:{argb:SRP_SUBJ_ARGB[k]}};C++;}));
+    C=3;const grps=[];L.cols.forEach(c=>{const last=grps[grps.length-1];if(last&&last.g===c.grp)last.n+=c.heads.length;else grps.push({g:c.grp,n:c.heads.length});});
+    grps.forEach(x=>{for(let k=0;k<x.n;k++)hcell(2,C+k,k?null:x.g);if(x.n>1)ws.mergeCells(2,C,2,C+x.n-1);C+=x.n;});
+  }else ['月份','週次',...lanes,'備註'].forEach((h,i)=>hcell(2,i+1,h));
+  const thick={style:'medium',color:{argb:'FF333333'}};
   L.rows.forEach((r,i)=>{
-    const R=i+3;
+    const R=i+H+1;
     for(let k=1;k<=nC;k++){const c=ws.getCell(R,k);c.border=all;c.alignment={vertical:'middle',horizontal:k<=2||k===nC?'center':'left',wrapText:true};}
-    ws.getCell(R,2).value=r.name;ws.getCell(R,nC).value=r.exam||null;
+    ws.getCell(R,2).value=r.range?`${r.name}\n${r.range}`:r.name;ws.getCell(R,nC).value=r.exam||null;
+    if(r.exam)for(let k=1;k<=nC;k++)ws.getCell(R,k).border={...all,top:thick};
     // 定期評量那週：整列淡色（跨好幾週的合併格、月份格不塗，免得整塊變色）
     if(r.exam){const ex={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBECD0'}};let k=3;ws.getCell(R,2).fill=ex;ws.getCell(R,nC).fill=ex;ws.getCell(R,nC).font={bold:true};
-      L.cols.forEach(c=>c.grid.forEach(g=>{const x=g[i];if(x!=='skip'&&!(x&&x.span>1))ws.getCell(R,k).fill=ex;k++;}));}
+      L.cols.forEach(c=>c.grid.forEach(g=>{const x=g[i];if(!x)ws.getCell(R,k).fill=ex;k++;}));}
     if(i===0||L.rows[i-1].mon!==r.mon){let n=1;while(L.rows[i+n]&&L.rows[i+n].mon===r.mon)n++;ws.getCell(R,1).value=r.mon;if(n>1)ws.mergeCells(R,1,R+n-1,1);}
     let col=3;
     L.cols.forEach(c=>c.grid.forEach(g=>{
       const x=g[i];
       if(x&&x!=='skip'){
-        const cell=ws.getCell(R,col);cell.value=x.items.map(b=>`${b.tag} ${b.title}`).join('\n');
-        if(x.span>1){ws.mergeCells(R,col,R+x.span-1,col);cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF3F5F7'}};}
+        const cell=ws.getCell(R,col);cell.value=x.items.map(b=>`${b.tag?b.tag+' ':''}${b.title}`).join('\n');
+        const k=srpCellCls(x);
+        if(k)cell.fill={type:'pattern',pattern:k==='s-inq'?'lightUp':'solid',fgColor:{argb:k==='s-inq'?'FFB8BEC5':SRP_SUBJ_ARGB[k]},bgColor:{argb:'FFFFFFFF'}};
+        else if(x.span>1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF3F5F7'}};
+        if(x.span>1)ws.mergeCells(R,col,R+x.span-1,col);
       }
       col++;
     }));
@@ -10736,7 +10934,7 @@ async function srBulkDelDo(){
 async function srDel(id){
   const r=srRuns.find(x=>x.id===id);if(!r)return;
   const t=r.template_id?srTpl(r.template_id):null;
-  if(!confirm(`刪除這筆紀錄？\n${r.run_date} ${r.period||''}　${t?t.name:(r.title||'')}　${r.teacher||''}`))return;
+  if(!await uiConfirm(`刪除這筆紀錄？\n${r.run_date} ${r.period||''}　${t?t.name:(r.title||'')}　${r.teacher||''}`,'刪除紀錄',true))return;
   try{await sb('DELETE','experiment_runs',{filter:'id=eq.'+encodeURIComponent(id),prefer:'return=minimal'});srRuns=srRuns.filter(x=>x.id!==id);showToast('已刪除','success');srRender();}
   catch(e){showToast('刪除失敗：'+e.message,'error');}
 }
@@ -10997,7 +11195,7 @@ async function srSave(){
       [...document.querySelectorAll('.sr-chain input:checked')].map(i=>srCtx.next[+i.dataset.n]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||base.grade||'').slice(0,20)||null,teacher:base.teacher})));
       // 一起填：同年級其他班（班級、老師用他們自己的預約）
       [...document.querySelectorAll('.sr-oth input:checked')].map(i=>srCtx.others[+i.dataset.o]).filter(Boolean).forEach(x=>x.ps.forEach(p=>body.push({...base,run_date:p.date,period:p.period||null,venue:p.venue||null,booking_id:String(x.b.id),grade:(x.b.grade||'').slice(0,20)||null,teacher:base.teacher,course_type:base.course_type||srBkType(x.b)||null})));
-      if(body.length>pick.length&&!confirm(`這次會一起填 ${body.length} 節，確定？`))return;
+      if(body.length>pick.length&&!await uiConfirm(`這次會一起填 ${body.length} 節，確定？`,'一起填'))return;
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
     }else{
