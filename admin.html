@@ -426,6 +426,13 @@
   .venue-table td.holiday-col{background:#fdf2f8;}
   .venue-table tr.band-shade td.holiday-col{background:#fce7f3;}
   .holiday-tag{font-size:9px;font-weight:700;display:block;}
+  /* 停課（颱風、地震等臨時停課）：灰藍斜線，跟粉紅的連假分開；格子裡的預約變淡、劃掉（2026-10-22） */
+  .venue-table th.closed-col{background:#475569!important;color:#fff!important;}
+  .venue-table td.closed-col{background:repeating-linear-gradient(135deg,#e7ecf2 0 6px,#f4f6f9 6px 12px)!important;}
+  .venue-table td.closed-col .venue-booking,.venue-table td.closed-col .vchip,.venue-table td.closed-col>div{opacity:.5;text-decoration:line-through;}
+  .closed-tag{font-size:9px;font-weight:700;display:block;}
+  .closed-legend-note{font-size:11.5px;color:#334155;background:#e7ecf2;border:1px solid #cbd5e1;border-radius:20px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px;}
+
   .holiday-legend-note{font-size:11.5px;color:#831843;background:#fdf2f8;border:1px solid #fbcfe8;border-radius:20px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px;}
   .exam-week-row{display:flex;gap:8px;align-items:center;background:var(--surface2);border-radius:8px;padding:8px 10px;flex-wrap:wrap;margin-bottom:6px;}
   .exam-week-row input{flex:1;min-width:70px;}
@@ -1434,12 +1441,15 @@
     <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
   </div>
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">🎉 國定假日／連假設定</div>
-    <div class="info-box">設定日期範圍後，週曆上這幾天會用粉紅色底標示為假期，但仍可正常新增／預約場地，只是提醒大家這幾天是假期。例如：9/25（五）～9/28（一）共放4天，開始日期填 9/25，結束日期填 9/28。</div>
+    <div class="card-title">🎉 國定假日／連假／停課設定</div>
+    <div class="info-box">設定日期範圍後，週曆上這幾天會用粉紅色底標示為假期，但仍可正常新增／預約場地，只是提醒大家這幾天是假期。颱風假這類臨時停課，類型選「停課」，會改用灰藍斜線標示。例如：9/25（五）～9/28（一）共放4天，開始日期填 9/25，結束日期填 9/28。</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group"><label>開始日期 *</label><input type="date" id="hol-start"></div>
       <div class="form-group"><label>結束日期 *</label><input type="date" id="hol-end"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>標籤</label><input type="text" id="hol-label" placeholder="例如：教師節連假、國慶連假"></div>
+      <div class="form-group"><label>類型</label><select id="hol-kind" onchange="holKindChange()"><option value="假期">假期（連假、國定假日）</option><option value="停課">停課（颱風、地震）</option></select></div>
+      <div class="form-group" id="hol-from-g" style="display:none"><label>從哪一節開始停課</label><select id="hol-from"><option value="">整天停課</option></select></div>
+      <div class="form-group" style="grid-column:1/-1"><label>標籤</label><input type="text" id="hol-label" maxlength="40" placeholder="例如：國慶連假；停課可以寫「凱米颱風」"></div>
+      <div class="hint" id="hol-kind-hint" style="grid-column:1/-1;display:none;font-size:12.5px;color:var(--text2);line-height:1.6">停課的日子在週曆上用灰藍斜線標示，那幾節的預約會變淡、劃掉，實驗室使用率不會把它們算進去。原本的預約不會被刪除，之後要補課再另外預約。</div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
       <button class="btn btn-secondary" onclick="clearHolidayForm()">清除</button>
@@ -2203,6 +2213,7 @@ function labUseCount(from,to,dayOk){
   allVenueBookings.forEach(b=>(b.periods||[]).forEach(p=>{
     if(!p||p.status==='已拒絕'||!p.date||p.date<from||p.date>to)return;
     if(dayOk&&!dayOk(p.date))return;
+    if(holClosed(holidayForDate(p.date,p.period)))return;   // 停課：有預約但沒上課，不算使用（2026-10-22）
     n[p.venue]=(n[p.venue]||0)+1;
     (times[p.venue]=times[p.venue]||new Set()).add(b.id+'|'+p.date);
   }));
@@ -2264,7 +2275,7 @@ function renderLabUse(){
     const semW=labUseSemester(),offDays=[];let open=0;
     for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const ds=fmtDate(d),h=holidayForDate(ds);
       const ok=semW?(ds>=semW.start&&ds<=semW.end&&semW.isSchool(ds)):!h;
-      if(ok)open++;else if(h)offDays.push(`${d.getMonth()+1}/${d.getDate()} ${h.label||'放假'}`);}
+      if(ok)open++;else if(h)offDays.push(`${d.getMonth()+1}/${d.getDate()} ${holClosed(h)?'停課・':''}${h.label||'放假'}`);}
     const slots=open*8;
     const wi=getWeekInfo(mon,activeSemester)||getWeekInfo(fri,activeSemester);
     const examLb=semW?(()=>{for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const e=semW.examOf(fmtDate(d));if(e)return e;}return '';})():'';
@@ -2328,7 +2339,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-21a';
+const ADMIN_VERSION='2026-10-22a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2535,7 +2546,7 @@ function showTab(tab,opts){
   if(!fromHist&&prevTab!==tab)navPush('');
   if(tab==='venue')loadAdminVenue();
   if(tab==='teachers')loadTeachers();
-  if(tab==='semester'){loadSemesters();loadHolidays();}
+  if(tab==='semester'){loadSemesters();loadHolidays();holKindChange();}
   if(tab==='templates'){loadTemplates();requestAnimationFrame(tplFitHeight);}
   if(tab==='semruns')loadSemRuns();
   if(tab==='floorplan')loadFloorplanCalibration();
@@ -3136,7 +3147,7 @@ function renderTeacherList(){
 function renderCatLegend(){
   const el=document.getElementById('catLegend');if(!el)return;
   const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
-  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span>';
+  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span><span class="closed-legend-note">停課（預約不算使用）</span>';
 }
 function clearTeacherForm(){
   editingTeacherId=null;
@@ -3585,6 +3596,23 @@ function weekDisplayLabel(w){
 }
 
 // ── 國定假日／連假 ────────────────────────────────────────
+
+// ── 停課（2026-10-22）：假期表多了 kind（假期／停課）和 from_period（從第幾節起停課，空的＝整天）──
+// 傳 period 時，只有那一節真的停課才算；不傳 period（例如表頭）就看這一天有沒有
+function holPeriodHit(h,period){
+  if(!period||h.kind!=='停課'||!h.from_period)return true;
+  const i=PERIODS.indexOf(period),f=PERIODS.indexOf(h.from_period);
+  return i<0||f<0||i>=f;
+}
+const holClosed=h=>!!h&&h.kind==='停課';
+// 表格格子用的 class：假期＝粉紅，停課＝灰藍斜線
+function holCls(h){return !h?'':holClosed(h)?'closed-col':'holiday-col';}
+// 表頭小字
+function holTag(h){
+  if(!h)return '';
+  const lb=String(h.label||(holClosed(h)?'停課':'假期'));
+  return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:'🎉'+lb;
+}
 let allHolidays=[],editingHolidayId=null;
 async function loadHolidays(){
   try{
@@ -3594,8 +3622,8 @@ async function loadHolidays(){
   renderHolidayList();
   try{if(allRecords.length||allVenueBookings.length){renderStats();renderLabUse();}}catch(_){}
 }
-function holidayForDate(dateStr){
-  return allHolidays.find(h=>dateStr>=h.start_date&&dateStr<=h.end_date);
+function holidayForDate(dateStr,period){
+  return allHolidays.find(h=>dateStr>=h.start_date&&dateStr<=h.end_date&&holPeriodHit(h,period));
 }
 function renderHolidayList(){
   const list=document.getElementById('holidayList');if(!list)return;
@@ -3604,8 +3632,8 @@ function renderHolidayList(){
     <div class="record-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
-          <div style="font-size:14px;font-weight:700">${h.label||'假期'}</div>
-          <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${h.start_date} ～ ${h.end_date}</div>
+          <div style="font-size:14px;font-weight:700">${holClosed(h)?'<span class="closed-legend-note" style="margin-right:6px">停課</span>':''}${escH(h.label||'假期')}</div>
+          <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${escH(h.start_date)} ～ ${escH(h.end_date)}${holClosed(h)?`・${h.from_period?escH(h.from_period)+'起':'整天'}`:''}</div>
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-secondary btn-sm" onclick="editHoliday(${ja(h.id)})">✏️ 編輯</button>
@@ -3614,8 +3642,18 @@ function renderHolidayList(){
       </div>
     </div>`).join('')+'</div>';
 }
+function holKindChange(){
+  const k=document.getElementById('hol-kind')?.value==='停課';
+  const g=document.getElementById('hol-from-g'),t=document.getElementById('hol-kind-hint');
+  if(g)g.style.display=k?'':'none';if(t)t.style.display=k?'':'none';
+  const f=document.getElementById('hol-from');
+  if(f&&f.options.length<=1)PERIODS.filter(p=>p!=='早休').forEach(p=>f.insertAdjacentHTML('beforeend',`<option value="${escH(p)}">${escH(p)}起${p==='第5節'?'（下午停課）':''}</option>`));
+}
 function clearHolidayForm(){
   editingHolidayId=null;
+  const k=document.getElementById('hol-kind');if(k)k.value='假期';
+  const f=document.getElementById('hol-from');if(f)f.value='';
+  holKindChange();
   document.getElementById('hol-start').value='';
   document.getElementById('hol-end').value='';
   document.getElementById('hol-label').value='';
@@ -3626,20 +3664,25 @@ function editHoliday(id){
   document.getElementById('hol-start').value=h.start_date||'';
   document.getElementById('hol-end').value=h.end_date||'';
   document.getElementById('hol-label').value=h.label||'';
+  document.getElementById('hol-kind').value=h.kind==='停課'?'停課':'假期';holKindChange();
+  document.getElementById('hol-from').value=h.from_period||'';
   document.getElementById('hol-start').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function saveHoliday(){
   const start=document.getElementById('hol-start').value;
   const end=document.getElementById('hol-end').value;
-  const label=document.getElementById('hol-label').value.trim()||'假期';
+  const kind=document.getElementById('hol-kind').value==='停課'?'停課':'假期';
+  const label=document.getElementById('hol-label').value.trim().slice(0,40)||kind;
+  const fp=document.getElementById('hol-from').value;
+  const from_period=kind==='停課'&&PERIODS.includes(fp)?fp:null;
   if(!start||!end){showToast('請填寫開始與結束日期','error');return;}
   if(end<start){showToast('結束日期不能早於開始日期','error');return;}
   try{
     if(editingHolidayId){
-      await sb('PATCH','holidays',{filter:'id=eq.'+editingHolidayId,body:{start_date:start,end_date:end,label},prefer:'return=minimal'});
+      await sb('PATCH','holidays',{filter:'id=eq.'+editingHolidayId,body:{start_date:start,end_date:end,label,kind,from_period},prefer:'return=minimal'});
       showToast('已更新','success');
     }else{
-      await sb('POST','holidays',{body:{id:'HOL-'+Date.now(),start_date:start,end_date:end,label},prefer:'return=minimal'});
+      await sb('POST','holidays',{body:{id:'HOL-'+Date.now(),start_date:start,end_date:end,label,kind,from_period},prefer:'return=minimal'});
       showToast('已新增','success');
     }
     clearHolidayForm();loadHolidays();loadAdminVenue();
@@ -3771,7 +3814,7 @@ function renderAdminVenueTable(dates,expanded){
   const COMPACT_PERIODS=['早休','午休'];
   let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
-    return `<th class="${holiday?'holiday-col':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">🎉${holiday.label}</span>`:''}</th>`;
+    return `<th class="${holCls(holiday)}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
@@ -3781,14 +3824,14 @@ function renderAdminVenueTable(dates,expanded){
       html+=`<td class="lab-cell">－</td>`;
       dates.forEach(date=>{
         const dateStr=fmtDate(date);
-        const isHoliday=!!holidayForDate(dateStr);
+        const hc=holCls(holidayForDate(dateStr,period));
         const cellBookings=[];
         LABS.forEach(lab=>{
           const venueFull=labFull[lab];
           expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull)
             .forEach(b=>cellBookings.push({...b,_lab:lab,_venueFull:venueFull}));
         });
-        html+=`<td class="vcell compact-vcell ${isHoliday?'holiday-col':''} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${labFull['生物']}')">`;
+        html+=`<td class="vcell compact-vcell ${hc} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${labFull['生物']}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
@@ -3809,9 +3852,9 @@ function renderAdminVenueTable(dates,expanded){
       dates.forEach(date=>{
         const dateStr=fmtDate(date);
         const venueFull=labFull[lab];
-        const isHoliday=!!holidayForDate(dateStr);
+        const hc=holCls(holidayForDate(dateStr,period));
         const cellBookings=expanded.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
-        html+=`<td class="vcell ${isHoliday?'holiday-col':''} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${venueFull}')">`;
+        html+=`<td class="vcell ${hc} ${cellBookings.length>1?'multi':''}" onclick="vcellTap(event,'${dateStr}','${period}','${venueFull}')">`;
         cellBookings.forEach(b=>{
           const cat=resolveCategory(b);
           const catCls=categoryClass(cat);
