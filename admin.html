@@ -953,7 +953,7 @@
   main .card{border-radius:12px;box-shadow:none;}
   .side-foot .sf-btns{display:flex;gap:6px;}
 }
-@media(max-width:1099px){.pg-head{display:none;}}
+@media(max-width:1099px){.pg-head{margin:0;}.pg-head h2,.pg-head p{display:none;}}
 /* 器材借用的狀態分頁（2026-10-20）：手機、電腦都有；數字是 0 的變淡 */
 .bw-subtabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:0 0 14px;overflow-x:auto;scrollbar-width:none;}
 .bw-subtabs::-webkit-scrollbar{display:none;}
@@ -1187,7 +1187,7 @@
    單欄限寬 760，卡片改成段落（中間一條細線），清單在前、新增在後，刪除滑過才出現 ── */
 @media(min-width:1100px){.panel.set-pg{max-width:760px}#panel-floorplan.set-pg{max-width:none}}
 .set-pg>.card.set-sec{background:transparent;border:0;border-top:1px solid var(--border);box-shadow:none;border-radius:0;padding:20px 0 24px;margin:0}
-.set-pg>.bw-subtabs+.card.set-sec{border-top:0;padding-top:4px}
+.set-pg>.pg-head+.card.set-sec{border-top:0;padding-top:4px}
 .set-pg>.card.set-sec>.card-title{font-size:16px;border:0;padding:0;margin:0 0 12px}
 .set-pg .set-sec .info-box{background:none;border:0;border-left:2px solid var(--border);border-radius:0;padding:0 0 0 10px;color:var(--text2);margin:0 0 14px}
 .set-pg .set-sec .card-title .ct-sub{font-size:12.5px;font-weight:400;color:var(--text2)}
@@ -1244,6 +1244,17 @@
 .ct-mv{display:flex;gap:2px}.ct-mv .btn{padding:2px 7px}
 .ct-on{display:flex;align-items:center;gap:4px;font-size:13px;white-space:nowrap}.ct-on input{width:auto}
 .ct-add{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}.ct-add input{flex:1;margin:0}
+</style>
+<style id="sticky-head">
+/* 頁首固定（2026-10-25）：電腦版往下捲時，標題、說明、子分頁留在上方；其他黏在上面的窗格（器材右窗格、借用單右窗格、場地待審、藥品櫃、平面圖工具列）讓出頁首的高度 --pgh */
+@media(min-width:1100px){
+  .panel>.pg-head{position:sticky;top:0;z-index:60;background:var(--bg);margin:-16px -36px 18px;padding:16px 36px 10px;}
+  .panel>.pg-head .bw-subtabs{margin:12px 0 -10px;}
+  body.pg-stuck .panel.active>.pg-head{box-shadow:0 1px 0 var(--border),0 8px 14px -12px rgba(0,0,0,.28);}
+  .eq-pane,.rec-pane,.venue-ws>.venue-pend-card{top:calc(var(--pgh,0px) + 16px);max-height:calc(100vh - var(--pgh,0px) - 32px);}
+  .chem-left{top:calc(var(--pgh,0px) + 20px);max-height:calc(100vh - var(--pgh,0px) - 40px);}
+}
+@media(min-width:1100px) and (min-height:900px){.calib-sticky{top:calc(var(--pgh,0px) + 8px);}}
 </style>
 </head>
 <body>
@@ -1303,21 +1314,21 @@
     </div>
   </div>
 </div>
-<div id="panel-pending" class="panel"><div class="pg-head"><h2>器材借用</h2><p>看器材夠不夠，再核准或拒絕；可以勾多筆一次核准</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
+<div id="panel-pending" class="panel"><div class="pg-head"><h2>器材借用</h2><p>看器材夠不夠，再核准或拒絕；可以勾多筆一次核准</p><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">待審核器材申請</div>
   <div class="purpose-tabs" id="pendingPurposeTabs"></div>
   <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
 </div>
-<div id="panel-approved" class="panel"><div class="pg-head"><h2>器材借用</h2><p>已核准、還沒借出的申請</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
+<div id="panel-approved" class="panel"><div class="pg-head"><h2>器材借用</h2><p>已核准、還沒借出的申請</p><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">已核准器材申請</div>
   <div class="purpose-tabs" id="approvedPurposeTabs"></div>
   <div id="approvedList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
-<div id="panel-return" class="panel"><div class="pg-head"><h2>器材借用</h2><p>借出中的器材，到期未還的排最前面</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
+<div id="panel-return" class="panel"><div class="pg-head"><h2>器材借用</h2><p>借出中的器材，到期未還的排最前面</p><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">尚未歸還</div>
   <div id="returnList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
-<div id="panel-deposit" class="panel"><div class="pg-head"><h2>器材借用</h2><p>收保證金、歸還後退保證金</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
+<div id="panel-deposit" class="panel"><div class="pg-head"><h2>器材借用</h2><p>收保證金、歸還後退保證金</p><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div></div>
   <div class="card" style="margin-bottom:0"><div class="card-title">保證金管理</div>
   <div class="dep-sum" id="depositSummary"></div>
   <div id="depositList"><div class="empty"><p>點重新整理載入</p></div></div></div>
@@ -1355,7 +1366,7 @@
   </div>
 </div>
 
-<div id="panel-purposes" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>前台可選的借用目的，以及哪些要收保證金</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div id="panel-purposes" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>前台可選的借用目的，以及哪些要收保證金</p><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div></div>
   <div class="card set-sec">
     <div class="card-title">借用目的</div>
     <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
@@ -1386,7 +1397,7 @@
     <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">儲存全部</button>
   </div>
 </div>
-<div id="panel-teachers" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>老師與任教科目（場地課表會依科目上色）</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div id="panel-teachers" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>老師與任教科目（場地課表會依科目上色）</p><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div></div>
   <div class="card set-sec">
     <div class="card-title">已登記的教師</div>
     <div id="teacherList"><div class="empty"><p>尚未建立任何老師資料</p></div></div>
@@ -1414,7 +1425,7 @@
 </div>
 
 <div id="panel-semruns" class="panel no-pane"><div class="pg-head"><h2>學期實驗紀錄</h2><p>前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</p></div><div class="card"><div class="card-title">學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
-<div id="panel-semester" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>學期週次、假日與定期評量週</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div id="panel-semester" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>學期週次、假日與定期評量週</p><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div></div>
   <div class="card set-sec">
     <div class="card-title">已建立的學期</div>
     <div id="semesterList"><div class="empty"><p>尚未建立任何學期</p></div></div>
@@ -1467,7 +1478,7 @@
     </div>
   </div>
 </div>
-<div id="panel-backup" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>把資料表和照片下載到這台電腦，建議每月一次</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div id="panel-backup" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>把資料表和照片下載到這台電腦，建議每月一次</p><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div></div>
 <div class="card set-sec" id="backupCard"><div class="card-title">資料備份</div>
       <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -1563,7 +1574,7 @@
   <div id="emView" class="em-view"></div>
 </div>
 
-<div id="panel-floorplan" class="panel set-pg"><div class="pg-head"><h2>設定</h2><p>在平面圖上框出櫃位熱區</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div id="panel-floorplan" class="panel set-pg"><div class="pg-head"><h2>設定</h2><p>在平面圖上框出櫃位熱區</p><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div></div>
   <div class="card calib-sticky" id="calibStickyCard" style="background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">平面圖熱區校正</div>
     <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「＋／－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
@@ -1579,7 +1590,7 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(0.5)">＋</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoomReset()">↺ 重置</button>
     </div>
-    <div id="calibScrollWrap" style="overflow:auto;max-height:45vh;border:1px solid var(--border);border-radius:8px;background:var(--surface2)">
+    <div id="calibScrollWrap" style="overflow:auto;max-height:60vh;border:1px solid var(--border);border-radius:8px;background:var(--surface2)">
       <div id="calibImgWrap" style="position:relative;width:1080px;aspect-ratio:1080/607;cursor:crosshair;user-select:none">
         <img id="calibImg" src="" alt="平面圖" style="display:block;width:100%;height:100%;pointer-events:none;-webkit-user-drag:none">
         <svg id="calibSvgLayer" viewBox="0 0 1080 607" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg>
@@ -2368,7 +2379,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-25d';
+const ADMIN_VERSION='2026-10-25e';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2599,7 +2610,15 @@ function showTab(tab,opts){
   if(tab==='highlights')loadHighlights();
   if(tab==='purposes')loadPurposesAdmin();
   if(tab==='backup')renderBackupInfo();
+  pgHeadMeasure();
 }
+function pgHeadMeasure(){
+  const h=document.querySelector('.panel.active>.pg-head');
+  const on=h&&getComputedStyle(h).position==='sticky';
+  document.documentElement.style.setProperty('--pgh',(on?h.offsetHeight:0)+'px');
+}
+window.addEventListener('resize',pgHeadMeasure);
+window.addEventListener('scroll',()=>document.body.classList.toggle('pg-stuck',window.scrollY>8),{passive:true});
 // 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
 // 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
 function positionTabMoreMenu(){
@@ -9502,10 +9521,11 @@ const FLOORPLAN_KEY_TO_ROOM={'bio':'Biology','chem':'Chemistry','geo':'Geoscienc
 let calibRoom='bio',allCalibHotspots=[],calibDrag=null,calibPendingRect=null;
 
 let calibZoomScale=1;
+let calibResizeBound=false;
 function loadFloorplanCalibration(){
   setCalibRoom(calibRoom);
-  applyCalibZoom();
-  window.addEventListener('resize',applyCalibZoom);
+  requestAnimationFrame(applyCalibZoom);
+  if(!calibResizeBound){window.addEventListener('resize',applyCalibZoom);calibResizeBound=true;}
 }
 function setCalibRoom(key){
   calibRoom=key;
@@ -9526,8 +9546,14 @@ function applyCalibZoom(){
   const scrollWrap=document.getElementById('calibScrollWrap');
   const wrap=document.getElementById('calibImgWrap');
   if(!scrollWrap||!wrap)return;
-  const baseWidth=scrollWrap.clientWidth||scrollWrap.getBoundingClientRect().width;
-  if(baseWidth>0)wrap.style.width=(baseWidth*calibZoomScale)+'px';
+  const boxW=scrollWrap.clientWidth||scrollWrap.getBoundingClientRect().width;
+  if(!(boxW>0))return;
+  // 框的高度：視窗高度扣掉框上方的頁首、工具列，至少 280px；整張圖 1080×607，100% 時以「放得下」為準
+  const boxH=Math.max(280,window.innerHeight-Math.max(0,scrollWrap.getBoundingClientRect().top)-24);
+  const fitW=Math.min(boxW,boxH*1080/607);
+  scrollWrap.style.maxHeight=Math.round(Math.max(fitW*607/1080,280))+2+'px';
+  wrap.style.width=(fitW*calibZoomScale)+'px';
+  wrap.style.margin=calibZoomScale===1?'0 auto':'0';
   const label=document.getElementById('calibZoomLabel');
   if(label)label.textContent=Math.round(calibZoomScale*100)+'%';
 }
