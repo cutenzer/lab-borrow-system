@@ -1246,15 +1246,15 @@
 .ct-add{display:flex;gap:8px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)}.ct-add input{flex:1;margin:0}
 </style>
 <style id="sticky-head">
-/* 頁首固定（2026-10-25）：電腦版往下捲時，標題、說明、子分頁留在上方；其他黏在上面的窗格（器材右窗格、借用單右窗格、場地待審、藥品櫃、平面圖工具列）讓出頁首的高度 --pgh */
+/* 工具列固定（2026-10-25）：學期實驗紀錄往下捲時，上方的學期／檢視／科目／篩選／新增那一列留在畫面頂端（電腦版）
+   頁首（標題）不固定；子分頁放在頁首裡面 */
+.pg-head .bw-subtabs{margin:14px 0 0;}
 @media(min-width:1100px){
-  .panel>.pg-head{position:sticky;top:0;z-index:60;background:var(--bg);margin:-16px -36px 18px;padding:16px 36px 10px;}
-  .panel>.pg-head .bw-subtabs{margin:12px 0 -10px;}
-  body.pg-stuck .panel.active>.pg-head{box-shadow:0 1px 0 var(--border),0 8px 14px -12px rgba(0,0,0,.28);}
-  .eq-pane,.rec-pane,.venue-ws>.venue-pend-card{top:calc(var(--pgh,0px) + 16px);max-height:calc(100vh - var(--pgh,0px) - 32px);}
-  .chem-left{top:calc(var(--pgh,0px) + 20px);max-height:calc(100vh - var(--pgh,0px) - 40px);}
+  .sr-bar{position:sticky;top:0;z-index:30;background:var(--surface);margin:-8px -20px 8px;padding:10px 20px;border-radius:0 0 10px 10px;transition:box-shadow .15s;}
+  .sr-bar.stuck{box-shadow:0 1px 0 var(--border),0 8px 14px -12px rgba(0,0,0,.28);}
+  .sr-wk{scroll-margin-top:72px;}
 }
-@media(min-width:1100px) and (min-height:900px){.calib-sticky{top:calc(var(--pgh,0px) + 8px);}}
+@media print{.sr-bar{position:static!important;box-shadow:none!important;}}
 </style>
 </head>
 <body>
@@ -2379,7 +2379,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-25e';
+const ADMIN_VERSION='2026-10-25f';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2610,15 +2610,10 @@ function showTab(tab,opts){
   if(tab==='highlights')loadHighlights();
   if(tab==='purposes')loadPurposesAdmin();
   if(tab==='backup')renderBackupInfo();
-  pgHeadMeasure();
 }
-function pgHeadMeasure(){
-  const h=document.querySelector('.panel.active>.pg-head');
-  const on=h&&getComputedStyle(h).position==='sticky';
-  document.documentElement.style.setProperty('--pgh',(on?h.offsetHeight:0)+'px');
-}
-window.addEventListener('resize',pgHeadMeasure);
-window.addEventListener('scroll',()=>document.body.classList.toggle('pg-stuck',window.scrollY>8),{passive:true});
+// 學期實驗紀錄的工具列黏在頂端時，下緣加一條細線（看得出下面的內容是捲到它底下）
+function srBarStuck(){document.querySelectorAll('#panel-semruns.active .sr-bar').forEach(b=>b.classList.toggle('stuck',b.getBoundingClientRect().top<=1&&window.scrollY>0));}
+window.addEventListener('scroll',srBarStuck,{passive:true});
 // 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
 // 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
 function positionTabMoreMenu(){
