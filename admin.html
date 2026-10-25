@@ -1250,7 +1250,7 @@
 
 <div class="login-wrap" id="loginWrap">
   <div class="login-card">
-    <div style="font-size:40px;margin-bottom:12px">🔐</div>
+    
     <div style="font-size:20px;font-weight:700;margin-bottom:6px">管理員登入</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:24px">請輸入管理密碼</div>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••" onkeydown="if(event.key==='Enter')checkPw()">
@@ -1264,7 +1264,7 @@
   <div class="admin-brand" onclick="showTab('overview')" style="cursor:pointer" title="回總覽"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10"/></svg><h1>管理後台</h1><span class="brand-sub">LAB ADMIN</span></div>
   <div style="display:flex;gap:8px">
     <button class="btn btn-secondary btn-sm settings-btn" onclick="openSettingsSheet()" aria-label="選單"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span class="sb-label">選單</span><span class="tab-badge" id="menuBadge"></span></button>
-    <button class="btn btn-secondary btn-sm" onclick="loadAll()" aria-label="重新整理">🔄<span class="rf-label">重新整理</span></button>
+    <button class="btn btn-secondary btn-sm" onclick="loadAll()" aria-label="重新整理"><svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg><span class="rf-label">重新整理</span></button>
     <button class="btn btn-secondary btn-sm header-logout" onclick="logout()">登出</button>
   </div>
 </header>
@@ -1294,43 +1294,43 @@
   <div class="stat-groups" id="statsGrid"></div>
   <div class="ov-grid">
     <div style="display:flex;flex-direction:column;gap:16px">
-    <div class="card"><div class="card-title">📌 今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
-    <div class="card"><div class="card-title">📦 借出中追蹤</div><div id="ovLoan"></div></div>
+    <div class="card"><div class="card-title">今天要處理</div><div id="ovTodo"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
+    <div class="card"><div class="card-title">借出中追蹤</div><div id="ovLoan"></div></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
-    <div class="card" id="labUseCard"><div class="card-title"><span id="ovWeekTitle">🏛️ 實驗室使用</span><span class="lu-seg" role="group" aria-label="切換統計範圍"><button type="button" data-m="week" onclick="setLabUse('week')">週</button><button type="button" data-m="sem" onclick="setLabUse('sem')">學期</button></span></div><div id="ovWeek"></div><div class="hint" id="luHint" style="font-size:12px;color:var(--text2);margin-top:8px"></div></div>
+    <div class="card" id="labUseCard"><div class="card-title"><span id="ovWeekTitle">實驗室使用</span><span class="lu-seg" role="group" aria-label="切換統計範圍"><button type="button" data-m="week" onclick="setLabUse('week')">週</button><button type="button" data-m="sem" onclick="setLabUse('sem')">學期</button></span></div><div id="ovWeek"></div><div class="hint" id="luHint" style="font-size:12px;color:var(--text2);margin-top:8px"></div></div>
 
     </div>
   </div>
 </div>
 <div id="panel-pending" class="panel"><div class="pg-head"><h2>器材借用</h2><p>看器材夠不夠，再核准或拒絕；可以勾多筆一次核准</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
-  <div class="card" style="margin-bottom:0"><div class="card-title">⏳ 待審核器材申請</div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">待審核器材申請</div>
   <div class="purpose-tabs" id="pendingPurposeTabs"></div>
   <div id="pendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div></div>
 </div>
 <div id="panel-approved" class="panel"><div class="pg-head"><h2>器材借用</h2><p>已核准、還沒借出的申請</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
-  <div class="card" style="margin-bottom:0"><div class="card-title">✅ 已核准器材申請</div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">已核准器材申請</div>
   <div class="purpose-tabs" id="approvedPurposeTabs"></div>
-  <div id="approvedList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+  <div id="approvedList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
 <div id="panel-return" class="panel"><div class="pg-head"><h2>器材借用</h2><p>借出中的器材，到期未還的排最前面</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
-  <div class="card" style="margin-bottom:0"><div class="card-title">📬 尚未歸還</div>
-  <div id="returnList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">尚未歸還</div>
+  <div id="returnList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
 <div id="panel-deposit" class="panel"><div class="pg-head"><h2>器材借用</h2><p>收保證金、歸還後退保證金</p></div><div class="bw-subtabs" role="tablist" aria-label="借用狀態"></div>
-  <div class="card" style="margin-bottom:0"><div class="card-title">💰 保證金管理</div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">保證金管理</div>
   <div class="dep-sum" id="depositSummary"></div>
-  <div id="depositList"><div class="empty"><div class="empty-icon">💳</div><p>點重新整理載入</p></div></div></div>
+  <div id="depositList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
 
 <div id="panel-venue" class="panel"><div class="pg-head"><h2>場地管理</h2><p>實驗室每週課表與場地申請</p></div>
   <div class="venue-ws">
   <div class="card venue-pend-card" style="margin-bottom:16px">
-    <div class="card-title">⏳ 待審核場地申請</div>
+    <div class="card-title">待審核場地申請</div>
     <div id="venuePendingList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
   <div class="card" style="margin-bottom:0">
-    <div class="card-title">🏛️ 場地週曆</div>
+    <div class="card-title">場地週曆</div>
     <div class="purpose-tabs" id="adminVenueLabTabs">
       <button type="button" class="purpose-tab active" data-lab="" onclick="setAdminVenueLabFilter('')">全部</button>
       <button type="button" class="purpose-tab" data-lab="生物" onclick="setAdminVenueLabFilter('生物')">生物</button>
@@ -1383,13 +1383,13 @@
   <div class="save-bar" id="ppSaveBar">
     <span class="sb-msg" id="ppDirtyMsg">有未儲存的變更</span>
     <button class="btn btn-secondary" onclick="loadPurposesAdmin()">↺ 放棄修改</button>
-    <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">💾 儲存全部</button>
+    <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">儲存全部</button>
   </div>
 </div>
 <div id="panel-teachers" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>老師與任教科目（場地課表會依科目上色）</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
   <div class="card set-sec">
     <div class="card-title">已登記的教師</div>
-    <div id="teacherList"><div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div></div>
+    <div id="teacherList"><div class="empty"><p>尚未建立任何老師資料</p></div></div>
   </div>
   <div class="card set-sec">
     <div class="card-title" id="teacherFormTitle">新增教師</div>
@@ -1408,16 +1408,16 @@
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
       <button class="btn btn-secondary" onclick="clearTeacherForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveTeacher()">💾 儲存</button>
+      <button class="btn btn-primary" onclick="saveTeacher()">儲存</button>
     </div>
   </div>
 </div>
 
-<div id="panel-semruns" class="panel no-pane"><div class="pg-head"><h2>學期實驗紀錄</h2><p>前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</p></div><div class="card"><div class="card-title">📅 學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
+<div id="panel-semruns" class="panel no-pane"><div class="pg-head"><h2>學期實驗紀錄</h2><p>前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</p></div><div class="card"><div class="card-title">學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
 <div id="panel-semester" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>學期週次、假日與定期評量週</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
   <div class="card set-sec">
     <div class="card-title">已建立的學期</div>
-    <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
+    <div id="semesterList"><div class="empty"><p>尚未建立任何學期</p></div></div>
   </div>
   <div class="card set-sec">
     <div class="card-title" id="semFormTitle">新增學期</div>
@@ -1443,12 +1443,12 @@
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" onclick="clearSemesterForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveSemester()">💾 儲存學期</button>
+      <button class="btn btn-primary" onclick="saveSemester()">儲存學期</button>
     </div>
   </div>
   <div class="card set-sec">
     <div class="card-title">已設定的假期／停課</div>
-    <div id="holidayList"><div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div></div>
+    <div id="holidayList"><div class="empty"><p>尚未設定任何假期</p></div></div>
   </div>
   <div class="card set-sec">
     <div class="card-title" id="holFormTitle">新增假期／停課</div>
@@ -1463,7 +1463,7 @@
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
       <button class="btn btn-secondary" onclick="clearHolidayForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveHoliday()">💾 儲存假期</button>
+      <button class="btn btn-primary" onclick="saveHoliday()">儲存假期</button>
     </div>
   </div>
 </div>
@@ -1471,15 +1471,15 @@
 <div class="card set-sec" id="backupCard"><div class="card-title">資料備份</div>
       <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">📊 下載 Excel 備份</button>
-        <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">🗂️ 下載完整備份（JSON）</button>
+        <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">下載 Excel 備份</button>
+        <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">下載完整備份（JSON）</button>
       </div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
-        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">📷 照片備份</div>
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">照片備份</div>
         <div id="photoBackupInfo" style="font-size:12.5px;color:var(--text2);margin-bottom:8px"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-primary btn-sm" id="photoNewBtn" onclick="runPhotoBackup(true)">📥 下載新增的照片</button>
-          <button class="btn btn-secondary btn-sm" id="photoAllBtn" onclick="runPhotoBackup(false)">📦 下載全部照片</button>
+          <button class="btn btn-primary btn-sm" id="photoNewBtn" onclick="runPhotoBackup(true)">下載新增的照片</button>
+          <button class="btn btn-secondary btn-sm" id="photoAllBtn" onclick="runPhotoBackup(false)">下載全部照片</button>
         </div>
         <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6">包含借用人上傳的照片、後台換過的器材照片與實驗室封面，打包成一個 ZIP。第一次請按「下載全部照片」，之後按「下載新增的照片」只抓上次之後新增的，比較快。</div>
       </div>
@@ -1493,7 +1493,7 @@
   <input type="file" id="tpl-import-file" accept=".xlsx" style="display:none" onchange="handleTemplateImport(this)">
 
   <div class="card tpl-sheet" id="tplFormCard" style="display:none" role="dialog" aria-label="編輯課綱實驗">
-    <div class="ts-head"><b>📚 新增 / 編輯課綱實驗</b><button type="button" class="ts-x" onclick="clearTemplateForm()" aria-label="關閉">✕</button></div>
+    <div class="ts-head"><b>新增 / 編輯課綱實驗</b><button type="button" class="ts-x" onclick="clearTemplateForm()" aria-label="關閉">✕</button></div>
     <div class="tpl-verbar" id="tplVerBar"></div>
     <div class="ts-tabs"><button type="button" data-tab="basic" class="on" onclick="tplTab('basic')">基本資料</button><button type="button" data-tab="equip" onclick="tplTab('equip')">器材<span id="tsEqN"></span></button><button type="button" data-tab="note" onclick="tplTab('note')">備註</button></div>
     <div class="ts-body">
@@ -1529,44 +1529,44 @@
         <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addTplEquipRow()">＋ 新增器材項目</button>
       </div>
       <div class="ts-pane ts-note" data-pane="note">
-        <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">📝 參考備註（藥品／共用品項／注意事項，老師借用時會看到）</label>
+        <label style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px">參考備註（藥品／共用品項／注意事項，老師借用時會看到）</label>
         <textarea id="tpl-note" rows="10"></textarea>
       </div>
     </div>
     <div class="tpl-veropt" id="tplVerOpt"></div>
-    <div class="ts-foot"><button class="btn btn-secondary" onclick="clearTemplateForm()">取消</button><button class="btn btn-primary" onclick="saveTemplate()">💾 儲存課綱實驗</button></div>
+    <div class="ts-foot"><button class="btn btn-secondary" onclick="clearTemplateForm()">取消</button><button class="btn btn-primary" onclick="saveTemplate()">儲存課綱實驗</button></div>
   </div>
 
   <div class="card" style="margin-bottom:0">
-    <div class="card-title" style="flex-wrap:wrap;gap:6px">📋 課綱實驗<span id="tplCount" style="font-size:12.5px;font-weight:400;color:var(--text2)"></span>
+    <div class="card-title" style="flex-wrap:wrap;gap:6px">課綱實驗<span id="tplCount" style="font-size:12.5px;font-weight:400;color:var(--text2)"></span>
       <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
         <button class="btn btn-primary btn-sm" onclick="newTemplate()">＋ 新增</button>
         <details class="act-more"><summary class="btn btn-secondary btn-sm" aria-label="更多動作">⋯<span class="eq-btn-txt"> 更多</span></summary><div class="act-pop">
-          <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-file').click()">📤 上傳實驗紀錄表（老師的 Excel）</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-file').click()">上傳實驗紀錄表（老師的 Excel）</button>
           <hr>
-          <button type="button" onclick="this.closest('details').removeAttribute('open');openCourseTypes()">🏷️ 管理課程類型</button>
-          <button type="button" onclick="this.closest('details').removeAttribute('open');openEqMap()">🔗 器材對名稱（對到庫存品名）</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');openCourseTypes()">管理課程類型</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');openEqMap()">器材對名稱（對到庫存品名）</button>
           <hr>
-          <button type="button" onclick="this.closest('details').removeAttribute('open');exportTemplatesXlsx()">📥 匯出全部（Excel 備份）</button>
-          <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-import-file').click()">📤 匯入備份 Excel（整批更新）</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');exportTemplatesXlsx()">匯出全部（Excel 備份）</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');document.getElementById('tpl-import-file').click()">匯入備份 Excel（整批更新）</button>
         </div></details>
       </span></div>
     <div id="tplParseMsg" style="font-size:13px;color:var(--text2)"></div>
     <div id="tplImportMsg" style="font-size:13px;color:var(--text2)"></div>
     <div class="tpl-tools">
-      <input type="search" id="tplSearch" placeholder="🔍 找課程名稱、老師、年級…" oninput="tplGroupSel=null;renderTemplateList()" autocomplete="off">
+      <input type="search" id="tplSearch" placeholder="找課程名稱、老師、年級…" oninput="tplGroupSel=null;renderTemplateList()" autocomplete="off">
       <div class="tpl-filter" id="tplFilter"></div>
       <div class="tpl-gf tpl-filter" id="tplGF"></div>
     </div>
-    <div id="templateList"><div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p></div></div>
+    <div id="templateList"><div class="empty"><p>尚未建立任何課綱實驗</p></div></div>
   </div>
   <div id="emView" class="em-view"></div>
 </div>
 
 <div id="panel-floorplan" class="panel set-pg"><div class="pg-head"><h2>設定</h2><p>在平面圖上框出櫃位熱區</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
   <div class="card calib-sticky" id="calibStickyCard" style="background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
-    <div class="card-title">🗺️ 平面圖熱區校正</div>
-    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
+    <div class="card-title">平面圖熱區校正</div>
+    <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「＋／－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
     <div class="purpose-tabs" id="calibRoomTabs">
       <button type="button" class="purpose-tab active" data-room="bio" onclick="setCalibRoom('bio')">生物</button>
       <button type="button" class="purpose-tab" data-room="chem" onclick="setCalibRoom('chem')">化學</button>
@@ -1574,9 +1574,9 @@
       <button type="button" class="purpose-tab" data-room="pc" onclick="setCalibRoom('pc')">理化</button>
       <button type="button" class="purpose-tab" data-room="phy" onclick="setCalibRoom('phy')">物理</button>
       <button type="button" class="purpose-tab" data-room="tmt" onclick="setCalibRoom('tmt')">教具室</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(-0.5)">🔍－</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(-0.5)">－</button>
       <span id="calibZoomLabel" style="font-size:12px;color:var(--text2);align-self:center">100%</span>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(0.5)">🔍＋</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoom(0.5)">＋</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="calibZoomReset()">↺ 重置</button>
     </div>
     <div id="calibScrollWrap" style="overflow:auto;max-height:45vh;border:1px solid var(--border);border-radius:8px;background:var(--surface2)">
@@ -1589,24 +1589,24 @@
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <label style="font-size:13px">代碼：</label>
         <input type="text" id="calibNewCode" placeholder="例如：BD08" style="max-width:160px">
-        <button class="btn btn-primary btn-sm" onclick="saveCalibNew()">💾 儲存這個熱區</button>
+        <button class="btn btn-primary btn-sm" onclick="saveCalibNew()">儲存這個熱區</button>
         <button class="btn btn-secondary btn-sm" onclick="cancelCalibNew()">取消</button>
       </div>
     </div>
   </div>
   <div class="card" style="margin-bottom:0">
-    <div class="card-title" style="flex-wrap:wrap">📋 目前房間的熱區清單
-      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">🔍 檢查全部房間的重複代碼</button>
+    <div class="card-title" style="flex-wrap:wrap">目前房間的熱區清單
+      <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">檢查全部房間的重複代碼</button>
       <button class="btn btn-danger btn-sm" onclick="checkCalibOversized()">⚠️ 檢查異常尺寸</button>
-      <button class="btn btn-danger btn-sm" onclick="clearRoomHotspots()">🗑️ 清空這個房間全部熱區</button>
+      <button class="btn btn-danger btn-sm" onclick="clearRoomHotspots()">清空這個房間全部熱區</button>
     </div>
-    <div id="calibList"><div class="empty"><div class="empty-icon">🗺️</div><p>點重新整理載入</p></div></div>
+    <div id="calibList"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
 </div>
 
 <div id="panel-highlights" class="panel">
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📸 新增精彩時刻</div>
+    <div class="card-title">新增精彩時刻</div>
     <div class="info-box">前台預設只顯示「最新一個年份」的公開項目，新到舊排序；舊年份不會刪除，前台可以另外查詢。<strong>「公開」不勾選的話，這張只會留在後台，前台完全看不到</strong>——學生臉部特寫這類建議不要勾公開。</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group"><label>年份 *</label><input type="number" id="hl-year" placeholder="例如：2026"></div>
@@ -1619,18 +1619,18 @@
     </div>
     <div style="margin-top:10px">
       <input type="file" id="hl-photo-input" accept="image/*" style="display:none" onchange="handleHighlightPhoto(this)">
-      <button class="btn btn-secondary" onclick="document.getElementById('hl-photo-input').click()">📷 選擇照片</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('hl-photo-input').click()">選擇照片</button>
       <span id="hl-photo-status" style="font-size:12.5px;color:var(--text2);margin-left:8px"></span>
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-primary" onclick="saveHighlight()">💾 儲存</button>
+      <button class="btn btn-primary" onclick="saveHighlight()">儲存</button>
     </div>
   </div>
   <div class="card" style="margin-bottom:0">
-    <div class="card-title" style="flex-wrap:wrap">📋 已上傳的精彩時刻
+    <div class="card-title" style="flex-wrap:wrap">已上傳的精彩時刻
       <select id="hlYearFilter" style="margin-left:auto;max-width:130px" onchange="renderHighlightsList()"><option value="">全部年份</option></select>
     </div>
-    <div id="highlightsList"><div class="empty"><div class="empty-icon">📸</div><p>點重新整理載入</p></div></div>
+    <div id="highlightsList"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
 </div>
 
@@ -1639,55 +1639,55 @@
   <div class="chem-ws">
     <div class="chem-left chem-sec" data-sec="cab">
   <div class="card">
-    <div class="card-title">🗄️ 藥品櫃</div>
+    <div class="card-title">藥品櫃</div>
     <div class="info-box">點格子看內容；每一排右邊的「＋」可以直接加藥品；點藥品可以改瓶數、容量，或「搬到」別的位置。改完前台馬上看得到，藥品清單的瓶數和位置也會自動跟著更新。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📥 匯入櫃位 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemCabXlsx(this)"></label>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="printChemCabinet()">🖨️ 列印這一櫃（貼門上）</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="exportChemCabXlsx()">⬇️ 下載 Excel</button>
+      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">匯入櫃位 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemCabXlsx(this)"></label>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="printChemCabinet()">列印這一櫃（貼門上）</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="exportChemCabXlsx()">下載 Excel</button>
     </div>
     <div class="hint" id="chemCabMsg"></div>
     <div id="chemCabOrphan"></div>
-    <div id="adminChemCab"><div class="empty"><div class="empty-icon">🗄️</div><p>點重新整理載入</p></div></div>
+    <div id="adminChemCab"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
     </div>
     <div class="chem-right">
       <div class="chem-tabs" id="chemTabs" role="tablist">
         <div class="ct-row">
-          <button type="button" data-ct="cab" class="ct-cab">🗄️ 藥品櫃</button>
-          <button type="button" data-ct="list">📋 清單</button>
-          <button type="button" data-ct="add">➕ 新增</button>
-          <button type="button" data-cg="todo">🧹 待整理<span class="ct-n" id="chemTodoN"></span></button>
-          <button type="button" data-cg="tools">🧰 工具</button>
+          <button type="button" data-ct="cab" class="ct-cab">藥品櫃</button>
+          <button type="button" data-ct="list">清單</button>
+          <button type="button" data-ct="add">新增</button>
+          <button type="button" data-cg="todo">待整理<span class="ct-n" id="chemTodoN"></span></button>
+          <button type="button" data-cg="tools">工具</button>
         </div>
         <div class="ct-row ct-sub" id="chemSubTabs" hidden>
-          <button type="button" data-ct="sort" data-g="todo">🗂️ 未分類<span class="ct-n" id="chemSortN"></span></button>
+          <button type="button" data-ct="sort" data-g="todo">未分類<span class="ct-n" id="chemSortN"></span></button>
           <button type="button" data-ct="zero" data-g="todo">0️⃣ 0 瓶<span class="ct-n" id="chemZeroN" style="background:#b45309"></span></button>
-          <button type="button" data-ct="noloc" data-g="todo">📭 沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
-          <button type="button" data-ct="pubchem" data-g="tools">🔬 PubChem 比對</button>
-          <button type="button" data-ct="cats" data-g="tools">🏷️ 大類</button>
-          <button type="button" data-ct="csv" data-g="tools">📥 匯入</button>
+          <button type="button" data-ct="noloc" data-g="todo">沒位置<span class="ct-n" id="chemNoLocN" style="background:#64748b"></span></button>
+          <button type="button" data-ct="pubchem" data-g="tools">PubChem 比對</button>
+          <button type="button" data-ct="cats" data-g="tools">大類</button>
+          <button type="button" data-ct="csv" data-g="tools">匯入</button>
         </div>
       </div>
       <div class="chem-sec" data-sec="list">
   <div class="card">
-    <div class="card-title">📋 藥品清單</div>
+    <div class="card-title">藥品清單</div>
     <div class="chem-list-tools">
-  <input type="search" id="adminChemSearch" placeholder="🔍 搜尋中文、英文、分子式、CAS…" oninput="filterAdminChems()" style="flex:1 1 180px">
+  <input type="search" id="adminChemSearch" placeholder="搜尋中文、英文、分子式、CAS…" oninput="filterAdminChems()" style="flex:1 1 180px">
   <select id="adminChemCat" onchange="filterAdminChems()">
     <option value="">全部分類</option>
   </select>
-  <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">🔍 檢查重複</button>
-  <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">🔎 相似名稱</button>
-  <button class="btn btn-secondary btn-sm" onclick="exportChemListXlsx()">⬇️ 下載藥品清單</button>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemDuplicates()">檢查重複</button>
+  <button class="btn btn-secondary btn-sm" onclick="checkChemSimilarFiltered()">相似名稱</button>
+  <button class="btn btn-secondary btn-sm" onclick="exportChemListXlsx()">下載藥品清單</button>
   <span class="hint" id="adminChemCount" style="align-self:center;margin-left:auto"></span>
 </div>
-    <div id="adminChemList"><div class="empty"><div class="empty-icon">🧪</div><p>點重新整理載入</p></div></div>
+    <div id="adminChemList"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
       </div>
       <div class="chem-sec" data-sec="add">
   <div class="card">
-    <div class="card-title">➕ 新增 / 編輯藥品</div>
+    <div class="card-title">新增 / 編輯藥品</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group" style="grid-column:1/-1"><label>中文名稱 *</label><input type="text" id="chem-name-zh"></div>
       <div class="form-group"><label>英文名稱</label><input type="text" id="chem-name-en"></div>
@@ -1711,22 +1711,22 @@
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
       <button class="btn btn-secondary" onclick="clearChemForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveChem()">💾 儲存</button>
+      <button class="btn btn-primary" onclick="saveChem()">儲存</button>
     </div>
   </div>
       </div>
       <div class="chem-sec" data-sec="cats">
   <div class="card">
-    <div class="card-title">🏷️ 藥品大類</div>
+    <div class="card-title">藥品大類</div>
     <div class="info-box">大類決定藥品清單的分類標籤和藥品櫃分區的顏色。改名、改顏色、調順序後按「儲存」，已經分好類的藥品和分區會一起跟著改。老師討論好的「藥品分類草稿」Excel 可以直接匯入。</div>
     <div id="catManager"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
       </div>
       <div class="chem-sec" data-sec="sort">
   <div class="card">
-    <div class="card-title">🏷️ 快速歸類「其他／未分類」藥品</div>
+    <div class="card-title">快速歸類「其他／未分類」藥品</div>
     <div class="info-box">把目前分類是「其他」或還沒填分類的藥品集中列在這裡，每一筆旁邊直接選新分類即可儲存，不用逐筆點進去編輯。</div>
-    <div id="chemQuickSortList"><div class="empty"><div class="empty-icon">🏷️</div><p>點重新整理載入</p></div></div>
+    <div id="chemQuickSortList"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
       </div>
       <div class="chem-sec" data-sec="zero">
@@ -1739,7 +1739,7 @@
       </div>
       <div class="chem-sec" data-sec="noloc">
   <div class="card">
-    <div class="card-title">📭 不在藥品櫃的藥品</div>
+    <div class="card-title">不在藥品櫃的藥品</div>
     <div class="info-box">藥品清單裡有、但藥品櫃沒有位置的藥品。可能放在別間教室（例如生物教室冰箱），也可能已經用完或處理掉了。每一筆可以：放進藥品櫃、記下在哪裡、標成已處理（不再出借，資料保留）、或直接刪除。</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px" id="nolocFilter">
       <button type="button" class="btn btn-secondary btn-sm" data-nf="all">全部</button>
@@ -1752,19 +1752,19 @@
       </div>
       <div class="chem-sec" data-sec="csv">
   <div class="card">
-    <div class="card-title">📥 批次匯入（貼上 CSV）</div>
+    <div class="card-title">批次匯入（貼上 CSV）</div>
     <div class="info-box">從 Google Sheet 複製資料（含標題列）貼到下方，格式：中文名稱、英文名稱、位置、分類、剩餘瓶數、藥品回收、附註、分子式（最後一欄可以不放，不放就不會動到已填的分子式）</div>
     <textarea id="chemCsvInput" rows="6" placeholder="貼上從 Google Sheet 複製的資料…" style="font-family:'DM Mono',monospace;font-size:12px"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-secondary" onclick="previewChemCsv()">👁️ 預覽</button>
-      <button class="btn btn-primary" onclick="importChemCsv()">🔍 比對並匯入</button>
+      <button class="btn btn-secondary" onclick="previewChemCsv()">預覽</button>
+      <button class="btn btn-primary" onclick="importChemCsv()">比對並匯入</button>
     </div>
     <div id="chemCsvPreview" style="margin-top:10px"></div>
   </div>
       </div>
       <div class="chem-sec" data-sec="pubchem">
   <div class="card">
-    <div class="card-title">🔬 PubChem 比對（結構式、CAS、檢查分子式）</div>
+    <div class="card-title">PubChem 比對（結構式、CAS、檢查分子式）</div>
     <div class="info-box pc-intro">用藥品的 <b>CAS</b>（沒有就用<b>英文名</b>）到 PubChem 查，拿回正式名稱、分子式、CAS 和結構式。<br>
       ・每 3 秒最多查一次、一次只查一個；PubChem 很忙會自動放慢或停下來等。<br>
       ・查到的先放在這裡給你看，按「✔ 就是這個」才會存進藥品資料，前台才看得到結構式。</div>
@@ -1775,7 +1775,7 @@
     </div>
     <div class="pc-prog" id="pcProgress"></div>
     <details class="pc-log" ontoggle="pcRenderLog()"><summary>查詢紀錄（每一次送給 PubChem 的內容）</summary><div id="pcLog"></div></details>
-    <div class="pc-search"><input type="search" id="pcQ" maxlength="40" placeholder="🔍 找某一筆：中文、英文、分子式、CAS…" autocomplete="off" oninput="PC.q=this.value;PC.shown=60;pcRender()" aria-label="在比對結果裡找藥品"></div>
+    <div class="pc-search"><input type="search" id="pcQ" maxlength="40" placeholder="找某一筆：中文、英文、分子式、CAS…" autocomplete="off" oninput="PC.q=this.value;PC.shown=60;pcRender()" aria-label="在比對結果裡找藥品"></div>
     <div class="pc-filter" id="pcFilter"></div>
     <div class="pc-selbar" id="pcSelBar" hidden></div>
     <div id="pcList"><div class="empty"><p>載入中…</p></div></div>
@@ -1816,20 +1816,20 @@
       </div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="eq-featured" style="width:auto">
-        <label for="eq-featured" style="color:var(--text)">⭐ 精選展示（首頁輪播）</label>
+        <label for="eq-featured" style="color:var(--text)">精選展示（首頁輪播）</label>
       </div>
-      <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（填了前台就會提醒「借用前先詢問」，不是就留空）</label><input type="text" id="eq-restrict" maxlength="100" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>📦 套組內容（整盒借出的實驗盒才填，一行一項；一般器材留空）</label><textarea id="eq-kit" rows="3" maxlength="2000" placeholder="例如：&#10;滴管 × 6&#10;培養皿 × 6&#10;鑷子 × 2"></textarea></div>
+      <div class="form-group" style="grid-column:1/-1"><label>選修課專用（填了前台就會提醒「借用前先詢問」，不是就留空）</label><input type="text" id="eq-restrict" maxlength="100" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>套組內容（整盒借出的實驗盒才填，一行一項；一般器材留空）</label><textarea id="eq-kit" rows="3" maxlength="2000" placeholder="例如：&#10;滴管 × 6&#10;培養皿 × 6&#10;鑷子 × 2"></textarea></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
       <button class="btn btn-secondary" onclick="clearEquipForm()">清除</button>
-      <button class="btn btn-primary" onclick="saveEquip()">💾 儲存</button>
+      <button class="btn btn-primary" onclick="saveEquip()">儲存</button>
     </div>
   </div>
 
   <div class="eq-ws">
   <div class="card eq-listcard" style="margin-bottom:16px">
-    <div class="card-title" style="flex-wrap:wrap">📋 器材清單 ／ 盤點
+    <div class="card-title" style="flex-wrap:wrap">器材清單 ／ 盤點
       <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
         <button class="btn btn-primary btn-sm" id="eqAddBtn" onclick="toggleEqAdd(true)">＋ 新增器材</button>
         <details class="act-more"><summary class="btn btn-secondary btn-sm" aria-label="更多動作">⋯<span class="eq-btn-txt"> 更多</span></summary><div class="act-pop">
@@ -1837,7 +1837,7 @@
         </div></details>
       </span>
     </div>
-    <div class="info-box">現場點貨：只點<b>架上</b>的數量，借出中的系統會自動加回總數。數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「💾 儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「✏️ 編輯」。</div>
+    <div class="info-box">現場點貨：只點<b>架上</b>的數量，借出中的系統會自動加回總數。數量不同就直接改「實點數量」（格子變橘色）；數量沒變就按「無變動」（變綠色）。按下方「儲存盤點」一次寫入並記錄盤點時間，存好的器材會移到「已盤點」分頁，「待盤點」只剩還沒點的。用搜尋／房間篩選縮小範圍，就等於是在對那個房間盤點。其他欄位（規格、櫃位、別名、照片）用「編輯」。</div>
     <div class="eq-filter-row" style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
       <input type="text" id="adminEquipSearch" placeholder="搜尋名稱／規格／別名／財產編號…" oninput="adminEquipPage=1;filterAdminEquip()" style="flex:1 1 260px;min-width:0">
       <select id="adminEquipRoomFilter" onchange="adminEquipPage=1;filterAdminEquip()">
@@ -1856,45 +1856,45 @@
     </div>
     <div id="stkBar"></div>
     <div id="eqQuickBar"></div>
-    <div id="adminEquipList"><div class="empty"><div class="empty-icon">📦</div><p>點重新整理載入</p></div></div>
+    <div id="adminEquipList"><div class="empty"><p>點重新整理載入</p></div></div>
     <div class="stk-savebar" id="stkSaveBar">
       <button class="btn btn-secondary btn-sm" onclick="markPageSame()" title="這一頁還沒改數量、也還沒按過的，全部當作數量沒變">✓ 本頁其餘都無變動</button>
-      <button class="btn btn-primary" onclick="saveVisibleStocktake()">💾 儲存盤點（<span id="stkPendingCount">0</span> 筆）</button>
+      <button class="btn btn-primary" onclick="saveVisibleStocktake()">儲存盤點（<span id="stkPendingCount">0</span> 筆）</button>
     </div>
   </div>
   <aside class="eq-pane" id="eqPane" aria-label="器材詳情"></aside>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">⭐ 目前的首頁精選<span id="featuredCount" style="font-weight:400;font-size:12.5px;color:var(--text2);margin-left:6px"></span></div>
+    <div class="card-title">目前的首頁精選<span id="featuredCount" style="font-weight:400;font-size:12.5px;color:var(--text2);margin-left:6px"></span></div>
     <div class="hint" style="margin-bottom:8px">點 ✕ 直接取消；要新增精選，在下方清單按器材旁的「☆ 設精選」。</div>
     <div id="featuredList"></div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📜 報廢紀錄</div>
-    <div class="info-box">「♻️ 報廢」會從總數扣除指定數量並留下紀錄（數量、原因、時間），跟直接刪除不一樣——刪除是整筆資料消失，報廢是留痕跡的減量，方便對照校內財產報廢流程。</div>
-    <button class="btn btn-secondary btn-sm" onclick="exportWriteoffLog()">📥 匯出報廢紀錄（Excel）</button>
-    <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><div class="empty-icon">📜</div><p>點重新整理載入</p></div></div>
+    <div class="card-title">報廢紀錄</div>
+    <div class="info-box">「報廢」會從總數扣除指定數量並留下紀錄（數量、原因、時間），跟直接刪除不一樣——刪除是整筆資料消失，報廢是留痕跡的減量，方便對照校內財產報廢流程。</div>
+    <button class="btn btn-secondary btn-sm" onclick="exportWriteoffLog()">匯出報廢紀錄（Excel）</button>
+    <div id="writeoffLogList" style="margin-top:10px"><div class="empty"><p>點重新整理載入</p></div></div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <div class="card-title">💾 器材清單備份／批次編輯</div>
+    <div class="card-title">器材清單備份／批次編輯</div>
     <div class="info-box">「匯出」把目前所有器材整理成 Excel（一列一項），可以直接在 Excel 裡改總數、規格、櫃位、別名，改完再「匯入」整批更新回來。比對用「房間＋名稱」或「器材ID」自動判斷是更新還是新增；匯入後清單裡消失的列預設「保留不刪」，避免貼錯整批清空。「可借數」欄只供參考，匯入時不會被寫入（可借數永遠由系統即時計算：總數－已核准未還）。</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <button class="btn btn-secondary" onclick="exportEquipmentXlsx()">📥 匯出器材清單（Excel備份）</button>
+      <button class="btn btn-secondary" onclick="exportEquipmentXlsx()">匯出器材清單（Excel備份）</button>
       <label class="btn btn-secondary" style="margin-bottom:0;cursor:pointer">
-        📤 匯入器材 Excel
+        匯入器材 Excel
         <input type="file" id="eq-import-file" accept=".xlsx" style="display:none" onchange="handleEquipmentImport(this)">
       </label>
-      <button class="btn btn-secondary" onclick="compressExistingEquipPhotos()" title="把之前上傳、檔案太大的器材照片縮成手機好載的大小">🗜️ 壓縮過大的器材照片</button>
+      <button class="btn btn-secondary" onclick="compressExistingEquipPhotos()" title="把之前上傳、檔案太大的器材照片縮成手機好載的大小">壓縮過大的器材照片</button>
     </div>
     <div class="hint" id="photoCompressMsg" style="margin-top:6px"></div>
     <div id="eqImportMsg" style="margin-top:8px;font-size:13px;color:var(--text2)"></div>
   </div>
 
     <details class="card stk-helper" id="stkHelperCard" style="margin-bottom:16px" ontoggle="if(this.open)loadStkHelper()">
-    <summary class="card-title" style="cursor:pointer;margin-bottom:0">🔗 盤點幫手連結（不用給密碼，請別人幫忙盤點）</summary>
+    <summary class="card-title" style="cursor:pointer;margin-bottom:0">盤點幫手連結（不用給密碼，請別人幫忙盤點）</summary>
     <div style="margin-top:12px">
       <div class="info-box">產生一個臨時連結傳給幫忙的人，對方用手機打開就能盤點、新增還沒建檔的器材，<b>看不到後台其他東西</b>。連結到期自動失效，也可以隨時作廢；對方改過的每一筆都記在下方「盤點紀錄」，可以還原。</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:10px">
@@ -1904,7 +1904,7 @@
       </div>
       <div class="form-group"><label>可以盤點的房間 *</label><div id="sl-rooms" style="display:flex;flex-wrap:wrap;gap:6px 14px"></div></div>
       <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;margin:4px 0 10px;cursor:pointer"><input type="checkbox" id="sl-add" checked style="width:auto"> 允許新增器材（還沒建檔的）</label>
-      <button class="btn btn-primary" onclick="createStkLink()">🔗 產生連結</button>
+      <button class="btn btn-primary" onclick="createStkLink()">產生連結</button>
       <div id="sl-result"></div>
       <div style="font-weight:700;margin:16px 0 6px">目前的連結</div>
       <div id="sl-list"><div class="hint">載入中…</div></div>
@@ -1914,10 +1914,10 @@
   </details>
 </div>
 <div id="panel-all" class="panel"><div class="pg-head"><h2>全部記錄</h2><p>所有器材借用單，可搜尋姓名、學號、器材</p></div>
-  <div class="card" style="margin-bottom:0"><div class="card-title">📊 全部器材借用記錄</div>
+  <div class="card" style="margin-bottom:0"><div class="card-title">全部器材借用記錄</div>
   <div class="purpose-tabs" id="allPurposeTabs"></div>
   <input type="search" id="allSearch" class="rec-search" maxlength="40" placeholder="搜尋姓名、學號、單號或器材…" oninput="clearTimeout(window._allSearchT);window._allSearchT=setTimeout(()=>renderWithFilter('all'),200)">
-  <div id="allList"><div class="empty"><div class="empty-icon">📋</div><p>點重新整理載入</p></div></div></div>
+  <div id="allList"><div class="empty"><p>點重新整理載入</p></div></div></div>
 </div>
 </main>
 <button id="backTopBtn" title="回到頂端" onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆</button>
@@ -2228,7 +2228,7 @@ function renderOverview(){
   renderBackupInfo();
   renderLoanTracker();
   todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
-    :'<div class="empty" style="padding:24px 0"><div class="empty-icon">✅</div><p>今天沒有待處理的事項</p></div>';
+    :'<div class="empty" style="padding:24px 0"><p>今天沒有待處理的事項</p></div>';
   renderLabUse();
 }
 // ── 實驗室使用（2026-10-19）：可以前後翻週，也可以看整學期 ──
@@ -2309,7 +2309,7 @@ function renderLabUse(){
     const wi=getWeekInfo(mon,activeSemester)||getWeekInfo(fri,activeSemester);
     const examLb=semW?(()=>{for(let i=0;i<5;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const e=semW.examOf(fmtDate(d));if(e)return e;}return '';})():'';
     const tag=labUse.off===0?((new Date().getDay()%6===0)?'下週':'本週'):wi?`第 ${wi.week} 週`:'';
-    if(tt)tt.textContent='🏛️ 實驗室使用';
+    if(tt)tt.textContent='實驗室使用';
     const total=LABS.reduce((a,[v])=>a+(n[v]||0),0);
     box.innerHTML=`<div class="lu-nav"><button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(-1)" aria-label="上一週">‹</button><b>${md(mon)}～${md(fri)}</b><span class="lu-tag">${escH(tag)}${wi&&labUse.off===0?`・第 ${wi.week} 週`:''}${wi&&wi.type&&wi.type!=='開學週期'?`・${escH(wi.label||wi.type)}`:''}</span>${examLb?`<span class="lu-exam">${escH(examLb)}</span>`:''}<button type="button" class="btn btn-secondary btn-sm" onclick="labUseWeek(1)" aria-label="下一週">›</button>${labUse.off?'<button type="button" class="lu-back" onclick="labUse.off=0;renderLabUse()">回本週</button>':''}</div>`+
       LABS.map(([v,c])=>{const k=n[v]||0,pc=slots?Math.min(100,Math.round(k/slots*100)):0;return `<div class="ov-bar${examLb?' lu-exam-bar':''}"><span class="ov-bar-name">${v}</span><span class="ov-bar-track"><span style="width:${examLb?Math.min(100,Math.round(k/40*100)):pc}%;background:${c}"></span></span><span class="ov-bar-num">${k} 節</span><span class="lu-pc">${slots&&!examLb?pc+'%':'─'}</span></div>`;}).join('')+
@@ -2318,7 +2318,7 @@ function renderLabUse(){
     return;
   }
   // 學期
-  if(tt)tt.textContent='🏛️ 實驗室使用';
+  if(tt)tt.textContent='實驗室使用';
   const sem=labUseSemester();
   if(!sem){
     box.innerHTML=(window._luSemDone?'<div class="empty" style="padding:18px 0"><p>還沒有「啟用中」的學期，到「學期設定」設好就能看整學期統計</p></div>':'<div class="loading"><div class="spinner"></div>讀取學期中…</div>');
@@ -2368,8 +2368,8 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-25b';
-function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
+const ADMIN_VERSION='2026-10-25c';
+function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
 // 手機／平板的選單：所有分頁（含數字提醒）都在這裡，最底下是登入帳號＋登出
@@ -2433,7 +2433,7 @@ async function runBackup(kind){
     }
     localStorage.setItem('lab_last_backup',String(Date.now()));
     renderBackupInfo();renderOverview();
-    showToast(`✅ 已下載備份（${Object.keys(data).length} 張表${skipped.length?'，略過 '+skipped.length+' 張不存在的表':''}）`,'success');
+    showToast(`已下載備份（${Object.keys(data).length} 張表${skipped.length?'，略過 '+skipped.length+' 張不存在的表':''}）`,'success');
   }catch(e){showToast('備份失敗：'+e.message,'error');}
   backupRunning=false;
   if(btn){btn.disabled=false;btn.textContent=orig;}
@@ -2507,7 +2507,7 @@ async function runPhotoBackup(onlyNew){
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
     if(!failed)localStorage.setItem('lab_last_photo_backup',String(Date.now()));
     renderPhotoBackupInfo();
-    showToast(failed?`已下載 ${files.length-failed} 張，有 ${failed} 張失敗（下次按「下載新增的照片」會再試）`:`✅ 已下載 ${files.length} 張照片`,failed?'error':'success');
+    showToast(failed?`已下載 ${files.length-failed} 張，有 ${failed} 張失敗（下次按「下載新增的照片」會再試）`:`已下載 ${files.length} 張照片`,failed?'error':'success');
   }catch(e){showToast('照片備份失敗：'+e.message,'error');}
   finally{photoBackupRunning=false;if(btn){btn.disabled=false;btn.textContent=orig;}}
 }
@@ -2660,10 +2660,10 @@ function isProxyRecord(r){
 function openAdminNote(id){
   const r=allRecords.find(x=>String(x.id)===String(id));if(!r)return;
   window._noteRecId=String(id);
-  showModal('🗒️ 管理員備註',`<div class="form-group"><label>只有管理員看得到，借用人看不到</label>
+  showModal('管理員備註',`<div class="form-group"><label>只有管理員看得到，借用人看不到</label>
     <textarea id="adminNoteInput" rows="4" maxlength="500" placeholder="例如：學生保證金由導師代收；歸還日口頭同意延到 10/15">${escH(r.adminNote||'')}</textarea></div>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'💾 儲存',cls:'btn-primary',fn:'saveAdminNote()'}
+    {label:'儲存',cls:'btn-primary',fn:'saveAdminNote()'}
   ]);
 }
 async function saveAdminNote(){
@@ -2885,7 +2885,7 @@ function openPhotoViewer(url){
 function closePhotoViewer(){const v=document.getElementById('photoViewer');if(v)v.classList.remove('show');}
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const ov=document.getElementById('modalOverlay');if(ov&&ov.classList.contains('show')){ov.classList.remove('show');return;}closePhotoViewer();});
 function renderList(records,container,mode){
-  if(!records||!records.length){container.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>目前沒有記錄</p></div>';return;}
+  if(!records||!records.length){container.innerHTML='<div class="empty"><p>目前沒有記錄</p></div>';return;}
   let bar='';
   if(mode==='pending'){
     const ids=records.filter(r=>r.status==='待審核').map(r=>String(r.id));
@@ -3006,7 +3006,7 @@ async function doExtendReturn(id){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(v)||isNaN(new Date(v+'T00:00:00'))){showToast('請選日期','error');return;}
   if(v<today){showToast('新的歸還日不能早於今天','error');return;}
   closeModal();
-  const log=`📅 ${today} 延長歸還日：${r.returnDate||'未填'} → ${v}`;
+  const log=`${today} 延長歸還日：${r.returnDate||'未填'} → ${v}`;
   const body={return_date:v,admin_note:((r.adminNote?r.adminNote+'\n':'')+log).slice(-1000)};
   if(r.status==='逾期')body.status='已核准';
   try{
@@ -3029,7 +3029,7 @@ function renderLoanTracker(){
   let h='';
   // 學期最後 3 週（或學期已結束）出現收尾提醒
   if(sem&&today>=addDaysStr(sem.end,-21)){
-    h+=`<div class="sem-end">🗓️ 本學期 ${escH(mdShort(sem.end))} 結束${today>sem.end?'（已結束）':''}：還有 <b>${out.length}</b> 筆未歸還、保證金待退 <b>${depOut}</b> 筆、待收 <b>${depIn}</b> 筆。<br>要延到下學期的，在那筆的「⋯」選「延長歸還日」，會繼續追蹤到拿回來。</div>`;
+    h+=`<div class="sem-end">本學期 ${escH(mdShort(sem.end))} 結束${today>sem.end?'（已結束）':''}：還有 <b>${out.length}</b> 筆未歸還、保證金待退 <b>${depOut}</b> 筆、待收 <b>${depIn}</b> 筆。<br>要延到下學期的，在那筆的「⋯」選「延長歸還日」，會繼續追蹤到拿回來。</div>`;
   }
   h+=`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--text2);margin-bottom:6px"><span>借出中 <b style="color:var(--text)">${out.length}</b> 筆${od?`・逾期 <b style="color:var(--danger)">${od}</b>`:''}${cross?`・跨學期 <b style="color:#5b2ea6">${cross}</b>`:''}</span>
     ${out.length?`<button type="button" class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="exportLoanList()">下載未歸還清單</button>`:''}</div>`;
@@ -3148,8 +3148,8 @@ function renderRecord(r,mode,inPane){
   const safePhotos=photos.map(safeUrl).filter(Boolean);
   // 只附照片、沒選器材的申請（借用人找不到品名，拍照代替）
   const editing=ieEditingHere(r,mode,inPane);
-  const photoOnlyHtml=!items.length&&safePhotos.length?`<div class="admin-note ie-photo-only" style="background:#eef4ff;border-color:#c7d7f5"><span>📷 這張申請沒有選器材，只附了照片，請看照片確認要借什麼</span>${canEditItems?`<button type="button" class="btn btn-primary btn-sm" onclick="openItemEdit(${ja(r.id)})">補器材</button>`:''}</div>`:'';
-  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">📷 借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback">📎<br>無法預覽</span></button>`).join('')}</div></div>`:'';
+  const photoOnlyHtml=!items.length&&safePhotos.length?`<div class="admin-note ie-photo-only" style="background:#eef4ff;border-color:#c7d7f5"><span>這張申請沒有選器材，只附了照片，請看照片確認要借什麼</span>${canEditItems?`<button type="button" class="btn btn-primary btn-sm" onclick="openItemEdit(${ja(r.id)})">補器材</button>`:''}</div>`:'';
+  const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback"><br>無法預覽</span></button>`).join('')}</div></div>`:'';
   const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   const actions=editing?'':recActionsHtml(r,mode);
   const canBatch=mode==='pending'&&r.status==='待審核';
@@ -3168,26 +3168,26 @@ function recActionsHtml(r,mode){
   }
   if(mode==='return'&&(r.status==='已核准'||r.status==='逾期'))actions=`<button class="btn btn-primary btn-sm" onclick="confirmReturn(${ja(r.id)})">完整歸還</button><button class="btn btn-danger-outline btn-sm" onclick="openDamageModal(${ja(r.id)})">損壞歸還</button>`;
   if(mode==='deposit'&&r.depositAmount>0){
-    if(r.depositStatus==='待繳納')actions=`<button class="btn btn-secondary btn-sm" onclick="updateDeposit(${ja(r.id)},'已繳納')">💰 標記已繳納</button>${r.role==='老師'?`<button class="btn btn-secondary btn-sm" onclick="waiveDeposit(${ja(r.id)})">🙅 老師免收</button>`:''}`;
+    if(r.depositStatus==='待繳納')actions=`<button class="btn btn-secondary btn-sm" onclick="updateDeposit(${ja(r.id)},'已繳納')">標記已繳納</button>${r.role==='老師'?`<button class="btn btn-secondary btn-sm" onclick="waiveDeposit(${ja(r.id)})">老師免收</button>`:''}`;
     if(r.depositStatus==='待退還')actions=`<button class="btn btn-primary btn-sm" onclick="confirmRefund(${ja(r.id)},${r.depositAmount})">↩️ 確認退還</button>`;
-    if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal(${ja(r.id)},${r.depositAmount})">💸 計算賠償</button>`;
+    if(r.depositStatus==='損壞-照價賠償')actions=`<button class="btn btn-warn btn-sm" onclick="openDamageSettleModal(${ja(r.id)},${r.depositAmount})">計算賠償</button>`;
   }
   // 主要動作留在外面；不常用的（匯出、備註、刪除）收進「⋯」。這一頁沒有主要動作時，匯出表單留在外面
   const more=[];
   if(items.length){
     const exp=`openExportModal(${ja(r.id)})`;
     const sheetOut=['已核准','逾期','已歸還','已歸還-損壞'].includes(r.status);
-    if(sheetOut||!actions)actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">📄 ${r.sheetPrintedAt?'重印紀錄表':'匯出紀錄表'}</button>`;
-    else more.push({label:'📄 匯出紀錄表',fn:exp});
-    if(r.sheetPrintedAt&&!r.sheetSignedAt)more.push({label:'✍️ 紀錄表已簽回',fn:`markSheetSigned(${ja(r.id)},true)`});
+    if(sheetOut||!actions)actions+=`<button class="btn btn-secondary btn-sm" onclick="${exp}">${r.sheetPrintedAt?'重印紀錄表':'匯出紀錄表'}</button>`;
+    else more.push({label:'匯出紀錄表',fn:exp});
+    if(r.sheetPrintedAt&&!r.sheetSignedAt)more.push({label:'紀錄表已簽回',fn:`markSheetSigned(${ja(r.id)},true)`});
     if(r.sheetSignedAt)more.push({label:'↩️ 取消「已簽回」',fn:`markSheetSigned(${ja(r.id)},false)`});
   }
   // 修改器材的入口在器材清單的表頭；沒有清單、也沒有照片時才放在這裡
-  if(ieCanEdit(r)&&!items.length&&!photos.length)more.push({label:'✏️ 加器材',fn:`openItemEdit(${ja(r.id)})`});
-  if(r.status==='已核准'||r.status==='逾期')more.push({label:'📅 延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
-  more.push({label:`🗒️ ${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
+  if(ieCanEdit(r)&&!items.length&&!photos.length)more.push({label:'加器材',fn:`openItemEdit(${ja(r.id)})`});
+  if(r.status==='已核准'||r.status==='逾期')more.push({label:'延長歸還日',fn:`openExtendReturn(${ja(r.id)})`});
+  more.push({label:`${r.adminNote?'改備註':'加備註'}`,fn:`openAdminNote(${ja(r.id)})`});
   more.push('hr');
-  more.push({label:'🗑️ 刪除這筆',fn:`deleteBorrowRecord(${ja(r.id)})`,danger:true});
+  more.push({label:'刪除這筆',fn:`deleteBorrowRecord(${ja(r.id)})`,danger:true});
   actions+=moreMenuHtml(more);
   return actions;
 }
@@ -3198,11 +3198,11 @@ function recCardHtml(r,mode,inPane,o){
       <div>${canBatch&&!inPane?`<label class="bsel" title="勾選後可一次核准"><input type="checkbox" data-rid="${escH(r.id)}" ${bOn?'checked':''} onchange="batchToggle(this.dataset.rid,this.checked)"></label>`:''}<span class="record-id">${escH(r.id)}</span>
         <div class="rc-name" style="font-weight:700">${escH(r.name)} <span style="font-size:12px;font-weight:400;color:var(--accent)">【${escH(r.purpose)}】</span></div>
         <div style="font-size:12px;color:var(--text2)">${escH(r.role||'學生')}${r.studentId?' ・ '+escH(r.studentId):''}</div>
-        ${isProxyRecord(r)?'<span class="proxy-badge">👩‍🏫 老師代借：學生需另填表單＋繳保證金</span>':''}</div>
+        ${isProxyRecord(r)?'<span class="proxy-badge">老師代借：學生需另填表單＋繳保證金</span>':''}</div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="badge ${sc}">${escH(r.status)}</span>
         ${overdueDays>0?`<span style="font-size:11px;color:var(--danger);font-weight:600">逾期 ${overdueDays} 天</span>`:''}
-        ${r.sheetSignedAt?`<span class="sheet-stamp ok">✍️ 已簽回 ${escH(sheetMD(r.sheetSignedAt))}</span>`:r.sheetPrintedAt?`<span class="sheet-stamp">🖨️ 已印 ${escH(sheetMD(r.sheetPrintedAt))}・待簽回</span>`:''}
+        ${r.sheetSignedAt?`<span class="sheet-stamp ok">已簽回 ${escH(sheetMD(r.sheetSignedAt))}</span>`:r.sheetPrintedAt?`<span class="sheet-stamp">已印 ${escH(sheetMD(r.sheetPrintedAt))}・待簽回</span>`:''}
       </div>
     </div>
     <div class="record-meta">
@@ -3216,7 +3216,7 @@ function recCardHtml(r,mode,inPane,o){
       if(!stock)return itemListHtml;
       return items.some(i=>i&&i.loose)?itemListHtml+stock:stock;
     })()}${editing?'':photoOnlyHtml+photosHtml}${damageHtml}
-    ${r.adminNote?`<div class="admin-note">🗒️ 管理員備註：${escH(r.adminNote)}</div>`:''}
+    ${r.adminNote?`<div class="admin-note">管理員備註：${escH(r.adminNote)}</div>`:''}
     ${(()=>{
       if(!r.note)return '';
       const courseMatch=r.note.match(/\[COURSE_NOTE\]([\s\S]*?)\[\/COURSE_NOTE\]/);
@@ -3226,9 +3226,9 @@ function recCardHtml(r,mode,inPane,o){
       const chemicals=[],shared=[],recycling=[];
       let section='';
       lines.forEach(l=>{
-        if(l.startsWith('🧪'))section='chem';
+        if(l.startsWith(''))section='chem';
         else if(l.startsWith('⚠️'))section='shared';
-        else if(l.startsWith('♻️'))section='recycle';
+        else if(l.startsWith(''))section='recycle';
         else if(l.trim()){
           if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
           else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
@@ -3236,15 +3236,15 @@ function recCardHtml(r,mode,inPane,o){
         }
       });
       let html='';
-      {const eLines=plainNote.split('\n').filter(l=>l.startsWith('🎓'));const rest=plainNote.split('\n').filter(l=>!l.startsWith('🎓')).join('\n').trim();
-      if(rest)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(rest)}</div>`;
+      {const eLines=plainNote.split('\n').filter(l=>l.startsWith(''));const rest=plainNote.split('\n').filter(l=>!l.startsWith('')).join('\n').trim();
+      if(rest)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">${escH(rest)}</div>`;
       eLines.forEach(l=>{html+=`<div style="font-size:12.5px;color:#6b21a8;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:6px 10px;margin-top:6px">${escH(l)}</div>`;});}
       if(shared.length||chemicals.length||recycling.length){
         html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
-        html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">📚 課程備註（來自套用課綱實驗）</div>`;
+        html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">課程備註（來自套用課綱實驗）</div>`;
         if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
-        if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">🧪 藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
-        if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">♻️ 回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
+        if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
+        if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         html+=`</div>`;
       }
       return html;
@@ -3266,7 +3266,7 @@ async function loadTeachers(){
     allTeachers=Array.isArray(allTeachers)?allTeachers:[];
     renderTeacherList();
     renderCatLegend();
-  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 teachers 資料表（欄位：id, name, subject）</p></div>';}
+  }catch(e){list.innerHTML='<div class="empty"><p>載入失敗，請確認 Supabase 是否已建立 teachers 資料表（欄位：id, name, subject）</p></div>';}
 }
 // 教師清單：一張表（姓名｜科目色點｜借用＋場地次數），依科目再依姓名排序；編輯、刪除滑過才出現（觸控螢幕一直顯示）
 const TEACHER_DOT={生物:'#4f7a4a',化學:'#a8662b',物理:'#3f5f86',地科:'#2f7478',理化:'#75558a'};
@@ -3286,7 +3286,7 @@ function renderTeacherList(){
 function renderCatLegend(){
   const el=document.getElementById('catLegend');if(!el)return;
   const cats=[...TEACHER_SUBJECTS,...DIRECT_PURPOSE_CATS];
-  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">🎉 假期（仍可預約）</span><span class="closed-legend-note">停課（預約不算使用）</span>';
+  el.innerHTML=cats.map(c=>`<span class="cat-legend-item ${categoryClass(c)}">${c}</span>`).join('')+'<span class="holiday-legend-note">假期（仍可預約）</span><span class="closed-legend-note">停課（預約不算使用）</span>';
 }
 function clearTeacherForm(){
   editingTeacherId=null;
@@ -3364,7 +3364,7 @@ function _venueLabelRaw(b){
 function renderVenuePending(){
   const list=document.getElementById('venuePendingList');
   const pendingBookings=allVenueBookings.filter(b=>(b.periods||[]).some(p=>p.status==='待審核'));
-  if(!pendingBookings.length){list.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>目前沒有待審核的場地申請</p></div>';return;}
+  if(!pendingBookings.length){list.innerHTML='<div class="empty"><p>目前沒有待審核的場地申請</p></div>';return;}
   list.innerHTML=pendingBookings.map(b=>{
     const periods=b.periods||[];
     const pendingCount=periods.filter(p=>p.status==='待審核').length;
@@ -3390,12 +3390,12 @@ function renderVenuePending(){
           </div>`).join('')}
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" onclick="approveVenueSelected(${ja(b.id)},true)">✅ 核准勾選時段</button>
-        <button class="btn btn-danger btn-sm" onclick="approveVenueSelected(${ja(b.id)},false)">❌ 拒絕勾選時段</button>
-        <button class="btn btn-secondary btn-sm" onclick="approveAllVenue(${ja(b.id)},true)">✅✅ 全部核准</button>
-        <button class="btn btn-danger btn-sm" style="opacity:0.7" onclick="approveAllVenue(${ja(b.id)},false)">❌❌ 全部拒絕</button>
+        <button class="btn btn-primary btn-sm" onclick="approveVenueSelected(${ja(b.id)},true)">核准勾選時段</button>
+        <button class="btn btn-danger btn-sm" onclick="approveVenueSelected(${ja(b.id)},false)">拒絕勾選時段</button>
+        <button class="btn btn-secondary btn-sm" onclick="approveAllVenue(${ja(b.id)},true)">全部核准</button>
+        <button class="btn btn-danger btn-sm" style="opacity:0.7" onclick="approveAllVenue(${ja(b.id)},false)">全部拒絕</button>
       </div>
-      ${b.note?`<div style="font-size:12px;color:var(--text2);margin-top:6px">📝 ${escH(b.note)}</div>`:''}
+      ${b.note?`<div style="font-size:12px;color:var(--text2);margin-top:6px">${escH(b.note)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -3600,7 +3600,7 @@ async function loadSemesters(){
   try{
     allSemesters=await sb('GET','semester_settings',{order:'created_at.desc'});
     allSemesters=Array.isArray(allSemesters)?allSemesters:[];
-    if(!allSemesters.length){list.innerHTML='<div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div>';return;}
+    if(!allSemesters.length){list.innerHTML='<div class="empty"><p>尚未建立任何學期</p></div>';return;}
     list.innerHTML='<div class="record-list">'+allSemesters.map(s=>{
       const periods=Array.isArray(s.periods)?s.periods:[];
       const periodSummary=periods.map(p=>`<div style="font-size:12px;color:var(--text2)">${escH(p.type)}${p.label&&p.label!==p.type?'（'+escH(p.label)+'）':''}：${escH(p.start_date)} ～ ${escH(p.end_date)}　第${parseInt(p.week_start)||1}週起</div>`).join('');
@@ -3613,13 +3613,13 @@ async function loadSemesters(){
           </div>
           <div style="display:flex;flex-direction:column;gap:6px">
             ${!s.is_active?`<button class="btn btn-primary btn-sm" onclick="activateSemester(${ja(s.id)})">設為啟用</button>`:''}
-            <button class="btn btn-secondary btn-sm" onclick="editSemester(${ja(s.id)})">✏️ 編輯</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteSemester(${ja(s.id)})">🗑️ 刪除</button>
+            <button class="btn btn-secondary btn-sm" onclick="editSemester(${ja(s.id)})">編輯</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSemester(${ja(s.id)})">刪除</button>
           </div>
         </div>
       </div>`;
     }).join('')+'</div>';
-  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+  }catch(e){list.innerHTML='<div class="empty"><p>載入失敗</p></div>';}
 }
 
 // ── 學期期間設定列 ────────────────────────────────────────
@@ -3752,7 +3752,7 @@ function holCls(h){return !h?'':holClosed(h)?'closed-col':'holiday-col';}
 function holTag(h){
   if(!h)return '';
   const lb=String(h.label||(holClosed(h)?'停課':'假期'));
-  return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:'🎉'+lb;
+  return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:''+lb;
 }
 let allHolidays=[],editingHolidayId=null;
 async function loadHolidays(){
@@ -3768,7 +3768,7 @@ function holidayForDate(dateStr,period){
 }
 function renderHolidayList(){
   const list=document.getElementById('holidayList');if(!list)return;
-  if(!allHolidays.length){list.innerHTML='<div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div>';return;}
+  if(!allHolidays.length){list.innerHTML='<div class="empty"><p>尚未設定任何假期</p></div>';return;}
   list.innerHTML='<div class="record-list">'+allHolidays.map(h=>`
     <div class="record-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -3777,8 +3777,8 @@ function renderHolidayList(){
           <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${escH(h.start_date)} ～ ${escH(h.end_date)}${holClosed(h)?`・${h.from_period?escH(h.from_period)+'起':'整天'}`:''}</div>
         </div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-sm" onclick="editHoliday(${ja(h.id)})">✏️ 編輯</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteHoliday(${ja(h.id)})">🗑️</button>
+          <button class="btn btn-secondary btn-sm" onclick="editHoliday(${ja(h.id)})">編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteHoliday(${ja(h.id)})">刪除</button>
         </div>
       </div>
     </div>`).join('')+'</div>';
@@ -3982,7 +3982,7 @@ function renderAdminVenueTable(dates,expanded){
           const catCls=categoryClass(cat);
           const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
           const cf=b.periodStatus==='待審核'&&venueSlotConflict(dateStr,period,b._venueFull,b.id)?' st-conflict':'';
-          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'📌':''}[${b._lab}] ${venueLabel(b)}</div>`;
+          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${b._venueFull}')">${b.is_fixed?'':''}[${b._lab}] ${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${labFull['生物']}')">＋</button>`;
         html+=`</td>`;
@@ -4005,7 +4005,7 @@ function renderAdminVenueTable(dates,expanded){
           const catCls=categoryClass(cat);
           const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
           const cf=b.periodStatus==='待審核'&&venueSlotConflict(dateStr,period,venueFull,b.id)?' st-conflict':'';
-          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')">${b.is_fixed?'📌':''}${venueLabel(b)}</div>`;
+          html+=`<div class="venue-booking ${catCls} ${statusCls}${cf}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')">${b.is_fixed?'':''}${venueLabel(b)}</div>`;
         });
         html+=`<button class="venue-add-admin" onclick="openAdminAddVenue('${dateStr}','${period}','${venueFull}')">＋</button>`;
         html+=`</td>`;
@@ -4032,29 +4032,29 @@ function clickAdminBooking(bookingId,date,period,venue){
     <div style="font-size:14px;margin-bottom:6px"><strong>${escH(booking.borrower_name)}</strong> 【${booking.grade?escH(booking.grade)+'・':''}${escH(booking.purpose)}】</div>
     <div style="font-size:13px;color:var(--text2);margin-bottom:4px">${escH(booking.role||'')}${booking.student_id?' ・ '+escH(booking.student_id):''}</div>
     <div style="font-size:13px;margin-bottom:10px">${escH(venue)}　${escH(period)}　狀態：<strong>${escH(target?.status||booking.status)}</strong></div>
-    ${booking.note?`<div style="font-size:13px;color:var(--text2)">📝 ${escH(booking.note)}</div>`:''}
-    ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">🔁 固定課程：第${parseInt(rec.week_start)||'?'}～${parseInt(rec.week_end)||'?'}週・每週${escH(DAYS[rec.day_of_week-1]||'')}（共 ${periods.length} 個時段）</div>`:''}
+    ${booking.note?`<div style="font-size:13px;color:var(--text2)">${escH(booking.note)}</div>`:''}
+    ${rec?`<div style="font-size:12px;color:var(--accent);margin-top:6px">固定課程：第${parseInt(rec.week_start)||'?'}～${parseInt(rec.week_end)||'?'}週・每週${escH(DAYS[rec.day_of_week-1]||'')}（共 ${periods.length} 個時段）</div>`:''}
     <div style="font-size:12px;color:var(--text2);margin-top:8px">此預約單共 ${periods.length} 個時段，「刪除此時段」僅移除這一筆。</div>
   `,[
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'},
     ...((target?.status||booking.status)==='待審核'?[
-      {label:'✅ 核准此時段',cls:'btn-primary',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准')`},
-      {label:'❌ 拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已拒絕')`}
+      {label:'核准此時段',cls:'btn-primary',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准')`},
+      {label:'拒絕此時段',cls:'btn-danger',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已拒絕')`}
     ]:[]),
     {label:'＋ 這節再加一筆',cls:'btn-secondary',fn:`closeModal();openAdminAddVenue(${ja(date)},${ja(period)},${ja(venue)})`},
-    {label:'✏️ 編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal(${ja(bookingId)})`},
+    {label:'編輯年級／科目',cls:'btn-secondary',fn:`openEditGradeSubjectModal(${ja(bookingId)})`},
     ...(rec?[
-      {label:'✏️ 編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal(${ja(bookingId)})`},
-      {label:'🗑️ 刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries(${ja(bookingId)})`}
+      {label:'編輯整學期排程',cls:'btn-secondary',fn:`openEditRecurrenceModal(${ja(bookingId)})`},
+      {label:'刪除整個系列',cls:'btn-danger',fn:`deleteWholeSeries(${ja(bookingId)})`}
     ]:[]),
-    {label:'🗑️ 刪除此時段',cls:'btn-danger',fn:`deletePeriod(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)})`}
+    {label:'刪除此時段',cls:'btn-danger',fn:`deletePeriod(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)})`}
   ]);
 }
 
 // 編輯單筆場地預約的「年級」與「科目（顏色）」
 function openEditGradeSubjectModal(bookingId){
   const booking=allVenueBookings.find(b=>b.id===bookingId);if(!booking)return;
-  showModal('✏️ 編輯年級／科目',`
+  showModal('編輯年級／科目',`
     <div class="form-group"><label>年級／班級（例如：高一戊）</label><input type="text" id="egs-grade" value="${escH(booking.grade||'')}" placeholder="例如：高一戊、高二選"></div>
     <div class="form-group"><label>科目（顏色分類，留空則依「教師管理」的老師姓名自動判斷）</label>
       <select id="egs-subject">
@@ -4126,7 +4126,7 @@ function openAdminAddVenue(date,period,presetVenue){
   const defaultStart=curInfo?curInfo.week:(hasWeeks?weeks[0].week:1);
   const defaultEnd=hasWeeks?weeks[weeks.length-1].week:defaultStart;
   const weekOptions=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
-  showModal(`🏛️ 新增場地預約 — ${date} ${period}`,`
+  showModal(`新增場地預約 — ${date} ${period}`,`
     <div class="form-group"><label>身份 *</label>
       <select id="avf-role" onchange="document.getElementById('avf-sid-group').style.display=this.value==='學生'?'flex':'none'">
         <option value="老師">老師</option><option value="學生">學生</option>
@@ -4141,14 +4141,14 @@ function openAdminAddVenue(date,period,presetVenue){
       <select id="avf-subject"><option value="">(自動依老師清單判斷)</option>${TEACHER_SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
     </div>
     <div class="form-group"><label>實驗室 *</label><select id="avf-venue">${VENUES.map(v=>`<option value="${v}" ${v===presetVenue?'selected':''}>${v}</option>`).join('')}</select></div>
-    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto" ${hasWeeks?'':'disabled'}><label for="avf-fixed" style="color:var(--text)">📌 固定課程（依週次套用）</label></div>
+    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="avf-fixed" style="width:auto" ${hasWeeks?'':'disabled'}><label for="avf-fixed" style="color:var(--text)">固定課程（依週次套用）</label></div>
     <div id="weekRangeWrap" style="display:none">
       ${hasWeeks?`
       <div class="info-box" style="margin-bottom:8px">系統會把這個節次套用到所選週次範圍內，每一週的「星期${DAYS[dow-1]}」。</div>
       <div style="display:flex;gap:8px">
         <div class="form-group" style="flex:1"><label>起始週</label><select id="avf-week-start">${weekOptions}</select></div>
         <div class="form-group" style="flex:1"><label>結束週</label><select id="avf-week-end">${weekOptions}</select></div>
-      </div>`:`<div class="info-box">尚未設定學期週次，請先到「📆 學期設定」建立並啟用學期，才能依週次套用。</div>`}
+      </div>`:`<div class="info-box">尚未設定學期週次，請先到「學期設定」建立並啟用學期，才能依週次套用。</div>`}
     </div>
     <div class="form-group"><label>備註</label><textarea id="avf-note" rows="2"></textarea></div>
   `,[
@@ -4235,7 +4235,7 @@ function openEditRecurrenceModal(bookingId){
   const weeks=getSemesterWeeks(activeSemester);
   if(!weeks.length){showToast('找不到學期週次設定，無法編輯排程','error');return;}
   const weekOptions=weeks.map(w=>`<option value="${w.week}">${weekDisplayLabel(w)}</option>`).join('');
-  showModal('✏️ 編輯整學期排程',`
+  showModal('編輯整學期排程',`
     <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${escH(booking.borrower_name)}　【${escH(booking.purpose)}】　${escH(rec.venue)}　${escH(rec.period)}　每週${DAYS[rec.day_of_week-1]}</div>
     <div style="display:flex;gap:8px">
       <div class="form-group" style="flex:1"><label>起始週</label><select id="erc-week-start">${weekOptions}</select></div>
@@ -4417,7 +4417,7 @@ async function openExportModal(id){
       <span style="flex:1"><strong>${escH(it.name)}</strong>${it.spec?'　<span style="color:var(--text2)">'+escH(it.spec)+'</span>':''}</span>
       <span style="font-family:'DM Mono',monospace;color:var(--text2)">總量 ${escH(it.quantity)}${escH(it.unit||'')}</span>
     </label>`).join('');
-  showModal('📄 匯出實驗紀錄表',`
+  showModal('匯出實驗紀錄表',`
     <div class="info-box" style="margin-bottom:12px">勾選要放進這張表單的器材，並填寫表頭欄位（可留白由老師手寫）。每組數量會在「借用數量 ÷ 組數」能整除時自動算好，否則留空。</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div class="form-group" style="grid-column:1/-1"><label>分類（表格右上角）</label><input id="exp-category" value="探究與實作"></div>
@@ -4450,12 +4450,12 @@ async function openExportModal(id){
       <div id="exp-ct-list" style="margin-top:6px"><div style="font-size:12px;color:var(--text2)">填好「教師」與「班級」後，按上面按鈕即可逐班指定老師（預設平均分配，可改）。</div></div>
     </div>
     <div style="margin-top:12px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px">🔬 要匯出的器材（預設全選）</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">要匯出的器材（預設全選）</div>
       ${itemRows}
     </div>
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'⬇️ 下載 Excel',cls:'btn-primary',fn:`doExport(${ja(id)})`}
+    {label:'下載 Excel',cls:'btn-primary',fn:`doExport(${ja(id)})`}
   ]);
 }
 
@@ -4531,9 +4531,9 @@ async function doExport(id){
     const chemicals=[],shared=[],recycling=[];
     let section='';
     lines.forEach(l=>{
-      if(l.startsWith('🧪'))section='chem';
+      if(l.startsWith(''))section='chem';
       else if(l.startsWith('⚠️'))section='shared';
-      else if(l.startsWith('♻️'))section='recycle';
+      else if(l.startsWith(''))section='recycle';
       else if(l.trim()){
         if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
         else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
@@ -4678,8 +4678,8 @@ async function buildReportXlsx(meta,items,rec){
     const t=ws2.getRow(1);t.getCell(1).font={name:FONT,bold:true,size:14};t.height=28;
     ws2.addRow([]);
     addSection('⚠️ 共用／數量待確認',meta.courseShared,'FFFEF3C7');
-    addSection('🧪 藥品項目',meta.courseChemicals,'FFE0F2FE');
-    addSection('♻️ 回收用具',meta.courseRecycling,'FFD1FAE5');
+    addSection('藥品項目',meta.courseChemicals,'FFE0F2FE');
+    addSection('回收用具',meta.courseRecycling,'FFD1FAE5');
   }
   // 列印設定：A4 直式、寬度縮成一頁、器材表頭每頁重複；頁尾左邊單號、中間頁碼、右邊列印日期
   const ftr=`&L單號 ${String(rec.id||'').replace(/&/g,'&&')}&C第 &P 頁，共 &N 頁&R列印 ${fmtDate(new Date())}`;
@@ -4728,7 +4728,7 @@ function confirmReturn(id){
   const rec=allRecords.find(r=>r.id===id);
   // 套組：列出盒內清單讓你對照點收（只是對照用，不會擋）
   const kits=(rec&&rec.items||[]).map(it=>({it,e:allEquipment.find(e=>e.room===it.room&&e.name===it.name)})).filter(x=>x.e&&kitLines(x.e).length);
-  const kitHtml=kits.map(x=>`<div class="kit-check"><div style="font-size:13px;font-weight:700;margin-bottom:4px">📦 ${escH(x.it.name)} × ${parseInt(x.it.quantity)||1}：盒內點收</div>${kitLines(x.e).map(l=>`<label><input type="checkbox">${escH(l)}</label>`).join('')}</div>`).join('');
+  const kitHtml=kits.map(x=>`<div class="kit-check"><div style="font-size:13px;font-weight:700;margin-bottom:4px">${escH(x.it.name)} × ${parseInt(x.it.quantity)||1}：盒內點收</div>${kitLines(x.e).map(l=>`<label><input type="checkbox">${escH(l)}</label>`).join('')}</div>`).join('');
   showModal('確認完整歸還',`<p>確認器材完整歸還？</p>${kitHtml}${kits.length?'<p class="hint" style="font-size:12px;color:var(--text2);margin-top:8px">盒內有缺的話，請改按「損壞歸還」記下來。</p>':''}`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認歸還',cls:'btn-primary',fn:`doReturn(${ja(id)},false,'',0)`}]);
 }
 function openDamageModal(id){
@@ -4736,7 +4736,7 @@ function openDamageModal(id){
   showModal('⚠️ 損壞歸還',`
     <div class="form-group"><label>損壞說明 *</label><textarea id="damageNoteInput" rows="2" placeholder="說明損壞情況"></textarea></div>
     <div class="damage-form">
-      <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px">💸 賠償計算</div>
+      <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px">賠償計算</div>
       ${items.map((item,i)=>`<div class="damage-row"><span style="font-size:12.5px;min-width:90px">${escH(item.name)}×${parseInt(item.quantity)||0}</span><input type="number" id="dmg_qty_${i}" placeholder="損壞數" min="0" max="${parseInt(item.quantity)||0}" oninput="calcDamage(${record?.depositAmount||0})"><span style="font-size:12px">件×NT$</span><input type="number" id="dmg_price_${i}" placeholder="單價" oninput="calcDamage(${record?.depositAmount||0})"></div>`).join('')}
       <div class="damage-summary">
         <div class="damage-line"><span>保證金</span><span>NT$${record?.depositAmount||0}</span></div>
@@ -4769,7 +4769,7 @@ async function doReturn(id,damaged,damageNote,depositAmount){
 }
 async function updateDeposit(id,status){try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:status},prefer:'return=minimal'});showToast('已更新','success');loadAll();}catch(e){showToast('失敗','error');}}
 function confirmRefund(id,amount){showModal('確認退還',`<p>確認退還 NT$<strong>${parseInt(amount)||0}</strong>？</p>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認已退還',cls:'btn-primary',fn:`updateDeposit(${ja(id)},'已退還')`}]);}
-function openDamageSettleModal(id,depositAmount){showModal('💸 損壞賠償結算',`<div class="form-group"><label>損壞說明</label><textarea id="settleNote" rows="2">${escH(allRecords.find(r=>r.id===id)?.damageNote||'')}</textarea></div><div class="form-group"><label>賠償金額(NT$)</label><input type="number" id="settleComp" placeholder="0" oninput="calcSettle(${depositAmount})"></div><div class="damage-summary"><div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div><div class="damage-line"><span>賠償</span><span id="settleCompDisplay">NT$0</span></div><div class="damage-line"><span>退還</span><span id="settleRefund">NT$${depositAmount}</span></div></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認結算',cls:'btn-warn',fn:`doSettle(${ja(id)},${depositAmount})`}]);}
+function openDamageSettleModal(id,depositAmount){showModal('損壞賠償結算',`<div class="form-group"><label>損壞說明</label><textarea id="settleNote" rows="2">${escH(allRecords.find(r=>r.id===id)?.damageNote||'')}</textarea></div><div class="form-group"><label>賠償金額(NT$)</label><input type="number" id="settleComp" placeholder="0" oninput="calcSettle(${depositAmount})"></div><div class="damage-summary"><div class="damage-line"><span>保證金</span><span>NT$${depositAmount}</span></div><div class="damage-line"><span>賠償</span><span id="settleCompDisplay">NT$0</span></div><div class="damage-line"><span>退還</span><span id="settleRefund">NT$${depositAmount}</span></div></div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'確認結算',cls:'btn-warn',fn:`doSettle(${ja(id)},${depositAmount})`}]);}
 function calcSettle(deposit){const comp=parseInt(document.getElementById('settleComp')?.value)||0,refund=Math.max(0,deposit-comp);if(document.getElementById('settleCompDisplay'))document.getElementById('settleCompDisplay').textContent='NT$'+comp;if(document.getElementById('settleRefund'))document.getElementById('settleRefund').textContent='NT$'+refund;}
 async function doSettle(id,depositAmount){const comp=parseInt(document.getElementById('settleComp')?.value)||0,note=document.getElementById('settleNote')?.value||'',refund=Math.max(0,depositAmount-comp);closeModal();try{await sb('PATCH','borrow_records',{filter:'id=eq.'+id,body:{deposit_status:'已退還',damage_note:note,final_refund:refund},prefer:'return=minimal'});showToast(`結算完成，退還 NT$${refund}`,'success');loadAll();}catch(e){showToast('結算失敗：'+e.message,'error');}}
 
@@ -4998,7 +4998,7 @@ function buildReferenceNote(otherItems, chemicals, recycling){
     lines.push('');
   }
   if(chemicals&&chemicals.length){
-    lines.push('🧪 藥品項目：');
+    lines.push('藥品項目：');
     chemicals.forEach(it=>{
       const qty=[it.qty_per_group,it.qty_total].filter(v=>v!=null&&v!=='').join(' / ');
       lines.push(`- ${it.name}${it.spec?'（'+it.spec+'）':''}${qty?'　'+qty:''}${it.note?'　'+it.note:''}`);
@@ -5006,7 +5006,7 @@ function buildReferenceNote(otherItems, chemicals, recycling){
     lines.push('');
   }
   if(recycling&&recycling.length){
-    lines.push('♻️ 回收用具：');
+    lines.push('回收用具：');
     recycling.forEach(it=>lines.push(`- ${it.name}${it.note?'　'+it.note:''}`));
   }
   return lines.join('\n').trim();
@@ -5041,14 +5041,14 @@ async function handleTemplateFile(input){
       const all=parseCourseTemplateSheets(wb,file.name);
       const sheetsTxt=`（檔案「${file.name}」共有 ${wb.SheetNames.length} 個工作表：${wb.SheetNames.join('、')}）`;
       if(!all.length){msg.textContent='⚠️ 此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗'+sheetsTxt;return;}
-      if(all.length===1){loadTemplateIntoForm(all[0]);msg.textContent=`✅ 讀到工作表「${all[0].sheet_name}」的「${all[0].name}」，請確認後儲存${sheetsTxt}`;return;}
+      if(all.length===1){loadTemplateIntoForm(all[0]);msg.textContent=`讀到工作表「${all[0].sheet_name}」的「${all[0].name}」，請確認後儲存${sheetsTxt}`;return;}
       // 好幾個工作表：檔名裡有提到的那個實驗優先；其他讓使用者挑
       const fn=String(file.name||'').replace(/\s+/g,'');
       const hit=all.filter(r=>r.name&&fn.includes(String(r.name).replace(/\s+/g,'')));
-      if(hit.length===1){loadTemplateIntoForm(hit[0]);msg.textContent=`✅ 這個檔案有 ${all.length} 個工作表，已帶入檔名對應的「${hit[0].name}」（工作表：${hit[0].sheet_name}）`;return;}
+      if(hit.length===1){loadTemplateIntoForm(hit[0]);msg.textContent=`這個檔案有 ${all.length} 個工作表，已帶入檔名對應的「${hit[0].name}」（工作表：${hit[0].sheet_name}）`;return;}
       window._tplSheets=all;msg.textContent=`這個檔案有 ${all.length} 個實驗工作表，請選要帶入哪一個`;
       showModal(`這個檔案有 ${all.length} 個實驗，要帶入哪一個？`,
-        `<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${escH(file.name)}</div><div style="display:flex;flex-direction:column;gap:6px">${all.map((r,i)=>`<button type="button" class="btn btn-secondary" style="justify-content:space-between;text-align:left;width:100%" onclick="closeModal();loadTemplateIntoForm(window._tplSheets[${i}]);document.getElementById('tplParseMsg').textContent='✅ 已帶入「'+(window._tplSheets[${i}].name||'')+'」，請確認後儲存'"><span><b>${escH(r.name||'（沒有實驗名稱）')}</b> <small style="color:var(--text2)">${escH(r.grade||'')}${r.teacher?'・'+escH(r.teacher):''}</small></span><small style="color:var(--text2)">工作表：${escH(r.sheet_name)}${r.hidden?'（隱藏）':''}・器材 ${r.equipment_items.length}</small></button>`).join('')}</div>`,
+        `<div style="font-size:13px;color:var(--text2);margin-bottom:8px">${escH(file.name)}</div><div style="display:flex;flex-direction:column;gap:6px">${all.map((r,i)=>`<button type="button" class="btn btn-secondary" style="justify-content:space-between;text-align:left;width:100%" onclick="closeModal();loadTemplateIntoForm(window._tplSheets[${i}]);document.getElementById('tplParseMsg').textContent='已帶入「'+(window._tplSheets[${i}].name||'')+'」，請確認後儲存'"><span><b>${escH(r.name||'（沒有實驗名稱）')}</b> <small style="color:var(--text2)">${escH(r.grade||'')}${r.teacher?'・'+escH(r.teacher):''}</small></span><small style="color:var(--text2)">工作表：${escH(r.sheet_name)}${r.hidden?'（隱藏）':''}・器材 ${r.equipment_items.length}</small></button>`).join('')}</div>`,
         [{label:'取消',cls:'btn-secondary',fn:'closeModal()'}]);
     }catch(err){msg.textContent='解析失敗：'+err.message;}
   };
@@ -5413,12 +5413,12 @@ function tplDatePreviewHtml(month,week){
 }
 function tplQuickDate(id){
   const t=allTemplates.find(x=>String(x.id)===String(id));if(!t)return;
-  showModal('📅 改日期',`<div class="tq-name">${escH(t.name||'（未命名）')}<small>${escH([t.grade,t.teacher].filter(Boolean).join('・'))}</small></div>
+  showModal('改日期',`<div class="tq-name">${escH(t.name||'（未命名）')}<small>${escH([t.grade,t.teacher].filter(Boolean).join('・'))}</small></div>
     <div class="tq-grid"><label>月份<input id="tq-month" value="${escH(t.month||'')}" placeholder="例如 5" maxlength="20" autocomplete="off"></label>
     <label>週次（學期第幾週）<input id="tq-week" value="${escH(t.week||'')}" placeholder="例如 13～14" maxlength="30" autocomplete="off"></label></div>
     <div id="tq-prev" class="tq-prev"></div>
     <div class="hint" style="margin-top:6px">週次寫「學期第幾週」；跨週寫 13～14。</div>`,
-    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:`tplQuickSave(${ja(t.id)})`}]);
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:`tplQuickSave(${ja(t.id)})`}]);
   const upd=()=>{document.getElementById('tq-prev').innerHTML=tplDatePreviewHtml(document.getElementById('tq-month').value,document.getElementById('tq-week').value);};
   ['tq-month','tq-week'].forEach(k=>document.getElementById(k).addEventListener('input',upd));upd();
 }
@@ -5494,7 +5494,7 @@ async function loadTemplates(){
     if(!activeSemester)await loadActiveSemester();
     tplEqIndex=Array.isArray(eqs)?tplBuildEqIndex(eqs):null;
     renderTemplateList();
-  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${escH(e.message)}</p></div>`;}
+  }catch(e){list.innerHTML=`<div class="empty"><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${escH(e.message)}</p></div>`;}
 }
 // ── 課綱實驗分組（2026-10-20）──
 // 「年級」欄位以前是自由填寫（高一菁英(化學)、高一菁英（化學）、高一化學…），這裡只取出「國一～高三」；
@@ -5556,11 +5556,11 @@ function renderTemplateList(){
   const fb=document.getElementById('tplFilter');
   if(fb)fb.innerHTML=`<button type="button" class="${tplFilterMode==='all'?'on':''}" onclick="tplFilterMode='all';tplGroupSel=null;renderTemplateList()">全部 ${allTemplates.length}</button>`+
     (tplEqIndex?`<button type="button" class="warn ${tplFilterMode==='bad'?'on':''}" onclick="tplFilterMode='bad';tplGroupSel=null;renderTemplateList()">⚠ 對不到器材 ${badN}</button>`:'')+
-    (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';tplGroupSel=null;renderTemplateList()">📅 日期待確認 ${dateN}</button>`:'')+
-    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';tplGroupSel=null;renderTemplateList()">👯 同名／名稱很像 ${nameN}</button>`:'')+
-    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';tplGroupSel=null;renderTemplateList()">📝 沒填科目 ${classN}</button>`:'');
+    (dateN?`<button type="button" class="warn ${tplFilterMode==='date'?'on':''}" onclick="tplFilterMode='date';tplGroupSel=null;renderTemplateList()">日期待確認 ${dateN}</button>`:'')+
+    (nameN?`<button type="button" class="warn ${tplFilterMode==='name'?'on':''}" onclick="tplFilterMode='name';tplGroupSel=null;renderTemplateList()">同名／名稱很像 ${nameN}</button>`:'')+
+    (classN?`<button type="button" class="warn ${tplFilterMode==='cls'?'on':''}" onclick="tplFilterMode='cls';tplGroupSel=null;renderTemplateList()">沒填科目 ${classN}</button>`:'');
   const cnt=document.getElementById('tplCount');if(cnt)cnt.textContent=allTemplates.length?`共 ${allTemplates.length} 個`:'';
-  if(!allTemplates.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
+  if(!allTemplates.length){list.innerHTML='<div class="empty"><p>尚未建立任何課綱實驗</p><p style="font-size:13px;color:var(--text2)">按右上角「＋ 新增」，或從「⋯ 更多」上傳老師的實驗紀錄表</p></div>';return;}
   let items=withMiss.filter(({t,miss})=>{
     if(tplFilterMode==='bad'&&!miss.length)return false;
     if(tplFilterMode==='date'&&!iss.get(t).date.length)return false;
@@ -5583,7 +5583,7 @@ function renderTemplateList(){
       <div class="tgf-row"><span class="tgf-h">科目</span>${chip(tplSubjF==='all','全部',Object.values(scnt).reduce((a,c)=>a+c,0),"tplSetF('subj','all')")}${ss.map(x=>chip(tplSubjF===x,x,scnt[x],`tplSetF('subj','${x}')`,tplSC(x))).join('')}</div>`;
   }
   const shown=pool.filter(x=>{const g=gOf(x);return (tplGradeF==='all'||g.grade===tplGradeF)&&(tplSubjF==='all'||g.subject===tplSubjF);});
-  if(!shown.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>沒有符合的課綱實驗</p></div>';return;}
+  if(!shown.length){list.innerHTML='<div class="empty"><p>沒有符合的課綱實驗</p></div>';return;}
   // 分組：年級 → 科目 → 課程類型（菁英、探究、選修是不同的課，分開放）
   const groups=new Map();
   shown.forEach(x=>{const g=gOf(x);if(!groups.has(g.key))groups.set(g.key,{...g,items:[]});groups.get(g.key).items.push(x);});
@@ -5613,7 +5613,7 @@ function tplRowHtml(t,miss,I){
     const n=(Array.isArray(t.equipment_items)?t.equipment_items:[]).length;
     const wk=String(t.week??'').trim();
     const when=tplWhenText(I.weeks,I.cal);
-    const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>📅 ${escH(x)}</span>`).join('')}${I.name?`<span class="${I.dup?'iss-dup':'iss-like'}">👯 ${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
+    const issHtml=(I.date.length||I.name)?`<div class="tpl-iss">${I.date.map(x=>`<span>${escH(x)}</span>`).join('')}${I.name?`<span class="${I.dup?'iss-dup':'iss-like'}">${escH(I.name)}</span>`:''}${I.date.length?`<button type="button" onclick="tplQuickDate(${ja(t.id)})">改日期</button>`:''}</div>`:'';
     const sub=[t.grade,t.teacher,t.class_count?t.class_count+' 班':'',t.group_count?t.group_count+' 組':'',`器材 ${n} 項`].filter(Boolean).map(escH).join('・');
     const health=!tplEqIndex?'':(miss.length
       ?`<div class="tpl-health bad">⚠ 對不到庫存品名 ${miss.length} 項：${miss.slice(0,4).map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}${miss.length>4?'…':''}</div>`
@@ -5623,7 +5623,7 @@ function tplRowHtml(t,miss,I){
       <div class="tpl-main"><div class="nm">${escH(t.name||'（未命名）')} ${TPL_SUBJ.includes(t.subject)?`<span class="tpl-cls tpl-cls-s" style="--sc:${tplSC(t.subject)}">${escH(t.subject)}</span>${tplTypeHtml(tplGroupOf(t).type)}`:`<span class="tpl-cls miss">沒填科目</span>`}${(()=>{const n=tplFamilyOf(t).length;return t.version_label||n>1?`<span class="tpl-cls ver">${escH(tplVerName(t))}${n>1?`・共 ${n} 版`:''}</span>`:'';})()}</div>
         ${(Array.isArray(t.aliases)&&t.aliases.length)?`<div class="sub">又叫：${escH(t.aliases.join('、'))}</div>`:''}
         <div class="sub">${sub}${when?`<span class="tpl-when">・${escH(when)}</span>`:''}</div>${health}${issHtml}</div>
-      <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">✏️<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'🗑️ 刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
+      <div class="tpl-act"><button class="btn btn-secondary btn-sm" onclick="editTemplate(${ja(t.id)})" aria-label="編輯">編輯<span class="tpl-edit-txt"> 編輯</span></button>${moreMenuHtml([{label:'刪除這個課綱實驗',fn:`deleteTemplate(${ja(t.id)})`,danger:true}])}</div>
     </div>`;
 }
 // ── 課綱實驗 匯出／匯入（備份、批次編輯用）──────────────────
@@ -5719,7 +5719,7 @@ function handleTemplateImport(input){
       const parsed=[...groups.values()].filter(g=>g.name);
       if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的課程列';return;}
       window._pendingTemplateImport=parsed;
-      msg.innerHTML=`✅ 解析到 <strong>${parsed.length}</strong> 個課程，`+
+      msg.innerHTML=`解析到 <strong>${parsed.length}</strong> 個課程，`+
         `<button class="btn btn-primary btn-sm" onclick="confirmTemplateImport()">確認匯入</button>`;
     }catch(err){msg.textContent='解析失敗：'+err.message;}
   };
@@ -5847,19 +5847,19 @@ function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.cod
 
 // ── 藥品大類（後台可以自己編輯；存在資料表 chem_categories，還沒建表時用下面的預設）──
 const CHEM_CAT_DEFAULTS=[
-  {name:'酸',color:'#e53935',icon:'🧪'},
-  {name:'鹼',color:'#1e88e5',icon:'⚗️'},
-  {name:'氧化劑',color:'#fb8c00',icon:'🔥'},
-  {name:'易燃・有機溶劑',color:'#f9a825',icon:'🛢️'},
-  {name:'一般鹽類・氧化物',color:'#43a047',icon:'🧂'},
-  {name:'金屬・元素',color:'#757575',icon:'⚙️'},
-  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:'🌈'},
-  {name:'生化・有機固體・其他',color:'#8d6e63',icon:'📦'}];
+  {name:'酸',color:'#e53935',icon:''},
+  {name:'鹼',color:'#1e88e5',icon:''},
+  {name:'氧化劑',color:'#fb8c00',icon:''},
+  {name:'易燃・有機溶劑',color:'#f9a825',icon:''},
+  {name:'一般鹽類・氧化物',color:'#43a047',icon:''},
+  {name:'金屬・元素',color:'#757575',icon:''},
+  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:''},
+  {name:'生化・有機固體・其他',color:'#8d6e63',icon:''}];
 let CHEM_CATS=CHEM_CAT_DEFAULTS.map((c,i)=>({...c,sort:i+1}));
 // 舊的分類名稱 → 新大類（資料還沒轉換前也能正確顯示）
 const CHEM_CAT_LEGACY={'鹽':'一般鹽類・氧化物','有機溶劑':'易燃・有機溶劑','指示劑':'指示劑・染劑・分析試劑','培養基／生化':'生化・有機固體・其他','溶液成品':'生化・有機固體・其他','其他':'生化・有機固體・其他'};
 function catName(v){const s=String(v??'').trim().replace(/^\d+\s+/,'');if(!s)return '';if(CHEM_CATS.some(c=>c.name===s))return s;return CHEM_CAT_LEGACY[s]||s;}
-function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:'📦'};}
+function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:''};}
 function hexMix(hex,t,to){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return to?'#eeeeee':'#555555';const n=parseInt(m[1],16);return '#'+[n>>16,(n>>8)&255,n&255].map(x=>Math.round(to?x+(255-x)*t:x*(1-t))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function catTagHtml(v,extra=''){const c=catInfo(v);return `<span class="chem-cat-tag ${extra}" style="background:${hexMix(c.color,.86,1)};color:${hexMix(c.color,.3,0)}">${escH(c.name)}</span>`;}
 async function loadChemCats(){
@@ -5971,7 +5971,7 @@ function makeCabUI(rootId,opts){
   function trayCellHtml(t,L,span,ctx){
     const top=L===t.layer,on=String(ui.state.tray)===String(t.id),hit=ctx.tSet.has(String(t.id)),dim=ctx.qOn&&!hit,wide=span>=3;
     const nm=String(t.name||'藥品盆').slice(0,30);
-    const lab=top?(wide?'🧺 '+nm:nm):(wide?'↑ 同上：'+nm:'↑同上');
+    const lab=top?(wide?''+nm:nm):(wide?'↑ 同上：'+nm:'↑同上');
     const tip=`${nm}（${trayCode(t)}）`;
     return `<button type="button" class="cb2-tray${top?'':' ghost'}${wide?' wide':''}${on?' sel':''}${hit?' hit':''}${dim?' dim':''}" style="grid-column:span ${span}" data-tray="${escH(String(t.id))}" title="${escH(tip)}" aria-label="${escH('藥品盆：'+tip)}">${top&&warnLines(t.warning).length?'<i class="wb"></i>':''}<span class="nm${wide?'':fsCls(lab)}">${escH(lab)}</span>${top?'<span class="basin"></span>':''}</button>`;
   }
@@ -6009,11 +6009,11 @@ function makeCabUI(rootId,opts){
         return `<button type="button" class="cb2-ti${c?'':' eq'}${hit?' hit':''}" data-titem="${i}" ${c?`style="--tb:${hexMix(ci.color,.9,1)};--tc:${hexMix(ci.color,.38,0)}"`:''}>${c&&warnLines(c.warning).length?'<span class="w">⚠</span>':''}${escH(x.label||c?.name_zh||'?')}</button>`;
       };
       return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${t.layer}-${b===a?a:b+'～'+a}</b><span class="t">藥品盆・佔 ${b-a+1} 排${tall>1?'×'+tall+' 層':''}・整盆借出</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
-        <div class="cb2-basin"><button type="button" class="hd" data-traycard><b>🧺 ${escH(t.name||'藥品盆')}</b><span>整盆資料卡 ›</span></button>
+        <div class="cb2-basin"><button type="button" class="hd" data-traycard><b>${escH(t.name||'藥品盆')}</b><span>整盆資料卡 ›</span></button>
           ${t.course?`<div class="cs">課程：${escH(t.course)}</div>`:''}
           ${its.length?`<div class="cb2-titems">${its.map(chip).join('')}</div>`:'<div class="cs">（還沒登記盆裡有什麼）</div>'}
           <div class="cs">${opts.onTray?'點盆裡任一樣可以修改這個盆':'點盆裡任一樣看它的資料卡・整盆一起借出、一起歸還'}</div></div>
-        ${opts.onTray?`<div class="cb2-admin"><button type="button" class="cab-add-here" data-trayedit>✏️ 修改這個盆</button></div>`:''}</div>`;
+        ${opts.onTray?`<div class="cb2-admin"><button type="button" class="cab-add-here" data-trayedit>修改這個盆</button></div>`:''}</div>`;
     }
     if(st.zone!=null&&st.col==null){
       const z=zonesOf(st.cab).find(x=>String(x.id)===String(st.zone));if(!z||z.layer!==L)return '';
@@ -6021,7 +6021,7 @@ function makeCabUI(rootId,opts){
       const uniq=items.filter((l,i,arr)=>arr.findIndex(o=>o.chem_id===l.chem_id)===i);
       return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${z.layer}-${z.b===z.a?z.a:z.b+'～'+z.a}</b><span class="t">分區「${escH(z.text)}」${uniq.length?'・'+uniq.length+' 種':''}</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
         ${uniq.length?`<div class="cab-here">${uniq.map(l=>`<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(chem(l.chem_id)?.name_zh||'?')}</button>`).join('')}</div>`:'<div class="cb2-empty">這一區目前是空的</div>'}
-        ${opts.onZone?`<div class="cb2-admin"><button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">🏷️ 修改這個分區</button></div>`:''}</div>`;
+        ${opts.onZone?`<div class="cb2-admin"><button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">修改這個分區</button></div>`:''}</div>`;
     }
     if(st.col==null||st.L!==L)return '';
     const here=cellLocs(st.cab,L,st.col),zHere=zoneAt(st.cab,L,st.col);
@@ -6029,7 +6029,7 @@ function makeCabUI(rootId,opts){
     const others=sel?locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id):[];
     const chipBig=l=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
     const adminList=opts.onQuick&&here.length?`<div class="cab-sub">改瓶數、移除（點名稱可以改容量、搬到別格）：</div><div class="cab-here">${here.map(l=>`<span class="cab-item">${chipBig(l)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`).join('')}</div>`:'';
-    const adminBtns=(opts.onAdd||opts.onZone||opts.onTray)?`<div class="cb2-admin">${opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:''}${opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">🏷️ ${zHere?'修改分區':'設定分區'}</button>`:''}${opts.onTray?`<button type="button" class="cab-zone-edit" data-traynew="1">🧺 從這格放藥品盆</button>`:''}</div>`:'';
+    const adminBtns=(opts.onAdd||opts.onZone||opts.onTray)?`<div class="cb2-admin">${opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:''}${opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">${zHere?'修改分區':'設定分區'}</button>`:''}${opts.onTray?`<button type="button" class="cab-zone-edit" data-traynew="1">從這格放藥品盆</button>`:''}</div>`:'';
     return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${L}-${st.col}</b><span class="t">第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${L} 層・第 ${st.col} 排${here.length?`・前 → 後 ${here.length} 樣`:''}</span>${navHtml(st)}<button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
       ${zHere?zoneTag(zHere,true):''}
       ${here.length?`<div class="cb2-jars">${here.map(l=>jarHtml(l,q)).join('')}</div><div class="cb2-dw"><span>門口（前）</span><span>${opts.onQuick?'點藥品罐可以修改':'點藥品罐看資料卡'}</span><span>靠牆（後）</span></div>`:'<div class="cb2-empty">這一格目前是空的</div>'}
@@ -6061,7 +6061,7 @@ function makeCabUI(rootId,opts){
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
       const inp=r.querySelector('.cab-q'),qx=r.querySelector('.cab-qx');
       const syncX=()=>{qx.hidden=!inp.value;};
       // 打字就直接跳到第一個找到的位置（不捲動畫面，免得手機鍵盤擋住）
@@ -6080,7 +6080,7 @@ function makeCabUI(rootId,opts){
     if(!st.q||st.picked)res.innerHTML='';
     else if(!total)res.innerHTML=`<div class="none">藥品櫃裡找不到「${escH(st.q)}」</div>`;
     else{
-      const trayBtns=tHits.slice(0,4).map(t=>`<button type="button" data-htray="${escH(String(t.id))}"><span>🧺 ${escH(t.name||'藥品盆')}${t.course?`<small>　${escH(t.course)}</small>`:''}</span><small>${escH(trayCode(t))}</small></button>`).join('');
+      const trayBtns=tHits.slice(0,4).map(t=>`<button type="button" data-htray="${escH(String(t.id))}"><span>${escH(t.name||'藥品盆')}${t.course?`<small>　${escH(t.course)}</small>`:''}</span><small>${escH(trayCode(t))}</small></button>`).join('');
       const locBtns=hits.slice(0,10).map(l=>{const c=chem(l.chem_id);return `<button type="button" data-hit="${escH(String(l.id))}"><span>${c&&warnLines(c.warning).length?'<b style="color:#c62828">⚠</b> ':''}${escH(c?.name_zh||'?')}${c&&c.alias?`<small>（${escH(c.alias)}）</small>`:''}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`;}).join('');
       res.innerHTML=trayBtns+locBtns+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；櫃子上亮黃色的是這一櫃找到的位置</div>`:'');
     }
@@ -6091,7 +6091,7 @@ function makeCabUI(rootId,opts){
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
       ${cabinetHtml()}
       ${catNames.length?`<div class="cab-cats">${catNames.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:''}
-      <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　🧺＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
+      <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
     // 不整個重畫：只改有變的地方（格子的顏色、拉出來的那一列）。
     // 整個換掉的話，手機會在換的瞬間把畫面跳到別的位置。
     const tmp=document.createElement('div');tmp.innerHTML=html;
@@ -6280,7 +6280,7 @@ function openTrayEdit(cab,L,col,t){
   const w=t?Math.min(tc.b-tc.a+1,maxW):Math.min(3,maxW),tall=t?tc.tall:1;
   window._trayEdit={id:t?t.id:null,cab,layer,start};
   const items=t?trayItems(t).map(x=>{const c=x.chem_id?allAdminChems.find(o=>String(o.id)===x.chem_id):null;return {kind:x.chem_id?'chem':'eq',name:c?c.name_zh:x.label,oldLabel:x.label,note:x.note};}):[{},{}];
-  showModal(`🧺 ${t?'修改藥品盆':'放藥品盆'}・第${CAB_CN[cab]}櫃第 ${layer} 層、第 ${start} 排起`,`
+  showModal(`${t?'修改藥品盆':'放藥品盆'}・第${CAB_CN[cab]}櫃第 ${layer} 層、第 ${start} 排起`,`
     <div class="form-group"><label>盆名 *</label><input id="tray-name" maxlength="30" value="${escH(t?.name||'')}" placeholder="例如：酸鹼滴定盆"></div>
     <div class="form-group"><label>課程（選填）</label><input id="tray-course" maxlength="40" value="${escH(t?.course||'')}" placeholder="例如：高二探究・酸鹼滴定"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -6294,7 +6294,7 @@ function openTrayEdit(cab,L,col,t){
     <div class="form-group"><label>備註（選填）</label><input id="tray-note" maxlength="200" value="${escH(t?.note||'')}"></div>
     <p class="hint" style="font-size:12.5px">盆只能放在同一扇門裡（左門 14～8、右門 7～1）。盆蓋住的格子在櫃子圖上會合併成一個金色大格。</p>
     ${t?`<button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteTray()">刪除這個盆</button>`:''}`,
-    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:'saveTray()'}]);
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveTray()'}]);
   trayRowsWire();
 }
 async function saveTray(){
@@ -6361,7 +6361,7 @@ function openZoneEdit(cab,L,col,z){
   const a=z?Math.max(z.col_from,z.col_to):col,b=z?Math.min(z.col_from,z.col_to):col;
   const names=[...new Set(allChemLabels.map(x=>x.text))].map(t=>`<option value="${escH(t)}"></option>`).join('');
   const zc=z?catName(z.category):'';
-  showModal(`🏷️ ${z?'修改':'設定'}分區・第${CAB_CN[cab]}櫃第 ${L} 層`,`
+  showModal(`${z?'修改':'設定'}分區・第${CAB_CN[cab]}櫃第 ${L} 層`,`
     <div class="form-group"><label>大類（決定顏色）</label><select id="zn-cat">${CHEM_CATS.map(c=>`<option value="${escH(c.name)}" ${zc===c.name?'selected':''}>${escH(c.name)}</option>`).join('')}</select></div>
     <div class="form-group"><label>細分名稱（選填，例如：指示劑溶液、氯化物；空白就顯示大類名稱）</label><input id="zn-text" maxlength="30" list="znNames" value="${escH(z&&z.text!==zc?z.text:'')}" autocomplete="off"><datalist id="znNames">${names}</datalist></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -6551,8 +6551,8 @@ function chemStructSvg(st,opts){
   });
   return s+'</svg>';
 }
-// 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
-function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'🧪';}
+// 清單上的小圖：有結構式就畫結構式，沒有就用 
+function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'';}
 // ==== 結構式（前台、後台共用）結束 ====
 // ==== PubChem 比對 開始 ====
 // 用藥品的 CAS（沒有就用英文名）去 PubChem 查：PubChem 名稱、分子式、CAS、結構式座標
@@ -6566,7 +6566,7 @@ function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.stru
 const PC_BASE='https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const PC_GAP=3000,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
 const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0,q:'',sel:new Set()};
-const PC_STATUS={match:'✅ 對得上',diff:'⚠️ 有出入',multi:'❓ 好幾個候選',notfound:'❓ 查不到',noname:'➖ 沒有英文名／CAS',skip:'➖ 不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
+const PC_STATUS={match:'對得上',diff:'⚠️ 有出入',multi:'好幾個候選',notfound:'查不到',noname:'沒有英文名／CAS',skip:'不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
 const pcSleep=ms=>new Promise(r=>setTimeout(r,ms));
 // CAS：最後一碼是檢查碼（前面數字由右往左乘 1、2、3…加總，除以 10 的餘數）
 function casValid(s){
@@ -6810,11 +6810,11 @@ async function pcPick(id,cid){
 }
 function pcEditName(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
-  showModal('✏️ 改英文名／CAS',`<div style="font-weight:700;margin-bottom:8px">${escH(c.name_zh||'')}</div>
+  showModal('改英文名／CAS',`<div style="font-weight:700;margin-bottom:8px">${escH(c.name_zh||'')}</div>
     <div class="form-group"><label>英文名稱</label><input id="pc-en" maxlength="100" value="${escH(c.name_en||'')}" autocomplete="off"></div>
     <div class="form-group"><label>CAS 號碼（例如 7664-93-9）</label><input id="pc-cas" maxlength="20" value="${escH(c.cas||'')}" autocomplete="off" inputmode="numeric"></div>
     <div class="hint">存好會用新的名稱／CAS 再查一次。</div>`,
-    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 存好再查',cls:'btn-primary',fn:`pcEditSave(${ja(c.id)})`}]);
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'存好再查',cls:'btn-primary',fn:`pcEditSave(${ja(c.id)})`}]);
 }
 async function pcEditSave(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
@@ -6831,7 +6831,7 @@ async function pcEditSave(id){
 }
 // ── 畫面 ──
 function pcRenderCtl(){
-  const b=document.getElementById('pcRunBtn');if(b){b.textContent=PC.running?'⏸ 暫停':'▶ 開始比對';b.classList.toggle('btn-warn',PC.running);}
+  const b=document.getElementById('pcRunBtn');if(b){b.textContent=PC.running?'暫停':'▶ 開始比對';b.classList.toggle('btn-warn',PC.running);}
   const p=document.getElementById('pcProgress');if(p)p.textContent=PC.progress||'';
 }
 function pcRenderLog(){
@@ -6845,7 +6845,7 @@ function pcRender(){
   rows.forEach(({r})=>{if(!r)cnt.none++;else if(r.status==='match')cnt.match++;else if(['diff','multi','error'].includes(r.status))cnt.todo2++;else if(r.status==='notfound')cnt.notfound++;else if(r.status==='noname')cnt.noname++;else if(r.status==='skip')cnt.skip++;else if(r.status==='done')cnt.done++;});
   const casMany=({c,r})=>{const d=r&&r.data;return !!d&&!d.casChosen&&(((d.casList||[]).length>1)||!!(c.cas&&(d.casList||[]).length&&!d.casList.includes(String(c.cas).trim())));};
   cnt.cas2=rows.filter(casMany).length;
-  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['cas2','🔢 CAS 要確認',cnt.cas2],['match','✅ 對得上',cnt.match],['notfound','❓ 查不到',cnt.notfound],['noname','➖ 沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','➖ 不適用',cnt.skip],['none','還沒查',cnt.none]];
+  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['cas2','CAS 要確認',cnt.cas2],['match','對得上',cnt.match],['notfound','查不到',cnt.notfound],['noname','沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','不適用',cnt.skip],['none','還沒查',cnt.none]];
   if(PC.filter==='todo')PC.filter=cnt.todo2?'todo2':cnt.match?'match':'none';
   document.getElementById('pcFilter').innerHTML=F.map(([k,l,n])=>`<button type="button" class="${PC.filter===k?'on':''}" onclick="PC.filter='${k}';PC.shown=60;pcRender()">${l} ${n}</button>`).join('')+
     (cnt.match?`<button type="button" class="pc-all" onclick="pcConfirmAllMatch()">✔ 對得上的全部確認</button>`:'');
@@ -6864,7 +6864,7 @@ function pcRenderSel(pageIds){
   const have=new Set(allAdminChems.map(c=>String(c.id)));[...PC.sel].forEach(id=>{if(!have.has(id))PC.sel.delete(id);});
   const n=PC.sel.size;
   bar.hidden=false;
-  bar.innerHTML=(n?`<b>已勾 ${n} 筆</b><button type="button" class="btn btn-primary btn-sm" onclick="pcRecheck([...PC.sel])" ${PC.running?'disabled':''}>🔄 重查勾選的 ${n} 筆</button><button type="button" class="btn btn-secondary btn-sm" onclick="PC.sel.clear();pcRender()">清除勾選</button>`:'<span>勾選左上角的方框，可以只重查你要的那幾筆</span>')+
+  bar.innerHTML=(n?`<b>已勾 ${n} 筆</b><button type="button" class="btn btn-primary btn-sm" onclick="pcRecheck([...PC.sel])" ${PC.running?'disabled':''}>重查勾選的 ${n} 筆</button><button type="button" class="btn btn-secondary btn-sm" onclick="PC.sel.clear();pcRender()">清除勾選</button>`:'<span>勾選左上角的方框，可以只重查你要的那幾筆</span>')+
     (PC.pageIds.length?`<button type="button" class="btn btn-secondary btn-sm" onclick="PC.pageIds.forEach(id=>PC.sel.add(id));pcRender()">勾選這頁 ${PC.pageIds.length} 筆</button>`:'');
 }
 function pcToggleSel(id,on){id=String(id);if(on)PC.sel.add(id);else PC.sel.delete(id);pcRenderSel(PC.pageIds);}
@@ -6898,9 +6898,9 @@ function pcRowHtml(c,r){
   const act=[];
   const casWill=d&&d.cas&&(d.casChosen?d.cas!==String(c.cas||'').trim():((d.casList||[]).length<=1&&!c.cas));
   if(d&&d.cid&&(r.status!=='done'||casWill))act.push(`<button type="button" class="btn btn-primary btn-sm" onclick="pcConfirm(${ja(c.id)},true)">✔ 就是這個${casWill?`（存 CAS ${escH(d.cas)}）`:''}</button>`);
-  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcRecheck(${ja(c.id)})" ${PC.running?'disabled':''}>🔄 重查這筆</button>`);
-  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcEditName(${ja(c.id)})">✏️ 改英文名／CAS 再查</button>`);
-  if(!r||r.status!=='skip')act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcSkip(${ja(c.id)})">➖ 不適用</button>`);
+  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcRecheck(${ja(c.id)})" ${PC.running?'disabled':''}>重查這筆</button>`);
+  act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcEditName(${ja(c.id)})">改英文名／CAS 再查</button>`);
+  if(!r||r.status!=='skip')act.push(`<button type="button" class="btn btn-secondary btn-sm" onclick="pcSkip(${ja(c.id)})">不適用</button>`);
   return `<div class="pc-row"><div class="pc-st-line"><label class="pc-pick"><input type="checkbox" ${PC.sel.has(String(c.id))?'checked':''} onchange="pcToggleSel(${ja(c.id)},this.checked)" aria-label="勾選 ${escH(c.name_zh||'')}">勾選</label><b style="font-size:13px">${escH(c.name_zh||'')}</b>${r?`<span class="pc-tag s-${escH(r.status)}">${escH(PC_STATUS[r.status]||r.status)}</span>`:''}</div><div class="pc-cmp">${ours}${theirs}</div>${cands}<div class="pc-act">${act.join('')}</div></div>`;
 }
 async function pcOpen(){
@@ -6914,8 +6914,8 @@ let zeroFilter='todo';
 function chemTotalBottles(c){const ls=chemLocsOf(c.id);return ls.length?ls.reduce((s,l)=>s+(parseInt(l.bottles)||0),0):(parseInt(c.bottles_left)||0);}
 function zeroWhere(c){
   const ls=chemLocsOf(c.id);
-  const a=ls.map(l=>`🗄️ ${cabText(l)}（${parseInt(l.bottles)||0} 瓶）`);
-  if(String(c.location||'').trim())a.push('📍 '+c.location);
+  const a=ls.map(l=>`${cabText(l)}（${parseInt(l.bottles)||0} 瓶）`);
+  if(String(c.location||'').trim())a.push(''+c.location);
   return a.length?a:['（沒有記錄位置）'];
 }
 function renderZero(countOnly){
@@ -6925,9 +6925,9 @@ function renderZero(countOnly){
   if(countOnly)return;
   const f=document.getElementById('zeroFilter'),box=document.getElementById('zeroList');if(!box)return;
   if(f)f.innerHTML=[['todo','還沒確認'],['moved','記了在別處'],['gone','已用完（停用）']].map(([k,l])=>`<button type="button" class="btn btn-sm ${zeroFilter===k?'btn-primary':'btn-secondary'}" onclick="zeroFilter='${k}';renderZero()">${l} ${cat[k].length}</button>`).join('')+
-    `<button type="button" class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="exportZeroXlsx()">⬇️ 下載清單（去現場核對）</button>`;
+    `<button type="button" class="btn btn-sm btn-secondary" style="margin-left:auto" onclick="exportZeroXlsx()">下載清單（去現場核對）</button>`;
   const items=cat[zeroFilter].slice().sort((a,b)=>String(a.name_zh).localeCompare(String(b.name_zh),'zh-Hant'));
-  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>這一類沒有藥品</p></div>';return;}
+  if(!items.length){box.innerHTML='<div class="empty"><p>這一類沒有藥品</p></div>';return;}
   box.innerHTML=`<div class="hint" style="margin-bottom:6px">共 ${items.length} 筆</div>`+items.map(c=>{const id=ja(c.id),gone=c.is_available===false;return `<div class="noloc-row" ${gone?'style="opacity:.65"':''}>
     <div style="flex:1;min-width:0"><div class="nm">${escH(c.name_zh)}${gone?' <span class="badge badge-rejected">已用完</span>':''}</div>
       <div class="sub">${c.name_en?escH(c.name_en)+'・':''}${catName(c.category)?escH(catName(c.category)):''}</div>
@@ -6943,10 +6943,10 @@ function renderZero(countOnly){
 function openZeroFound(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;window._zeroId=c.id;
   const ls=chemLocsOf(c.id);
-  showModal(`🔎 找到「${c.name_zh}」了`,(ls.length?ls.map(l=>`<div class="form-group"><label>${escH(cabText(l))}</label><input type="number" min="0" max="999" inputmode="numeric" data-loc="${escH(l.id)}" value="${parseInt(l.bottles)||0}"></div>`).join('')
-    :`<div class="form-group"><label>瓶數</label><input type="number" min="0" max="999" inputmode="numeric" id="zf-btl" value="1"></div><div class="hint">還沒有櫃位；要放進藥品櫃可以到「📭 沒位置」分頁。</div>`)+
+  showModal(`找到「${c.name_zh}」了`,(ls.length?ls.map(l=>`<div class="form-group"><label>${escH(cabText(l))}</label><input type="number" min="0" max="999" inputmode="numeric" data-loc="${escH(l.id)}" value="${parseInt(l.bottles)||0}"></div>`).join('')
+    :`<div class="form-group"><label>瓶數</label><input type="number" min="0" max="999" inputmode="numeric" id="zf-btl" value="1"></div><div class="hint">還沒有櫃位；要放進藥品櫃可以到「沒位置」分頁。</div>`)+
     (c.is_available===false?'<div class="hint">儲存後也會把「已用完」取消，恢復可以借。</div>':''),
-    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'💾 儲存',cls:'btn-primary',fn:'saveZeroFound()'}]);
+    [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveZeroFound()'}]);
 }
 async function saveZeroFound(){
   const c=allAdminChems.find(x=>String(x.id)===String(window._zeroId));if(!c)return;
@@ -7021,7 +7021,7 @@ function openCabAdd(cab,L,col){
     </div>
     <div class="form-group"><label>備註（選填）</label><input id="cab-add-note" maxlength="100"></div>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'💾 加入',cls:'btn-primary',fn:'saveCabAdd()'}
+    {label:'加入',cls:'btn-primary',fn:'saveCabAdd()'}
   ]);
   setTimeout(()=>document.getElementById('cab-add-name')?.focus(),60);
 }
@@ -7060,7 +7060,7 @@ function openCabEdit(locId){
   const l=allChemLocs.find(x=>String(x.id)===String(locId));if(!l)return;
   const c=allAdminChems.find(x=>String(x.id)===String(l.chem_id));
   window._cabEdit=l.id;
-  showModal(`🧪 ${c?c.name_zh:'藥品'}`,`
+  showModal(`${c?c.name_zh:'藥品'}`,`
     <div class="hint" style="margin-bottom:10px">目前位置：${escH(cabText(l))}（${cabDoor(l.col)}）</div>
     ${c?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label>中文名稱</label><input id="cab-ed-zh" maxlength="60" value="${escH(c.name_zh||'')}"></div>
@@ -7081,13 +7081,13 @@ function openCabEdit(locId){
       <div class="form-group"><label>容量（選填）</label><input id="cab-ed-cap" maxlength="30" value="${escH(l.capacity||'')}"></div>
       <div class="form-group"><label>備註（選填）</label><input id="cab-ed-note" maxlength="100" value="${escH(l.note||'')}"></div>
     </div>
-    <div class="form-group"><label>📦 搬到</label><div class="cab-move">
+    <div class="form-group"><label>搬到</label><div class="cab-move">
       <select id="cab-ed-cab">${cabSelectOpts(4,l.cab,v=>`第${CAB_CN[v]}櫃`)}</select>
       <select id="cab-ed-layer">${cabSelectOpts(5,l.layer,v=>`${v} 層`)}</select>
       <select id="cab-ed-col">${cabSelectOpts(14,l.col,v=>`${v} 排（${cabDoor(v)}）`)}</select></div></div>
-    <button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteCabLoc()">🗑️ 從這個位置移除（用完／報廢）</button>`,[
+    <button type="button" class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="deleteCabLoc()">從這個位置移除（用完／報廢）</button>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'💾 儲存',cls:'btn-primary',fn:'saveCabEdit()'}
+    {label:'儲存',cls:'btn-primary',fn:'saveCabEdit()'}
   ]);
 }
 function cabBtlStep(d){const el=document.getElementById('cab-ed-btl');if(el)el.value=Math.max(0,Math.min(999,(parseInt(el.value)||0)+d));}
@@ -7109,7 +7109,7 @@ async function saveCabEdit(){
     if(nameChanged||Object.keys(extra).length){
       if(nameChanged){
         const dup=chemNameClash(c.id,zh,en);
-        if(dup&&!await uiConfirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「🔎 相似名稱」合併）`,'仍要這樣改'))return;
+        if(dup&&!await uiConfirm(`已經有「${dup.name_zh}」${dup.name_en?'（'+dup.name_en+'）':''}，名稱跟它重複。\n確定還是要這樣改嗎？\n（如果是同一種藥品，建議改用藥品清單的「相似名稱」合併）`,'仍要這樣改'))return;
       }
       try{await sb('PATCH','chemicals',{filter:'id=eq.'+encodeURIComponent(c.id),body:{name_zh:zh,name_en:en||null,...extra,updated_at:new Date().toISOString()},prefer:'return=minimal'});Object.assign(c,{name_zh:zh,name_en:en||null},extra);}
       catch(e){showToast('藥品資料更新失敗：'+e.message,'error');return;}
@@ -7215,7 +7215,7 @@ function chemSimilarGroups(){
 let chemSimGroups=[];
 function checkChemSimilar(){
   chemSimGroups=chemSimilarGroups();
-  if(!chemSimGroups.length){showModal('🔎 相似名稱','<div class="empty"><div class="empty-icon">✅</div><p>沒有找到寫法相似的藥品</p></div>',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);return;}
+  if(!chemSimGroups.length){showModal('相似名稱','<div class="empty"><p>沒有找到寫法相似的藥品</p></div>',[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);return;}
   const body=chemSimGroups.map((g,gi)=>`
     <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:10px">
       <div style="font-size:12px;color:var(--text2);margin-bottom:6px">第 ${gi+1} 組・${escH(g.reasons.join('、')||'名稱相似')}</div>
@@ -7228,7 +7228,7 @@ function checkChemSimilar(){
             <input id="sim-zh-${id}" value="${escH(c.name_zh||'')}" maxlength="60" style="flex:1 1 140px;min-width:0;font-weight:700;padding:5px 8px" aria-label="中文名稱">
             <input id="sim-en-${id}" value="${escH(c.name_en||'')}" maxlength="100" placeholder="英文／簡寫" style="flex:1 1 140px;min-width:0;padding:5px 8px" aria-label="英文名稱">
             <button type="button" class="btn btn-secondary btn-sm" onclick="saveSimName(${ja(c.id)})">存名稱</button></span>
-          <span style="color:var(--text2)">${c.formula?fmtFormula(c.formula)+'・':''}${escH(String(c.bottles_left??0))} 瓶${c.category?'・'+escH(catName(c.category)):''}${chemLocsOf(c.id).length?'・📍 '+chemLocsOf(c.id).map(l=>escH(cabCode(l))).join('、'):(c.location?'・📍 '+escH(c.location):'')}・#${id}</span></span>
+          <span style="color:var(--text2)">${c.formula?fmtFormula(c.formula)+'・':''}${escH(String(c.bottles_left??0))} 瓶${c.category?'・'+escH(catName(c.category)):''}${chemLocsOf(c.id).length?'・'+chemLocsOf(c.id).map(l=>escH(cabCode(l))).join('、'):(c.location?'・'+escH(c.location):'')}・#${id}</span></span>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
           <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarOne(${gi},${ja(c.id)})" title="這一筆跟同組其他的都不是同一種">移出這組</button>
           <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteSimilarOne(${ja(c.id)})">刪除</button>
@@ -7237,8 +7237,8 @@ function checkChemSimilar(){
         <button type="button" class="btn btn-secondary btn-sm" onclick="dismissSimilarGroup(${gi})">全部都不是同一種</button>
         <button type="button" class="btn btn-primary btn-sm" onclick="mergeSimilarGroup(${gi})">把勾「併入」的合併到「保留」那筆</button></div>
     </div>`).join('');
-  showModal(`🔎 找到 ${chemSimGroups.length} 組寫法相似的藥品`,`<div class="hint" style="margin-bottom:10px">一組裡不一定全部都是同一種。<b>只有部分相同</b>：選一筆「保留」，把相同的勾「併入」，再按合併；不相同的按「移出這組」，之後就不會再跟它們配在一起。<b>合併</b>會把併入那幾筆的藥品櫃位置和瓶數搬到保留那筆，再刪掉它們。</div>${body}`,[
-    {label:'📥 匯出成 Excel',cls:'btn-secondary',fn:'exportChemSimilar()'},
+  showModal(`找到 ${chemSimGroups.length} 組寫法相似的藥品`,`<div class="hint" style="margin-bottom:10px">一組裡不一定全部都是同一種。<b>只有部分相同</b>：選一筆「保留」，把相同的勾「併入」，再按合併；不相同的按「移出這組」，之後就不會再跟它們配在一起。<b>合併</b>會把併入那幾筆的藥品櫃位置和瓶數搬到保留那筆，再刪掉它們。</div>${body}`,[
+    {label:'匯出成 Excel',cls:'btn-secondary',fn:'exportChemSimilar()'},
     {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
   ]);
 }
@@ -7444,7 +7444,7 @@ function showCabImportPreview(ok,manual,bad,grid){
       const curInCabs=grid?allChemLocs.filter(l=>gridCabs.includes(l.cab)).length:allChemLocs.length;
       const orphanN=chemCabOrphans().filter(l=>!grid||gridCabs.includes(l.cab)).length;
       const li=a=>a.map(t=>`<li>${t}</li>`).join('');
-      showModal('📥 匯入藥品櫃位置',`
+      showModal('匯入藥品櫃位置',`
         <p>共 <b>${ok.length}</b> 個位置、<b>${ok.reduce((s,x)=>s+x.bottles,0)}</b> 瓶。</p>
         <p>✔ 對到現有藥品：${ok.length-ok.filter(x=>!x.match).length} 筆</p>
         ${fuzzy.length?`<details><summary>名稱寫法不同、自動對上的 ${fuzzy.length} 種（請看一下對不對）</summary><ul style="font-size:13px">${li(fuzzy.map(([a,b])=>`${escH(a)} → ${escH(b)}`))}</ul></details>`:''}
@@ -7494,7 +7494,7 @@ async function runCabImport(){
   finally{cabBusy=false;cabImportPlan=null;}
 }
 // ── 下載藥品櫃 Excel：跟門上的表一樣——第一櫃～第四櫃各一頁、14 在左 1 在右、一格一瓶由下往上疊、灰色列分層（灰色列上可寫分區標籤）
-// 下載的檔案改完可以直接用「📥 匯入櫃位 Excel」匯回來
+// 下載的檔案改完可以直接用「匯入櫃位 Excel」匯回來
 async function exportChemCabXlsx(){
   if(!allChemLocs.length){showToast('藥品櫃目前沒有資料','error');return;}
   showToast('產生 Excel 中…');
@@ -7567,7 +7567,7 @@ h1{text-align:center;font-size:20pt;margin:0 0 4px}table{width:100%;border-colla
 th,td{border:1px solid #666;padding:2px 3px;vertical-align:top;font-size:9.5pt;line-height:1.3}th{background:#ddd;font-size:10pt}
 td.l{width:9mm;text-align:center;vertical-align:middle;font-weight:700;background:#eee}tr.r td{height:33mm}.door{background:#f3f3f3}
 .f{display:flex;justify-content:space-between;font-size:8.5pt;color:#444;margin-top:3px}.bar{padding:10px;border-bottom:1px solid #ddd}.bar button{font-size:16px;padding:8px 16px}@media print{.bar{display:none}}</style></head><body>
-<div class="bar"><button onclick="window.print()">🖨️ 列印</button></div>
+<div class="bar"><button onclick="window.print()">列印</button></div>
 <h1>第${CAB_CN[cab]}櫃</h1>
 <table><thead><tr><th class="l">層</th>${cols.map(c=>`<th class="${c>7?'door':''}">${c}</th>`).join('')}</tr></thead>
 <tbody>${[1,2,3,4,5].map(L=>`<tr class="r"><td class="l">${L}</td>${cols.map(c=>`<td>${cell(L,c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
@@ -7596,23 +7596,23 @@ function renderNoLoc(){
   if(f)f.querySelectorAll('[data-nf]').forEach(b=>{b.classList.toggle('btn-primary',b.dataset.nf===nolocFilter);b.classList.toggle('btn-secondary',b.dataset.nf!==nolocFilter);});
   const items=all.filter(c=>nolocFilter==='all'?true:nolocFilter==='off'?c.is_available===false:nolocFilter==='where'?(c.is_available!==false&&String(c.location||'').trim()):(c.is_available!==false&&!String(c.location||'').trim()))
     .sort((a,b)=>(a.is_available===false)-(b.is_available===false)||String(a.name_zh).localeCompare(String(b.name_zh),'zh-Hant'));
-  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>這一類沒有藥品</p></div>';return;}
+  if(!items.length){box.innerHTML='<div class="empty"><p>這一類沒有藥品</p></div>';return;}
   box.innerHTML=`<div class="hint" style="margin-bottom:6px">共 ${items.length} 筆</div>`+items.map(c=>{const id=ja(c.id);return `<div class="noloc-row" ${c.is_available===false?'style="opacity:.6"':''}>
     <div style="flex:1;min-width:0"><div class="nm">${escH(c.name_zh)}${c.is_available===false?' <span class="badge badge-rejected">已處理</span>':''}</div>
       <div class="sub">${c.name_en?escH(c.name_en)+'・':''}${catName(c.category)?escH(catName(c.category))+'・':''}${parseInt(c.bottles_left)||0} 瓶</div>
-      ${String(c.location||'').trim()?`<div class="sub">📍 ${escH(c.location)}</div>`:''}</div>
+      ${String(c.location||'').trim()?`<div class="sub">${escH(c.location)}</div>`:''}</div>
     <div class="noloc-acts">
       <button type="button" class="btn btn-secondary btn-sm" onclick="openNoLocPlace(${id})">放進藥品櫃</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="openNoLocWhere(${id})">在哪裡</button>
       ${c.is_available===false?`<button type="button" class="btn btn-secondary btn-sm" onclick="setChemAvailable(${id},true)">恢復</button>`:`<button type="button" class="btn btn-secondary btn-sm" onclick="setChemAvailable(${id},false)">已處理</button>`}
-      <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteChem(${id})" aria-label="刪除">🗑️</button>
+      <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteChem(${id})" aria-label="刪除">刪除</button>
     </div></div>`;}).join('');
 }
 function openNoLocPlace(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;
   if(!chemLocsReady){showToast('請先執行 chem_cabinet.sql','error');return;}
   window._nolocId=c.id;
-  showModal(`🗄️ 把「${c.name_zh}」放進藥品櫃`,`
+  showModal(`把「${c.name_zh}」放進藥品櫃`,`
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
       <div class="form-group"><label>櫃</label><select id="nl-cab">${[1,2,3,4].map(v=>`<option value="${v}">第${CAB_CN[v]}櫃</option>`).join('')}</select></div>
       <div class="form-group"><label>層</label><select id="nl-layer">${cabSelectOpts(5,1,v=>v+' 層')}</select></div>
@@ -7632,7 +7632,7 @@ async function saveNoLocPlace(){
 function openNoLocWhere(id){
   const c=allAdminChems.find(x=>String(x.id)===String(id));if(!c)return;window._nolocId=c.id;
   const sugg=['生物實驗室冰箱','化學實驗室冰箱','理化實驗室','物理實驗室','地科教室','教具室','準備室','已用完'];
-  showModal(`📍 「${c.name_zh}」在哪裡`,`<div class="form-group"><label>位置說明（例如：生物教室冰箱第 2 層）</label><input id="nl-where" maxlength="60" list="nlWhere" value="${escH(c.location||'')}" autocomplete="off"><datalist id="nlWhere">${sugg.map(v=>`<option value="${escH(v)}"></option>`).join('')}</datalist></div>`,
+  showModal(`「${c.name_zh}」在哪裡`,`<div class="form-group"><label>位置說明（例如：生物教室冰箱第 2 層）</label><input id="nl-where" maxlength="60" list="nlWhere" value="${escH(c.location||'')}" autocomplete="off"><datalist id="nlWhere">${sugg.map(v=>`<option value="${escH(v)}"></option>`).join('')}</datalist></div>`,
     [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'儲存',cls:'btn-primary',fn:'saveNoLocWhere()'}]);
   setTimeout(()=>document.getElementById('nl-where')?.focus(),60);
 }
@@ -7686,8 +7686,8 @@ function renderCatManager(){
     ${none?`<div class="hint" style="margin-top:8px">還有 ${none} 種藥品沒有分類，可以在下面「快速分類」一個一個選，或匯入分類 Excel。</div>`:''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="addCatRow()">＋ 新增大類</button>
-      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📥 匯入藥品分類 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemClassXlsx(this)"></label>
-      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveCats()">💾 儲存大類</button>
+      <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">匯入藥品分類 Excel<input type="file" accept=".xlsx" style="display:none" onchange="importChemClassXlsx(this)"></label>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="saveCats()">儲存大類</button>
     </div>`;
 }
 function moveCatRow(i,d){const live=catDraft.filter(c=>!c._del),k=live.indexOf(catDraft[i]),t=live[k+d];if(!t)return;const j=catDraft.indexOf(t);[catDraft[i],catDraft[j]]=[catDraft[j],catDraft[i]];renderCatManager();}
@@ -7819,7 +7819,7 @@ function renderChemQuickSort(){
   const box=document.getElementById('chemQuickSortList');if(!box)return;
   const targets=allAdminChems.filter(c=>!catName(c.category));
   const nEl=document.getElementById('chemSortN');if(nEl)nEl.textContent=targets.length?String(targets.length):'';
-  if(!targets.length){box.innerHTML='<div class="empty"><div class="empty-icon">✅</div><p>目前沒有「其他／未分類」的藥品</p></div>';return;}
+  if(!targets.length){box.innerHTML='<div class="empty"><p>目前沒有「其他／未分類」的藥品</p></div>';return;}
   box.innerHTML=`<div style="font-size:12.5px;color:var(--text2);margin-bottom:8px">共 ${targets.length} 筆</div>`+targets.map(c=>{
     const catOpts=CHEM_CATS.map(x=>x.name).map(v=>`<option value="${escH(v)}" ${catName(c.category)===v?'selected':''}>${escH(v)}</option>`).join('');
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--surface2);flex-wrap:wrap">
@@ -7851,7 +7851,7 @@ function filterAdminChems() {
   );
   const list = document.getElementById('adminChemList');
   const cntEl=document.getElementById('adminChemCount');if(cntEl)cntEl.textContent=`共 ${items.length} 筆`;
-  if (!items.length) { list.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合藥品</p></div>'; return; }
+  if (!items.length) { list.innerHTML = '<div class="empty"><p>找不到符合藥品</p></div>'; return; }
   list.innerHTML = '<div class="record-list">' + items.map(c => {
     const esc = s => (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/`/g, '&#96;');
     const catOpts = ['',...CHEM_CATS.map(x=>x.name)].map(v => `<option value="${escH(v)}" ${catName(c.category)===v?'selected':''}>${escH(v||'不指定')}</option>`).join('');
@@ -7863,15 +7863,15 @@ function filterAdminChems() {
           <div style="font-size:12px;color:var(--text2);margin-top:2px">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>
           <div style="font-size:12.5px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
             ${catName(c.category)?catTagHtml(c.category):''}
-            ${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="goChemLoc(${ja(l.id)})">📍 ${escH(cabCode(l))}${(parseInt(l.bottles)||0)!==1?' ×'+l.bottles:''}</button>`).join(''):(c.location?`<span>📍 ${escH(c.location)}</span>`:'')}
+            ${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="goChemLoc(${ja(l.id)})">${escH(cabCode(l))}${(parseInt(l.bottles)||0)!==1?' ×'+l.bottles:''}</button>`).join(''):(c.location?`<span>${escH(c.location)}</span>`:'')}
             <span style="font-family:'DM Mono',monospace;font-weight:700">${escH(c.bottles_left??0)} 瓶</span>
-            ${c.recycle_type?`<span>♻️ ${escH(c.recycle_type)}</span>`:''}
+            ${c.recycle_type?`<span>${escH(c.recycle_type)}</span>`:''}
           </div>
-          ${c.note&&c.note!=='附註'?`<div style="font-size:12px;color:var(--text2);margin-top:3px">📝 ${escH(c.note)}</div>`:''}
+          ${c.note&&c.note!=='附註'?`<div style="font-size:12px;color:var(--text2);margin-top:3px">${escH(c.note)}</div>`:''}
         </div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="toggleChemEdit(${c.id})">編輯</button>
-          <button class="btn btn-danger-outline btn-sm" onclick="deleteChem(${c.id})" aria-label="刪除">🗑️</button>
+          <button class="btn btn-danger-outline btn-sm" onclick="deleteChem(${c.id})" aria-label="刪除">刪除</button>
         </div>
       </div>
       <div id="cheминеdit-${c.id}" style="display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
@@ -7893,7 +7893,7 @@ function filterAdminChems() {
         </div>
         <div style="display:flex;gap:8px;justify-content:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="toggleChemEdit(${c.id})">取消</button>
-          <button class="btn btn-primary btn-sm" onclick="saveChemInline(${c.id})">💾 儲存</button>
+          <button class="btn btn-primary btn-sm" onclick="saveChemInline(${c.id})">儲存</button>
         </div>
       </div>
     </div>`;
@@ -8005,7 +8005,7 @@ async function doDeleteChem(id) {
   const dupGroups = Object.values(keyMap).filter(g => g.length > 1);
 
   if (!dupGroups.length) {
-    showModal('🔍 檢查重複', '<div class="empty"><div class="empty-icon">✅</div><p>目前沒有重複的藥品</p></div>', [
+    showModal('檢查重複', '<div class="empty"><p>目前沒有重複的藥品</p></div>', [
       { label: '關閉', cls: 'btn-secondary', fn: 'closeModal()' }
     ]);
     return;
@@ -8022,7 +8022,7 @@ async function doDeleteChem(id) {
           <span style="flex:1">
             <strong>${escH(c.name_zh)}</strong>
             ${c.name_en ? `<span style="color:var(--text2)"> ${escH(c.name_en)}</span>` : ''}
-            ${c.location ? `　📍 ${escH(c.location)}` : ''}
+            ${c.location ? `　${escH(c.location)}` : ''}
             　<span style="font-family:'DM Mono',monospace">${escH(c.bottles_left ?? 0)} 瓶</span>
             ${c.category ? `　${escH(c.category)}` : ''}
           </span>
@@ -8030,7 +8030,7 @@ async function doDeleteChem(id) {
         </label>`).join('')}
     </div>`).join('');
 
-  showModal(`🔍 發現 ${dupGroups.length} 組重複藥品`,
+  showModal(`發現 ${dupGroups.length} 組重複藥品`,
     `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">勾選要刪除的項目，每組至少保留一筆。</div>${rows}`,
     [
       { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
@@ -8169,12 +8169,12 @@ function showChemDiffModal(added, removed, changed) {
       ${added.length ? `<span style="color:#065f46">● 多了 ${added.length} 筆</span>` : ''}
       ${changed.length ? `<span style="color:#92400e">● 變更 ${changed.length} 筆</span>` : ''}
     </div>
-    ${removed.length ? `<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">🗑️ 新清單中消失的藥品（預設保留，勾選才刪除）</div>${removedRows}` : ''}
-    ${changed.length ? `<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">🔄 資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}` : ''}
-    ${added.length ? `<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">➕ 新清單中新增的藥品（預設新增，取消勾選則跳過）</div>${addedRows}` : ''}
+    ${removed.length ? `<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">新清單中消失的藥品（預設保留，勾選才刪除）</div>${removedRows}` : ''}
+    ${changed.length ? `<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}` : ''}
+    ${added.length ? `<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">新清單中新增的藥品（預設新增，取消勾選則跳過）</div>${addedRows}` : ''}
   `;
 
-  showModal('📋 與現有藥品的差異', body, [
+  showModal('與現有藥品的差異', body, [
     { label: '取消', cls: 'btn-secondary', fn: 'closeModal()' },
     { label: '確認執行', cls: 'btn-primary', fn: 'doApplyChemDiff()' }
   ]);
@@ -8235,7 +8235,7 @@ async function loadAdminEquipment(){
     });
     filterAdminEquip();
     loadWriteoffLog();
-  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+  }catch(e){list.innerHTML=`<div class="empty"><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
 }
 const CONSUMABLE_KEYWORDS=['燒杯','滴管','量筒','濾紙','蓋玻片','載玻片','電池','試管','錐形瓶','燒瓶','培養皿','玻棒','玻璃棒','試紙','手套','拭鏡紙','吸管','棉花','口罩','擦拭紙'];
 const NON_TRACKED_UNITS=['盒','包','袋','箱','卷','捆','瓶','罐','組','套'];
@@ -8296,10 +8296,10 @@ function eqPaneRender(){
       ${moreMenuHtml([
         {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
         'hr',
-        {label:'🧪 這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
+        {label:'這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
         'hr',
-        {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
-        {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
+        {label:'報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
+        {label:'刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
       ])}
     </div>`;
 }
@@ -8323,7 +8323,7 @@ function clearEquipForm(){
 function checkEquipLocationMismatch(){
   const flagged=allAdminEquipment.map(e=>({e,bad:equipLocationMismatches(e)})).filter(x=>x.bad.length);
   if(!flagged.length){
-    showModal('⚠️ 檢查位置代碼開頭',`<div class="empty"><div class="empty-icon">✅</div><p>沒有發現位置代碼開頭跟房間對不上的器材</p></div>`,[
+    showModal('⚠️ 檢查位置代碼開頭',`<div class="empty"><p>沒有發現位置代碼開頭跟房間對不上的器材</p></div>`,[
       {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
     ]);
     return;
@@ -8349,14 +8349,14 @@ async function checkTemplateHealth(){
     const bad=(Array.isArray(tpls)?tpls:[]).map(t=>({t,miss:(Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>!matches(it))})).filter(x=>x.miss.length);
     const total=(Array.isArray(tpls)?tpls:[]).length;
     if(!bad.length){
-      showModal('🩺 課綱實驗健檢',`<div class="empty"><div class="empty-icon">✅</div><p>全部 ${total} 個課綱實驗的器材都對得到庫存品名</p></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+      showModal('課綱實驗健檢',`<div class="empty"><p>全部 ${total} 個課綱實驗的器材都對得到庫存品名</p></div>`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
       return;
     }
     const rows=bad.map(({t,miss})=>`<div style="padding:8px 10px;border-radius:6px;background:#fff7ed;margin-bottom:6px;font-size:13.5px">
       <strong>${escH(t.name||'（未命名）')}</strong>${t.grade?` <span style="color:var(--text2);font-size:12px">${escH(t.grade)}</span>`:''}
       <div style="color:#b45309;margin-top:3px">對不到：${miss.map(it=>escH(it.name)+(it.spec?'（'+escH(it.spec)+'）':'')).join('、')}</div>
     </div>`).join('');
-    showModal(`🩺 ${bad.length}／${total} 個課綱實驗有對不到的器材`,`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">這些品名在器材庫存找不到，老師套用模板時會被列成「查無相符品名」，容易誤以為系統沒有這個東西。處理方式二選一：①到器材管理把庫存品名改成一致、或在「別名」加上模板用的名稱；②修改模板裡的品名。真的沒有的器材則考慮採購或補登。</div>${rows}`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+    showModal(`${bad.length}／${total} 個課綱實驗有對不到的器材`,`<div style="font-size:13px;color:var(--text2);margin-bottom:10px">這些品名在器材庫存找不到，老師套用模板時會被列成「查無相符品名」，容易誤以為系統沒有這個東西。處理方式二選一：①到器材管理把庫存品名改成一致、或在「別名」加上模板用的名稱；②修改模板裡的品名。真的沒有的器材則考慮採購或補登。</div>${rows}`,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
   }catch(e){showToast('健檢失敗：'+e.message,'error');}
 }
 function toggleInlineEditEquip(id){
@@ -8392,17 +8392,17 @@ function renderInlineEditEquip(e){
       </div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
         <input type="checkbox" id="ie-featured-${e.id}" ${e.featured===true?'checked':''} style="width:auto">
-        <label style="color:var(--text)">⭐ 精選展示</label>
+        <label style="color:var(--text)">精選展示</label>
       </div>
       <div class="form-group"><label>耗材提醒</label>
         <select id="ie-consumable-${e.id}"><option value="" ${e.is_consumable!==true&&e.is_consumable!==false?'selected':''}>自動判斷</option><option value="true" ${e.is_consumable===true?'selected':''}>是耗材</option><option value="false" ${e.is_consumable===false?'selected':''}>非耗材</option></select>
       </div>
-      <div class="form-group" style="grid-column:1/-1"><label>🎓 選修課專用（留空＝一般器材）</label><input type="text" id="ie-restrict-${e.id}" maxlength="100" value="${escH(e.restricted_note||'')}" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
-      <div class="form-group" style="grid-column:1/-1"><label>📦 套組內容（一行一項；一般器材留空）</label><textarea id="ie-kit-${e.id}" rows="3" maxlength="2000" placeholder="滴管 × 6">${escH(e.kit_contents||'')}</textarea></div>
+      <div class="form-group" style="grid-column:1/-1"><label>選修課專用（留空＝一般器材）</label><input type="text" id="ie-restrict-${e.id}" maxlength="100" value="${escH(e.restricted_note||'')}" placeholder="例如：物理科 朱慶文老師（物理專題選修）"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>套組內容（一行一項；一般器材留空）</label><textarea id="ie-kit-${e.id}" rows="3" maxlength="2000" placeholder="滴管 × 6">${escH(e.kit_contents||'')}</textarea></div>
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px">
       <button class="btn btn-secondary btn-sm" onclick="toggleInlineEditEquip(${ja(e.id)})">取消</button>
-      <button class="btn btn-primary btn-sm" onclick="saveInlineEquip(${ja(e.id)})">💾 儲存</button>
+      <button class="btn btn-primary btn-sm" onclick="saveInlineEquip(${ja(e.id)})">儲存</button>
     </div>
   </div>`;
 }
@@ -8516,7 +8516,7 @@ async function openEquipToChem(id){
   const refs=activeRecordsUsing(e.room,e.name);
   window._e2c={id:e.id,match:m?m.id:null};
   const where=[rn(e.room),e.location].filter(Boolean).join(' ');
-  showModal('🧪 把這筆器材轉成藥品',`
+  showModal('把這筆器材轉成藥品',`
     <div class="form-group"><label>藥品中文名稱</label><input id="e2c-zh" maxlength="60" value="${escH(e.name)}"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group"><label>英文名稱／簡寫（選填）</label><input id="e2c-en" maxlength="100" value="${escH(e.alias||'')}"></div>
@@ -8526,7 +8526,7 @@ async function openEquipToChem(id){
     </div>
     ${m?`<label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-top:4px"><input type="checkbox" id="e2c-merge" checked style="width:auto;margin-top:3px">藥品清單已經有「${escH(m.name_zh)}」，把瓶數加到它上面（不另外新建）</label>`:''}
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:13.5px;margin-top:8px"><input type="checkbox" id="e2c-del" ${refs.length?'disabled':'checked'} style="width:auto;margin-top:3px">轉完後刪除這筆器材${refs.length?`<span style="color:var(--danger)">（還有 ${refs.length} 筆借用中，先改成「不開放借用」，歸還後再刪）</span>`:'（不勾的話改成「不開放借用」）'}</label>
-    <p class="hint" style="font-size:12.5px;margin-top:8px">轉過去的藥品會出現在藥品管理的「📭 沒位置」，之後可以放進藥品櫃。</p>`,
+    <p class="hint" style="font-size:12.5px;margin-top:8px">轉過去的藥品會出現在藥品管理的「沒位置」，之後可以放進藥品櫃。</p>`,
     [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'轉成藥品',cls:'btn-primary',fn:'doEquipToChem()'}]);
 }
 async function doEquipToChem(){
@@ -8647,7 +8647,7 @@ function filterAdminEquip(){
   window._stkItems=items;
   const list=document.getElementById('adminEquipList');
   window._stkPageIds=[];
-  if(!items.length){list.innerHTML=stkView==='todo'&&base.length?'<div class="empty"><div class="empty-icon">🎉</div><p>這個範圍都盤點完了！</p></div>':'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合器材</p></div>';return;}
+  if(!items.length){list.innerHTML=stkView==='todo'&&base.length?'<div class="empty"><p>這個範圍都盤點完了！</p></div>':'<div class="empty"><p>找不到符合器材</p></div>';return;}
   const totalPages=Math.max(1,Math.ceil(items.length/ADMIN_EQ_PAGE));
   if(adminEquipPage>totalPages)adminEquipPage=totalPages;
   const pageItems=items.slice((adminEquipPage-1)*ADMIN_EQ_PAGE,adminEquipPage*ADMIN_EQ_PAGE);
@@ -8657,7 +8657,7 @@ function filterAdminEquip(){
   list.innerHTML=pager+'<div class="record-list">'+pageItems.map(e=>{
     // 依櫃位排序時，每換一個櫃子插一個小標題，現場比較好對
     let head='';
-    if(stkSort==='loc'){const cab=stkCabinet(e);if(cab!==prevCab){head=`<div class="stk-loc-head">📍 ${cab?escH(cab):'未填櫃位'}</div>`;prevCab=cab;}}
+    if(stkSort==='loc'){const cab=stkCabinet(e);if(cab!==prevCab){head=`<div class="stk-loc-head">${cab?escH(cab):'未填櫃位'}</div>`;prevCab=cab;}}
     return head+renderAdminEquipCard(e);
   }).join('')+'</div>'+pager;
   renderFeaturedList();
@@ -8703,15 +8703,15 @@ function equipUsageHtml(e){
   lent.sort((a,b)=>String(a.r.returnDate||'9').localeCompare(String(b.r.returnDate||'9')));
   const who=x=>`<b>${escH(x.r.name)}</b>${x.r.role==='學生'&&x.r.studentId?'（'+escH(x.r.studentId)+'）':''} ×${x.q}`;
   let h='';
-  if(lent.length)h+='📌 借用中：'+lent.map(x=>`${who(x)} ${x.r.status==='逾期'?`<span class="od">已逾期（${escH(mdShort(x.r.returnDate))}）</span>`:'到 '+escH(mdShort(x.r.returnDate))}`).join('、');
-  if(wait.length)h+=(h?'<br>':'')+'⏳ 申請中：'+wait.map(x=>`${who(x)}（${escH(mdShort(x.r.borrowDate))} 起）`).join('、');
+  if(lent.length)h+='借用中：'+lent.map(x=>`${who(x)} ${x.r.status==='逾期'?`<span class="od">已逾期（${escH(mdShort(x.r.returnDate))}）</span>`:'到 '+escH(mdShort(x.r.returnDate))}`).join('、');
+  if(wait.length)h+=(h?'<br>':'')+'申請中：'+wait.map(x=>`${who(x)}（${escH(mdShort(x.r.borrowDate))} 起）`).join('、');
   return `<div class="eq-usage">${h}</div>`;
 }
 function renderAdminEquipCard(e){
     if(!eqWide()&&inlineEditEquipId!==null&&String(inlineEditEquipId)===String(e.id))return renderInlineEditEquip(e);
     const avail=equipAvailable(e);
     const imgUrl=safeUrl(e.image_url);
-    const imgHtml=imgUrl?`<img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt="" title="點一下放大" onclick="openPhotoViewer(${ja(imgUrl)})">`:`<div class="eq-thumb">🔬</div>`;
+    const imgHtml=imgUrl?`<img class="eq-thumb" src="${escH(imgUrl)}" loading="lazy" alt="" title="點一下放大" onclick="openPhotoViewer(${ja(imgUrl)})">`:`<div class="eq-thumb"></div>`;
     const mismatches=equipLocationMismatches(e);
     const stkChanged=stocktakePending[e.id]!==undefined,stkSameOn=!stkChanged&&stocktakeSame.has(String(e.id));
     const sel=eqSelId!==null&&String(eqSelId)===String(e.id);
@@ -8719,14 +8719,14 @@ function renderAdminEquipCard(e){
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div class="eq-body" style="flex:1;min-width:0">
-          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">📦 套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">🎓 選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">✅ 已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
+          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}<span class="eq-flags">${mismatches.length?'<i class="w" title="位置代碼對不上">位置待確認</i>':''}${equipUsageHtml(e)?'<i title="有人在借或申請中">借用中</i>':''}</span></div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">${equipOut(e)?'架上實點':'實點數量'}：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??stkShelfExpected(e)}" data-orig="${stkShelfExpected(e)}" oninput="markStocktake(${ja(e.id)},this.value,${stkShelfExpected(e)})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
               <button type="button" class="stk-same ${stkSameOn?'on':''}" id="stks-${e.id}" style="${stkChanged?'display:none':''}" onclick="toggleStkSame(${ja(e.id)})">${stkSameOn?'✓ 無變動':'無變動'}</button>
               ${equipOut(e)?`<span style="font-size:11.5px;color:var(--text2);white-space:nowrap">總數 ${parseInt(e.total)||0}，借出中 ${equipOut(e)}，只點架上的</span>`:''}</span>
             <span style="color:${avail>0?'var(--accent)':'var(--danger)'}">可借 <strong>${avail}</strong></span>
-            ${e.location&&!(stkSort==='loc'&&String(e.location).trim()===stkCabinet(e))?`<span>📍 ${escH(e.location)}</span>`:''}
+            ${e.location&&!(stkSort==='loc'&&String(e.location).trim()===stkCabinet(e))?`<span>${escH(e.location)}</span>`:''}
             ${e.alias?`<span>別名：${escH(e.alias)}</span>`:''}
           </div>
           ${(()=>{ // 財產編號平常放在詳細資料；搜尋是因為財產編號才找到時，在這裡說明為什麼搜得到
@@ -8734,8 +8734,8 @@ function renderAdminEquipCard(e){
             if(!q||!e.asset_no||[e.name,e.spec,e.alias].some(x=>String(x||'').toLowerCase().includes(ql))||!assetHit(e.asset_no,q))return '';
             return `<div class="eq-asset-hit">財產編號符合 ${escH(q)}</div>`;
           })()}
-          ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">🎓 選修專用：${escH(e.restricted_note)}</div>`:''}
-          ${kitLines(e).length?`<details class="kit-box eq-x"><summary>📦 套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
+          ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">選修專用：${escH(e.restricted_note)}</div>`:''}
+          ${kitLines(e).length?`<details class="kit-box eq-x"><summary>套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
           <div class="eq-x">${equipUsageHtml(e)}</div>
           ${mismatches.length?`<div class="eq-x" style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div class="eq-x" style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
@@ -8746,10 +8746,10 @@ function renderAdminEquipCard(e){
           ${moreMenuHtml([
             {label:e.featured===true?'★ 取消精選':'☆ 設為精選',fn:`toggleFeatured(${ja(e.id)},${e.featured===true?'false':'true'})`},
             'hr',
-            {label:'🧪 這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
+            {label:'這其實是藥品（轉成藥品）',fn:`openEquipToChem(${ja(e.id)})`},
             'hr',
-            {label:'♻️ 報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
-            {label:'🗑️ 刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
+            {label:'報廢（扣數量、留紀錄）',fn:`openWriteoffModal(${ja(e.id)})`,danger:true},
+            {label:'刪除整筆',fn:`deleteEquip(${ja(e.id)})`,danger:true}
           ])}
         </div>
       </div>
@@ -8856,7 +8856,7 @@ async function loadPurposesAdmin(){
     purposeSnap=purposeRows.map(r=>JSON.stringify(r));purposeDepSnap=[purposeDepositRow.equip_amount,purposeDepositRow.venue_amount,purposeDepositRow.both_amount].map(String).join('|');
     renderPurposeRows();
   }catch(e){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">⚠️</div><p>讀取失敗：${escH(e.message)}</p><p class="hint" style="margin-top:6px">如果訊息提到 borrow_purposes 不存在，請先在 Supabase 執行「借用目的與保證金.sql」</p></div>`;
+    list.innerHTML=`<div class="empty"><p>讀取失敗：${escH(e.message)}</p><p class="hint" style="margin-top:6px">如果訊息提到 borrow_purposes 不存在，請先在 Supabase 執行「借用目的與保證金.sql」</p></div>`;
   }
 }
 function renderPurposeRows(){
@@ -8940,9 +8940,9 @@ async function savePurposesAdmin(){
       p_deleted:purposeDeleted.map(x=>parseInt(x)).filter(Number.isFinite),
       p_equip:equip,p_venue:venue,p_both:both
     }});
-    showToast('✅ 已儲存，前台重新整理後生效','success');
+    showToast('已儲存，前台重新整理後生效','success');
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
-  btn.disabled=false;btn.textContent='💾 儲存全部';
+  btn.disabled=false;btn.textContent='儲存全部';
   loadPurposesAdmin();
 }
 
@@ -8985,7 +8985,7 @@ async function loadStkLinks(){
       return `<div class="record-card" style="padding:10px 14px;${live?'':'opacity:.6'}"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
         <div><b>${escH(l.helper_name)}</b> <span class="badge ${live?'badge-approved':'badge-rejected'}">${st}</span>
           <div style="font-size:12.5px;color:var(--text2);margin-top:3px">${(l.rooms||[]).map(r=>escH(rn(r))).join('、')}${l.can_add?'・可新增':''}・到 ${exp.toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}${l.add_count?`・已新增 ${l.add_count} 項`:''}${l.last_used_at?`・最後使用 ${new Date(l.last_used_at).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}`:''}</div></div>
-        ${live?`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="revokeStkLink(${ja(l.id)})">⛔ 作廢</button>`:''}</div></div>`;
+        ${live?`<button class="btn btn-secondary btn-sm" style="color:var(--danger)" onclick="revokeStkLink(${ja(l.id)})">作廢</button>`:''}</div></div>`;
     }).join('')+'</div>':'<div class="hint">還沒有產生過連結</div>';
   }catch(e){el.innerHTML=`<div class="hint" style="color:var(--danger)">${stkTableMissing(e)?'資料庫還沒有盤點連結的資料表，請先在 Supabase 執行「盤點幫手連結.sql」':'讀取失敗：'+escH(e.message)}</div>`;}
 }
@@ -9013,8 +9013,8 @@ async function createStkLink(){
   const url=new URL('stocktake.html',location.href).href.split('#')[0]+'#t='+token;
   window._lastStkUrl=url;
   document.getElementById('sl-result').innerHTML=`<div class="info-box" style="margin-top:10px;word-break:break-all">
-    <b>✅ 連結已產生（只會顯示這一次，請現在傳給 ${escH(name)}）</b><div style="font-family:'DM Mono',monospace;font-size:12.5px;margin:6px 0;background:var(--surface);padding:8px;border-radius:6px">${escH(url)}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="copyStkUrl()">📋 複製連結</button>${navigator.share?'<button class="btn btn-secondary btn-sm" onclick="shareStkUrl()">📤 分享（LINE 等）</button>':''}</div>
+    <b>連結已產生（只會顯示這一次，請現在傳給 ${escH(name)}）</b><div style="font-family:'DM Mono',monospace;font-size:12.5px;margin:6px 0;background:var(--surface);padding:8px;border-radius:6px">${escH(url)}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary btn-sm" onclick="copyStkUrl()">複製連結</button>${navigator.share?'<button class="btn btn-secondary btn-sm" onclick="shareStkUrl()">分享（LINE 等）</button>':''}</div>
     <div class="hint" style="margin-top:6px">拿到連結的人都能用，請只傳給本人；不需要時按「作廢」。</div></div>`;
   document.getElementById('sl-name').value='';
   loadStkLinks();
@@ -9103,10 +9103,10 @@ function printStocktakeSheet(){
   @media screen{body{padding:12px;}.noprint{margin-bottom:10px;}}
   @media print{.noprint{display:none;}}
 </style></head><body>
-<div class="noprint"><button onclick="window.print()" style="font-size:16px;padding:8px 16px">🖨️ 列印</button></div>
+<div class="noprint"><button onclick="window.print()" style="font-size:16px;padding:8px 16px">列印</button></div>
 <h1>器材盤點表</h1>
 <div class="meta">房間：${escH(roomTxt)}　範圍：${escH(viewTxt)}${q?'　搜尋：'+escH(q):''}　共 ${items.length} 項　列印日期：${today}</div>
-<div class="how">填法：只點<b>架上</b>的（借出中的不用找，系統會自己加回去）。數量<b>沒變</b>→ 勾「無變動」☑；數量<b>不同</b>→ 在「實點」寫架上實際數字。回到電腦輸入時，「頁-序」就是後台清單的第幾頁、第幾項；請<b>全部輸入完再按一次「儲存盤點」</b>（中途存檔，存好的會移到已盤點，後面的頁序就會往前移）。</div>
+<div class="how">填法：只點<b>架上</b>的（借出中的不用找，系統會自己加回去）。數量<b>沒變</b>→ 勾「無變動」；數量<b>不同</b>→ 在「實點」寫架上實際數字。回到電腦輸入時，「頁-序」就是後台清單的第幾頁、第幾項；請<b>全部輸入完再按一次「儲存盤點」</b>（中途存檔，存好的會移到已盤點，後面的頁序就會往前移）。</div>
 <table><thead><tr><th style="width:9%">頁-序</th><th style="width:12%">櫃位</th><th>名稱／規格</th><th style="width:13%">架上應有</th><th style="width:9%">無變動</th><th style="width:11%">實點</th><th style="width:16%">備註</th></tr></thead>
 <tbody>${rows}</tbody></table>
 <div class="sign">盤點人：＿＿＿＿＿＿＿＿　日期：＿＿＿＿＿＿＿＿</div>
@@ -9134,10 +9134,10 @@ function renderStkBar(done,total,f){
   box.innerHTML=`<div class="stk-bar">
     <div class="stk-prog-row"><strong>本輪</strong><span>${done} / ${total} 項（${pct}%）${f?`<span class="stk-f">・目前篩選 ${f.done} / ${f.total}</span>`:''}</span><div class="stk-prog"><i style="width:${pct}%"></i></div></div>
     <div class="stk-round">本輪從 <input type="date" value="${rs}" onchange="setStkRoundStart(this.value)"> 起算
-      <button type="button" class="btn btn-secondary btn-sm" onclick="startNewStkRound()">🔄 今天開始新一輪</button></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="startNewStkRound()">今天開始新一輪</button></div>
     <div class="stk-round">排序
       <select onchange="setStkSort(this.value)" style="width:auto;padding:3px 6px;font-size:12.5px"><option value="loc" ${stkSort==='loc'?'selected':''}>依櫃位（照現場走的順序）</option><option value="name" ${stkSort==='name'?'selected':''}>依名稱</option></select>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="printStocktakeSheet()">🖨️ 列印這份清單</button></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="printStocktakeSheet()">列印這份清單</button></div>
     <div class="stk-views">
       <button type="button" class="${stkView==='todo'?'on':''}" onclick="setStkView('todo')">待盤點（${vt-vd}）</button>
       <button type="button" class="${stkView==='done'?'on':''}" onclick="setStkView('done')">已盤點（${vd}）</button>
@@ -9227,7 +9227,7 @@ function renderFeaturedList(){
   const items=allAdminEquipment.filter(e=>e.featured===true);
   const cnt=document.getElementById('featuredCount');if(cnt)cnt.textContent=`（${items.length} 項）`;
   if(!items.length){box.innerHTML='<div class="hint">目前沒有設定精選</div>';return;}
-  box.innerHTML=items.map(e=>`<span class="featured-chip">${e.image_url?`<img src="${escH(e.image_url)}" alt="">`:'<span class="ph">🔬</span>'}${escH(e.name)}<button title="取消精選" onclick="toggleFeatured(${ja(e.id)},false)">✕</button></span>`).join('');
+  box.innerHTML=items.map(e=>`<span class="featured-chip">${e.image_url?`<img src="${escH(e.image_url)}" alt="">`:'<span class="ph"></span>'}${escH(e.name)}<button title="取消精選" onclick="toggleFeatured(${ja(e.id)},false)">✕</button></span>`).join('');
 }
 async function toggleFeatured(id,val){
   try{
@@ -9375,11 +9375,11 @@ function showEquipDiffModal(added,removed,changed){
       ${added.length?`<span style="color:#065f46">● 新增 ${added.length} 筆</span>`:''}
       ${changed.length?`<span style="color:#92400e">● 變更 ${changed.length} 筆</span>`:''}
     </div>
-    ${removed.length?`<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">🗑️ 新清單中消失的器材（預設保留，勾選才刪除）</div>${removedRows}`:''}
-    ${changed.length?`<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">🔄 資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}`:''}
-    ${added.length?`<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">➕ 新清單中新增的器材（預設新增，取消勾選則跳過）</div>${addedRows}`:''}
+    ${removed.length?`<div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:6px">新清單中消失的器材（預設保留，勾選才刪除）</div>${removedRows}`:''}
+    ${changed.length?`<div style="font-size:12px;font-weight:700;color:#92400e;margin-top:10px;margin-bottom:6px">資料有變更（預設更新，取消勾選則跳過）</div>${changedRows}`:''}
+    ${added.length?`<div style="font-size:12px;font-weight:700;color:#065f46;margin-top:10px;margin-bottom:6px">新清單中新增的器材（預設新增，取消勾選則跳過）</div>${addedRows}`:''}
   `;
-  showModal('📋 與現有器材的差異',body,[
+  showModal('與現有器材的差異',body,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認執行',cls:'btn-primary',fn:'doApplyEquipDiff()'}
   ]);
@@ -9420,7 +9420,7 @@ const WRITEOFF_REASONS=['損壞','遺失','過舊汰換','其他'];
 function openWriteoffModal(id){
   const e=allAdminEquipment.find(x=>String(x.id)===String(id));if(!e)return;
   const avail=equipAvailable(e);
-  showModal(`♻️ 報廢 — ${e.name}`,`
+  showModal(`報廢 — ${e.name}`,`
     <div style="font-size:13px;color:var(--text2);margin-bottom:10px">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}　目前總數 ${e.total??0}，可借 ${avail}</div>
     <div class="form-group"><label>報廢數量 *</label><input type="number" id="wo-qty" min="1" max="${e.total??0}" value="1"></div>
     <div class="form-group"><label>原因 *</label>
@@ -9456,7 +9456,7 @@ async function loadWriteoffLog(){
   try{
     const rows=await sb('GET','equipment_writeoffs',{order:'created_at.desc'});
     const items=(Array.isArray(rows)?rows:[]).slice(0,30);
-    if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">📜</div><p>目前沒有報廢紀錄</p></div>';return;}
+    if(!items.length){box.innerHTML='<div class="empty"><p>目前沒有報廢紀錄</p></div>';return;}
     box.innerHTML='<div class="record-list">'+items.map(w=>`
       <div class="record-card" style="padding:10px 14px">
         <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
@@ -9466,9 +9466,9 @@ async function loadWriteoffLog(){
           </div>
           <span style="font-size:11px;color:var(--text2)">${w.created_at?new Date(w.created_at).toLocaleString('zh-TW'):''}</span>
         </div>
-        ${w.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${escH(w.note)}</div>`:''}
+        ${w.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${escH(w.note)}</div>`:''}
       </div>`).join('')+'</div>';
-  }catch(e){box.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+  }catch(e){box.innerHTML=`<div class="empty"><p>載入失敗</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
 }
 async function exportWriteoffLog(){
   if(typeof ExcelJS==='undefined'){showToast('Excel 元件尚未載入，請檢查網路後重試','error');return;}
@@ -9541,7 +9541,7 @@ async function loadCalibHotspots(){
     renderCalibOverlay();
     renderCalibList();
   }catch(e){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 floorplan_hotspots 資料表</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;
+    list.innerHTML=`<div class="empty"><p>載入失敗，請確認 Supabase 是否已建立 floorplan_hotspots 資料表</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;
   }
 }
 function renderCalibOverlay(){
@@ -9576,13 +9576,13 @@ async function openCalibLocEditor(hotspotId){
         <div style="font-weight:600">${escH(e.name)}</div>
         <div style="font-size:12px;color:var(--text2)">${escH(e.spec||'')}　總數 ${escH(String(e.total??0))}　可借 ${avail}</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal();jumpEditEquipFromCalib(${escH(JSON.stringify(String(e.id)))})">✏️ 編輯</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal();jumpEditEquipFromCalib(${escH(JSON.stringify(String(e.id)))})">編輯</button>
     </div>`;
   }).join('')||'<div style="font-size:13px;color:var(--text2)">目前這個位置還沒有登記任何器材</div>';
   const ja=v=>escH(JSON.stringify(String(v??'')));
-  showModal(`📦 ${h.code}（${rn(room)}）`,
+  showModal(`${h.code}（${rn(room)}）`,
     `<div style="margin-bottom:10px">${rows}</div>
-     <button class="btn btn-primary btn-sm" onclick="openQuickAddToLocation(${ja(room)},${ja(h.code)},${ja(h.id)})">➕ 新增器材到這裡</button>`,
+     <button class="btn btn-primary btn-sm" onclick="openQuickAddToLocation(${ja(room)},${ja(h.code)},${ja(h.id)})">新增器材到這裡</button>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
   );
 }
@@ -9596,7 +9596,7 @@ let quickAddCtx=null,quickAddPhoto=null;
 function openQuickAddToLocation(room,code,hotspotId){
   quickAddCtx={room,code,hotspotId};
   if(quickAddPhoto){URL.revokeObjectURL(quickAddPhoto.url);quickAddPhoto=null;}
-  showModal(`➕ 新增器材到 ${code}（${rn(room)}）`,`
+  showModal(`新增器材到 ${code}（${rn(room)}）`,`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
       <div class="form-group" style="grid-column:span 2"><label>名稱 *</label><input type="text" id="qa-name" maxlength="60" placeholder="例如：錐形瓶" oninput="qaDupHint()"><div class="hint" id="qa-dup" style="color:var(--danger)"></div></div>
       <div class="form-group"><label>規格</label><input type="text" id="qa-spec" maxlength="60" placeholder="例如：250mL"></div>
@@ -9605,14 +9605,14 @@ function openQuickAddToLocation(room,code,hotspotId){
       <div class="form-group"><label>櫃位</label><input type="text" id="qa-loc" maxlength="40" value="${escH(code)}"></div>
       <div class="form-group" style="grid-column:span 2"><label>照片（選填，會自動壓縮）</label>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">📷 拍照／選照片<input type="file" id="qa-photo" accept="image/*" style="display:none" onchange="qaPickPhoto(this)"></label>
+          <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">拍照／選照片<input type="file" id="qa-photo" accept="image/*" style="display:none" onchange="qaPickPhoto(this)"></label>
           <div class="qa-photo-prev" id="qa-photo-prev"></div>
         </div></div>
       <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;grid-column:span 2;cursor:pointer"><input type="checkbox" id="qa-avail" checked style="width:auto"> 開放借用</label>
     </div>`,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'儲存並繼續新增',cls:'btn-secondary',fn:'saveQuickAdd(true)'},
-    {label:'💾 儲存',cls:'btn-primary',fn:'saveQuickAdd(false)'}
+    {label:'儲存',cls:'btn-primary',fn:'saveQuickAdd(false)'}
   ]);
   setTimeout(()=>document.getElementById('qa-name')?.focus(),60);
 }
@@ -9672,7 +9672,7 @@ async function saveQuickAdd(again){
 }
 function renderCalibList(){
   const box=document.getElementById('calibList');if(!box)return;
-  if(!allCalibHotspots.length){box.innerHTML='<div class="empty"><div class="empty-icon">🗺️</div><p>這個房間還沒有任何熱區，直接在上面圖上拖拉畫一個試試</p></div>';return;}
+  if(!allCalibHotspots.length){box.innerHTML='<div class="empty"><p>這個房間還沒有任何熱區，直接在上面圖上拖拉畫一個試試</p></div>';return;}
   box.innerHTML='<div class="record-list">'+allCalibHotspots.map(h=>`
     <div class="record-card" style="padding:10px 14px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -9681,7 +9681,7 @@ function renderCalibList(){
         <label style="font-size:11px;color:var(--text2)">上</label><input type="number" step="0.1" value="${h.top_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'top_pct',this.value)" onchange="updateCalibHotspot(${h.id},'top_pct',this.value)">
         <label style="font-size:11px;color:var(--text2)">寬</label><input type="number" step="0.1" value="${h.width_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'width_pct',this.value)" onchange="updateCalibHotspot(${h.id},'width_pct',this.value)">
         <label style="font-size:11px;color:var(--text2)">高</label><input type="number" step="0.1" value="${h.height_pct}" style="max-width:70px" onfocus="highlightCalibHotspot(${h.id})" oninput="previewCalibHotspot(${h.id},'height_pct',this.value)" onchange="updateCalibHotspot(${h.id},'height_pct',this.value)">
-        <button class="btn btn-danger btn-sm" onclick="deleteCalibHotspot(${h.id})">🗑️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCalibHotspot(${h.id})">刪除</button>
       </div>
     </div>`).join('')+'</div>';
 }
@@ -9849,7 +9849,7 @@ async function checkCalibDuplicates(){
     });
     const dupGroups=Object.values(groups).filter(g=>g.length>1);
     if(!dupGroups.length){
-      showModal('🔍 檢查重複代碼','<div class="empty"><div class="empty-icon">✅</div><p>目前沒有重複的熱區代碼</p></div>',[
+      showModal('檢查重複代碼','<div class="empty"><p>目前沒有重複的熱區代碼</p></div>',[
         {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
       ]);
       return;
@@ -9867,7 +9867,7 @@ async function checkCalibDuplicates(){
           </label>`).join('')}
       </div>`;
     }).join('');
-    showModal(`🔍 發現 ${dupGroups.length} 組重複代碼`,
+    showModal(`發現 ${dupGroups.length} 組重複代碼`,
       `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">預設勾選保留「最新」一筆、刪除其他較舊的（通常舊的是校正前的錯誤位置）。確認前可以自行調整勾選。</div>${rowsHtml}`,
       [
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
@@ -9896,7 +9896,7 @@ async function checkCalibOversized(){
     const all=Array.isArray(rows)?rows:[];
     const bad=all.filter(h=>parseFloat(h.width_pct)>CALIB_OVERSIZE_LIMIT||parseFloat(h.height_pct)>CALIB_OVERSIZE_LIMIT);
     if(!bad.length){
-      showModal('⚠️ 檢查異常尺寸',`<div class="empty"><div class="empty-icon">✅</div><p>沒有發現寬或高超過 ${CALIB_OVERSIZE_LIMIT}% 的異常熱區</p></div>`,[
+      showModal('⚠️ 檢查異常尺寸',`<div class="empty"><p>沒有發現寬或高超過 ${CALIB_OVERSIZE_LIMIT}% 的異常熱區</p></div>`,[
         {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
       ]);
       return;
@@ -9969,7 +9969,7 @@ async function handleHighlightPhoto(input){
     });
     if(!res.ok){const t=await res.text().catch(()=>'');throw new Error(t||res.statusText||'上傳失敗');}
     pendingHighlightPhotoUrl=`${SUPABASE_URL}/storage/v1/object/public/borrow-photos/${path}`;
-    if(status)status.textContent='✅ 已上傳，儲存時會一併存檔';
+    if(status)status.textContent='已上傳，儲存時會一併存檔';
   }catch(e){
     if(status)status.textContent='';
     showToast('照片上傳失敗：'+e.message,'error');
@@ -10010,13 +10010,13 @@ async function loadHighlights(){
     sel.innerHTML='<option value="">全部年份</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
     sel.value=curVal;
     renderHighlightsList();
-  }catch(e){list.innerHTML=`<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 highlights 資料表</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
+  }catch(e){list.innerHTML=`<div class="empty"><p>載入失敗，請確認 Supabase 是否已建立 highlights 資料表</p><p style="font-size:12px;color:var(--danger);margin-top:6px">${e.message}</p></div>`;}
 }
 function renderHighlightsList(){
   const list=document.getElementById('highlightsList');if(!list)return;
   const yearFilter=document.getElementById('hlYearFilter')?.value;
   const items=yearFilter?allHighlights.filter(h=>String(h.year)===yearFilter):allHighlights;
-  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📸</div><p>目前沒有資料</p></div>';return;}
+  if(!items.length){list.innerHTML='<div class="empty"><p>目前沒有資料</p></div>';return;}
   list.innerHTML='<div class="record-list">'+items.map(h=>`
     <div class="record-card" style="display:flex;gap:12px;align-items:flex-start">
       <img src="${escH(safeUrl(h.image_url))}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0">
@@ -10028,7 +10028,7 @@ function renderHighlightsList(){
           公開在前台
         </label>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="deleteHighlight(${ja(h.id)})">🗑️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteHighlight(${ja(h.id)})">刪除</button>
     </div>`).join('')+'</div>';
 }
 async function toggleHighlightPublic(id,checked){
@@ -10420,7 +10420,7 @@ function teDrop(id){
   const q=inp.value.trim(),list=q?teFind(q,8,document.getElementById('te-room-'+id)?.value):[];
   if(!list.length||(list.length===1&&list[0].name===q)){dd.hidden=true;dd.innerHTML='';return;}
   const hi=Math.min(teHi[id]||0,list.length-1);
-  dd.innerHTML=list.map((e,i)=>`<button type="button" class="${i===hi?'hi':''}" data-n="${escH(e.name)}" data-c="${e.chem?1:''}" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)},${e.chem?1:0})"><b>${e.chem?'🧪 ':''}${escH(e.name)}</b><small>${escH(teEqLine(e))}</small></button>`).join('');
+  dd.innerHTML=list.map((e,i)=>`<button type="button" class="${i===hi?'hi':''}" data-n="${escH(e.name)}" data-c="${e.chem?1:''}" onmousedown="event.preventDefault()" onclick="tePick(${id},${ja(e.name)},${e.chem?1:0})"><b>${e.chem?'':''}${escH(e.name)}</b><small>${escH(teEqLine(e))}</small></button>`).join('');
   dd.hidden=false;
 }
 function teKey(id,ev){
