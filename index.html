@@ -1365,6 +1365,8 @@
   .chem-recycle-tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10.5px;background:#f1f5f9;color:var(--text2);border:1px solid var(--border);}
   
   .chem-unavail{opacity:0.45;}
+.ph-ico{width:42%;height:42%;max-width:44px;max-height:44px;opacity:.38}
+.search-icon svg{display:block}
 </style>
 <style id="eq-upgrade">
 /* ── 器材頁改版（2026-10-11）：沿用首頁 hero2 的深色主視覺 ── */
@@ -1720,13 +1722,13 @@ body.wk-open{overflow:hidden}
   <div class="nav-wrap">
     <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="選單"><span class="nh-o">☰ 選單</span><span class="nh-c">✕ 收合</span></button>
     <div class="nav-menu" id="navMenu">
-      <button class="active" data-page="home" onclick="showPage('home')">🏠 首頁</button>
-      <button data-page="borrow" onclick="showPage('equipment')">🔬 器材借用</button>
-      <button data-page="semester" onclick="showPage('semester')">📅 學期實驗</button>
-      <button data-page="venue" onclick="showPage('venue')">🏛️ 場地預約</button>
-      <button data-page="floorplan" onclick="showPage('floorplan')">🏫 平面圖</button>
-      <button data-page="chemicals" onclick="showPage('chemicals')">🧪 藥品查詢</button>
-      <button data-page="myrecords" onclick="showPage('myrecords')">📋 我的記錄</button>
+      <button class="active" data-page="home" onclick="showPage('home')">首頁</button>
+      <button data-page="borrow" onclick="showPage('equipment')">器材借用</button>
+      <button data-page="semester" onclick="showPage('semester')">學期實驗</button>
+      <button data-page="venue" onclick="showPage('venue')">場地預約</button>
+      <button data-page="floorplan" onclick="showPage('floorplan')">平面圖</button>
+      <button data-page="chemicals" onclick="showPage('chemicals')">藥品查詢</button>
+      <button data-page="myrecords" onclick="showPage('myrecords')">我的記錄</button>
     </div>
   </div>
 </header>
@@ -1776,11 +1778,11 @@ body.wk-open{overflow:hidden}
   <div class="home-col">
   <!-- 電腦版左欄：藥品快查（跟右邊「器材借用」對稱） -->
   <div class="home-section desk-only" id="homeChemSection">
-    <div class="card-title">🧪 藥品快查</div>
+    <div class="card-title">藥品快查</div>
     <div class="hint" style="margin-bottom:10px">查藥品在哪、還剩幾瓶，可直接申請</div>
     <div class="home-chem-cats" id="homeChemCats"></div>
     <div class="search-wrap home-eq-search" style="margin-top:10px">
-      <span class="search-icon">🔎</span>
+      <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
       <input class="search-input" type="text" id="homeChemSearch" placeholder="搜尋藥品中文、英文名稱或 CAS…" oninput="renderHomeChem()" autocomplete="off">
     </div>
     <div class="home-chem-list" id="homeChemList"></div>
@@ -1788,7 +1790,7 @@ body.wk-open{overflow:hidden}
   </div>
   </div>
   <div class="home-section">
-    <div class="card-title">🔬 器材借用</div>
+    <div class="card-title">器材借用</div>
     <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以直接加入借用清單；要找其他器材請用上方搜尋框</div>
     <div id="homeEquipFeatured"></div>
 
@@ -1805,7 +1807,7 @@ body.wk-open{overflow:hidden}
 
 <!-- 學期實驗週表（老師）-->
 <div id="page-semester" class="page">
-  <div class="sp-head"><h2>📅 學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
+  <div class="sp-head"><h2>學期實驗週表</h2><span>每一格是一週，同一週可以有好幾科同時進行。點實驗看器材、直接申請。</span></div>
   <div class="sp-q">
     <label class="sp-qbox"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
       <input type="search" id="spQ" maxlength="40" placeholder="找實驗：名稱、年級、老師或器材，例如 滴定、高二、顯微鏡" autocomplete="off" enterkeyhint="search" aria-label="搜尋學期實驗" oninput="spSearch(this.value)" onkeydown="if(event.key==='Escape'){this.value='';spSearch('');}"></label>
@@ -1845,7 +1847,7 @@ body.wk-open{overflow:hidden}
   <div class="proxy-notice" id="proxyNotice" style="display:none"></div>
   <!-- 紙本表單（2026-10-21）：學校規定要交紙本的情況，直接在這裡下載列印 -->
   <details class="forms-dl" id="formsDl">
-    <summary>📄 紙本表單 <small>只有科展、競賽借實驗室，或社團借用才要交</small></summary>
+    <summary>紙本表單 <small>只有科展、競賽借實驗室，或社團借用才要交</small></summary>
     <div class="forms-list">
       <a href="forms/lab-application.pdf" target="_blank" rel="noopener"><b>實驗室（學生競賽）申請表暨切結書</b><span>借實驗室做科展、競賽時填寫，至少 3 天前提出，須繳保證金</span><i>下載 PDF ›</i></a>
       <a href="forms/lab-plan.pdf" target="_blank" rel="noopener"><b>科展／競賽借用實驗室計畫書</b><span>和申請表一起交，寫實驗目的、器材、步驟與預定時間</span><i>下載 PDF ›</i></a>
@@ -1981,7 +1983,7 @@ body.wk-open{overflow:hidden}
 <!-- 場地預約 -->
 <div id="page-venue" class="page">
   <div class="card">
-    <div class="card-title" style="flex-wrap:wrap;gap:8px">📅 場地課表
+    <div class="card-title" style="flex-wrap:wrap;gap:8px">場地課表
       <span class="week-selector" id="weekSelector" style="display:none;margin:0 0 0 auto"><select id="weekJump" onchange="jumpToWeek(this.value)" style="padding:6px 8px;font-size:14px;width:auto"></select></span>
     </div>
     <div class="venue-nav">
@@ -1992,11 +1994,11 @@ body.wk-open{overflow:hidden}
     <div class="venue-actions venue-actions-compact">
       <button class="btn btn-secondary btn-sm" onclick="goThisWeek()">本週</button>
       <button type="button" class="btn btn-secondary btn-sm" id="venueWeekendBtn" onclick="toggleVenueWeekend()">＋週末</button>
-      <button type="button" class="btn btn-secondary btn-sm" id="venueViewToggleBtn" onclick="toggleVenueViewMode()">📋 日檢視</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="printVenueWeek()" title="印成 A4 貼在實驗室門口">🖨️ 列印</button>
-      <button class="btn btn-secondary btn-sm" onclick="openVenueFullscreen()">🔳 全螢幕</button>
-      <button class="btn btn-primary btn-sm" onclick="openVenueBookingModal()">✏️ 新增</button>
-      <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()" style="display:none">🔍 放大</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="venueViewToggleBtn" onclick="toggleVenueViewMode()">日檢視</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="printVenueWeek()" title="印成 A4 貼在實驗室門口">列印</button>
+      <button class="btn btn-secondary btn-sm" onclick="openVenueFullscreen()">全螢幕</button>
+      <button class="btn btn-primary btn-sm" onclick="openVenueBookingModal()">新增</button>
+      <button class="btn btn-secondary btn-sm" id="inlineZoomBtn" onclick="toggleInlineVenueZoom()" style="display:none">放大</button>
     </div>
     <div class="room-tabs venue-lab-tabs" id="venueLabTabs">
       <button type="button" class="room-tab active" data-lab="" onclick="setVenueLabFilter('')">全部</button>
@@ -2052,7 +2054,7 @@ body.wk-open{overflow:hidden}
 <!-- 我的記錄 -->
 <div id="page-myrecords" class="page">
   <div class="card">
-    <div class="card-title">📋 我的借用記錄</div>
+    <div class="card-title">我的借用記錄</div>
     <div class="form-grid" style="margin-bottom:14px">
       <div class="form-group"><label>姓名 *</label><input type="text" id="queryName" maxlength="30" placeholder="輸入完整姓名" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
       <div class="form-group"><label>學號（學生必填）</label><input type="text" id="queryStudentId" maxlength="20" placeholder="學生請輸入學號" onkeydown="if(event.key==='Enter')loadMyRecords()"></div>
@@ -2061,19 +2063,19 @@ body.wk-open{overflow:hidden}
       <label><input type="checkbox" id="rememberMe">在這台裝置記住我（下次打開自動查詢）</label>
       <button type="button" class="link" id="forgetMeBtn" style="display:none" onclick="forgetMe()">不是我／清除</button>
     </div>
-    <button class="btn btn-primary" onclick="loadMyRecords()" style="margin-bottom:14px">🔍 查詢</button>
-    <div id="myRecordsList"><div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div></div>
+    <button class="btn btn-primary" onclick="loadMyRecords()" style="margin-bottom:14px">查詢</button>
+    <div id="myRecordsList"><div class="empty"><p>老師填完整姓名；學生填姓名＋學號</p></div></div>
   </div>
 </div>
 
 <!-- 藥品查詢 -->
 <div id="page-chemicals" class="page">
   <div class="card">
-    <div class="card-title">🧪 實驗室藥品查詢</div>
+    <div class="card-title">實驗室藥品查詢</div>
     <div class="info-box">藥品不開放自行領取，申請後由管理員或老師備藥。配製溶液請填寫濃度與用量。</div>
     <div class="chem-view-toggle" role="tablist" aria-label="檢視方式">
-      <button type="button" class="on" id="chemViewListBtn" onclick="setChemView('list')">📋 清單</button>
-      <button type="button" id="chemViewCabBtn" onclick="setChemView('cab')">🗄️ 藥品櫃</button>
+      <button type="button" class="on" id="chemViewListBtn" onclick="setChemView('list')">清單</button>
+      <button type="button" id="chemViewCabBtn" onclick="setChemView('cab')">藥品櫃</button>
     </div>
     <div id="chemCabView" style="display:none"></div>
     <div id="chemListView">
@@ -2091,17 +2093,17 @@ body.wk-open{overflow:hidden}
   <!-- 平面圖 -->
 <div id="page-floorplan" class="page">
   <div class="card">
-    <div class="card-title">🏫 實驗室平面圖</div>
+    <div class="card-title">實驗室平面圖</div>
     <div class="info-box">點選實驗室切換平面圖，圖上的櫃位可以直接點——會亮起來並在下方顯示裡面有什麼；點圖片本身可以放大檢視。</div>
     <div id="floorplanRoomCovers"></div>
     <div class="room-tabs" id="floorplanTabs" style="margin-top:10px">
-      <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">🔄 重新整理位置</button>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(-0.5)">🔍－</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="refreshFloorplanHotspots()">重新整理位置</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(-0.5)">－</button>
       <span id="floorplanZoomLabel" style="font-size:12px;color:var(--text2);align-self:center">100%</span>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(0.5)">🔍＋</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(0.5)">＋</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoomReset()">↺</button>
     </div>
-    <div class="hint" style="margin-top:6px">格子太小點不準的話，先按「🔍＋」放大，再用手指或滑鼠滾軸/拖曳捲軸左右上下移動查看，放大後點擊會準很多。</div>
+    <div class="hint" style="margin-top:6px">格子太小點不準的話，先按「＋」放大，再用手指或滑鼠滾軸/拖曳捲軸左右上下移動查看，放大後點擊會準很多。</div>
     <div class="fp-layout">
     <div style="text-align:center;margin-top:10px;min-width:0">
       <div id="floorplanScrollWrap" style="overflow:auto;max-width:100%;border-radius:8px">
@@ -2118,28 +2120,28 @@ body.wk-open{overflow:hidden}
     <aside class="fp-side" id="floorplanSide" aria-label="櫃位內容"><div class="hint" style="padding:30px 6px;text-align:center">點圖上的櫃子，<br>這裡會列出裡面有什麼</div></aside>
     </div>
     <div id="floorplanLocList" style="margin-top:14px"></div>
-    <div class="hint" style="text-align:center;margin-top:8px">📍 位置編碼說明可參考「找器材」分頁的「❓ 找物說明」</div>
+    <div class="hint" style="text-align:center;margin-top:8px">位置編碼說明可參考「找器材」分頁的「找物說明」</div>
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-13j · 點週次看當週課表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-25a · 點週次看當週課表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
-    <div class="venue-zoom-head"><span id="venueZoomTitle"></span><div><button type="button" class="venue-book-btn" id="venueZoomBook">📅 我要預約</button><button type="button" class="btn btn-secondary btn-sm" onclick="closeHomeVenueZoom()">✕ 關閉</button></div></div>
+    <div class="venue-zoom-head"><span id="venueZoomTitle"></span><div><button type="button" class="venue-book-btn" id="venueZoomBook">我要預約</button><button type="button" class="btn btn-secondary btn-sm" onclick="closeHomeVenueZoom()">✕ 關閉</button></div></div>
     <div class="venue-zoom-body" id="venueZoomBody"></div>
   </div>
 </div>
 
 <!-- 購物車（右下） -->
-<button class="cart-fab" id="cartFab" onclick="openCart()" title="已選器材 / 搜尋加入" aria-label="已選器材 / 搜尋加入">🛒<span class="cart-badge" id="cartBadge">0</span></button>
+<button class="cart-fab" id="cartFab" onclick="openCart()" title="已選器材 / 搜尋加入" aria-label="已選器材 / 搜尋加入"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2"/><circle cx="9.5" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/></svg><span class="cart-badge" id="cartBadge">0</span></button>
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-drawer" id="cartDrawer">
   <div class="cart-drawer-handle"></div>
-  <div class="cart-drawer-header"><div class="cart-drawer-title">🛒 已選器材清單</div><button class="btn btn-secondary btn-sm" onclick="closeCart()">關閉</button></div>
+  <div class="cart-drawer-header"><div class="cart-drawer-title">已選器材清單</div><button class="btn btn-secondary btn-sm" onclick="closeCart()">關閉</button></div>
   <div style="padding:10px 18px 0">
     <div class="search-wrap" style="margin-bottom:0">
-      <span class="search-icon">🔎</span>
+      <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
       <input class="search-input" type="text" id="cartSearchInput" placeholder="搜尋器材，直接加入清單…" oninput="doCartSearch(this.value)" autocomplete="off">
     </div>
   </div>
@@ -2147,8 +2149,8 @@ body.wk-open{overflow:hidden}
   <div class="cart-drawer-body" id="cartBody"></div>
   <div class="cart-form-summary" id="cartFormSummary"></div>
   <div class="cart-drawer-footer">
-    <button class="btn btn-danger btn-sm" onclick="clearCart()">🗑️ 清空</button>
-    <button class="btn btn-primary" id="cartSubmitBtn" style="flex:1;justify-content:center" onclick="cartSubmit()">📋 直接提交申請</button>
+    <button class="btn btn-danger btn-sm" onclick="clearCart()">清空</button>
+    <button class="btn btn-primary" id="cartSubmitBtn" style="flex:1;justify-content:center" onclick="cartSubmit()">直接提交申請</button>
   </div>
 </div>
 
@@ -2161,7 +2163,7 @@ body.wk-open{overflow:hidden}
         <button class="btn btn-secondary btn-sm" onclick="changeWeek(-1)">← 上週</button>
         <button class="btn btn-primary btn-sm" onclick="goThisWeek()">本週</button>
         <button class="btn btn-secondary btn-sm" onclick="changeWeek(1)">下週 →</button>
-        <button class="btn btn-secondary btn-sm" id="vfsModeBtn" onclick="toggleVenueFsMode()">🔍 放大</button>
+        <button class="btn btn-secondary btn-sm" id="vfsModeBtn" onclick="toggleVenueFsMode()">放大</button>
         <button class="btn btn-danger btn-sm" onclick="closeVenueFullscreen()">✕ 關閉</button>
       </div>
     </div>
@@ -2231,9 +2233,9 @@ async function loadTeachersFront(){
 
 // ── 位置編碼解析（原有邏輯不變）────────────────────────────
 const CABINET_CODE_MAP={
-  'A':{name:'鐵櫃',icon:'🗄️'},'B':{name:'鐵架',icon:'📚'},
-  'C':{name:'玻璃鐵櫃',icon:'🪟'},'D':{name:'桌子的櫃子',icon:'🗃️'},
-  'E':{name:'抽氣櫃的櫃子',icon:'🌀'}
+  'A':{name:'鐵櫃',icon:''},'B':{name:'鐵架',icon:''},
+  'C':{name:'玻璃鐵櫃',icon:''},'D':{name:'桌子的櫃子',icon:''},
+  'E':{name:'抽氣櫃的櫃子',icon:''}
 };
 const ROOM_CODE_INFO=[
   {code:'T',name:'教具室'},{code:'PC',name:'理化實驗室'},{code:'C',name:'化學實驗室'},
@@ -2268,14 +2270,14 @@ function decodeLocation(code,room){
 function showLocationGuide(){
   const roomRows=ROOM_CODE_INFO.map(r=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span style="font-family:'DM Mono',monospace;font-weight:700">${r.code}</span><span>${r.name}</span></div>`).join('');
   const cabRows=Object.entries(CABINET_CODE_MAP).map(([code,c])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--surface2)"><span>${c.icon} <span style="font-family:'DM Mono',monospace;font-weight:700">${code}</span></span><span>${c.name}</span></div>`).join('');
-  showModal('❓ 器材標籤對照說明',`
-    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・🏷️鐵架02號・第2層。</p>
+  showModal('器材標籤對照說明',`
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <strong style="font-family:'DM Mono',monospace">BB02-2</strong>，代表：<br>生物室・鐵架02號・第2層。</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">① 實驗室代號</div>${roomRows}</div>
       <div><div style="font-weight:700;font-size:13px;margin-bottom:6px">② 櫃別代號＋圖示</div>${cabRows}</div>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・🗄️鐵櫃01號 (PCA01)</p>
-    <p style="font-size:12px;color:var(--text2);margin-top:6px">📌 若同一器材分放在多個位置，會以「＋」串接顯示。</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">範例：PCA01 → 理化室・鐵櫃01號 (PCA01)</p>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px">若同一器材分放在多個位置，會以「＋」串接顯示。</p>
   `,[{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
 }
 
@@ -2405,12 +2407,12 @@ function locCodeMatches(field,hotspotCode){
 }
 let floorplanZoomScale=1;
 const ROOM_COVERS=[
-  {key:'bio',label:'生物實驗室',emoji:'🧬',c1:'#22c55e',c2:'#15803d'},
-  {key:'chem',label:'化學實驗室',emoji:'⚗️',c1:'#eab308',c2:'#a16207'},
-  {key:'geo',label:'地科實驗室',emoji:'🌍',c1:'#06b6d4',c2:'#0e7490'},
-  {key:'pc',label:'理化實驗室',emoji:'🔭',c1:'#8b5cf6',c2:'#6d28d9'},
-  {key:'phy',label:'物理實驗室',emoji:'⚡',c1:'#f97316',c2:'#c2410c'},
-  {key:'tmt',label:'教具室',emoji:'📦',c1:'#64748b',c2:'#334155'}
+  {key:'bio',label:'生物實驗室',emoji:'',c1:'#22c55e',c2:'#15803d'},
+  {key:'chem',label:'化學實驗室',emoji:'',c1:'#eab308',c2:'#a16207'},
+  {key:'geo',label:'地科實驗室',emoji:'',c1:'#06b6d4',c2:'#0e7490'},
+  {key:'pc',label:'理化實驗室',emoji:'',c1:'#8b5cf6',c2:'#6d28d9'},
+  {key:'phy',label:'物理實驗室',emoji:'',c1:'#f97316',c2:'#c2410c'},
+  {key:'tmt',label:'教具室',emoji:'',c1:'#64748b',c2:'#334155'}
 ];
 window._autoCarouselTimers=window._autoCarouselTimers||{};
 window.addEventListener('resize',()=>{document.querySelectorAll('.auto-carousel-track').forEach(t=>{const id=t.id.replace(/-track$/,'');const box=document.getElementById(id);if(box)setAutoCarouselIndex(id,box._acIndex||0);});});
@@ -2516,12 +2518,12 @@ function isLowStock(e,avail){
 }
 const OFF_PERIODS=['早休','午休','晚上'];
 const HOME_VENUE_FILTERS=[
-  {key:'',label:'全部',emoji:'🏛️',c1:'#1d6b64',c2:'#154f4a'},
-  {key:'生物',label:'生物',emoji:'🧬',c1:'#22c55e',c2:'#15803d'},
-  {key:'化學',label:'化學',emoji:'⚗️',c1:'#eab308',c2:'#a16207'},
-  {key:'理化',label:'理化',emoji:'🔭',c1:'#8b5cf6',c2:'#6d28d9'},
-  {key:'物理',label:'物理',emoji:'⚡',c1:'#f97316',c2:'#c2410c'},
-  {key:'地科',label:'地科',emoji:'🌍',c1:'#06b6d4',c2:'#0e7490'}
+  {key:'',label:'全部',emoji:'',c1:'#1d6b64',c2:'#154f4a'},
+  {key:'生物',label:'生物',emoji:'',c1:'#22c55e',c2:'#15803d'},
+  {key:'化學',label:'化學',emoji:'',c1:'#eab308',c2:'#a16207'},
+  {key:'理化',label:'理化',emoji:'',c1:'#8b5cf6',c2:'#6d28d9'},
+  {key:'物理',label:'物理',emoji:'',c1:'#f97316',c2:'#c2410c'},
+  {key:'地科',label:'地科',emoji:'',c1:'#06b6d4',c2:'#0e7490'}
 ];
 async function renderHomeVenuePreview(){
   const box=document.getElementById('homeVenuePreview');if(!box)return;
@@ -2568,8 +2570,8 @@ async function renderHomeVenuePreview(){
       const slideTable=`<table class="mini-venue mini-fixed"><thead>${head}</thead><tbody>${buildRows(r.key?'slide':'dots')}</tbody></table><div class="mini-legend">${r.key?'「+N」＝同一節還有其他組':'色塊＝該節有課（生／化／理／物／地）'}，點課表看完整內容</div>`;
       window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}`,table};
       return `<div class="auto-carousel-slide venue-slide" onclick="openHomeVenueZoom('${r.key}')">
-        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">📅 我要預約</button></div>
-        <div class="venue-slide-hint">🔍 點課表可放大檢視・左右滑動換科別</div>
+        <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">我要預約</button></div>
+        <div class="venue-slide-hint">點課表可放大檢視・左右滑動換科別</div>
         ${slideTable}
       </div>`;
     });
@@ -2604,7 +2606,7 @@ async function renderHomeChem(){
     head=`找到 ${items.length} 項${items.length>6?'（顯示前 6 項）':''}`;
   }else{
     items=allChemicals.filter(c=>c.is_available!==false&&c.bottles_left!=null&&Number(c.bottles_left)<=2).sort((a,b)=>Number(a.bottles_left)-Number(b.bottles_left));
-    head=items.length?'⚠️ 存量偏少，要用請提早申請':'常用藥品';
+    head=items.length?'存量偏少，要用請提早申請':'常用藥品';
     if(!items.length)items=allChemicals.filter(c=>c.is_available!==false);
   }
   window._homeChemItems=items.slice(0,6);
@@ -2613,9 +2615,9 @@ async function renderHomeChem(){
     const ci=catInfo(c.category),avail=c.is_available!==false,left=c.bottles_left;
     const low=left!=null&&Number(left)<=2;
     return `<div class="home-chem-row chem-clickable ${avail?'':'chem-unavail'}" onclick="openChemDetail(window._homeChemItems[${i}].id)">
-      ${chemThumb(c)!=='🧪'?`<div class="hc-icon hc-st">${chemThumb(c)}</div>`:`<div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'📦')}</div>`}
+      ${chemThumb(c)!=='<svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 0 0 4 0V3M10 11h4"/></svg>'?`<div class="hc-icon hc-st">${chemThumb(c)}</div>`:`<div class="hc-icon" style="background:${hexMix(ci.color,.86,1)}">${escH(ci.icon||'')}</div>`}
       <div class="hc-info"><div class="hc-name">${escH(c.name_zh)}</div>
-        <div class="hc-sub">${c.formula?fmtFormula(c.formula)+'　':''}${c.name_en?escH(c.name_en)+'　':''}${c.location?'📍'+escH(c.location):''}</div>
+        <div class="hc-sub">${c.formula?fmtFormula(c.formula)+'　':''}${c.name_en?escH(c.name_en)+'　':''}${c.location?''+escH(c.location):''}</div>
         <div class="hc-sub">${catName(c.category)?catTagHtml(c.category):''}　<span class="${low?'hc-low':''}">剩 ${escH(left??'?')} 瓶</span></div></div>
       ${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(window._homeChemItems[${i}].id)">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}
     </div>`;
@@ -2683,7 +2685,7 @@ function heroSearchLive(q){
     const oi=window._heroLocOpen;
     let html='';
     if(locs.length){
-      html+=`<div class="hr-sec">📍 櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" class="${i===oi?'on':''}" aria-expanded="${i===oi}" onclick="heroLocToggle(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項 ${i===oi?'▴':'▾'}</span></button>`).join('')}</div>`;
+      html+=`<div class="hr-sec">櫃位</div><div class="hr-locs">${locs.map((l,i)=>`<button type="button" class="${i===oi?'on':''}" aria-expanded="${i===oi}" onclick="heroLocToggle(${i})"><b>${escH(l.code)}</b><span>${escH(rn(l.room))}・${l.n} 項 ${i===oi?'▴':'▾'}</span></button>`).join('')}</div>`;
       const L=locs[oi];
       if(L){
         const its=allEquipment.filter(e=>e.room===L.room&&locCodeMatches(e.location,L.code));
@@ -2691,12 +2693,12 @@ function heroSearchLive(q){
         window._srLists.heroLoc=its;window._heroLocChems=chs;
         html+=`<div class="hr-locbox"><div class="hr-loch"><span><b>${escH(L.code)}</b> 裡面有什麼</span><button type="button" class="hr-locmap" onclick="heroLoc(${oi})">在平面圖看位置 ›</button></div>`+
           (its.length?`<div class="search-dropdown">${its.map((e,j)=>searchResultRowHTML('heroLoc',e,j,false)).join('')}</div>`:'')+
-          (chs.length?`<div class="hr-sec" style="margin-top:8px">🧪 藥品</div><div class="search-dropdown">${chs.map((c,j)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroLocChems[${j}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh||'')}</div><div class="sr-room">剩 ${escH(c.bottles_left??'?')} 瓶${c.is_available===false?'・暫不開放':''}</div></div></div>`).join('')}</div>`:'')+
+          (chs.length?`<div class="hr-sec" style="margin-top:8px">藥品</div><div class="search-dropdown">${chs.map((c,j)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroLocChems[${j}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh||'')}</div><div class="sr-room">剩 ${escH(c.bottles_left??'?')} 瓶${c.is_available===false?'・暫不開放':''}</div></div></div>`).join('')}</div>`:'')+
           (!its.length&&!chs.length?'<div class="hint" style="padding:6px 2px">這個櫃位目前沒有登記東西</div>':'')+'</div>';
       }
     }
-    if(eq.length)html+=`<div class="hr-sec">🔬 器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
-    if(ch.length)html+=`<div class="hr-sec">🧪 藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${casHit(c,ql)?'CAS '+escH(c.cas)+'・':''}${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・📍'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
+    if(eq.length)html+=`<div class="hr-sec">器材 <small>${eq.length} 項</small></div><div class="search-dropdown">${eq.slice(0,5).map((e,i)=>searchResultRowHTML('hero',e,i,true)).join('')}</div>`;
+    if(ch.length)html+=`<div class="hr-sec">藥品</div><div class="search-dropdown">${ch.map((c,i)=>`<div class="search-result-item chem-clickable" onclick="openChemDetail(window._heroChems[${i}].id)"><div class="sr-thumb-ph${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div style="flex:1;min-width:0"><div class="sr-name">${escH(c.name_zh)}</div><div class="sr-room">${casHit(c,ql)?'CAS '+escH(c.cas)+'・':''}${c.formula?fmtFormula(c.formula)+'・':''}${c.name_en?escH(c.name_en)+'・':''}剩 ${escH(c.bottles_left??'?')} 瓶${c.location?'・'+escH(c.location):''}</div></div>${c.is_available!==false?`<button type="button" class="btn btn-primary btn-sm" onclick="event.stopPropagation();openChemRequestModal(window._heroChems[${i}].id)">申請</button>`:''}</div>`).join('')}</div>`;
     if(!html)html=`<div class="search-empty">找不到「${escH(q)}」相關的器材、藥品或櫃位</div>`;
     else if(eq.length>5)html+=`<button type="button" class="hr-more" onclick="heroSearchGo()">看全部 ${eq.length} 項器材 ›</button>`;
     box.innerHTML=html;
@@ -2745,7 +2747,7 @@ function renderHomeEquipFeatured(){
     const u=safeUrl(e.image_url);
     const img=u?`<img class="equip-slide-img" src="${escH(u)}" alt="${escH(e.name)}" ${i===0?'fetchpriority="high"':'loading="lazy"'} decoding="async" onload="this.parentNode.classList.add('img-ok')" onerror="this.remove()"><div class="slide-shade"></div>`:'';
     return `<div class="auto-carousel-slide equip-slide" onclick="openEquipDetail('feat',${i})">
-      <span class="equip-slide-ph" aria-hidden="true">🔬</span>
+      <span class="equip-slide-ph" aria-hidden="true"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></span>
       ${img}
       <span class="cover-label" style="position:relative;z-index:2">${escH(e.name)}</span>
     </div>`;
@@ -2765,7 +2767,7 @@ function renderHomeEquipList(){
   box.innerHTML=items.map((e,i)=>{
     const avail=parseInt(e.available)||0;
     const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
-    const thumb=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy">`:`<div class="home-eq-thumb">🔬</div>`;
+    const thumb=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy">`:`<div class="home-eq-thumb"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">借出中</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
       :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="homeEqAdd(${i},-1)">−</button>${qtyNum(qty,avail,`homeEqSet(${i},this.value)`)}<button type="button" class="qty-btn" onclick="homeEqAdd(${i},1)">+</button></div>`
@@ -2781,8 +2783,8 @@ function openEquipDetail(src,i){
 // 器材資料卡（任何清單都用這個開）；onChange：卡片裡改數量後，原本那份清單要跟著更新
 function openEquipDetailFor(e,onChange){
   window._detailEq=e;window._detailOnChange=onChange||null;
-  showModal('🔬 器材資料','',[
-    {label:'🛒 查看借用清單',cls:'btn-secondary',fn:'closeModal();openCart()'},
+  showModal('器材資料','',[
+    {label:'查看借用清單',cls:'btn-secondary',fn:'closeModal();openCart()'},
     {label:'關閉',cls:'btn-primary',fn:'closeModal()'}
   ]);
   renderEquipDetail();
@@ -2794,7 +2796,7 @@ function renderEquipDetail(){
   const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
   const photo=e.image_url?`<img src="${escH(e.image_url)}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:var(--surface2);cursor:zoom-in" onclick="openLightbox(window._detailEq.image_url,window._detailEq.name)">`:'';
   const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
-  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">📍${escH(e.location)}　看平面圖位置 ›</span>`:'';
+  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">${escH(e.location)}　看平面圖位置 ›</span>`:'';
   const action=avail<=0?`<button type="button" class="home-eq-add" disabled style="width:100%">目前無法借用</button>`
     :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button>${qtyNum(qty,avail,'detailSet(this.value)',true)}<button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
     :`<button type="button" class="home-eq-add" style="width:100%" onclick="detailQty(1)">加入借用清單</button>`;
@@ -2804,7 +2806,7 @@ function renderEquipDetail(){
     ${(cur.alias||e.alias)?`<div class="hint" style="margin-top:2px">別名：${escH(String(cur.alias||e.alias).split(/[、,，;；/／]/).map(s=>s.trim()).filter(Boolean).join('、'))}</div>`:''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">${pill}${loc}</div>
     ${electiveBoxHtml(e.room,e.name)}
-    ${kitLinesOf(e).length?`<div class="kit-list"><strong>📦 整盒借出，盒內有：</strong><ul>${kitLinesOf(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:''}
+    ${kitLinesOf(e).length?`<div class="kit-list"><strong>整盒借出，盒內有：</strong><ul>${kitLinesOf(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></div>`:''}
     ${getBorrowerInfo(e.name,e.room)}
     <div style="margin-top:14px">${action}</div>`;
 }
@@ -2812,7 +2814,7 @@ function detailSet(v){
   const e=window._detailEq;if(!e)return;
   const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
   setQty(e.room,e.name,e.spec||'',e.unit,parseInt(cur.available)||0,v);
-  if(document.getElementById('modalTitle')?.textContent==='🔬 器材資料')renderEquipDetail();
+  if(document.getElementById('modalTitle')?.textContent==='器材資料')renderEquipDetail();
   renderHomeEquipList();if(typeof window._detailOnChange==='function')window._detailOnChange();
 }
 function detailQty(d){
@@ -2820,7 +2822,7 @@ function detailQty(d){
   const cur=allEquipment.find(x=>x.room===e.room&&x.name===e.name)||e;
   changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(cur.available)||0,d);
   // changeQty 可能改跳「本科還有現貨」的詢問視窗，那種情況就不要蓋掉它
-  if(document.getElementById('modalTitle')?.textContent==='🔬 器材資料')renderEquipDetail();
+  if(document.getElementById('modalTitle')?.textContent==='器材資料')renderEquipDetail();
   renderHomeEquipList();
   if(typeof window._detailOnChange==='function')window._detailOnChange();
 }
@@ -2919,7 +2921,7 @@ function renderFloorplanLocations(){
     groups.get(key).push(c);
   });
   const groupKeys=[...groups.keys()].sort();
-  box.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">📍 這個房間的櫃位（也可以直接點上面圖片，點下面的分類會展開細項）</div>
+  box.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:8px">這個房間的櫃位（也可以直接點上面圖片，點下面的分類會展開細項）</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px">
       ${groupKeys.map(key=>{
         const codesInGroup=groups.get(key).sort(naturalCodeCompare);
@@ -3021,7 +3023,7 @@ function renderFloorplanLocModalBody(){
     box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px"><span class="fp-code">${escH(code)}</span><span style="font-size:13px;color:var(--text2)">${escH(rn(room))}・${items.length+chems.length} 項</span></div><div class="fp-bar"></div>`+
       (items.length?items.map((e,i)=>{
         const avail=parseInt(e.available)||0,img=safeUrl(e.image_url),qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
-        return `<div class="fp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="fpZoom(${i})">`:'<div class="ph">🔬</div>'}
+        return `<div class="fp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="fpZoom(${i})">`:'<div class="ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>'}
           <div class="nm"><b>${escH(e.name)}</b><span>${e.spec?escH(e.spec)+'・':''}${escH(e.location||'')}</span><div class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借 '+avail+' '+escH(e.unit||''):'目前沒有可借'}</div></div>
           ${avail>0?(qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="fpQty(${i},-1)" aria-label="減少">−</button><span style="min-width:22px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="fpQty(${i},1)" aria-label="增加">+</button></div>`:`<button type="button" class="btn btn-primary btn-sm" onclick="fpQty(${i},1)">加入</button>`):''}
         </div>`;
@@ -3033,7 +3035,7 @@ function renderFloorplanLocModalBody(){
     const rowId='fploc-'+i;
     const isOpen=floorplanExpandedRowId===rowId;
     const img=safeUrl(e.image_url);
-    const thumb=img?`<img src="${escH(img)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0">🔬</div>`;
+    const thumb=img?`<img src="${escH(img)}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0">`:`<div style="width:44px;height:44px;border-radius:6px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
     const photoHtml=img?`<img src="${escH(img)}" style="width:100%;max-height:180px;object-fit:contain;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:8px;cursor:zoom-in" onclick="event.stopPropagation();fpZoom(${i})">`:'';
     const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
     return `<div style="border-bottom:1px solid var(--surface2)">
@@ -3063,7 +3065,7 @@ function renderFloorplanLocModalBody(){
   const box=document.getElementById('fpSheetBody');
   if(box)box.innerHTML=body+chemHtml;
   const title=document.getElementById('fpSheetTitle');
-  if(title)title.textContent=`📦 ${code} 裡面有什麼（${items.length+chems.length} 項）`;
+  if(title)title.textContent=`${code} 裡面有什麼（${items.length+chems.length} 項）`;
   syncFpSheetH();
 }
 function fpQty(i,d){const e=(window._fpItems||[])[i];if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);renderFloorplanLocModalBody();}
@@ -3115,7 +3117,7 @@ async function jumpToFloorplanLocation(room,code,itemName){
     openFloorplanLocModal(expandLocationField(code)[0]||code);
     return;
   }
-  // 一律用正常大小顯示整張平面圖（不自動放大），一眼就看得出櫃子在房間的哪裡；要看細節再自己按「🔍＋」
+  // 一律用正常大小顯示整張平面圖（不自動放大），一眼就看得出櫃子在房間的哪裡；要看細節再自己按「＋」
   if(floorplanZoomScale!==1)floorplanZoomReset();
   showFloorplanBubbles(spots,code,itemName);
   if(typeof fpSideMode==='function'&&fpSideMode())openFloorplanLocModal(spots[0].code);
@@ -3166,7 +3168,7 @@ function showFloorplanBubbles(spots,code,itemName){
     const others=clusterList.length>1?`<div class="fp-bubble-sub" style="margin-top:4px">其他位置：${clusterList.map((o,oj)=>oj===ci?'':`<span class="fp-bubble-link" onclick="scrollToFloorplanBubble(${oj})">${o.map(k=>escH(spots[k].code)).join('、')} ⇢</span>`).filter(Boolean).join('　')}</div>`:'';
     return `<div class="fp-bubble ${below?'below':''}" data-ci="${ci}" style="left:${cx}%;top:${top}%;--shift:${shift}%">
       <button type="button" class="fp-bubble-x" onclick="clearFloorplanBubbles()" aria-label="關閉">✕</button>
-      <div class="fp-bubble-title">📦 ${escH(itemName||'器材')}在這裡</div>
+      <div class="fp-bubble-title">${escH(itemName||'器材')}在這裡</div>
       <div class="fp-bubble-sub">${sub}</div>
       ${links}${others}
     </div>`;
@@ -3315,7 +3317,7 @@ async function setMinDates(){
     const bd=bdEl.value,rd=rdEl.value;
     if(!rd){updateDateDisplays();return;}
     if(bd&&rd<bd){
-      setDateHint('f-return-date','f-return-date-display',`⚠️ 歸還日期不能早於借用日期（${bd}），請改一下`,true);
+      setDateHint('f-return-date','f-return-date-display',`歸還日期不能早於借用日期（${bd}），請改一下`,true);
       return;
     }
     updateDateDisplays();
@@ -3377,7 +3379,7 @@ function updateProxyNotice(){
   const p=document.getElementById('f-purpose')?.value||'';
   const on=isTeacherProxyPurpose(p,currentRole);
   el.style.display=on?'block':'none';
-  if(on)el.innerHTML=`<b>👩‍🏫 老師代借「${escH(p)}」</b><br>${PROXY_NOTICE_TEXT}`;
+  if(on)el.innerHTML=`<b>老師代借「${escH(p)}」</b><br>${PROXY_NOTICE_TEXT}`;
 }
 function depositFor(needs,hasVenue,hasEquip){
   if(!needs)return {type:'無',amount:0};
@@ -3604,7 +3606,7 @@ async function findPeriodConflicts(periods){
   return lines;
 }
 function showConflictModal(lines){
-  showModal('⚠️ 部分時段已被使用',`<p>以下時段已有人借用（包含還在審核中的申請），一般課堂原則上一班一教室：</p><div style="margin-top:8px;font-size:13px">${lines.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px;color:var(--text2)">請調整時段後再送出，你填的其他資料都還在。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
+  showModal('部分時段已被使用',`<p>以下時段已有人借用（包含還在審核中的申請），一般課堂原則上一班一教室：</p><div style="margin-top:8px;font-size:13px">${lines.map(c=>`<div style="padding:3px 0;color:var(--danger)">${c}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px;color:var(--text2)">請調整時段後再送出，你填的其他資料都還在。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
 }
 async function submitVenueRequest(){
   if(submittingVenue)return;
@@ -3633,7 +3635,7 @@ async function submitVenueRequest(){
   submittingVenue=true;
   const submitBtns=[...document.querySelectorAll('#modalActions .btn-primary')];
   submitBtns.forEach(b=>{b.disabled=true;b.textContent='提交中…';});
-  const unlock=()=>{submittingVenue=false;submitBtns.forEach(b=>{b.disabled=false;b.textContent='📋 提交申請';});};
+  const unlock=()=>{submittingVenue=false;submitBtns.forEach(b=>{b.disabled=false;b.textContent='提交申請';});};
   if(!isShareablePurpose(purpose)){
     const conflicts=await findPeriodConflicts(periods);
     if(conflicts===null){unlock();showToast('無法確認場地是否已被預約，請稍後再試','error');return;}
@@ -3656,7 +3658,7 @@ async function submitVenueRequest(){
     // 有選實驗：每一節記一筆實驗紀錄（學期實驗頁會顯示）
     const expV=(document.getElementById('vExpGroup')?.style.display!=='none')?(document.getElementById('vf-exp')?.value||'').trim():'';
     if(expV&&typeof sxRunsForBooking==='function')await sxRunsForBooking(id,periods,expV,name,grade,{purpose});
-    showModal('✅ 場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。審核前課表上會以<strong>虛線框</strong>顯示「待審核」，其他人也看得到，不會被重複預約。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
+    showModal('場地預約申請已送出',`<p>申請編號：<strong style="font-family:'DM Mono',monospace">${id}</strong></p><p style="margin-top:8px;font-size:13px;color:var(--text2)">共申請 ${periods.length} 個時段。審核前課表上會以<strong>虛線框</strong>顯示「待審核」，其他人也看得到，不會被重複預約。</p>`,[{label:'確定',cls:'btn-primary',fn:'closeModal()'}]);
     periodRows=[];
     submittingVenue=false;
     venuePicks=[];renderVenuePickBar();
@@ -3784,7 +3786,7 @@ function holCls(h){return !h?'':holClosed(h)?'closed-col':'holiday-col';}
 function holTag(h){
   if(!h)return '';
   const lb=String(h.label||(holClosed(h)?'停課':'假期'));
-  return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:'🎉'+lb;
+  return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:''+lb;
 }
 let allHolidaysFront=[];
 async function loadHolidaysFront(){
@@ -3834,7 +3836,7 @@ function applyVenueViewMode(){
   const dv=document.getElementById('venueDayView'),tw=document.getElementById('venueTableWrapEl'),btn=document.getElementById('venueViewToggleBtn');
   if(dv)dv.style.display=day?'block':'none';
   if(tw)tw.style.display=day?'none':'';
-  if(btn)btn.textContent=day?'🗓️ 週課表':'📋 日檢視';
+  if(btn)btn.textContent=day?'週課表':'日檢視';
 }
 function toggleVenueViewMode(){venueViewMode=(venueViewMode==='day')?'week':'day';applyVenueViewMode();}
 function setVenueDay(i){venueDayIdx=i;if(window._venueDates)renderVenueDayView(window._venueDates);}
@@ -3854,14 +3856,14 @@ function renderVenueDayView(dates){
       const blocking=bks.some(x=>!isShareablePurpose(x.purpose)&&x.periodStatus!=='已拒絕');
       const chips=bks.map(x=>{
         const st=x.periodStatus==='已拒絕'?'st-rejected':(x.periodStatus==='待審核'?'st-pending':'st-approved');
-        return `<span class="venue-booking ${categoryClass(resolveCategory(x))} ${st}" onclick="showVenueSlotInfo('${dateStr}','${period}','${vf}')">${x.is_fixed?'📌':''}${venueLabel(x)}${x.periodStatus==='待審核'?'（待審）':''}</span>`;
+        return `<span class="venue-booking ${categoryClass(resolveCategory(x))} ${st}" onclick="showVenueSlotInfo('${dateStr}','${period}','${vf}')">${x.is_fixed?'':''}${venueLabel(x)}${x.periodStatus==='待審核'?'（待審）':''}</span>`;
       }).join('');
       const add=blocking?'':`<button type="button" class="vd-add" onclick="openVenueBookingModal('${dateStr}','${period}','${vf}')">＋ 預約</button>`;
       return `<div class="vd-row">${LABS.length>1?`<span class="vd-lab">${lab}</span>`:''}<div class="vd-slot">${chips}${add}</div></div>`;
     }).join('');
     return `<div class="vd-period ${OFF_PERIODS.includes(period)?'off-period':''}"><div class="vd-period-name">${period}</div><div class="vd-period-body">${rows}</div></div>`;
   }).join('');
-  box.innerHTML=days+(hol?(holClosed(hol)?`<div class="vd-holiday-banner closed">停課：${escH(hol.label||'停課')}${hol.from_period?`（${escH(hol.from_period)}起）`:'（整天）'}，這段時間的預約不會上課</div>`:`<div class="vd-holiday-banner">🎉 ${escH(hol.label)}（仍可預約）</div>`):'')+body;
+  box.innerHTML=days+(hol?(holClosed(hol)?`<div class="vd-holiday-banner closed">停課：${escH(hol.label||'停課')}${hol.from_period?`（${escH(hol.from_period)}起）`:'（整天）'}，這段時間的預約不會上課</div>`:`<div class="vd-holiday-banner">${escH(hol.label)}（仍可預約）</div>`):'')+body;
 }
 // 除了自主學習可以多組共用同一間教室外，其他目的（課程/探究/選修/菁英/科展/社團/其他）視為獨佔（一班一教室）
 function isShareablePurpose(purpose){return purpose==='自主學習';}
@@ -3872,10 +3874,10 @@ function showVenueSlotInfo(dateStr,period,venue){
   const bookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venue);
   if(!bookings.length)return;
   const rows=bookings.map(b=>{
-    const statusLabel=(b.is_fixed||b.periodStatus==='已核准')?'✅ 已核准':(b.periodStatus==='已拒絕'?'❌ 已拒絕':'⏳ 待審核（尚未確認）');
+    const statusLabel=(b.is_fixed||b.periodStatus==='已核准')?'已核准':(b.periodStatus==='已拒絕'?'已拒絕':'待審核（尚未確認）');
     return `<div style="padding:6px 0;border-bottom:1px solid var(--surface2)">
       <div style="font-weight:700">${escH(b.borrower_name)}　<span style="font-weight:400;color:var(--text2);font-size:12.5px">${b.grade?escH(b.grade)+'・':''}${escH(b.purpose)}</span></div>
-      <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${statusLabel}${b.is_fixed?'　📌 固定課程':''}</div>
+      <div style="font-size:12.5px;color:var(--text2);margin-top:2px">${statusLabel}${b.is_fixed?'　固定課程':''}</div>
     </div>`;
   }).join('');
   showModal(`${dateStr} ${period} ${venue}`,rows,[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
@@ -3904,7 +3906,7 @@ function renderVenuePickBar(){
   const txt=venuePicks.map(x=>{const dt=new Date(x.date+'T00:00:00');return `${dt.getMonth()+1}/${dt.getDate()} ${x.period} ${x.venue.replace('實驗室','')}`;}).join('、');
   bar.innerHTML=`<div class="vp-txt"><b>已選 ${venuePicks.length} 個時段</b><span>${escH(txt)}</span></div>
     <button type="button" class="btn btn-secondary btn-sm" onclick="clearVenuePicks()">清除</button>
-    <button type="button" class="btn btn-primary" onclick="bookVenuePicks()">📅 填寫預約</button>`;
+    <button type="button" class="btn btn-primary" onclick="bookVenuePicks()">填寫預約</button>`;
   bar.classList.add('show');
 }
 function clearVenuePicks(){venuePicks=[];renderVenueTable(getWeekDates(venueWeekOffset));renderVenuePickBar();}
@@ -3924,14 +3926,14 @@ function openVenueBookingModal(dateStr,period,venue){
     const conflict=findVenueConflict(dateStr,period,venue);
     if(conflict){
       const statusLabel=(conflict.is_fixed||conflict.periodStatus==='已核准')?'已核准':'待審核（尚未確認）';
-      showModal('⚠️ 此時段已有人使用',`<p><strong>${escH(conflict.borrower_name)}</strong>（${escH(conflict.purpose)}）— ${statusLabel}</p><p style="margin-top:8px;font-size:13px;color:var(--text2)">${dateStr} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">一般課堂原則上一班一教室，請改選其他空堂時段。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
+      showModal('此時段已有人使用',`<p><strong>${escH(conflict.borrower_name)}</strong>（${escH(conflict.purpose)}）— ${statusLabel}</p><p style="margin-top:8px;font-size:13px;color:var(--text2)">${dateStr} ${period} ${venue}</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">一般課堂原則上一班一教室，請改選其他空堂時段。</p>`,[{label:'我知道了',cls:'btn-primary',fn:'closeModal()'}]);
       return;
     }
   }
   const body=`
     <div class="role-tabs" style="margin-bottom:12px">
-      <div class="role-tab" id="vroleTabStudent" onclick="setVenueRole('學生')">🎓 學生</div>
-      <div class="role-tab active" id="vroleTabTeacher" onclick="setVenueRole('老師')">👨‍🏫 老師</div>
+      <div class="role-tab" id="vroleTabStudent" onclick="setVenueRole('學生')">學生</div>
+      <div class="role-tab active" id="vroleTabTeacher" onclick="setVenueRole('老師')">老師</div>
     </div>
     <div class="form-group"><label>姓名 *</label><input type="text" id="vf-name" maxlength="30" placeholder="輸入姓名"></div>
     <div class="form-group" id="vStudentIdGroup" style="display:none"><label>學號 *</label><input type="text" id="vf-student-id" maxlength="20" placeholder="輸入學號"></div>
@@ -3951,18 +3953,18 @@ function openVenueBookingModal(dateStr,period,venue){
     <div class="form-group" id="vSupervisorGroup" style="display:none">
       <label>指導老師／陪同老師</label>
       <input type="text" id="vf-supervisor" maxlength="30" placeholder="輸入陪同老師姓名">
-      <div class="hint">⚠️ 無老師陪同不得使用實驗室 ⚠️</div>
+      <div class="hint">無老師陪同不得使用實驗室 </div>
     </div>
     <div class="form-group"><label>備註說明</label><textarea id="vf-note" rows="2" maxlength="500" placeholder="說明用途…"></textarea></div>
     <div style="margin-top:10px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:6px">📅 借用時段</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:6px">借用時段</div>
       <div class="period-list" id="periodList"></div>
       <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="addPeriodRow()">＋ 新增時段</button>
     </div>
   `;
-  showModal(dateStr?`🏛️ 場地預約 — ${dateStr} ${period}`:'🏛️ 場地預約申請',body,[
+  showModal(dateStr?`場地預約 — ${dateStr} ${period}`:'場地預約申請',body,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
-    {label:'📋 提交申請',cls:'btn-primary',fn:'submitVenueRequest()'}
+    {label:'提交申請',cls:'btn-primary',fn:'submitVenueRequest()'}
   ]);
   periodRows=[];
   document.getElementById('periodList').innerHTML='';
@@ -4050,7 +4052,7 @@ function openVenueLabChooser(dateStr,period){
     return `<button type="button" class="vlc-row ${picked?'picked':''}" onclick="toggleVenuePick('${dateStr}','${period}','${vf}');openVenueLabChooser('${dateStr}','${period}')">${labBadge(lab)}${lab}實驗室<span class="vlc-st">${picked?'✓ 已選':'選這間'}</span></button>`;
   }).join('');
   const d=dateStr.slice(5).replace('-','/').replace(/^0/,'').replace('/0','/');
-  showModal(`${d} ${period}　選實驗室`,`<div class="vlc-list">${rows}</div><div class="hint" style="margin-top:8px">可以選好幾間；選好後按畫面下方的「📅 填寫預約」一起填表。</div>`,[{label:'完成',cls:'btn-primary',fn:'closeModal()'}]);
+  showModal(`${d} ${period}　選實驗室`,`<div class="vlc-list">${rows}</div><div class="hint" style="margin-top:8px">可以選好幾間；選好後按畫面下方的「填寫預約」一起填表。</div>`,[{label:'完成',cls:'btn-primary',fn:'closeModal()'}]);
 }
 // ── 列印本週課表（A4 直式，一間實驗室一張，貼在門口用）──
 // 目前選哪間就印哪間；選「全部」就五間各印一張。
@@ -4074,7 +4076,7 @@ function printVenueWeek(){
     const bk=venueBookings.filter(b=>b.displayVenue===vf&&b.periodStatus!=='已拒絕');
     const wkEndHas=dates.slice(5).some(d=>bk.some(b=>b.displayDate===fmtDate(d)));
     const ds=(venueShowWeekend||wkEndHas)?dates:dates.slice(0,5);
-    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):''}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^🎉/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
+    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):''}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
     const body=PERIODS.map(p=>{
       const off=OFF_PERIODS.includes(p);
       return `<tr class="${off?'off':''}"><td class="pc">${p}</td>${ds.map(d=>{
@@ -4122,7 +4124,7 @@ footer{display:flex;justify-content:space-between;font-size:9pt;color:#444;margi
 @media print{.bar{display:none}}
 @media screen{.page{border:1px solid #ccc;margin:12px auto;width:192mm;max-width:100%;padding:6mm;height:auto;min-height:278mm}}
 </style></head><body>
-<div class="bar"><button onclick="window.print()">🖨️ 列印</button><span>共 ${labs.length} 張 A4（直式）。手機上請在列印畫面選「儲存為 PDF」或直接印。</span></div>
+<div class="bar"><button onclick="window.print()">列印</button><span>共 ${labs.length} 張 A4（直式）。手機上請在列印畫面選「儲存為 PDF」或直接印。</span></div>
 ${pages}</body></html>`;
   const w=window.open('','_blank');
   if(!w){showToast('瀏覽器擋住了新視窗，請允許彈出視窗後再試','error');return;}
@@ -4223,7 +4225,7 @@ function closeVenueFullscreen(e){if(!e||e.target===document.getElementById('venu
 function toggleVenueFsMode(){
   const body=document.getElementById('venueFsBody');
   const scroll=body.classList.toggle('scroll-mode');
-  document.getElementById('vfsModeBtn').textContent=scroll?'🗺️ 總覽':'🔍 放大';
+  document.getElementById('vfsModeBtn').textContent=scroll?'總覽':'放大';
   fitVenueFs();
 }
 function fitVenueFs(){
@@ -4240,12 +4242,12 @@ function fitVenueFs(){
 window.addEventListener('resize',()=>{if(venueFsOpen())fitVenueFs();fitInlineVenue();});
 
 // ── 手機版場地週曆：預設縮小到整週剛好塞進畫面寬度（不用橫向滑動），
-//    「🔍 放大細看」可切換成正常大小＋橫向捲動，方便實際點選預約 ──
+//    「放大細看」可切換成正常大小＋橫向捲動，方便實際點選預約 ──
 let inlineVenueZoomed=false;
 function toggleInlineVenueZoom(){
   inlineVenueZoomed=!inlineVenueZoomed;
   const btn=document.getElementById('inlineZoomBtn');
-  if(btn)btn.textContent=inlineVenueZoomed?'🗺️ 總覽':'🔍 放大';
+  if(btn)btn.textContent=inlineVenueZoomed?'總覽':'放大';
   fitInlineVenue();
 }
 function fitInlineVenue(){
@@ -4284,7 +4286,7 @@ function nextReturnDate(name,room){
 function getBorrowerInfo(name,room){
   const active=activeBorrowRecords.filter(r=>(r.status==='已核准'||r.status==='逾期')&&Array.isArray(r.items)&&r.items.some(i=>i.name===name&&i.room===room));
   if(!active.length)return '';
-  return active.map(r=>`<div class="borrower-tag">📌 ${escH(r.borrower_name)} 借用中${r.return_date?`（${r.status==='逾期'?'已逾期，原訂':'預計'} ${escH(md(r.return_date))} 還）`:''}</div>`).join('');
+  return active.map(r=>`<div class="borrower-tag">${escH(r.borrower_name)} 借用中${r.return_date?`（${r.status==='逾期'?'已逾期，原訂':'預計'} ${escH(md(r.return_date))} 還）`:''}</div>`).join('');
 }
 
 // ── 照片上傳（備註用，主表單與購物車快速送出共用）──────────
@@ -4407,8 +4409,8 @@ function venueNotBookedWarning(){
   const v=document.getElementById('f-venue')?.value;
   if(!v||getInlineVenueDraft())return '';
   return currentRole==='學生'
-    ?`⚠️ 選了「${escH(v)}」，但學生借教室要到「場地預約」頁另外申請，這張單不會預約教室`
-    :`⚠️ 選了「${escH(v)}」但沒勾「一起送出場地預約」，教室不會被預約`;
+    ?`選了「${escH(v)}」，但學生借教室要到「場地預約」頁另外申請，這張單不會預約教室`
+    :`選了「${escH(v)}」但沒勾「一起送出場地預約」，教室不會被預約`;
 }
 function venueDraftText(periods){
   if(!periods)return '';
@@ -4428,10 +4430,10 @@ function updateBorrowDraftBar(){
   if(!show){bar.innerHTML='';return;}
   const total=items.reduce((a,i)=>a+itemCount(i),0);
   const bd=document.getElementById('f-borrow-date').value,rd=document.getElementById('f-return-date').value;
-  bar.innerHTML=`<div class="db-text">📋 <b>借用單還沒送出</b>　已選 ${items.length} 項／${total} 件　${bd?escH(bd.slice(5))+'～'+escH((rd||'').slice(5)):''}
-    ${venue?`<br><span class="db-venue">📅 會一起預約場地：${venueDraftText(venue)}</span>`:''}${venueNotBookedWarning()?`<br><span style="color:var(--danger);font-weight:600">${venueNotBookedWarning()}</span>`:''}</div>
+  bar.innerHTML=`<div class="db-text"><b>借用單還沒送出</b>　已選 ${items.length} 項／${total} 件　${bd?escH(bd.slice(5))+'～'+escH((rd||'').slice(5)):''}
+    ${venue?`<br><span class="db-venue">會一起預約場地：${venueDraftText(venue)}</span>`:''}${venueNotBookedWarning()?`<br><span style="color:var(--danger);font-weight:600">${venueNotBookedWarning()}</span>`:''}</div>
     <button class="btn btn-secondary btn-sm" onclick="showPage('borrow')">← 回借用單</button>
-    <button class="btn btn-primary btn-sm" onclick="openCart()">🛒 檢查並送出</button>`;
+    <button class="btn btn-primary btn-sm" onclick="openCart()">檢查並送出</button>`;
 }
 // 購物車底部：送出前讓使用者看到這張單的日期、目的、有沒有含場地
 function renderCartFormSummary(){
@@ -4444,15 +4446,15 @@ function renderCartFormSummary(){
   const vWarn=venueNotBookedWarning();
   const proxy=isTeacherProxyPurpose(document.getElementById('f-purpose')?.value||'',currentRole);
   box.innerHTML=`<button type="button" class="cfs-edit" onclick="openCartFormEdit()" aria-label="修改姓名、目的、日期">
-      <span class="cfs-lines"><span>👤 ${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　🎯 ${escH(purpose)}</span>
-      <span>📆 借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</span>
-      ${proxy?'<span class="cfs-proxy">👩‍🏫 代學生借用：請學生另填表單並繳保證金</span>':''}</span>
-      <span class="cfs-pen">✏️ 修改</span></button>
+      <span class="cfs-lines"><span>${name?escH(name):'<span style="color:var(--danger)">姓名未填</span>'}　${escH(purpose)}</span>
+      <span>借用 ${escH(bd||'未選')} → 歸還 ${escH(rd||'未選')}</span>
+      ${proxy?'<span class="cfs-proxy">代學生借用：請學生另填表單並繳保證金</span>':''}</span>
+      <span class="cfs-pen">修改</span></button>
     <button type="button" class="cfs-venue ${venue?'':(vWarn?'warn':'none')}" onclick="openCartVenueEdit()">
-      <span>${venue?`📅 場地會一起送出：${venueDraftText(venue)}`:(vWarn||'📅 這張單沒有同步預約場地')}</span>
+      <span>${venue?`場地會一起送出：${venueDraftText(venue)}`:(vWarn||'這張單沒有同步預約場地')}</span>
       <span class="cfs-pen">${venue?'改時段 ›':(currentRole==='學生'?'去預約 ›':'＋ 加場地 ›')}</span></button>`;
   const btn=document.getElementById('cartSubmitBtn');
-  if(btn)btn.textContent=venue&&venue.length?'📋 送出器材＋場地申請':'📋 直接提交申請';
+  if(btn)btn.textContent=venue&&venue.length?'送出器材＋場地申請':'直接提交申請';
 }
 // 送出後跳到場地課表，並切到該時段所在的那一週
 function goVenueWeekOf(dateStr){
@@ -4478,13 +4480,13 @@ function renderBorrowSidePanel(){
   const dep=depositFor(needs,!!document.getElementById('f-venue').value,items.length>0);
   const warn=venueNotBookedWarning();
   const list=items.length?items.map((i,idx)=>{
-    if(i._isChem)return `<div class="bsp-item"><div class="ph">🧪</div>
+    if(i._isChem)return `<div class="bsp-item"><div class="ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 0 0 4 0V3M10 11h4"/></svg></div>
       <div class="nm"><b>${escH(i.name)}</b><span>藥品・${escH(i.spec||'')}</span></div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="sideItemQty(${idx},0)">修改</button>
     </div>`;
     const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(eq?.image_url);
-    return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph">🔬</div>'}
+    return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>'}
       <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
       <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button>${i._isChem?`<span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span>`:qtyNum(i.quantity,null,`sideItemSet(${idx},this.value)`)+(i.loose?`<small>${escH(itemUnitLabel(i))}</small>`:'')}<button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
@@ -4560,11 +4562,11 @@ function safeUrl(u){u=String(u||'').trim();return /^https?:\/\//i.test(u)?u:'';}
 function searchResultRowHTML(listName,e,i,withBorrower){
   const avail=parseInt(e.available)||0,key=e.room+'__'+e.name,qty=selectedItems[key]?.quantity||0;
   const img=safeUrl(e.image_url);
-  const imgHtml=img?`<img class="sr-thumb" src="${escH(img)}" loading="lazy" onclick="srZoom('${listName}',${i})" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph">🔬</div>`;
+  const imgHtml=img?`<img class="sr-thumb" src="${escH(img)}" loading="lazy" onclick="srZoom('${listName}',${i})" onerror="this.style.display='none'">`:`<div class="sr-thumb-ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
   const hasLoc=!!e.location;
-  // 名稱 → 器材資料卡；📍位置 → 平面圖（2026-10-19）
+  // 名稱 → 器材資料卡；位置 → 平面圖（2026-10-19）
   const nameHtml=`<div class="sr-name sr-link" title="點我看器材資料" onclick="srDetail('${listName}',${i})">${escH(e.name)}</div>`;
-  const locHtml=hasLoc?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="srLoc('${listName}',${i})">📍${escH(e.location)}</span>`:'';
+  const locHtml=hasLoc?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="srLoc('${listName}',${i})">${escH(e.location)}</span>`:'';
   return `<div class="search-result-item">
     ${imgHtml}
     <div style="flex:1;min-width:0">${nameHtml}<div class="sr-room">${escH(rn(e.room))} ${locHtml}</div>${e.spec?`<div class="sr-spec">${escH(e.spec)}</div>`:''}${withBorrower?getBorrowerInfo(e.name,e.room):''}</div>
@@ -4625,19 +4627,19 @@ function doBorrowPageSearch(q,now){
 function renderCart(){
   const body=document.getElementById('cartBody'),items=Object.values(selectedItems);
   window._cartItems=items;
-  if(!items.length){body.innerHTML='<div class="empty"><div class="empty-icon">🛒</div><p>尚未選擇任何器材</p></div>';return;}
+  if(!items.length){body.innerHTML='<div class="empty"><p>尚未選擇任何器材</p></div>';return;}
   body.innerHTML=items.map((i,idx)=>{
-    if(i._isChem)return `<div class="cart-item"><div class="cart-item-thumb-ph">🧪</div>
-      <div class="cart-item-info"><div class="cart-item-name">${escH(i.name)}</div><div class="cart-item-sub">藥品・${escH(i.spec||'')}${i.note?'・📝 '+escH(i.note):''}</div></div>
+    if(i._isChem)return `<div class="cart-item"><div class="cart-item-thumb-ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 0 0 4 0V3M10 11h4"/></svg></div>
+      <div class="cart-item-info"><div class="cart-item-name">${escH(i.name)}</div><div class="cart-item-sub">藥品・${escH(i.spec||'')}${i.note?'・'+escH(i.note):''}</div></div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="cartItemQty(${idx},0)">修改</button>
       <button class="cart-item-remove" onclick="cartItemRemove(${idx})" aria-label="移除">✕</button>
     </div>`;
     const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(equip?.image_url);
-    const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph">🔬</div>`;
-    const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">📍${escH(equip.location)}</span>`:'';
+    const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
+    const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">${escH(equip.location)}</span>`:'';
     return `<div class="cart-item">${imgHtml}
-      <div class="cart-item-info"><div class="cart-item-name ${equip?'sr-link':''}" ${equip?`onclick="cartItemDetail(${idx})" title="點我看器材資料"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">📦 套組・${k.length} 項</span>`:'';})()}</div>
+      <div class="cart-item-info"><div class="cart-item-name ${equip?'sr-link':''}" ${equip?`onclick="cartItemDetail(${idx})" title="點我看器材資料"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">套組・${k.length} 項</span>`:'';})()}</div>
         ${isPackUnit(i.unit)?`<div class="loose-toggle" role="group" aria-label="借用方式">
           <button type="button" class="${i.loose?'':'on'}" onclick="cartSetLoose(${idx},false)">整${escH(i.unit)}借</button>
           <button type="button" class="${i.loose?'on':''}" onclick="cartSetLoose(${idx},true)">只拿幾個</button></div>`:''}</div>
@@ -4748,17 +4750,17 @@ async function loadEquipmentData(){
 function renderRoomTabs(){
   const el=document.getElementById('roomTabs');if(!el)return;
   const ordered=userHomeLab?[userHomeLab,...allRooms.filter(r=>r!==userHomeLab)]:allRooms;
-  el.innerHTML=ordered.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${r===userHomeLab?'🏠 ':''}${rn(r)}</button>`).join('');
+  el.innerHTML=ordered.map(r=>`<button class="room-tab ${r===currentRoom?'active':''}" onclick="selectRoom('${r}')">${r===userHomeLab?'':''}${rn(r)}</button>`).join('');
 }
 function selectRoom(room){currentRoom=room;renderRoomTabs();renderEquipList();}
 function renderEquipList(){
   const list=document.getElementById('equipList');if(!list)return;
   const items=allEquipment.filter(e=>e.room===currentRoom);
-  if(!items.length){list.innerHTML='<div class="empty"><div class="empty-icon">📦</div><p>此房間目前無器材</p></div>';return;}
+  if(!items.length){list.innerHTML='<div class="empty"><p>此房間目前無器材</p></div>';return;}
   list.innerHTML=items.map(e=>{
     const avail=parseInt(e.available)||0,qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
     const U=safeUrl(e.image_url),A=`${ja(e.room)},${ja(e.name)},${ja(e.spec||'')},${ja(e.unit)},${avail}`;
-    const imgHtml=U?`<img class="equip-thumb" src="${escH(U)}" loading="lazy" onclick="event.stopPropagation();openLightbox(${ja(U)},${ja(e.name)})" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none">🔬</div>`:`<div class="equip-thumb-ph">🔬</div>`;
+    const imgHtml=U?`<img class="equip-thumb" src="${escH(U)}" loading="lazy" onclick="event.stopPropagation();openLightbox(${ja(U)},${ja(e.name)})" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="equip-thumb-ph" style="display:none"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`:`<div class="equip-thumb-ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
     const borrowerInfo=getBorrowerInfo(e.name,e.room);
     const locHtml=e.location?' ・ '+decodeLocation(e.location,e.room):'';
     return `<div class="equip-row ${avail<=0?'unavailable':''}">
@@ -4782,11 +4784,11 @@ function equipRestrictNote(room,name){
 }
 function electiveTagHtml(room,name){
   const n=equipRestrictNote(room,name);
-  return n?`<span class="eq-tag elective" title="選修課專用：${escH(n)}">🎓 選修專用</span>`:'';
+  return n?`<span class="eq-tag elective" title="選修課專用：${escH(n)}">選修專用</span>`:'';
 }
 function electiveBoxHtml(room,name){
   const n=equipRestrictNote(room,name);
-  return n?`<div class="elective-box">🎓 <strong>選修課專用器材</strong>（${escH(n)}）<br>借用前請先詢問負責老師，確認不影響選修課使用。</div>`:'';
+  return n?`<div class="elective-box"><strong>選修課專用器材</strong>（${escH(n)}）<br>借用前請先詢問負責老師，確認不影響選修課使用。</div>`:'';
 }
 function ackRestrictAndAdd(room,name,spec,unit,avail){
   restrictAck.add(room+'__'+name);
@@ -4799,7 +4801,7 @@ function changeQty(room,name,spec,unit,avail,delta){
   if(delta>0&&cur===0&&!restrictAck.has(key)){
     const rnote=equipRestrictNote(room,name);
     if(rnote){
-      showModal('🎓 選修課專用器材',
+      showModal('選修課專用器材',
         `<p style="font-size:14px;line-height:1.7">「<strong>${escH(name)}</strong>」（${escH(rn(room))}）是選修課專用的器材：</p>
         <div class="elective-box" style="margin:8px 0 10px">${escH(rnote)}</div>
         <p style="font-size:13.5px;line-height:1.7">借用前請<strong>先詢問負責的老師</strong>，確認不會影響選修課使用。管理員審核時也會看到這個提醒。</p>`,
@@ -4811,7 +4813,7 @@ function changeQty(room,name,spec,unit,avail,delta){
   if(delta>0&&cur===0&&userHomeLab&&room!==userHomeLab){
     const homeEquip=allEquipment.find(e=>e.room===userHomeLab&&e.name===name&&parseInt(e.available)>0);
     if(homeEquip){
-      showModal('💡 本科還有現貨',
+      showModal('本科還有現貨',
         `<p style="font-size:13px">您正在借用 <strong>${rn(room)}</strong> 的「${name}」，但 <strong>${rn(userHomeLab)}</strong> 目前還有 <strong>${homeEquip.available}</strong> ${homeEquip.unit} 可借。</p>`,
         [{label:`改借本科（${rn(userHomeLab)}）`,cls:'btn-primary',fn:`closeModal();_addQty(${ja(userHomeLab)},${ja(name)},${ja(homeEquip.spec||'')},${ja(homeEquip.unit)},${parseInt(homeEquip.available)||0},1)`},
          {label:'仍要借此項',cls:'btn-secondary',fn:`closeModal();_addQty(${ja(room)},${ja(name)},${ja(spec||'')},${ja(unit)},${parseInt(avail)||0},1)`}]);
@@ -4855,7 +4857,7 @@ function onPurposeChange(fromUser){
     const free=TEACHER_PURPOSES.filter(o=>!purposeNeedsDeposit(o.value,'老師')).map(o=>'「'+escH(o.label)+'」').join('');
     const fmt=n=>Number(n).toLocaleString();
     window._revertPurposeTo=prev;
-    showModal('⚠️ 這個目的需要繳保證金',`<p>選擇「${escH(purposeLabel(p))}」需繳保證金（僅器材 NT$${fmt(DEPOSIT_AMT.equip)}／僅場地 NT$${fmt(DEPOSIT_AMT.venue)}／兩者 NT$${fmt(DEPOSIT_AMT.both)}，完整歸還後退還）。</p>${free?`<p style="margin-top:8px;font-size:14px;color:var(--text2)">一般上課請選${free}，不需保證金。</p>`:''}`,[
+    showModal('這個目的需要繳保證金',`<p>選擇「${escH(purposeLabel(p))}」需繳保證金（僅器材 NT$${fmt(DEPOSIT_AMT.equip)}／僅場地 NT$${fmt(DEPOSIT_AMT.venue)}／兩者 NT$${fmt(DEPOSIT_AMT.both)}，完整歸還後退還）。</p>${free?`<p style="margin-top:8px;font-size:14px;color:var(--text2)">一般上課請選${free}，不需保證金。</p>`:''}`,[
       {label:'改回原本的目的',cls:'btn-secondary',fn:`revertPurpose(window._revertPurposeTo||'')`},
       {label:'確定，就是這個目的',cls:'btn-primary',fn:'closeModal()'}
     ]);
@@ -4926,8 +4928,8 @@ function showQuickFillModal(errs,mode){
   let html=`<p style="font-size:13px;color:var(--text2);margin-bottom:10px">${edit?'改完按「確定」，會同步回借用單（還不會送出）：':'請確認／補齊以下資料即可送出申請：'}</p>`;
   html+=`<div class="form-group"><label>身份</label>
     <div class="role-tabs" style="margin-bottom:0">
-      <div class="role-tab ${currentRole==='學生'?'active':''}" onclick="qfSetRole('學生')">🎓 學生</div>
-      <div class="role-tab ${currentRole==='老師'?'active':''}" onclick="qfSetRole('老師')">👨‍🏫 老師</div>
+      <div class="role-tab ${currentRole==='學生'?'active':''}" onclick="qfSetRole('學生')">學生</div>
+      <div class="role-tab ${currentRole==='老師'?'active':''}" onclick="qfSetRole('老師')">老師</div>
     </div></div>`;
   if(fields.has('name'))html+=`<div class="form-group"><label>姓名 *</label><input id="qf-name" maxlength="30" placeholder="輸入姓名" value="${val('f-name')}">${errOf('name')}</div>`;
   if(fields.has('studentId'))html+=`<div class="form-group" id="qf-sid-group"><label>學號 *</label><input id="qf-sid" maxlength="20" placeholder="輸入學號" value="${val('f-student-id')}">${errOf('studentId')}</div>`;
@@ -4945,17 +4947,17 @@ function showQuickFillModal(errs,mode){
   // 備註與照片：固定顯示，不論其他欄位是否缺漏
   html+=`<div class="form-group"><label>備註說明</label><textarea id="qf-note" rows="2" maxlength="500" placeholder="其他說明、特殊需求…">${escH(document.getElementById('f-note').value)}</textarea></div>`;
   html+=`<div class="form-group">
-    <label>📷 上傳照片（最多${MAX_PHOTOS}張；找不到器材時只傳照片也可以） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
+    <label>上傳照片（最多${MAX_PHOTOS}張；找不到器材時只傳照片也可以） <span id="qf-photos-count" style="font-weight:400;color:var(--text2)"></span></label>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button type="button" class="btn btn-primary" onclick="document.getElementById('qf-photos-camera').click()">📷 拍照</button>
-      <button type="button" class="btn btn-secondary" onclick="document.getElementById('qf-photos-gallery').click()">🖼️ 從相簿選</button>
+      <button type="button" class="btn btn-primary" onclick="document.getElementById('qf-photos-camera').click()">拍照</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('qf-photos-gallery').click()">從相簿選</button>
     </div>
     <input type="file" id="qf-photos-camera" accept="image/*" capture="environment" style="display:none" onchange="addPhotos(this.files);this.value=''">
     <input type="file" id="qf-photos-gallery" accept="image/*" multiple style="display:none" onchange="addPhotos(this.files);this.value=''">
     <div class="hint">可拍攝器材現況、損壞處等，每張會自動壓縮</div>
     <div id="qf-photos-preview" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
   </div>`;
-  showModal(edit?'✏️ 修改借用資料':'📋 確認借用資料',html,edit?[
+  showModal(edit?'修改借用資料':'確認借用資料',html,edit?[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'✓ 確定',cls:'btn-primary',fn:'saveQuickEdit()'}
   ]:[
@@ -4974,7 +4976,7 @@ function qfDateChanged(which){
   b.classList.remove('field-error');r.classList.remove('field-error');if(eb)eb.textContent='';if(er)er.textContent='';
   if(b.value&&b.value<t){b.value=t;if(eb)eb.textContent='↻ 不能選今天以前，已改為今天';}
   if(b.value){r.min=b.value;if(which==='b'&&r.value&&r.value<b.value){r.value=nextSchoolDay(b.value);if(er)er.textContent='↻ 歸還日已自動改為 '+r.value+'（可再修改）';}}
-  if(which==='r'&&r.value&&b.value&&r.value<b.value){r.classList.add('field-error');if(er)er.textContent='⚠️ 歸還日期不能早於借用日期';}
+  if(which==='r'&&r.value&&b.value&&r.value<b.value){r.classList.add('field-error');if(er)er.textContent='歸還日期不能早於借用日期';}
 }
 function qfSetRole(role){
   currentRole=role;setRole(role);
@@ -5039,8 +5041,8 @@ function showBorrowFormErrors(errs){
   document.querySelectorAll('#page-borrow .field-error').forEach(el=>el.classList.remove('field-error'));
   errs.forEach(e=>{
     const el=document.getElementById(map[e.field]);if(el)el.classList.add('field-error');
-    if(e.field==='borrowDate')setDateHint('f-borrow-date','f-borrow-date-display','⚠️ '+e.msg,true);
-    if(e.field==='returnDate')setDateHint('f-return-date','f-return-date-display','⚠️ '+e.msg,true);
+    if(e.field==='borrowDate')setDateHint('f-borrow-date','f-borrow-date-display',''+e.msg,true);
+    if(e.field==='returnDate')setDateHint('f-return-date','f-return-date-display',''+e.msg,true);
   });
   const first=document.getElementById(map[errs[0].field]);
   if(first){first.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>first.focus({preventScroll:true}),350);}
@@ -5105,7 +5107,7 @@ if(courseNoteBody){
   const electiveItems=Object.values(selectedItems).filter(i=>!i._isChem&&equipRestrictNote(i.room,i.name));
   const unacked=electiveItems.filter(i=>!restrictAck.has(i.room+'__'+i.name));
   if(unacked.length){
-    showModal('🎓 清單裡有選修課專用器材',
+    showModal('清單裡有選修課專用器材',
       `<p style="font-size:13.5px;line-height:1.7;margin-bottom:8px">下列器材是選修課專用，借用前請先詢問負責的老師：</p>
       ${unacked.map(i=>`<div class="elective-box" style="margin-top:6px"><strong>${escH(i.name)}</strong>（${escH(rn(i.room))}）<br>${escH(equipRestrictNote(i.room,i.name))}</div>`).join('')}`,
       [{label:'回去修改清單',cls:'btn-secondary',fn:'closeModal();openCart()'},
@@ -5173,26 +5175,26 @@ if(courseNoteBody){
 
     // 結果分兩塊清楚列出：器材一塊、場地一塊（成功列出每個時段，失敗用紅框）
     const mono=`style="font-family:'DM Mono',monospace"`;
-    let resultHtml=`<div class="result-box ok"><div class="rb-title">✅ 器材借用申請已送出</div>
+    let resultHtml=`<div class="result-box ok"><div class="rb-title">器材借用申請已送出</div>
       編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(borrowDate)} 借 → ${escH(returnDate)} 還
-      ${da>0?`<br>💰 保證金 NT$${da}（${escH(dt)}），請至辦公室繳納`:''}
-      ${isTeacherProxyPurpose(purpose,currentRole)?`<br>👩‍🏫 ${PROXY_NOTICE_TEXT}`:''}</div>`;
+      ${da>0?`<br>保證金 NT$${da}（${escH(dt)}），請至辦公室繳納`:''}
+      ${isTeacherProxyPurpose(purpose,currentRole)?`<br>${PROXY_NOTICE_TEXT}`:''}</div>`;
     if(venueId){
-      resultHtml+=`<div class="result-box ok"><div class="rb-title">✅ 場地預約也已送出（待審核）</div>
+      resultHtml+=`<div class="result-box ok"><div class="rb-title">場地預約也已送出（待審核）</div>
         編號 <strong ${mono}>${escH(venueId)}</strong>
         <ul>${inlinePeriods.map(p=>`<li>${fmtPeriodShort(p)}　${escH(p.venue)}</li>`).join('')}</ul>
         <div style="color:var(--text2);font-size:12.5px;margin-top:4px">課表上已經看得到（虛線框＝待審核），別人不會再借走這些時段。</div></div>`;
     }else if(venueFail){
-      resultHtml+=`<div class="result-box fail"><div class="rb-title">❌ 場地預約沒有送出成功</div>
+      resultHtml+=`<div class="result-box fail"><div class="rb-title">場地預約沒有送出成功</div>
         器材借用已經送出，但教室還沒借到（${escH(venueFail)}）。<br>請按下方「重新預約場地」。</div>`;
     }else if(venue){
       resultHtml+=`<div class="result-box" style="background:var(--surface2)">ℹ️ 你在表單選了「${escH(venue)}」但<b>沒有勾選同步預約時段</b>，所以只登記了器材，教室還沒預約。</div>`;
     }
     const actions=[];
-    if(venueId)actions.push({label:'📅 看課表確認',cls:'btn-secondary',fn:`goVenueWeekOf('${escH(inlinePeriods[0]?.date||'')}')`});
-    if(venueFail||(!venueId&&venue))actions.push({label:'📅 重新預約場地',cls:'btn-warn',fn:"closeModal();showPage('venue')"});
+    if(venueId)actions.push({label:'看課表確認',cls:'btn-secondary',fn:`goVenueWeekOf('${escH(inlinePeriods[0]?.date||'')}')`});
+    if(venueFail||(!venueId&&venue))actions.push({label:'重新預約場地',cls:'btn-warn',fn:"closeModal();showPage('venue')"});
     actions.push({label:'確定',cls:'btn-primary',fn:'closeModal()'});
-    showModal(venueFail?'⚠️ 部分完成':'✅ 申請成功',resultHtml,actions);
+    showModal(venueFail?'部分完成':'申請成功',resultHtml,actions);
     lastSubmittedName=name;
     resetForm();
   }catch(e){showToast('提交失敗：'+e.message,'error');}
@@ -5229,7 +5231,7 @@ function forgetMe(){
   const cb=document.getElementById('rememberMe');if(cb)cb.checked=false;
   window._myRec=null;
   const list=document.getElementById('myRecordsList');
-  if(list)list.innerHTML='<div class="empty"><div class="empty-icon">📭</div><p>老師填完整姓名；學生填姓名＋學號</p></div>';
+  if(list)list.innerHTML='<div class="empty"><p>老師填完整姓名；學生填姓名＋學號</p></div>';
   updateForgetBtn();showToast('已清除這台裝置記住的資料','success');
 }
 // 借用表單：姓名、學號空著的話，帶入「我的紀錄」記住的資料
@@ -5280,7 +5282,7 @@ async function loadMyRecords(){
     }catch(_){}
     updateForgetBtn();
     renderMyRecords();
-  }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>查詢失敗</p></div>';}
+  }catch(e){list.innerHTML='<div class="empty"><p>查詢失敗</p></div>';}
 }
 // 我的記錄：依狀態分類（全部／審核中／已核准＝借出中／已歸還／已拒絕）
 const REC_TABS=[['all','全部'],['pending','審核中'],['ok','已核准'],['returned','已歸還'],['rejected','已拒絕']];
@@ -5304,9 +5306,9 @@ function myRecAlertsHtml(rows){
     else if(left!==null&&left<=3)soon.push({r,left});
   });
   const pending=(rows||[]).filter(r=>r.status==='待審核').length;
-  if(overdue.length)out.push(`<div class="rec-alert bad">🔴 有 <strong>${overdue.length}</strong> 筆已經超過歸還日，請盡快歸還（${overdue.map(r=>escH(md(r.return_date))).join('、')} 到期）</div>`);
-  if(soon.length)out.push(`<div class="rec-alert soon">⏰ 有 <strong>${soon.length}</strong> 筆快到期：${soon.map(x=>`${escH(md(x.r.return_date))}（${x.left===0?'今天':x.left+' 天後'}）`).join('、')}</div>`);
-  if(pending)out.push(`<div class="rec-alert wait">⏳ ${pending} 筆審核中，核准後就可以來領</div>`);
+  if(overdue.length)out.push(`<div class="rec-alert bad">有 <strong>${overdue.length}</strong> 筆已經超過歸還日，請盡快歸還（${overdue.map(r=>escH(md(r.return_date))).join('、')} 到期）</div>`);
+  if(soon.length)out.push(`<div class="rec-alert soon">有 <strong>${soon.length}</strong> 筆快到期：${soon.map(x=>`${escH(md(x.r.return_date))}（${x.left===0?'今天':x.left+' 天後'}）`).join('、')}</div>`);
+  if(pending)out.push(`<div class="rec-alert wait">${pending} 筆審核中，核准後就可以來領</div>`);
   return out.length?`<div class="rec-alerts">${out.join('')}</div>`:'';
 }
 // ── 再借一次／修改後重新申請：把那筆申請的器材放回借用清單 ──
@@ -5348,7 +5350,7 @@ function renderMyRecords(){
   const f=d.filter||'all';
   const all=[...d.rows.map(r=>({k:'b',r,b:recBucket(r.status)})),...d.venueRows.map(r=>({k:'v',r,b:recBucket(r.status)}))];
   if(!all.length){
-    list.innerHTML=`<div class="empty"><div class="empty-icon">📭</div><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${d.studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;return;
+    list.innerHTML=`<div class="empty"><p>查無記錄</p><p class="hint" style="margin-top:6px">姓名要和申請時填的完全一樣${d.studentId?'，學號也要相同':'；學生請一併填學號'}</p></div>`;return;
   }
   const count=k=>k==='all'?all.length:all.filter(x=>x.b===k).length;
   let html=myRecAlertsHtml(d.rows);
@@ -5363,7 +5365,7 @@ function renderMyRecords(){
       return `<div class="record-card">
         <div class="record-header"><div><span class="record-id">${escH(r.id)}</span><div style="font-size:14px;font-weight:700;margin-top:2px">${r.grade?escH(r.grade)+'・':''}${escH(r.purpose)}</div></div><span class="badge ${sc}">${escH(r.status)}</span></div>
         <div style="font-size:13px;margin-top:8px">${periods.map((p,i)=>`<div style="padding:2px 0">${i+1}. ${escH(p.date)} ${escH(p.period)} ${escH(p.venue)} <span class="badge ${p.status==='已核准'?'badge-approved':p.status==='已拒絕'?'badge-rejected':'badge-pending'}">${escH(p.status)}</span></div>`).join('')}</div>
-        ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">📝 ${escH(r.note)}</div>`:''}
+        ${r.note?`<div style="font-size:12px;color:var(--text2);margin-top:4px">${escH(r.note)}</div>`:''}
       </div>`;
     }).join('')+'</div>';
   }
@@ -5393,14 +5395,14 @@ function renderRecordListHTML(rows){
         const reason=m?m[1].trim():'';
         const plain=raw.replace(/^【拒絕原因】[^\n]*\n?/,'').replace(/\[COURSE_NOTE\][\s\S]*?\[\/COURSE_NOTE\]/g,'').trim();
         let h='';
-        if(r.status==='已拒絕')h+=`<div class="reject-box">❌ 沒有通過${reason?'：'+escH(reason):'，詳細原因可以詢問實驗室管理員'}</div>`;
-        if(plain)h+=`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">📝 ${escH(plain)}</div>`;
+        if(r.status==='已拒絕')h+=`<div class="reject-box">沒有通過${reason?'：'+escH(reason):'，詳細原因可以詢問實驗室管理員'}</div>`;
+        if(plain)h+=`<div style="font-size:11.5px;color:var(--text2);margin-top:4px">${escH(plain)}</div>`;
         return h;
       })()}
       ${photosHtml}
       ${items.length?`<div class="rec-card-actions">${r.status==='已拒絕'
-        ?`<button type="button" class="btn btn-primary btn-sm" onclick="reborrowRecord(${ja(r.id)})">✏️ 修改後重新申請</button>`
-        :`<button type="button" class="btn btn-secondary btn-sm" onclick="reborrowRecord(${ja(r.id)})">🔁 再借一次</button>`}</div>`:''}
+        ?`<button type="button" class="btn btn-primary btn-sm" onclick="reborrowRecord(${ja(r.id)})">修改後重新申請</button>`
+        :`<button type="button" class="btn btn-secondary btn-sm" onclick="reborrowRecord(${ja(r.id)})">再借一次</button>`}</div>`:''}
     </div>`;
   }).join('')+'</div>';
 }
@@ -5503,12 +5505,12 @@ async function renderChemSearchSection(){
   if(equipSearchType==='equip'||(equipSearchType==='all'&&!q)){box.innerHTML='';return;}
   const list=allChemicals.filter(c=>chemHit(c,q));
   const limit=equipSearchType==='all'?6:list.length;
-  if(!list.length){box.innerHTML=equipSearchType==='chem'?'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>':'<div class="hint" style="margin-top:14px">🧪 藥品：沒有符合的結果</div>';return;}
-  box.innerHTML=`<div class="chem-sec-title">🧪 藥品（${list.length} 筆）</div><div class="home-eq-list chem-sec-list">${list.slice(0,limit).map(c=>{
+  if(!list.length){box.innerHTML=equipSearchType==='chem'?'<div class="empty"><p>找不到符合的藥品</p></div>':'<div class="hint" style="margin-top:14px">藥品：沒有符合的結果</div>';return;}
+  box.innerHTML=`<div class="chem-sec-title">藥品（${list.length} 筆）</div><div class="home-eq-list chem-sec-list">${list.slice(0,limit).map(c=>{
     const avail=c.is_available!==false;
     return `<div class="home-eq-row chem-clickable" onclick="openChemDetail(${parseInt(c.id)})" title="看藥品資料與位置"><div class="home-eq-thumb${chemStructOk(c.structure)?' st':''}">${chemThumb(c)}</div><div class="home-eq-info">
       <div class="home-eq-name">${escH(c.name_zh||'')}</div>${c.name_en||c.formula?`<div class="home-eq-spec">${c.formula?fmtFormula(c.formula)+(c.name_en?'　':''):''}${escH(c.name_en||'')}</div>`:''}
-      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?(chemFreeLoc(c)?`<span class="eq-tag eq-loc" role="button" tabindex="0" title="點我看平面圖位置" onclick="event.stopPropagation();chemLocJump(${ja(c.id)})" onkeydown="if(event.key==='Enter'){event.stopPropagation();chemLocJump(${ja(c.id)})}">📍${escH(c.location)}</span>`:`<span class="eq-tag">📍${escH(c.location)}</span>`):''}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.category?`<span class="eq-tag">${escH(c.category)}</span>`:''}<span class="eq-tag">剩 ${escH(c.bottles_left??'?')} 瓶</span>${c.location?(chemFreeLoc(c)?`<span class="eq-tag eq-loc" role="button" tabindex="0" title="點我看平面圖位置" onclick="event.stopPropagation();chemLocJump(${ja(c.id)})" onkeydown="if(event.key==='Enter'){event.stopPropagation();chemLocJump(${ja(c.id)})}">${escH(c.location)}</span>`:`<span class="eq-tag">${escH(c.location)}</span>`):''}</div>
     </div>${avail?`<button type="button" class="home-eq-add" onclick="event.stopPropagation();openChemRequestModal(${parseInt(c.id)})">申請</button>`:`<button type="button" class="home-eq-add" disabled>暫不開放</button>`}</div>`;
   }).join('')}</div>${list.length>limit?`<span class="home-eq-more" onclick="setEquipSearchType('chem')">看全部 ${list.length} 筆藥品 ›</span>`:''}`;
 }
@@ -5557,7 +5559,7 @@ function renderLocSearchSection(q,roomFilter){
     inner=`<div class="hr-locbox"><div class="hr-loch"><span><b>${escH(L.code)}</b> ${escH(rn(L.room))}・裡面有什麼</span><button type="button" class="hr-locmap" onclick="locSearchGo(${oi})">在平面圖看位置 ›</button></div>`+
       (its.length?`<div class="search-dropdown">${its.map((e,j)=>searchResultRowHTML('loc',e,j,false)).join('')}</div>`:'<div class="hint" style="padding:6px 2px">這個櫃位目前沒有登記器材</div>')+'</div>';
   }
-  box.innerHTML=`<div class="loc-search"><div class="loc-search-title">📍 櫃位</div>
+  box.innerHTML=`<div class="loc-search"><div class="loc-search-title">櫃位</div>
     <div class="loc-search-list">${list.slice(0,LIMIT).map((m,i)=>`<button type="button" class="loc-chip${i===oi?' on':''}" aria-expanded="${i===oi}" onclick="locSearchToggle(${i})"><strong>${escH(m.code)}</strong><small>${escH(rn(m.room))}・${m.count?m.count+' 項':'未登記器材'}</small> ${i===oi?'▴':'▾'}</button>`).join('')}
     ${list.length>LIMIT?`<span class="hint" style="align-self:center">還有 ${list.length-LIMIT} 個，打完整一點可以縮小範圍</span>`:''}</div>${inner}</div>`;
   window._locExpanded=!!L;
@@ -5592,7 +5594,7 @@ function renderEquipBrowse(items){
   const grid=document.getElementById('equipBrowseGrid');
   const pager=document.getElementById('equipPagination');
   if(!items.length){
-    grid.innerHTML=window._locHitCount?(window._locExpanded?'':'<div class="hint" style="padding:6px 2px;grid-column:1/-1">點上面的櫃位，就會列出裡面的器材</div>'):'<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的器材</p></div>';
+    grid.innerHTML=window._locHitCount?(window._locExpanded?'':'<div class="hint" style="padding:6px 2px;grid-column:1/-1">點上面的櫃位，就會列出裡面的器材</div>'):'<div class="empty"><p>找不到符合的器材</p></div>';
     if(pager)pager.innerHTML='';
     return;
   }
@@ -5604,14 +5606,14 @@ function renderEquipBrowse(items){
   grid.innerHTML=pageItems.map((e,i)=>{
     const avail=parseInt(e.available)||0,total=parseInt(e.total)||0;
     const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
-    const img=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="browseZoom(${i})">`:`<div class="home-eq-thumb">🔬</div>`;
+    const img=e.image_url?`<img class="home-eq-thumb" src="${escH(e.image_url)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="browseZoom(${i})">`:`<div class="home-eq-thumb"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
     const tags=[];
     if(userHomeLab&&e.room!==userHomeLab)tags.push('<span class="eq-tag">跨科</span>');
     if(avail>0&&isLowStock(e,avail))tags.push('<span class="eq-tag warn">庫存不足</span>');
     if(e.restricted_note)tags.push(electiveTagHtml(e.room,e.name));
-    if(e.kit_contents)tags.push(`<span class="eq-tag kit" title="整盒借出，內含 ${kitLinesOf(e).length} 項">📦 套組</span>`);
+    if(e.kit_contents)tags.push(`<span class="eq-tag kit" title="整盒借出，內含 ${kitLinesOf(e).length} 項">套組</span>`);
     if(avail<=0&&total>0){const nr=nextReturnDate(e.name,e.room);if(nr)tags.push(`<span class="eq-tag next">最早 ${escH(md(nr))} 還</span>`);}
-    const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">📍${escH(e.location)}</span>`:'';
+    const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">${escH(e.location)}</span>`:'';
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
       :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button>${qtyNum(qty,avail,`browseSet(${i},this.value)`)}<button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
@@ -5910,7 +5912,7 @@ function semSubjectOf(t){const s=detectSubject(t);return SEM_SUBJ.some(x=>x[0]==
 function semColor(s){return (SEM_SUBJ.find(x=>x[0]===s)||SEM_SUBJ[5])[1];}
 function renderSemTable(){
   const box=document.getElementById('tplSemTable');
-  if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span>📅</span><span><b>上課要用的實驗？到「學期實驗」借</b><small>點實驗就帶入器材和日期，這裡留給臨時要借的東西</small></span><span>›</span></button>`:'';
+  if(box)box.innerHTML=allCourseTemplates.length?`<button type="button" class="sp-link" onclick="showPage('semester')"><span><b>上課要用的實驗？到「學期實驗」借</b><small>點實驗就帶入器材和日期，這裡留給臨時要借的東西</small></span><span>›</span></button>`:'';
   spRender();
 }
 // ==== 學期實驗頁 開始 ====
@@ -6126,12 +6128,12 @@ function spOpen(id,ctx){
   const vers=fam.length>1?`<div class="sp-vers"><span>版本</span>${fam.map((v,i)=>`<button type="button" class="${String(v.id)===String(t.id)?'on':''}" onclick="spOpen(${ja(v.id)},window._spCtx)">${escH(tplVerName(v))}${i===0?'（最新）':''}${ctx&&String(ctx.tplId)===String(v.id)?'・這次用的':''}</button>`).join('')}</div>`:'';
   const eq=items.map(it=>{const q=parseInt(it.quantity)||0,per=(gc>1&&q>=gc&&q%gc===0)?q/gc:0;
     return `<div class="sp-eq"><span>${escH(it.name||'')}${it.spec?`<small> ${escH(it.spec)}</small>`:''}</span>${q?`<i class="${per?'pg':'sh'}">${per?`每組 ${per}`:'全班共用'}</i><b>${q} ${escH(it.unit||'')}</b>`:''}</div>`;}).join('');
-  showModal('📅 '+formatTemplateName(t),`
+  showModal(''+formatTemplateName(t),`
     <div class="sp-dtag" style="color:${semColor(sj)};background:${SP_TINT[sj]}">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</div>
-    <div class="sp-dmeta">${ctx?`<span>🗓️ ${escH(ctx.when)}${ctx.n?`・${ctx.n} 節`:''}</span>${ctx.cls?`<span>🏫 ${escH(ctx.cls)}</span>`:''}${ctx.who?`<span>👩‍🏫 ${escH(ctx.who)}</span>`:''}`:`<span>🗓️ ${escH(when)}</span>${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}`}${t.default_room?`<span>📍 ${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>👥 ${gc} 組</span>`:''}</div>
+    <div class="sp-dmeta">${ctx?`<span>${escH(ctx.when)}${ctx.n?`・${ctx.n} 節`:''}</span>${ctx.cls?`<span>${escH(ctx.cls)}</span>`:''}${ctx.who?`<span>${escH(ctx.who)}</span>`:''}`:`<span>${escH(when)}</span>${t.teacher?`<span>${escH(t.teacher)}</span>`:''}`}${t.default_room?`<span>${escH(ROOM_NAMES[t.default_room]||t.default_room)}</span>`:''}${gc?`<span>${gc} 組</span>`:''}</div>
     ${vers}${runItems||runNote!=null?`<div class="sp-runnote">這次${[runItems?'器材':'',runNote!=null?'備註':''].filter(Boolean).join('和')}有調整，下面是實際用的（和課綱「${escH(tplVerName(t))}」不同）</div>`:''}
     <div class="sp-eqs">${eq||'<div class="sp-eq"><span style="color:var(--text2)">還沒有登記器材</span></div>'}</div>
-    ${refNote?`<div class="sp-ref">📝 ${escH(refNote)}</div>`:''}
+    ${refNote?`<div class="sp-ref">${escH(refNote)}</div>`:''}
     <div class="hint" style="margin-top:10px">按「用這個申請」會帶入器材、日期先放課綱那一週，下一頁都可以再改。</div>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'用這個申請 ›',cls:'btn-primary',fn:`spApply(${ja(t.id)})`}]);
 }
@@ -6283,21 +6285,21 @@ function cbRender(){
   h+=tpls.map(t=>{const sj=semSubjectOf(t),s=cbSlotOf(t);return `<div class="cb-hero" style="--c:${semColor(sj)};--t:${SP_TINT[sj]}">
     <div class="cb-ht"><span class="cb-tag">${escH(sj)}${detectSpecialTag(t)?'・'+escH(detectSpecialTag(t)):''}</span>${tpls.length>1?`<button type="button" class="cb-x" onclick="cbToggleTpl(${ja(t.id)})" aria-label="這個實驗不借">✕</button>`:''}</div>
     <h2>${escH(formatTemplateName(t))}</h2>
-    <div class="cb-meta">${s?`<span>🗓️ ${escH(spSlotTitle(s,true))}</span>`:''}${t.teacher?`<span>👩‍🏫 ${escH(t.teacher)}</span>`:''}${t.default_room?`<span>📍 ${escH(rn(t.default_room))}</span>`:''}</div></div>`;}).join('');
+    <div class="cb-meta">${s?`<span>${escH(spSlotTitle(s,true))}</span>`:''}${t.teacher?`<span>${escH(t.teacher)}</span>`:''}${t.default_room?`<span>${escH(rn(t.default_room))}</span>`:''}</div></div>`;}).join('');
   const mates=slot?slot.items.filter(t=>!cb.ids.some(x=>String(x)===String(t.id))):[];
   if(mates.length)h+=`<div class="cb-mates"><span>同一週還有，要一起借就點：</span>${mates.map(t=>`<button type="button" onclick="cbToggleTpl(${ja(t.id)})"><b style="color:${semColor(semSubjectOf(t))}">${escH(spLetter(t))}</b> ${escH(templateNameParts(t).pure||formatTemplateName(t))}　＋</button>`).join('')}</div>`;
   // 器材
-  h+=`<div class="card cb-card"><div class="cb-ct">🧪 要借的器材${groupsUsed?'<small>「每組」的數量跟著組數變</small>':''}</div>`;
-  if(groupsUsed)h+=`<div class="cb-grp"><span>👥 組數</span><button type="button" onclick="cbGroups(-1)" aria-label="少一組">−</button><b>${cb.groups}</b><button type="button" onclick="cbGroups(1)" aria-label="多一組">＋</button></div>`;
+  h+=`<div class="card cb-card"><div class="cb-ct">要借的器材${groupsUsed?'<small>「每組」的數量跟著組數變</small>':''}</div>`;
+  if(groupsUsed)h+=`<div class="cb-grp"><span>組數</span><button type="button" onclick="cbGroups(-1)" aria-label="少一組">−</button><b>${cb.groups}</b><button type="button" onclick="cbGroups(1)" aria-label="多一組">＋</button></div>`;
   h+=got.map(o=>`<div class="cb-eq"><span class="n">${escH(o.name)}<small>${escH(rn(o.room))}${o.spec?'・'+escH(o.spec):''}${o.qty>o.avail?`・<em>可借只有 ${o.avail}</em>`:''}</small></span>${o.chem?`<i class="tg sh">藥品・${escH(o.unit)}</i>`:o.per?`<i class="tg pg">每組 ${o.per}</i>`:o.extra?'<i class="tg ex">加借</i>':'<i class="tg sh">全班共用</i>'}<span class="cb-q"><button type="button" onclick="cbQty(${ja(o.key)},-1)" aria-label="少一個">−</button>${qtyNum(o.qty,o.chem?99999:999,`cbSet(${ja(o.key)},this.value)`)}<button type="button" onclick="cbQty(${ja(o.key)},1)" aria-label="多一個">＋</button></span></div>`).join('')||'<div class="cb-none">這個實驗還沒登記器材，可以用下面搜尋加入</div>';
-  if(miss.length)h+=`<div class="cb-warn">⚠️ 庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
+  if(miss.length)h+=`<div class="cb-warn">庫存清單找不到：${miss.map(o=>`<b>${escH(o.name)}${o.spec?'（'+escH(o.spec)+'）':''} × ${o.qty}</b>`).join('、')}<br>會一起寫在申請單上，請管理員確認。</div>`;
   h+=`<div class="cb-add"><input type="search" id="cbSearch" placeholder="＋ 這次還要加借別的器材（輸入名稱）" value="${escH(cb.q)}" oninput="cbSearch(this.value)" autocomplete="off" maxlength="40"><div id="cbSearchRes"></div></div></div>`;
   // 課綱備註（數量待確認、怎麼擺放…）：借的人送出前也要看得到
   const refs=tpls.filter(t=>String(t.reference_note||'').trim());
-  if(refs.length)h+=`<div class="cb-ref"><div class="cb-ref-t">📝 課綱備註<small>送出時會一起附在申請單</small></div>${refs.map(t=>`${refs.length>1||tpls.length>1?`<div class="cb-ref-n">${escH(formatTemplateName(t))}</div>`:''}<div class="cb-ref-b">${escH(String(t.reference_note).trim())}</div>`).join('')}</div>`;
+  if(refs.length)h+=`<div class="cb-ref"><div class="cb-ref-t">課綱備註<small>送出時會一起附在申請單</small></div>${refs.map(t=>`${refs.length>1||tpls.length>1?`<div class="cb-ref-n">${escH(formatTemplateName(t))}</div>`:''}<div class="cb-ref-b">${escH(String(t.reference_note).trim())}</div>`).join('')}</div>`;
   h+='</div><div class="cb-side"><div class="card cb-card">';
   // 借用資訊：日期、教室、申請人放在一起
-  h+=`<div class="cb-ct">📋 借用資訊</div>
+  h+=`<div class="cb-ct">借用資訊</div>
     <div class="cb-dates"><label>借用日<input type="date" value="${escH(cb.bd)}" min="${todayStr()}" onchange="cbSetDate('bd',this.value)"></label><label>歸還日<input type="date" value="${escH(cb.rd)}" min="${escH(cb.bd||todayStr())}" onchange="cbSetDate('rd',this.value)"></label></div>
     <div class="cb-chips">${[['today','今天借'],['course','課綱那週'],['this','這週'],['next','下週']].map(([k,l])=>`<button type="button" class="${cb.mode===k?'on':''}" onclick="cbSetMode('${k}')">${l}</button>`).join('')}${cb.mode==='custom'?'<button type="button" class="on">自己選</button>':''}</div>
     <div class="cb-sep"></div>
@@ -6341,7 +6343,7 @@ async function cbSubmit(){
   // 選修課專用器材：先提醒要問負責老師
   const elective=got.filter(o=>equipRestrictNote(o.room,o.name));
   if(elective.length&&!cb.ack){
-    showModal('🎓 清單裡有選修課專用器材',`<p style="font-size:13.5px;line-height:1.7;margin-bottom:8px">下列器材是選修課專用，借用前請先詢問負責的老師：</p>${elective.map(o=>`<div class="elective-box" style="margin-top:6px"><strong>${escH(o.name)}</strong>（${escH(rn(o.room))}）<br>${escH(equipRestrictNote(o.room,o.name))}</div>`).join('')}`,
+    showModal('清單裡有選修課專用器材',`<p style="font-size:13.5px;line-height:1.7;margin-bottom:8px">下列器材是選修課專用，借用前請先詢問負責的老師：</p>${elective.map(o=>`<div class="elective-box" style="margin-top:6px"><strong>${escH(o.name)}</strong>（${escH(rn(o.room))}）<br>${escH(equipRestrictNote(o.room,o.name))}</div>`).join('')}`,
       [{label:'回去修改',cls:'btn-secondary',fn:'closeModal()'},{label:'已詢問過，繼續送出',cls:'btn-primary',fn:'cbAck()'}]);
     return;
   }
@@ -6375,11 +6377,11 @@ async function cbSubmit(){
       renderHomeVenuePreview();
     }
     const mono=`style="font-family:'DM Mono',monospace"`;
-    let html=`<div class="result-box ok"><div class="rb-title">✅ 課綱借用申請已送出</div>編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(cb.bd)} 借 → ${escH(cb.rd)} 還<br>📚 ${tpls.map(t=>escH(formatTemplateName(t))).join('、')}</div>`;
-    if(venueId)html+=`<div class="result-box ok"><div class="rb-title">✅ 教室也預約了（待審核）</div>編號 <strong ${mono}>${escH(venueId)}</strong><ul>${periods.map(p=>`<li>${fmtPeriodShort(p)}　${escH(p.venue)}</li>`).join('')}</ul></div>`;
-    else if(venueFail)html+=`<div class="result-box fail"><div class="rb-title">❌ 教室沒有預約成功</div>器材已經送出，但教室還沒借到（${escH(venueFail)}），請到「場地預約」再借一次。</div>`;
+    let html=`<div class="result-box ok"><div class="rb-title">課綱借用申請已送出</div>編號 <strong ${mono}>${escH(id)}</strong>　共 ${items.length} 項<br>${escH(cb.bd)} 借 → ${escH(cb.rd)} 還<br>${tpls.map(t=>escH(formatTemplateName(t))).join('、')}</div>`;
+    if(venueId)html+=`<div class="result-box ok"><div class="rb-title">教室也預約了（待審核）</div>編號 <strong ${mono}>${escH(venueId)}</strong><ul>${periods.map(p=>`<li>${fmtPeriodShort(p)}　${escH(p.venue)}</li>`).join('')}</ul></div>`;
+    else if(venueFail)html+=`<div class="result-box fail"><div class="rb-title">教室沒有預約成功</div>器材已經送出，但教室還沒借到（${escH(venueFail)}），請到「場地預約」再借一次。</div>`;
     lastSubmittedName=name;cb=null;
-    showModal(venueFail?'⚠️ 部分完成':'✅ 申請成功',html,[...(venueFail?[{label:'📅 到場地預約',cls:'btn-warn',fn:"closeModal();showPage('venue')"}]:[]),{label:'回學期週表',cls:'btn-primary',fn:"closeModal();showPage('semester')"}]);
+    showModal(venueFail?'部分完成':'申請成功',html,[...(venueFail?[{label:'到場地預約',cls:'btn-warn',fn:"closeModal();showPage('venue')"}]:[]),{label:'回學期週表',cls:'btn-primary',fn:"closeModal();showPage('semester')"}]);
     cbRender();
   }catch(e){showToast('送出失敗：'+e.message,'error');}
   finally{cbBusy=false;const b=document.getElementById('cbSubmitBtn');if(b){b.disabled=false;b.textContent='送出借用申請';}}
@@ -6508,7 +6510,7 @@ function renderAppliedTemplate(){
     html+=unmatched.map(u=>{
       const safeKey=u.key;
       return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid #fed7aa;background:#fff7ed;border-radius:6px;margin-top:6px;flex-wrap:wrap">
-        <span style="font-weight:600;flex:1;min-width:90px">⚠️ ${escH(u.name)}${u.spec?'（'+escH(u.spec)+'）':''}</span>
+        <span style="font-weight:600;flex:1;min-width:90px">${escH(u.name)}${u.spec?'（'+escH(u.spec)+'）':''}</span>
         ${(appliedTemplate.groupCount||0)>1&&u.per?`<span class="tpl-tag per">每組 ${u.per}</span>`:''}
         <div class="equip-row-qty" style="flex-shrink:0">
           <button class="qty-btn" onclick="changeUnmatchedQty('${safeKey}',-1)">−</button>
@@ -6522,16 +6524,16 @@ function renderAppliedTemplate(){
     html+=`</div>`;
   }
   html+=`<div style="margin-top:10px">
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px">➕ 補充器材（清單沒列到的細項也可以加）</div>
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:4px">補充器材（清單沒列到的細項也可以加）</div>
     <div class="search-wrap" style="margin-bottom:0">
-      <span class="search-icon">🔎</span>
+      <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
       <input class="search-input" type="text" id="tplExtraSearch" placeholder="輸入名稱，例如：燒杯…" oninput="doTplExtraSearch(this.value)" autocomplete="off">
     </div>
     <div id="tplExtraResults"></div>
   </div>`;
   if(appliedTemplate.note){
     const safeNote=appliedTemplate.note.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    html+=`<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">📝 參考備註（藥品／注意事項）</div>
+    html+=`<div style="margin-top:10px"><div style="font-size:13px;font-weight:700;margin-bottom:4px">參考備註（藥品／注意事項）</div>
       <div style="white-space:pre-wrap;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12.5px">${safeNote}</div></div>`;
   }
   box.innerHTML=html;
@@ -6676,24 +6678,24 @@ function zoneColor(text){let h=0;for(const ch of String(text||''))h=(h*31+ch.cod
 
 // ── 藥品大類（後台可以自己編輯；存在資料表 chem_categories，還沒建表時用下面的預設）──
 const CHEM_CAT_DEFAULTS=[
-  {name:'酸',color:'#e53935',icon:'🧪'},
-  {name:'鹼',color:'#1e88e5',icon:'⚗️'},
-  {name:'氧化劑',color:'#fb8c00',icon:'🔥'},
-  {name:'易燃・有機溶劑',color:'#f9a825',icon:'🛢️'},
-  {name:'一般鹽類・氧化物',color:'#43a047',icon:'🧂'},
-  {name:'金屬・元素',color:'#757575',icon:'⚙️'},
-  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:'🌈'},
-  {name:'生化・有機固體・其他',color:'#8d6e63',icon:'📦'}];
+  {name:'酸',color:'#e53935',icon:'<svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 0 0 4 0V3M10 11h4"/></svg>'},
+  {name:'鹼',color:'#1e88e5',icon:''},
+  {name:'氧化劑',color:'#fb8c00',icon:''},
+  {name:'易燃・有機溶劑',color:'#f9a825',icon:''},
+  {name:'一般鹽類・氧化物',color:'#43a047',icon:''},
+  {name:'金屬・元素',color:'#757575',icon:''},
+  {name:'指示劑・染劑・分析試劑',color:'#8e24aa',icon:''},
+  {name:'生化・有機固體・其他',color:'#8d6e63',icon:''}];
 let CHEM_CATS=CHEM_CAT_DEFAULTS.map((c,i)=>({...c,sort:i+1}));
 // 舊的分類名稱 → 新大類（資料還沒轉換前也能正確顯示）
 const CHEM_CAT_LEGACY={'鹽':'一般鹽類・氧化物','有機溶劑':'易燃・有機溶劑','指示劑':'指示劑・染劑・分析試劑','培養基／生化':'生化・有機固體・其他','溶液成品':'生化・有機固體・其他','其他':'生化・有機固體・其他'};
 function catName(v){const s=String(v??'').trim().replace(/^\d+\s+/,'');if(!s)return '';if(CHEM_CATS.some(c=>c.name===s))return s;return CHEM_CAT_LEGACY[s]||s;}
-function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:'📦'};}
+function catInfo(v){const n=catName(v);return CHEM_CATS.find(c=>c.name===n)||{name:n||'未分類',color:'#9e9e9e',icon:''};}
 function hexMix(hex,t,to){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return to?'#eeeeee':'#555555';const n=parseInt(m[1],16);return '#'+[n>>16,(n>>8)&255,n&255].map(x=>Math.round(to?x+(255-x)*t:x*(1-t))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 function catTagHtml(v,extra=''){const c=catInfo(v);return `<span class="chem-cat-tag ${extra}" style="background:${hexMix(c.color,.86,1)};color:${hexMix(c.color,.3,0)}">${escH(c.name)}</span>`;}
 async function loadChemCats(){
   try{const r=await sb('GET','chem_categories',{order:'sort,name'});
-    if(Array.isArray(r)&&r.length){CHEM_CATS=r.filter(x=>x&&x.name).map(x=>({id:x.id,name:String(x.name).slice(0,20),color:/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#9e9e9e',icon:String(x.icon||'').slice(0,4),sort:x.sort||0}));}
+    if(Array.isArray(r)&&r.length){CHEM_CATS=r.filter(x=>x&&x.name).map(x=>({id:x.id,name:String(x.name).slice(0,20),color:/^#[0-9a-f]{6}$/i.test(x.color||'')?x.color:'#9e9e9e',icon:'',sort:x.sort||0}));}
     window._catsFromDb=Array.isArray(r);
   }catch(_){window._catsFromDb=false;}
 }
@@ -6800,7 +6802,7 @@ function makeCabUI(rootId,opts){
   function trayCellHtml(t,L,span,ctx){
     const top=L===t.layer,on=String(ui.state.tray)===String(t.id),hit=ctx.tSet.has(String(t.id)),dim=ctx.qOn&&!hit,wide=span>=3;
     const nm=String(t.name||'藥品盆').slice(0,30);
-    const lab=top?(wide?'🧺 '+nm:nm):(wide?'↑ 同上：'+nm:'↑同上');
+    const lab=top?(wide?''+nm:nm):(wide?'↑ 同上：'+nm:'↑同上');
     const tip=`${nm}（${trayCode(t)}）`;
     return `<button type="button" class="cb2-tray${top?'':' ghost'}${wide?' wide':''}${on?' sel':''}${hit?' hit':''}${dim?' dim':''}" style="grid-column:span ${span}" data-tray="${escH(String(t.id))}" title="${escH(tip)}" aria-label="${escH('藥品盆：'+tip)}">${top&&warnLines(t.warning).length?'<i class="wb"></i>':''}<span class="nm${wide?'':fsCls(lab)}">${escH(lab)}</span>${top?'<span class="basin"></span>':''}</button>`;
   }
@@ -6838,11 +6840,11 @@ function makeCabUI(rootId,opts){
         return `<button type="button" class="cb2-ti${c?'':' eq'}${hit?' hit':''}" data-titem="${i}" ${c?`style="--tb:${hexMix(ci.color,.9,1)};--tc:${hexMix(ci.color,.38,0)}"`:''}>${c&&warnLines(c.warning).length?'<span class="w">⚠</span>':''}${escH(x.label||c?.name_zh||'?')}</button>`;
       };
       return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${t.layer}-${b===a?a:b+'～'+a}</b><span class="t">藥品盆・佔 ${b-a+1} 排${tall>1?'×'+tall+' 層':''}・整盆借出</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
-        <div class="cb2-basin"><button type="button" class="hd" data-traycard><b>🧺 ${escH(t.name||'藥品盆')}</b><span>整盆資料卡 ›</span></button>
+        <div class="cb2-basin"><button type="button" class="hd" data-traycard><b>${escH(t.name||'藥品盆')}</b><span>整盆資料卡 ›</span></button>
           ${t.course?`<div class="cs">課程：${escH(t.course)}</div>`:''}
           ${its.length?`<div class="cb2-titems">${its.map(chip).join('')}</div>`:'<div class="cs">（還沒登記盆裡有什麼）</div>'}
           <div class="cs">${opts.onTray?'點盆裡任一樣可以修改這個盆':'點盆裡任一樣看它的資料卡・整盆一起借出、一起歸還'}</div></div>
-        ${opts.onTray?`<div class="cb2-admin"><button type="button" class="cab-add-here" data-trayedit>✏️ 修改這個盆</button></div>`:''}</div>`;
+        ${opts.onTray?`<div class="cb2-admin"><button type="button" class="cab-add-here" data-trayedit>修改這個盆</button></div>`:''}</div>`;
     }
     if(st.zone!=null&&st.col==null){
       const z=zonesOf(st.cab).find(x=>String(x.id)===String(st.zone));if(!z||z.layer!==L)return '';
@@ -6850,7 +6852,7 @@ function makeCabUI(rootId,opts){
       const uniq=items.filter((l,i,arr)=>arr.findIndex(o=>o.chem_id===l.chem_id)===i);
       return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${z.layer}-${z.b===z.a?z.a:z.b+'～'+z.a}</b><span class="t">分區「${escH(z.text)}」${uniq.length?'・'+uniq.length+' 種':''}</span><button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
         ${uniq.length?`<div class="cab-here">${uniq.map(l=>`<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(chem(l.chem_id)?.name_zh||'?')}</button>`).join('')}</div>`:'<div class="cb2-empty">這一區目前是空的</div>'}
-        ${opts.onZone?`<div class="cb2-admin"><button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">🏷️ 修改這個分區</button></div>`:''}</div>`;
+        ${opts.onZone?`<div class="cb2-admin"><button type="button" class="cab-zone-edit" data-zedit="${escH(String(z.id))}">修改這個分區</button></div>`:''}</div>`;
     }
     if(st.col==null||st.L!==L)return '';
     const here=cellLocs(st.cab,L,st.col),zHere=zoneAt(st.cab,L,st.col);
@@ -6858,7 +6860,7 @@ function makeCabUI(rootId,opts){
     const others=sel?locs().filter(l=>l.chem_id===sel.chem_id&&l.id!==sel.id):[];
     const chipBig=l=>{const c=chem(l.chem_id),n=parseInt(l.bottles)||0;return `<button type="button" class="cab-chip cab-big" data-loc="${escH(String(l.id))}">${escH(c?c.name_zh:'?')}${n!==1?`<i>×${n}</i>`:''}</button>`;};
     const adminList=opts.onQuick&&here.length?`<div class="cab-sub">改瓶數、移除（點名稱可以改容量、搬到別格）：</div><div class="cab-here">${here.map(l=>`<span class="cab-item">${chipBig(l)}<button type="button" class="qb" data-qd="-1" data-ql="${escH(String(l.id))}" aria-label="少一瓶">−</button><button type="button" class="qb" data-qd="1" data-ql="${escH(String(l.id))}" aria-label="多一瓶">＋</button><button type="button" class="qb rm" data-rm="${escH(String(l.id))}" aria-label="從這格移除">✕</button></span>`).join('')}</div>`:'';
-    const adminBtns=(opts.onAdd||opts.onZone||opts.onTray)?`<div class="cb2-admin">${opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:''}${opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">🏷️ ${zHere?'修改分區':'設定分區'}</button>`:''}${opts.onTray?`<button type="button" class="cab-zone-edit" data-traynew="1">🧺 從這格放藥品盆</button>`:''}</div>`:'';
+    const adminBtns=(opts.onAdd||opts.onZone||opts.onTray)?`<div class="cb2-admin">${opts.onAdd?`<button type="button" class="cab-add-here" data-add="${st.col}">＋ 在這格加藥品</button>`:''}${opts.onZone?`<button type="button" class="cab-zone-edit" data-zcell="1">${zHere?'修改分區':'設定分區'}</button>`:''}${opts.onTray?`<button type="button" class="cab-zone-edit" data-traynew="1">從這格放藥品盆</button>`:''}</div>`:'';
     return `<div class="cb2-panel"><div class="cb2-ph"><b class="code">${L}-${st.col}</b><span class="t">第${CAB_CN[st.cab]}櫃・${cabDoor(st.col)}・第 ${L} 層・第 ${st.col} 排${here.length?`・前 → 後 ${here.length} 樣`:''}</span>${navHtml(st)}<button type="button" class="cb2-x" data-close aria-label="收起">✕</button></div>
       ${zHere?zoneTag(zHere,true):''}
       ${here.length?`<div class="cb2-jars">${here.map(l=>jarHtml(l,q)).join('')}</div><div class="cb2-dw"><span>門口（前）</span><span>${opts.onQuick?'點藥品罐可以修改':'點藥品罐看資料卡'}</span><span>靠牆（後）</span></div>`:'<div class="cb2-empty">這一格目前是空的</div>'}
@@ -6890,7 +6892,7 @@ function makeCabUI(rootId,opts){
     const r=root();if(!r)return;const st=ui.state;
     // 搜尋框只建一次（打字時不會被重畫、不會跳掉游標）
     if(!r.querySelector(':scope>.cab-search')){
-      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="🔍 找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
+      r.innerHTML=`<div class="cab-search"><div class="cab-qwrap"><input type="search" class="cab-q" placeholder="找藥品：中文名、俗名、分子式、CAS、藥品盆…" maxlength="40" autocomplete="off" aria-label="在藥品櫃裡找藥品"><button type="button" class="cab-qx" aria-label="清除搜尋" hidden>✕</button></div><div class="cab-results"></div></div><div class="cab-body"></div>`;
       const inp=r.querySelector('.cab-q'),qx=r.querySelector('.cab-qx');
       const syncX=()=>{qx.hidden=!inp.value;};
       // 打字就直接跳到第一個找到的位置（不捲動畫面，免得手機鍵盤擋住）
@@ -6909,7 +6911,7 @@ function makeCabUI(rootId,opts){
     if(!st.q||st.picked)res.innerHTML='';
     else if(!total)res.innerHTML=`<div class="none">藥品櫃裡找不到「${escH(st.q)}」</div>`;
     else{
-      const trayBtns=tHits.slice(0,4).map(t=>`<button type="button" data-htray="${escH(String(t.id))}"><span>🧺 ${escH(t.name||'藥品盆')}${t.course?`<small>　${escH(t.course)}</small>`:''}</span><small>${escH(trayCode(t))}</small></button>`).join('');
+      const trayBtns=tHits.slice(0,4).map(t=>`<button type="button" data-htray="${escH(String(t.id))}"><span>${escH(t.name||'藥品盆')}${t.course?`<small>　${escH(t.course)}</small>`:''}</span><small>${escH(trayCode(t))}</small></button>`).join('');
       const locBtns=hits.slice(0,10).map(l=>{const c=chem(l.chem_id);return `<button type="button" data-hit="${escH(String(l.id))}"><span>${c&&warnLines(c.warning).length?'<b style="color:#c62828">⚠</b> ':''}${escH(c?.name_zh||'?')}${c&&c.alias?`<small>（${escH(c.alias)}）</small>`:''}</span><small>${escH(cabText(l))}${(parseInt(l.bottles)||0)!==1?' ×'+(parseInt(l.bottles)||0):''}</small></button>`;}).join('');
       res.innerHTML=trayBtns+locBtns+(hits.length>10?`<div class="none">還有 ${hits.length-10} 個位置，打完整一點可以縮小範圍；櫃子上亮黃色的是這一櫃找到的位置</div>`:'');
     }
@@ -6920,7 +6922,7 @@ function makeCabUI(rootId,opts){
       <div class="cab-tabs">${[4,3,2,1].map(c=>`<button type="button" class="${c===st.cab?'on':''}" data-cab="${c}">第${CAB_CN[c]}櫃${st.q&&qCount(c)?`<span class="qn">${qCount(c)}</span>`:''}</button>`).join('')}</div>
       ${cabinetHtml()}
       ${catNames.length?`<div class="cab-cats">${catNames.map(n=>{const ci=catInfo(n);return `<button type="button" class="${st.catHi===n?'on':''}" data-cathi="${escH(n)}"><i style="background:${hexMix(ci.color,.45,1)};border-color:${ci.color}"></i>${escH(n)}<small>${cnt[n]}</small></button>`;}).join('')}</div>`:''}
-      <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　🧺＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
+      <div class="cb2-legend">● 點的數量＝瓶數　<b style="color:#c62828">▔</b> 紅色上緣＝有警示的藥品　＝藥品盆（可以佔好幾排、好幾層）</div></div>`;
     // 不整個重畫：只改有變的地方（格子的顏色、拉出來的那一列）。
     // 整個換掉的話，手機會在換的瞬間把畫面跳到別的位置。
     const tmp=document.createElement('div');tmp.innerHTML=html;
@@ -7138,8 +7140,8 @@ function chemStructSvg(st,opts){
   });
   return s+'</svg>';
 }
-// 清單上的小圖：有結構式就畫結構式，沒有就用 🧪
-function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'🧪';}
+// 清單上的小圖：有結構式就畫結構式，沒有就用 
+function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.structure,{mini:true}))||'<svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v13a2 2 0 0 0 4 0V3M10 11h4"/></svg>';}
 // ==== 結構式（前台、後台共用）結束 ====
 // 點藥品 → 跳出資料卡：名稱、俗名、警示、分類、存量、回收類別、附註、在哪幾個位置（點位置直接帶到藥品櫃）
 // ctx.locId：從藥品櫃點某一罐進來的；ctx.tray／ctx.item：從藥品盆裡點進來的
@@ -7151,16 +7153,16 @@ async function openChemDetail(id,ctx){
   const row=(k,v)=>v?`<div class="note-row"><span class="k">${k}</span><span class="v">${v}</span></div>`:'';
   const hlId=ctx.locId!=null?String(ctx.locId):null;
   const showLocs=locs.filter(l=>String(l.id)!==hlId);
-  const freeLocHtml=c.location?(chemFreeLoc(c)?`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();chemLocJump(${ja(c.id)})" title="看平面圖位置">📍 ${escH(c.location)} ›</button>`:`<span style="font-size:13.5px">📍 ${escH(c.location)}</span>`):'';
-  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">📍 ${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):'';
+  const freeLocHtml=c.location?(chemFreeLoc(c)?`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();chemLocJump(${ja(c.id)})" title="看平面圖位置">${escH(c.location)} ›</button>`:`<span style="font-size:13.5px">${escH(c.location)}</span>`):'';
+  const locHtml=showLocs.length?showLocs.map(l=>`<button type="button" class="chem-loc-chip" style="font-size:13px;padding:4px 10px;margin:3px 4px 3px 0" onclick="closeModal();if(navCurPage()!=='chemicals')showPage('chemicals');setTimeout(()=>showChemLoc(${ja(l.id)}),80)">${escH(cabText(l))}（${cabDoor(l.col)}）${(parseInt(l.bottles)||0)!==1?' ×'+parseInt(l.bottles):''}${l.capacity?'・'+escH(l.capacity):''}</button>`).join(''):'';
   // 這一罐在哪裡（從櫃子點進來才有）
   let here='';
   const hl=ctx.locId!=null?allChemLocs.find(l=>String(l.id)===String(ctx.locId)):null;
   if(hl){const same=allChemLocs.filter(l=>l.cab===hl.cab&&l.layer===hl.layer&&l.col===hl.col).sort((a,b)=>(a.sort||0)-(b.sort||0)||(a.id-b.id));const k=same.findIndex(l=>l.id===hl.id);
-    here=`📍 ${escH(cabText(hl))}（${cabDoor(hl.col)}）・${k<=0?'最前面':'由前往後第 '+(k+1)+' 個'}${(parseInt(hl.bottles)||0)!==1?'・這裡有 '+parseInt(hl.bottles)+' 瓶':''}`;}
+    here=`${escH(cabText(hl))}（${cabDoor(hl.col)}）・${k<=0?'最前面':'由前往後第 '+(k+1)+' 個'}${(parseInt(hl.bottles)||0)!==1?'・這裡有 '+parseInt(hl.bottles)+' 瓶':''}`;}
   const t=ctx.tray!=null?allChemTrays.find(x=>String(x.id)===String(ctx.tray)):null,it=t?trayItems(t)[ctx.item]:null;
-  if(t)here=`🧺 在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）${it&&it.note?'・盆內規格：'+escH(it.note):''}`;
-  showModal('🧪 '+(c.name_zh||'藥品'),`
+  if(t)here=`在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）${it&&it.note?'・盆內規格：'+escH(it.note):''}`;
+  showModal(''+(c.name_zh||'藥品'),`
     ${c.alias?`<div style="font-size:14.5px;margin-bottom:2px">俗名／別名：<b>${escH(c.alias)}</b></div>`:''}
     ${c.name_en?`<div style="color:var(--text2);margin-bottom:8px">${escH(c.name_en)}</div>`:''}
     ${warnBoxHtml(c.warning)}
@@ -7171,7 +7173,7 @@ async function openChemDetail(id,ctx){
     ${row('分類',catName(c.category)?catTagHtml(c.category):'')}
     ${row('存量',`剩 ${escH(c.bottles_left??'?')} 瓶${avail?'':'・<span style="color:var(--danger)">暫不開放</span>'}`)}
     ${hlId!=null||ctx.tray!=null?row('其他位置',(showLocs.length?locHtml:'')+freeLocHtml):row('位置',(locHtml+freeLocHtml)||'<span style="color:var(--text2)">還沒有登記位置</span>')}
-    ${row('回收',c.recycle_type?'♻️ '+escH(c.recycle_type):'')}
+    ${row('回收',c.recycle_type?''+escH(c.recycle_type):'')}
     ${row('附註',c.note&&c.note!=='附註'?escH(c.note):'')}
 `,
     avail?[{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'申請這個藥品',cls:'btn-primary',fn:`closeModal();openChemRequestModal(${parseInt(c.id)||0})`}]
@@ -7183,13 +7185,13 @@ function openTrayCard(id){
   const {a,b,tall}=trayCols(t),its=trayItems(t);
   const chips=its.map((x,i)=>{const c=x.chem_id?allChemicals.find(o=>String(o.id)===x.chem_id):null;
     return `<button type="button" class="cb2-ti${c?'':' eq'}" style="margin:3px 4px 3px 0" onclick="openTrayItem(${ja(t.id)},${i})">${c&&warnLines(c.warning).length?'<span class="w">⚠</span>':''}${escH(x.label||c?.name_zh||'?')}${x.note?`<small style="font-weight:400;opacity:.8">　${escH(x.note)}</small>`:''}</button>`;}).join('');
-  showModal('🧺 '+(t.name||'藥品盆'),`
+  showModal(''+(t.name||'藥品盆'),`
     ${warnBoxHtml(t.warning)}
-    <div class="note-here">📍 ${escH(trayCode(t))}（${cabDoor(a)}）・佔 ${b-a+1} 排寬${tall>1?'、'+tall+' 層高':''}</div>
+    <div class="note-here">${escH(trayCode(t))}（${cabDoor(a)}）・佔 ${b-a+1} 排寬${tall>1?'、'+tall+' 層高':''}</div>
     ${t.course?`<div style="font-size:14px;margin-bottom:6px">課程：<b>${escH(t.course)}</b></div>`:''}
     <div style="font-size:13px;color:var(--text2);margin:6px 0 2px">盆裡有（點一樣看它的資料卡）：</div>
     <div>${chips||'<span style="color:var(--text2)">還沒登記</span>'}</div>
-    ${t.note?`<div style="font-size:13px;color:var(--text2);margin-top:8px">📝 ${escH(t.note)}</div>`:''}
+    ${t.note?`<div style="font-size:13px;color:var(--text2);margin-top:8px">${escH(t.note)}</div>`:''}
     <div class="hint" style="margin-top:10px">整盆一起借出、一起歸還；要借整盆請在借用單備註寫盆名。</div>`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
 }
@@ -7199,7 +7201,7 @@ function openTrayItem(id,i){
   const x=trayItems(t)[i];if(!x)return;
   if(x.chem_id&&allChemicals.some(c=>String(c.id)===x.chem_id)){openChemDetail(x.chem_id,{tray:t.id,item:i});return;}
   showModal((x.label||'盆內物品'),`
-    <div class="note-here">🧺 在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）</div>
+    <div class="note-here">在「${escH(t.name||'藥品盆')}」裡（${escH(trayCode(t))}）</div>
     ${x.note?`<div style="font-size:14px">數量／規格：<b>${escH(x.note)}</b></div>`:''}
     <div class="hint" style="margin-top:8px">跟著盆一起借出、一起歸還。</div>`,
     [{label:'看整盆',cls:'btn-secondary',fn:`openTrayCard(${ja(t.id)})`},{label:'關閉',cls:'btn-primary',fn:'closeModal()'}]);
@@ -7220,7 +7222,7 @@ async function loadChemicals(){
     await ensureChemData();
     filteredChemicals=allChemicals;renderChemList(allChemicals);
   }
-  catch(e){document.getElementById('chemList').innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗</p></div>';}
+  catch(e){document.getElementById('chemList').innerHTML='<div class="empty"><p>載入失敗</p></div>';}
 }
 const CHEM_CAT_CLASS_MAP={'酸':'cat-acid','鹼':'cat-base','鹽':'cat-salt','有機溶劑':'cat-organic','指示劑':'cat-indicator','培養基／生化':'cat-bio','溶液成品':'cat-solution','其他':'cat-other'};
 function chemCatClass(cat){return CHEM_CAT_CLASS_MAP[cat]||'cat-other';}
@@ -7231,23 +7233,23 @@ function filterChemicals(){
 }
 function renderChemList(items){
   const box=document.getElementById('chemList');
-  if(!items.length){box.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><p>找不到符合的藥品</p></div>';return;}
+  if(!items.length){box.innerHTML='<div class="empty"><p>找不到符合的藥品</p></div>';return;}
   box.innerHTML='<div class="chem-table-head"><span>名稱</span><span>分類</span><span>存量</span><span>位置</span><span>回收類別</span><span></span></div>'+items.map(c=>{
     const avail=c.is_available!==false;
     const left=c.bottles_left;const low=left!=null&&Number(left)<=2;
     return `<div class="chem-tr ${avail?'':'chem-unavail'}">
-      <div class="c-name chem-clickable" onclick="openChemDetail(${parseInt(c.id)||0})"><b>${warnLines(c.warning).length?'<span style="color:#c62828" title="有安全警示">⚠ </span>':''}${escH(c.name_zh)}</b>${c.alias?`<span style="font-size:12.5px;color:var(--text2)">（${escH(c.alias)}）</span>`:''}${c.name_en||c.formula?`<div class="c-en">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">📝 ${escH(c.note)}</div>`:''}</div>
+      <div class="c-name chem-clickable" onclick="openChemDetail(${parseInt(c.id)||0})"><b>${warnLines(c.warning).length?'<span style="color:#c62828" title="有安全警示">⚠ </span>':''}${escH(c.name_zh)}</b>${c.alias?`<span style="font-size:12.5px;color:var(--text2)">（${escH(c.alias)}）</span>`:''}${c.name_en||c.formula?`<div class="c-en">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>`:''}${c.note&&c.note!=='附註'?`<div class="c-en" style="color:var(--accent)">${escH(c.note)}</div>`:''}</div>
       <div class="c-cat">${catName(c.category)?catTagHtml(c.category):'<span class="chem-cat-tag">未分類</span>'}</div>
       <div class="c-left ${low?'low':''}">${escH(left??'?')} 瓶</div>
-      <div class="c-loc">${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="showChemLoc(${ja(l.id)})" title="${escH(cabText(l))}">📍 ${escH(cabCode(l))}</button>`).join(''):(c.location?'📍 '+escH(c.location):'')}</div>
-      <div class="c-rec">${c.recycle_type?`<span class="chem-recycle-tag">♻️ ${escH(c.recycle_type)}</span>`:''}</div>
+      <div class="c-loc">${chemLocsOf(c.id).length?chemLocsOf(c.id).map(l=>`<button type="button" class="chem-loc-chip" onclick="showChemLoc(${ja(l.id)})" title="${escH(cabText(l))}">${escH(cabCode(l))}</button>`).join(''):(c.location?''+escH(c.location):'')}</div>
+      <div class="c-rec">${c.recycle_type?`<span class="chem-recycle-tag">${escH(c.recycle_type)}</span>`:''}</div>
       <div class="c-act">${avail?`<button class="btn btn-primary btn-sm" onclick="openChemRequestModal(${parseInt(c.id)||0})">申請</button>`:`<span style="font-size:12px;color:var(--danger)">暫不開放</span>`}</div>
     </div>`;
   }).join('');
 }
 function openChemRequestModal(id){
   const c=allChemicals.find(x=>x.id===id);if(!c)return;
-  showModal(`🧪 申請藥品 — ${c.name_zh}`,`
+  showModal(`申請藥品 — ${c.name_zh}`,`
     ${warnBoxHtml(c.warning)}
     <div style="font-size:13px;color:var(--text2);margin-bottom:12px">${escH(c.name_en||'')}${c.formula?`${c.name_en?'　':''}<span style="color:var(--text)">${fmtFormula(c.formula)}</span>`:''}</div>
     <div class="form-group"><label>借用方式 *</label>
@@ -7289,7 +7291,7 @@ function openChemRequestModal(id){
       </div>
     </div>
     <div class="form-group"><label>備註說明</label><textarea id="chemNote" rows="2" placeholder="其他說明…"></textarea></div>
-  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'加入購物車 🛒',cls:'btn-primary',fn:`addChemToCart(${id})`}]);
+  `,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'加入購物車 ',cls:'btn-primary',fn:`addChemToCart(${id})`}]);
 }
 function toggleChemMode(){const isMix=document.getElementById('chemModeMix').checked;document.getElementById('chemBottleSection').style.display=isMix?'none':'block';document.getElementById('chemMixSection').style.display=isMix?'block':'none';}
 function toggleChemVolMode(){const byClass=document.getElementById('chemByClass').checked;document.getElementById('chemByClassSection').style.display=byClass?'flex':'none';document.getElementById('chemByTotalSection').style.display=byClass?'none':'block';}
@@ -7366,7 +7368,7 @@ window.renderEquipBrowse=function(items){
   orig(items);
   const list=window._browseItems||[];
   document.querySelectorAll('#equipBrowseGrid .home-eq-row').forEach((row,i)=>{
-    row.querySelectorAll('.eq-loc').forEach(el=>{const t=el.textContent.replace(/^📍\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
+    row.querySelectorAll('.eq-loc').forEach(el=>{const t=el.textContent.replace(/^\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
     if(wide.matches&&list[i])stepper(row,i,list[i]);
   });
 };
@@ -7693,7 +7695,7 @@ spRender=function(){
   if(spTerm==null)spTerm=spHomeTerm();
   if(!sxLoaded)sxLoad();
   const head=document.querySelector('#page-semester .sp-head');
-  if(head)head.innerHTML=`<h2>📅 學期實驗</h2><div class="pv-tabs" role="tablist"><button type="button" role="tab" class="${sxView==='sem'?'on':''}" onclick="sxView='sem';spRender()">這學期</button><button type="button" role="tab" class="${sxView==='lib'?'on':''}" onclick="sxView='lib';spRender()">實驗庫</button></div>`;
+  if(head)head.innerHTML=`<h2>學期實驗</h2><div class="pv-tabs" role="tablist"><button type="button" role="tab" class="${sxView==='sem'?'on':''}" onclick="sxView='sem';spRender()">這學期</button><button type="button" role="tab" class="${sxView==='lib'?'on':''}" onclick="sxView='lib';spRender()">實驗庫</button></div>`;
   const mobile=!window.matchMedia('(min-width:901px)').matches;
   sxCardArr=[];
   const html=sxView==='lib'?sxLibHtml(mobile):sxSemHtml(mobile);
