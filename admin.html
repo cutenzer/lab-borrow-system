@@ -474,7 +474,6 @@
   .period-setting-row .ps-weeklabel{font-size:12px;color:var(--text2);white-space:nowrap;}
   .period-setting-row .ps-weekstart{max-width:64px;flex:0 0 64px;}
   .period-setting-remove{color:var(--danger);cursor:pointer;font-size:18px;background:none;border:none;padding:0 4px;flex-shrink:0;}
-  .teacher-chip{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:20px;padding:4px 6px 4px 12px;background:var(--surface);}
   @media(max-width:600px){.tab{padding:7px 9px;font-size:12px;}}
   /* ── 器材卡片（改用 class，電腦版可以整體放大）── */
   .eq-thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:22px;}
@@ -949,7 +948,7 @@
   .pg-head h2{font-size:24px;font-weight:700;letter-spacing:.5px;line-height:1.2;margin:0;}
   .pg-head p{font-size:13px;color:var(--text2);margin:4px 0 0;}
   /* 頁首已經寫了頁名，卡片裡重複的標題拿掉 */
-  #panel-purposes>.pg-head+.card>.card-title,#panel-semruns .card>.card-title,#calibStickyCard>.card-title{display:none;}
+  #panel-semruns .card>.card-title,#calibStickyCard>.card-title{display:none;}
   /* 卡片統一：細框、不加陰影 */
   main .card{border-radius:12px;box-shadow:none;}
   .side-foot .sf-btns{display:flex;gap:6px;}
@@ -1185,17 +1184,45 @@
 }
 </style>
 <style id="settings-frame">
-/* 設定類頁面：靠左；有改才出現儲存列
-   窄螢幕（1100～1279）單欄限 760px，表單才不會被拉得太長；1280 以上改成「左邊編輯、右邊清單」兩欄，不再右半邊空白（2026-10-19） */
+/* 設定類頁面：靠左；有改才出現儲存列 */
 @media(min-width:1100px) and (max-width:1279px){.panel.no-pane{max-width:760px}}
-@media(min-width:1280px){
-  #panel-purposes.active,#panel-teachers.active,#panel-semester.active{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
-  #panel-purposes>.card,#panel-teachers>.card,#panel-semester>.card{margin:0!important}
-  #panel-teachers.active{grid-template-columns:minmax(360px,.8fr) minmax(0,1.2fr)}
-  #panel-purposes.active{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
-  #panel-purposes>.pg-head+.card{grid-row:span 2}
-  #panel-purposes>.save-bar{grid-column:1/-1}
-}
+/* ── 設定（2026-10-25）：借用目的、教師、學期、平面圖、資料備份共用側欄一個「設定」，上方同一排子分頁（照器材借用）
+   單欄限寬 760，卡片改成段落（中間一條細線），清單在前、新增在後，刪除滑過才出現 ── */
+@media(min-width:1100px){.panel.set-pg{max-width:760px}#panel-floorplan.set-pg{max-width:none}}
+.set-pg>.card.set-sec{background:transparent;border:0;border-top:1px solid var(--border);box-shadow:none;border-radius:0;padding:20px 0 24px;margin:0}
+.set-pg>.bw-subtabs+.card.set-sec{border-top:0;padding-top:4px}
+.set-pg>.card.set-sec>.card-title{font-size:16px;border:0;padding:0;margin:0 0 12px}
+.set-pg .set-sec .info-box{background:none;border:0;border-left:2px solid var(--border);border-radius:0;padding:0 0 0 10px;color:var(--text2);margin:0 0 14px}
+.set-pg .set-sec .card-title .ct-sub{font-size:12.5px;font-weight:400;color:var(--text2)}
+/* 借用目的：一張表＋開關 */
+#purposeList .pp-list{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+#purposeList .pp-row{border:0;border-radius:0;border-bottom:1px solid var(--border);padding:6px 12px}
+#purposeList .pp-row:last-child{border-bottom:0}
+#purposeList .pp-move .btn{height:16px!important;padding:0 6px!important;border:0;background:none;font-size:9px;color:var(--text2)}
+#purposeList .pp-name{border-color:transparent;background:transparent;font-size:14px}
+#purposeList .pp-name:focus{border-color:var(--border);background:var(--surface)}
+#purposeList .pp-checks label{color:var(--text2)}
+.set-sw{appearance:none;-webkit-appearance:none;width:30px!important;height:18px!important;margin:0;border-radius:999px;cursor:pointer;flex-shrink:0;background:radial-gradient(circle at 9px 50%,#fff 6px,transparent 6.5px),#cfc8bb;transition:background .15s}
+.set-sw:checked{background:radial-gradient(circle at 21px 50%,#fff 6px,transparent 6.5px),var(--accent)}
+.set-sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pp-del,.set-act button{all:unset;cursor:pointer;font-size:13px;padding:4px 8px;border-radius:6px;color:var(--text2);opacity:0;text-align:center}
+.pp-row:hover .pp-del,.pp-del:focus-visible,.set-tbl tr:hover .set-act button,.set-act button:focus-visible{opacity:1}
+.pp-del:hover,.set-act button.del:hover{background:#f6e1dc;color:var(--danger)}
+.set-act button:not(.del):hover{background:var(--surface2);color:var(--text)}
+@media(hover:none){.pp-del,.set-act button{opacity:1}}
+.pp-add{border-top:0;margin-top:10px;padding-top:0}
+/* 教師：姓名｜科目色點｜次數 一張表 */
+.set-tbl{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;font-size:14px}
+.set-tbl th{font-size:12px;font-weight:600;color:var(--text2);text-align:left;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.set-tbl td{padding:0 14px;height:44px;border-bottom:1px solid var(--border)}
+.set-tbl tr:last-child td{border-bottom:0}
+.set-tbl .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.set-tbl .n{font-family:'DM Mono',monospace;color:var(--text2);font-size:13px;text-align:right;white-space:nowrap}
+.set-act{text-align:right;white-space:nowrap;width:1%}
+.set-tbl th,.set-tbl td:nth-child(2){white-space:nowrap}
+@media(max-width:600px){.set-tbl th,.set-tbl td{padding-left:10px;padding-right:10px}.set-act button{padding:4px 6px}}
+@media(max-width:700px){.pp-row>.pp-del{grid-area:del}}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .save-bar{display:none;position:sticky;bottom:0;z-index:30;align-items:center;justify-content:flex-end;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));margin-top:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 -4px 16px rgba(34,38,42,.08)}
 .save-bar.show{display:flex}
 .save-bar{flex-wrap:wrap}.save-bar .btn{white-space:nowrap}
@@ -1254,15 +1281,12 @@
   <div class="tab-more-wrap">
     <button class="tab" id="tabMoreBtn" onclick="toggleTabMoreMenu(event)"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg><span class="tab-label">設定與資料 ▾</span></button>
     <div class="tab-more-menu" id="tabMoreMenu">
-      <div class="tab-group-label">設定與資料</div>
+      <div class="tab-group-label">資料</div>
       <button data-tab="equipment" onclick="showTab('equipment')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><span>器材管理</span></button>
       <button data-tab="chemicals" onclick="showTab('chemicals')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg><span>藥品管理</span></button>
       <button data-tab="templates" onclick="showTab('templates')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h10a4 4 0 0 1 4 4v12H8a4 4 0 0 1-4-4z"/><path d="M4 16a4 4 0 0 1 4-4h10"/></svg><span>課綱實驗</span></button>
       <button data-tab="semruns" onclick="showTab('semruns')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h3M8 17h6"/></svg><span>學期實驗紀錄</span></button>
-      <button data-tab="purposes" onclick="showTab('purposes')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="8" cy="8" r="1.5"/></svg><span>借用目的與保證金</span></button>
-      <button data-tab="floorplan" onclick="showTab('floorplan')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><span>平面圖校正</span></button>
-      <button data-tab="teachers" onclick="showTab('teachers')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>教師管理</span></button>
-      <button data-tab="semester" onclick="showTab('semester')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18"/></svg><span>學期設定</span></button>
+      <button data-tab="settings" onclick="showTab('settings')" title="借用目的・教師・學期・平面圖・資料備份"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg><span>設定</span></button>
       <button type="button" class="side-more-tog" id="sideMoreTog" onclick="toggleSideMore()" aria-expanded="false">▸ 其他設定</button>
     </div>
   </div>
@@ -1279,23 +1303,7 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
     <div class="card" id="labUseCard"><div class="card-title"><span id="ovWeekTitle">🏛️ 實驗室使用</span><span class="lu-seg" role="group" aria-label="切換統計範圍"><button type="button" data-m="week" onclick="setLabUse('week')">週</button><button type="button" data-m="sem" onclick="setLabUse('sem')">學期</button></span></div><div id="ovWeek"></div><div class="hint" id="luHint" style="font-size:12px;color:var(--text2);margin-top:8px"></div></div>
-    <div class="card" id="backupCard"><div class="card-title">💾 資料備份</div>
-      <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">📊 下載 Excel 備份</button>
-        <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">🗂️ 下載完整備份（JSON）</button>
-      </div>
-      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
-        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">📷 照片備份</div>
-        <div id="photoBackupInfo" style="font-size:12.5px;color:var(--text2);margin-bottom:8px"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button class="btn btn-primary btn-sm" id="photoNewBtn" onclick="runPhotoBackup(true)">📥 下載新增的照片</button>
-          <button class="btn btn-secondary btn-sm" id="photoAllBtn" onclick="runPhotoBackup(false)">📦 下載全部照片</button>
-        </div>
-        <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6">包含借用人上傳的照片、後台換過的器材照片與實驗室封面，打包成一個 ZIP。第一次請按「下載全部照片」，之後按「下載新增的照片」只抓上次之後新增的，比較快。</div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">Excel 方便打開查看；JSON 保留全部欄位原樣，萬一要還原資料時用這份。建議每月一次，學期末再多備份一次。照片檔案不包含在內。</div>
-    </div>
+
     </div>
   </div>
 </div>
@@ -1352,29 +1360,29 @@
   </div>
 </div>
 
-<div id="panel-purposes" class="panel no-pane"><div class="pg-head"><h2>借用目的與保證金</h2><p>前台可選的借用目的，以及哪些要收保證金</p></div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">💰 借用目的與保證金</div>
+<div id="panel-purposes" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>前台可選的借用目的，以及哪些要收保證金</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+  <div class="card set-sec">
+    <div class="card-title">借用目的</div>
     <div class="info-box">課程變動時在這裡調整就好，不用改程式。<br>・「老師可選／學生可選」決定前台選單出現哪些目的<br>・「需保證金」打勾的目的，送出時會依借用內容收保證金<br>・名稱為「其他」的目的，前台會讓使用者自己填寫內容（自填的內容一律需要保證金）<br>・已送出的申請會保留當時的目的與金額，不受這裡修改影響</div>
     <div id="purposeList"><div class="loading"><div class="spinner"></div>載入中…</div></div>
     <div class="pp-add">
       <div class="form-group" style="margin:0"><label>新增借用目的</label><input type="text" id="pp-new-name" maxlength="20" placeholder="例如：校外比賽"></div>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-t" checked style="width:18px;height:18px">老師可選</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-s" style="width:18px;height:18px">學生可選</label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" id="pp-new-d" style="width:18px;height:18px">需保證金</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" class="set-sw" id="pp-new-t" checked style="width:18px;height:18px">老師可選</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" class="set-sw" id="pp-new-s" style="width:18px;height:18px">學生可選</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;white-space:nowrap"><input type="checkbox" class="set-sw" id="pp-new-d" style="width:18px;height:18px">需保證金</label>
       <button class="btn btn-secondary" onclick="addPurposeRow()">＋ 加入清單</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">💵 保證金金額（新台幣）</div>
+  <div class="card set-sec">
+    <div class="card-title">保證金金額<span class="ct-sub">新台幣</span></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
       <div class="form-group"><label>只借器材</label><input type="number" id="dep-equip" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
       <div class="form-group"><label>只借場地</label><input type="number" id="dep-venue" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
       <div class="form-group"><label>器材＋場地</label><input type="number" id="dep-both" min="0" max="100000" step="100" oninput="ppDirtyUpdate()"></div>
     </div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">👀 前台會看到</div>
+  <div class="card set-sec">
+    <div class="card-title">前台會看到</div>
     <div id="purposePreview" style="font-size:14px;line-height:1.8"></div>
   </div>
   <div class="save-bar" id="ppSaveBar">
@@ -1383,9 +1391,13 @@
     <button class="btn btn-primary" id="purposeSaveBtn" onclick="savePurposesAdmin()">💾 儲存全部</button>
   </div>
 </div>
-<div id="panel-teachers" class="panel no-pane"><div class="pg-head"><h2>教師管理</h2><p>老師與任教科目（場地課表會依科目上色）</p></div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">👩‍🏫 新增 / 編輯教師科目</div>
+<div id="panel-teachers" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>老師與任教科目（場地課表會依科目上色）</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+  <div class="card set-sec">
+    <div class="card-title">已登記的教師</div>
+    <div id="teacherList"><div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div></div>
+  </div>
+  <div class="card set-sec">
+    <div class="card-title" id="teacherFormTitle">新增教師</div>
     <div class="info-box">在這裡登記每位老師固定教授的科目，之後在「場地管理」新增課程時，只要輸入老師姓名，系統就會自動依此判斷顏色分類（生物/化學/物理/地科/理化）。若某筆場地預約需要不同分類，也可以在該筆記錄上手動指定科目或探究/選修/菁英/社團/其他。</div>
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px">
       <div class="form-group"><label>老師姓名 *</label><input type="text" id="teacher-name" placeholder="例如：戴德禮"></div>
@@ -1404,23 +1416,23 @@
       <button class="btn btn-primary" onclick="saveTeacher()">💾 儲存</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">📋 已登記的教師</div>
-    <div id="teacherList"><div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div></div>
-  </div>
 </div>
 
 <div id="panel-semruns" class="panel no-pane"><div class="pg-head"><h2>學期實驗紀錄</h2><p>前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</p></div><div class="card"><div class="card-title">📅 學期實驗紀錄<span style="font-size:12.5px;font-weight:400;color:var(--text2)">前台「學期實驗・這學期」顯示的內容；老師沒填的可以在這裡補</span></div><div id="srRoot"></div></div></div>
-<div id="panel-semester" class="panel no-pane"><div class="pg-head"><h2>學期設定</h2><p>學期週次、假日與定期評量週</p></div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📆 新增 / 編輯學期</div>
+<div id="panel-semester" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>學期週次、假日與定期評量週</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+  <div class="card set-sec">
+    <div class="card-title">已建立的學期</div>
+    <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
+  </div>
+  <div class="card set-sec">
+    <div class="card-title" id="semFormTitle">新增學期</div>
     <div class="info-box">設定各個「期間」的日期範圍與起始週次，系統會依此計算每個日期屬於第幾週，或顯示為寒假／寒輔／暑假／暑輔等標籤。設為「啟用中」的學期會用於前台週次顯示。</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
       <div class="form-group"><label>學期名稱 *</label><input type="text" id="sem-name" placeholder="例如：114學年度下學期"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:20px"><input type="checkbox" id="sem-active" style="width:auto"><label for="sem-active" style="color:var(--text)">設為啟用中學期</label></div>
     </div>
     <div style="margin-top:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📅 學期期間設定</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">學期期間設定</div>
       <div class="info-box" style="margin-bottom:10px">
         範例：114學年度下學期，2/9～2/22 是「寒輔」，從第1週開始算；2/23 開學後是「開學週期」，因為前面寒輔已經算了2週，所以開學週期的起始週次填 <strong>3</strong>。<br>
         114學年度上學期，9/1 開學是「開學週期」，起始週次填 <strong>1</strong>。
@@ -1429,7 +1441,7 @@
       <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addPeriodSettingRow()">＋ 新增期間</button>
     </div>
     <div style="margin-top:14px">
-      <div style="font-size:13px;font-weight:700;margin-bottom:8px">📝 特殊週次標註（定期評量等，屬於此學期）</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">特殊週次標註（定期評量等，屬於此學期）</div>
       <div class="info-box" style="margin-bottom:10px">例如「第5週」是第一次定期評量週，設定後所有顯示週次的地方都會自動加註「第5週〔第一次定期評量〕」。週次要對照上面「學期期間設定」計算出來的週次。</div>
       <div id="examWeekList"></div>
       <button class="btn btn-secondary btn-sm" style="margin-top:4px" onclick="addExamWeekRow()">＋ 新增特殊週次標註</button>
@@ -1439,12 +1451,12 @@
       <button class="btn btn-primary" onclick="saveSemester()">💾 儲存學期</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">📋 已建立的學期</div>
-    <div id="semesterList"><div class="empty"><div class="empty-icon">📆</div><p>尚未建立任何學期</p></div></div>
+  <div class="card set-sec">
+    <div class="card-title">已設定的假期／停課</div>
+    <div id="holidayList"><div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div></div>
   </div>
-  <div class="card" style="margin-bottom:16px">
-    <div class="card-title">🎉 國定假日／連假／停課設定</div>
+  <div class="card set-sec">
+    <div class="card-title" id="holFormTitle">新增假期／停課</div>
     <div class="info-box">設定日期範圍後，週曆上這幾天會用粉紅色底標示為假期，但仍可正常新增／預約場地，只是提醒大家這幾天是假期。颱風假這類臨時停課，類型選「停課」，會改用灰藍斜線標示。例如：9/25（五）～9/28（一）共放4天，開始日期填 9/25，結束日期填 9/28。</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
       <div class="form-group"><label>開始日期 *</label><input type="date" id="hol-start"></div>
@@ -1459,10 +1471,25 @@
       <button class="btn btn-primary" onclick="saveHoliday()">💾 儲存假期</button>
     </div>
   </div>
-  <div class="card" style="margin-bottom:0">
-    <div class="card-title">📋 已設定的假期</div>
-    <div id="holidayList"><div class="empty"><div class="empty-icon">🎉</div><p>尚未設定任何假期</p></div></div>
-  </div>
+</div>
+<div id="panel-backup" class="panel no-pane set-pg"><div class="pg-head"><h2>設定</h2><p>把資料表和照片下載到這台電腦，建議每月一次</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
+<div class="card set-sec" id="backupCard"><div class="card-title">資料備份</div>
+      <div id="backupInfo" style="font-size:13.5px;color:var(--text2);margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="backupXlsxBtn" onclick="runBackup('xlsx')">📊 下載 Excel 備份</button>
+        <button class="btn btn-secondary btn-sm" id="backupJsonBtn" onclick="runBackup('json')">🗂️ 下載完整備份（JSON）</button>
+      </div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)">
+        <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">📷 照片備份</div>
+        <div id="photoBackupInfo" style="font-size:12.5px;color:var(--text2);margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary btn-sm" id="photoNewBtn" onclick="runPhotoBackup(true)">📥 下載新增的照片</button>
+          <button class="btn btn-secondary btn-sm" id="photoAllBtn" onclick="runPhotoBackup(false)">📦 下載全部照片</button>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.6">包含借用人上傳的照片、後台換過的器材照片與實驗室封面，打包成一個 ZIP。第一次請按「下載全部照片」，之後按「下載新增的照片」只抓上次之後新增的，比較快。</div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">Excel 方便打開查看；JSON 保留全部欄位原樣，萬一要還原資料時用這份。建議每月一次，學期末再多備份一次。照片檔案不包含在內。</div>
+    </div>
 </div>
 
   <div id="panel-templates" class="panel">
@@ -1541,7 +1568,7 @@
   <div id="emView" class="em-view"></div>
 </div>
 
-<div id="panel-floorplan" class="panel"><div class="pg-head"><h2>平面圖校正</h2><p>在平面圖上框出櫃位熱區</p></div>
+<div id="panel-floorplan" class="panel set-pg"><div class="pg-head"><h2>設定</h2><p>在平面圖上框出櫃位熱區</p></div><div class="bw-subtabs set-subtabs" role="tablist" aria-label="設定"></div>
   <div class="card calib-sticky" id="calibStickyCard" style="background:var(--surface);box-shadow:0 4px 12px rgba(0,0,0,0.08)">
     <div class="card-title">🗺️ 平面圖熱區校正</div>
     <div class="info-box">選房間 → 在圖上按住拖拉畫一個框 → 輸入代碼（例如 BD08）→ 儲存。畫錯了可以直接刪除重畫；也可以在下面清單用數字微調現有熱區的位置（點輸入框，圖上對應的框會變橘色亮起來，方便邊調邊看）。改完的位置前台會自動套用，不用改程式碼。這張圖片卡片固定在畫面上方，往下滑清單時圖片不會跑掉。用「🔍＋／🔍－」放大縮小圖片，放大後可以直接滑動（滑鼠拖曳捲軸或手指滑動）查看各個角落；放大時觸控拖曳用來滑動查看，回到 100% 才能用觸控畫框。<strong>直接點已經畫好的熱區（不是拖拉），會跳出這個位置目前登記了哪些器材，可以直接補登或跳去編輯</strong>，適合一格一格檢查資料有沒有補齊，手機電腦都可以點。</div>
@@ -2346,7 +2373,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-22c';
+const ADMIN_VERSION='2026-10-25a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">🔄 重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -2357,7 +2384,7 @@ function openSettingsSheet(){
     const tab=b.dataset.tab,icon=b.querySelector('svg')?.outerHTML||'';
     const label=(b.querySelector('.tab-label,span:not(.tab-badge)')?.textContent||'').replace('▾','').trim();
     const bd=b.querySelector('.tab-badge.show');
-    return `<button type="button" class="${tab===cur||(tab==='borrow'&&BORROW_TABS.includes(cur))?'active':''}" onclick="closeModal();showTab('${safeId(tab)}')">${icon}<span>${escH(label)}</span>${bd?`<span class="ss-badge">${escH(bd.textContent)}</span>`:''}<span class="ss-arrow">›</span></button>`;
+    return `<button type="button" class="${tab===cur||(tab==='borrow'&&BORROW_TABS.includes(cur))||(tab==='settings'&&SETTINGS_TABS.includes(cur))?'active':''}" onclick="closeModal();showTab('${safeId(tab)}')">${icon}<span>${escH(label)}</span>${bd?`<span class="ss-badge">${escH(bd.textContent)}</span>`:''}<span class="ss-arrow">›</span></button>`;
   };
   const main=[...document.querySelectorAll('.tabs > button.tab[data-tab]')].map(row).join('');
   const more=[...document.querySelectorAll('#tabMoreMenu button[data-tab]')].map(row).join('');
@@ -2531,12 +2558,25 @@ function renderWithFilter(panel){
   renderList(records,document.getElementById(panel+'List'),panel);
 }
 
-const TAB_MORE_GROUP=['teachers','semester','templates','semruns','floorplan','chemicals','equipment','highlights','purposes'];
+const TAB_MORE_GROUP=['teachers','semester','templates','semruns','floorplan','chemicals','equipment','highlights','purposes','backup'];
 // 器材借用：四個狀態共用側欄一項，進去用上方分頁切換；點側欄回到上次看的那個分頁
 const BORROW_TABS=['pending','approved','return','deposit'];
 let borrowLastTab='pending';
+// 設定：五頁共用側欄一顆「設定」（跟器材借用同一套做法），記住上次看的是哪一頁
+const SETTINGS_TABS=['purposes','teachers','semester','floorplan','backup'];
+let settingsLastTab='purposes';
+function renderSettingsSubtabs(cur){
+  cur=cur||settingsLastTab;
+  let tc='',pc='';
+  try{if(allTeachers.length)tc=allTeachers.length;}catch(_){}
+  try{if(purposeRows.length)pc=purposeRows.length;}catch(_){}
+  const T=[['purposes','借用目的與保證金',pc],['teachers','教師',tc],['semester','學期與假日',''],['floorplan','平面圖校正',''],['backup','資料備份','']];
+  const html=T.map(([k,l,n])=>`<button type="button" role="tab" aria-selected="${k===cur}" class="bw-tab${k===cur?' on':''}" onclick="showTab('${k}')">${l}${n!==''?`<span class="bw-n">${n}</span>`:''}</button>`).join('');
+  document.querySelectorAll('.set-subtabs').forEach(el=>{el.innerHTML=html;});
+}
 function showTab(tab,opts){
   if(tab==='borrow')tab=borrowLastTab;
+  if(tab==='settings')tab=settingsLastTab;
   const fromHist=!!(opts&&opts.fromHistory);
   if(!document.getElementById('panel-'+tab))return;
   const prevTab=navCurPage();
@@ -2544,7 +2584,9 @@ function showTab(tab,opts){
   closeTabMoreMenu();
   const inBorrow=BORROW_TABS.includes(tab);
   if(inBorrow){borrowLastTab=tab;renderBorrowSubtabs(tab);}
-  document.querySelectorAll('.tabs .tab[data-tab],.tab-more-menu button[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab||(inBorrow&&t.dataset.tab==='borrow')));
+  const inSettings=SETTINGS_TABS.includes(tab);
+  if(inSettings){settingsLastTab=tab;renderSettingsSubtabs(tab);}
+  document.querySelectorAll('.tabs .tab[data-tab],.tab-more-menu button[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab||(inBorrow&&t.dataset.tab==='borrow')||(inSettings&&t.dataset.tab==='settings')));
   if(tab==='overview')renderOverview();
   const moreBtn=document.getElementById('tabMoreBtn');
   if(moreBtn)moreBtn.classList.toggle('active',TAB_MORE_GROUP.includes(tab));
@@ -2561,6 +2603,7 @@ function showTab(tab,opts){
   if(tab==='equipment')loadAdminEquipment();
   if(tab==='highlights')loadHighlights();
   if(tab==='purposes')loadPurposesAdmin();
+  if(tab==='backup')renderBackupInfo();
 }
 // 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
 // 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
@@ -3230,27 +3273,20 @@ async function loadTeachers(){
     renderCatLegend();
   }catch(e){list.innerHTML='<div class="empty"><div class="empty-icon">❌</div><p>載入失敗，請確認 Supabase 是否已建立 teachers 資料表（欄位：id, name, subject）</p></div>';}
 }
+// 教師清單：一張表（姓名｜科目色點｜借用＋場地次數），依科目再依姓名排序；編輯、刪除滑過才出現（觸控螢幕一直顯示）
+const TEACHER_DOT={生物:'#4f7a4a',化學:'#a8662b',物理:'#3f5f86',地科:'#2f7478',理化:'#75558a'};
 function renderTeacherList(){
   const list=document.getElementById('teacherList');if(!list)return;
-  if(!allTeachers.length){list.innerHTML='<div class="empty"><div class="empty-icon">👩‍🏫</div><p>尚未建立任何老師資料</p></div>';return;}
-  const bySubject={};
-  TEACHER_SUBJECTS.forEach(s=>bySubject[s]=[]);
-  allTeachers.forEach(t=>{(bySubject[t.subject]=bySubject[t.subject]||[]).push(t);});
-  list.innerHTML=TEACHER_SUBJECTS.map(subj=>{
-    const teachers=bySubject[subj]||[];
-    if(!teachers.length)return '';
-    return `<div style="margin-bottom:14px">
-      <div class="cat-legend-item ${categoryClass(subj)}" style="margin-bottom:6px;font-weight:700">${subj}（${teachers.length}位）</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${teachers.map(t=>`<div class="teacher-chip">
-          <span style="font-size:13px;font-weight:600">${escH(t.name)}</span>
-          <span style="font-size:11.5px;color:var(--text2);font-family:'DM Mono',monospace" title="借用＋場地申請次數">${teacherUseCount(t.name)} 次</span>
-          <button class="btn btn-secondary btn-sm" style="padding:2px 8px" onclick="editTeacher('${safeId(t.id)}')" aria-label="編輯">✏️</button>
-          <button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="deleteTeacher('${safeId(t.id)}')" aria-label="刪除">✕</button>
-        </div>`).join('')}
-      </div>
-    </div>`;
-  }).join('');
+  renderSettingsSubtabs();
+  if(!allTeachers.length){list.innerHTML='<div class="empty"><p>還沒有老師。用下面的「新增教師」加第一位。</p></div>';return;}
+  const order=s=>{const i=TEACHER_SUBJECTS.indexOf(s);return i<0?99:i;};
+  const rows=[...allTeachers].sort((a,b)=>order(a.subject)-order(b.subject)||String(a.name).localeCompare(String(b.name),'zh-Hant'));
+  list.innerHTML=`<table class="set-tbl"><thead><tr><th>姓名</th><th>科目</th><th style="text-align:right" title="借用＋場地申請次數">使用次數</th><th><span class="sr-only">操作</span></th></tr></thead><tbody>${rows.map(t=>`<tr>
+    <td><b>${escH(t.name)}</b></td>
+    <td><span class="dot" style="background:${TEACHER_DOT[t.subject]||'#888'}"></span>${escH(t.subject)}</td>
+    <td class="n">${teacherUseCount(t.name)} 次</td>
+    <td class="set-act"><button type="button" onclick="editTeacher('${safeId(t.id)}')" aria-label="編輯 ${escH(t.name)}">編輯</button><button type="button" class="del" onclick="deleteTeacher('${safeId(t.id)}')" aria-label="刪除 ${escH(t.name)}">刪除</button></td>
+  </tr>`).join('')}</tbody></table>`;
 }
 function renderCatLegend(){
   const el=document.getElementById('catLegend');if(!el)return;
@@ -3259,6 +3295,7 @@ function renderCatLegend(){
 }
 function clearTeacherForm(){
   editingTeacherId=null;
+  const ft=document.getElementById('teacherFormTitle');if(ft)ft.textContent='新增教師';
   document.getElementById('teacher-name').value='';
   document.getElementById('teacher-subject').value='生物';
 }
@@ -3267,6 +3304,7 @@ function editTeacher(id){
   editingTeacherId=id;
   document.getElementById('teacher-name').value=t.name||'';
   document.getElementById('teacher-subject').value=t.subject||'生物';
+  const ft=document.getElementById('teacherFormTitle');if(ft)ft.textContent='編輯教師：'+(t.name||'');
   document.getElementById('teacher-name').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function saveTeacher(){
@@ -3759,6 +3797,7 @@ function holKindChange(){
 }
 function clearHolidayForm(){
   editingHolidayId=null;
+  const ft=document.getElementById('holFormTitle');if(ft)ft.textContent='新增假期／停課';
   const k=document.getElementById('hol-kind');if(k)k.value='假期';
   const f=document.getElementById('hol-from');if(f)f.value='';
   holKindChange();
@@ -3774,6 +3813,7 @@ function editHoliday(id){
   document.getElementById('hol-label').value=h.label||'';
   document.getElementById('hol-kind').value=h.kind==='停課'?'停課':'假期';holKindChange();
   document.getElementById('hol-from').value=h.from_period||'';
+  {const ft=document.getElementById('holFormTitle');if(ft)ft.textContent='編輯假期／停課';}
   document.getElementById('hol-start').scrollIntoView({behavior:'smooth',block:'center'});
 }
 async function saveHoliday(){
@@ -3811,6 +3851,7 @@ async function doDeleteHoliday(id){
 let editingSemesterId=null;
 function clearSemesterForm(){
   editingSemesterId=null;
+  const ft=document.getElementById('semFormTitle');if(ft)ft.textContent='新增學期';
   document.getElementById('sem-name').value='';
   document.getElementById('sem-active').checked=false;
   renderPeriodSettingList([]);
@@ -3824,7 +3865,8 @@ function editSemester(id){
   document.getElementById('sem-active').checked=!!s.is_active;
   renderPeriodSettingList(Array.isArray(s.periods)?s.periods:[]);
   renderExamWeekList(Array.isArray(s.exam_weeks)?s.exam_weeks:[]);
-  document.getElementById('chem-name-zh').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const ft=document.getElementById('semFormTitle');if(ft)ft.textContent='編輯學期：'+(s.name||'');
+  document.getElementById('sem-name').scrollIntoView({ behavior: 'smooth', block: 'center' });
   showToast('已載入學期資料，可修改後儲存','success');
 }
 
@@ -8833,8 +8875,8 @@ async function loadPurposesAdmin(){
 function renderPurposeRows(){
   const list=document.getElementById('purposeList');
   if(!purposeRows.length){list.innerHTML='<div class="empty"><p>目前沒有任何借用目的</p></div>';renderPurposePreview();ppDirtyUpdate();return;}
-  const ck=(i,f,label)=>`<label><input type="checkbox" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)">${label}</label>`;
-  list.innerHTML=`<div style="display:flex;flex-direction:column;gap:6px">`+purposeRows.map((r,i)=>`
+  const ck=(i,f,label)=>`<label><input type="checkbox" class="set-sw" ${purposeRows[i][f]?'checked':''} onchange="setPurposeField(${i},'${f}',this.checked)">${label}</label>`;
+  list.innerHTML=`<div class="pp-list">`+purposeRows.map((r,i)=>`
     <div class="pp-row ${ppRowState(r)}" style="background:${r.is_active?'var(--surface)':'var(--surface2)'};${r.is_active?'':'opacity:.6'}">
       <div class="pp-move">
         <button class="btn btn-secondary btn-sm" style="padding:0 8px;height:22px" onclick="movePurpose(${i},-1)" ${i===0?'disabled':''} aria-label="往上">▲</button>
@@ -8842,9 +8884,9 @@ function renderPurposeRows(){
       </div>
       <input type="text" class="pp-name" maxlength="20" value="${escH(r.name)}" onchange="setPurposeField(${i},'name',this.value)" aria-label="目的名稱">
       <div class="pp-checks">${ck(i,'for_teacher','老師可選')}${ck(i,'for_student','學生可選')}${ck(i,'needs_deposit','需保證金')}${ck(i,'is_active','啟用')}</div>
-      <button class="btn btn-danger-outline btn-sm" onclick="deletePurposeRow(${i})" aria-label="刪除">刪除</button>
+      <button type="button" class="pp-del" onclick="deletePurposeRow(${i})" aria-label="刪除「${escH(r.name)}」">刪除</button>
     </div>`).join('')+`</div>`;
-  renderPurposePreview();ppDirtyUpdate();
+  renderPurposePreview();ppDirtyUpdate();renderSettingsSubtabs();
 }
 // 跟剛載入時比：哪幾列是新增／改過，整頁有沒有沒存的
 let purposeSnap=[],purposeDepSnap='';
