@@ -1597,7 +1597,7 @@
   <div class="card" style="margin-bottom:0">
     <div class="card-title" style="flex-wrap:wrap">目前房間的熱區清單
       <button class="btn btn-secondary btn-sm" style="margin-left:auto" onclick="checkCalibDuplicates()">檢查全部房間的重複代碼</button>
-      <button class="btn btn-danger btn-sm" onclick="checkCalibOversized()">⚠️ 檢查異常尺寸</button>
+      <button class="btn btn-danger btn-sm" onclick="checkCalibOversized()">檢查異常尺寸</button>
       <button class="btn btn-danger btn-sm" onclick="clearRoomHotspots()">清空這個房間全部熱區</button>
     </div>
     <div id="calibList"><div class="empty"><p>點重新整理載入</p></div></div>
@@ -1833,7 +1833,7 @@
       <span style="margin-left:auto;display:flex;gap:6px;align-items:center">
         <button class="btn btn-primary btn-sm" id="eqAddBtn" onclick="toggleEqAdd(true)">＋ 新增器材</button>
         <details class="act-more"><summary class="btn btn-secondary btn-sm" aria-label="更多動作">⋯<span class="eq-btn-txt"> 更多</span></summary><div class="act-pop">
-          <button type="button" onclick="this.closest('details').removeAttribute('open');checkEquipLocationMismatch()">⚠️ 檢查位置代碼開頭</button>
+          <button type="button" onclick="this.closest('details').removeAttribute('open');checkEquipLocationMismatch()">檢查位置代碼開頭</button>
         </div></details>
       </span>
     </div>
@@ -2368,7 +2368,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-25c';
+const ADMIN_VERSION='2026-10-25d';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3150,7 +3150,7 @@ function renderRecord(r,mode,inPane){
   const editing=ieEditingHere(r,mode,inPane);
   const photoOnlyHtml=!items.length&&safePhotos.length?`<div class="admin-note ie-photo-only" style="background:#eef4ff;border-color:#c7d7f5"><span>這張申請沒有選器材，只附了照片，請看照片確認要借什麼</span>${canEditItems?`<button type="button" class="btn btn-primary btn-sm" onclick="openItemEdit(${ja(r.id)})">補器材</button>`:''}</div>`:'';
   const photosHtml=safePhotos.length?`<div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px">借用人上傳照片</div><div style="display:flex;gap:6px;flex-wrap:wrap">${safePhotos.map(u=>`<button type="button" class="bp-thumb" onclick="openPhotoViewer(${ja(u)})"><img src="${escH(u)}" loading="lazy" onerror="this.parentNode.classList.add('bp-bad');this.remove()" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);cursor:pointer"><span class="bp-fallback"><br>無法預覽</span></button>`).join('')}</div></div>`:'';
-  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">⚠️ ${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
+  const damageHtml=r.damageNote?`<div style="background:#fff5f5;border-radius:6px;padding:8px 10px;margin-top:8px;font-size:12.5px;color:var(--danger)">${escH(r.damageNote)}${r.finalRefund!=null?' | 退還：NT$'+escH(r.finalRefund):''}</div>`:'';
   const actions=editing?'':recActionsHtml(r,mode);
   const canBatch=mode==='pending'&&r.status==='待審核';
   const bOn=canBatch&&batchSel.has(String(r.id));
@@ -3226,9 +3226,9 @@ function recCardHtml(r,mode,inPane,o){
       const chemicals=[],shared=[],recycling=[];
       let section='';
       lines.forEach(l=>{
-        if(l.startsWith(''))section='chem';
+        if(l.startsWith('🧪'))section='chem';
         else if(l.startsWith('⚠️'))section='shared';
-        else if(l.startsWith(''))section='recycle';
+        else if(l.startsWith('♻️'))section='recycle';
         else if(l.trim()){
           if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
           else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
@@ -3236,13 +3236,13 @@ function recCardHtml(r,mode,inPane,o){
         }
       });
       let html='';
-      {const eLines=plainNote.split('\n').filter(l=>l.startsWith(''));const rest=plainNote.split('\n').filter(l=>!l.startsWith('')).join('\n').trim();
+      {const eLines=plainNote.split('\n').filter(l=>l.startsWith('🎓'));const rest=plainNote.split('\n').filter(l=>!l.startsWith('🎓')).join('\n').trim();
       if(rest)html+=`<div style="font-size:12px;color:var(--text2);margin-top:6px">${escH(rest)}</div>`;
       eLines.forEach(l=>{html+=`<div style="font-size:12.5px;color:#6b21a8;background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:6px 10px;margin-top:6px">${escH(l)}</div>`;});}
       if(shared.length||chemicals.length||recycling.length){
         html+=`<div style="margin-top:8px;background:#fff8f0;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px">`;
         html+=`<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:6px">課程備註（來自套用課綱實驗）</div>`;
-        if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">⚠️ 共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
+        if(shared.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#b45309;margin-bottom:3px">共用／數量待確認</div>${shared.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         if(chemicals.length)html+=`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:600;color:#0369a1;margin-bottom:3px">藥品項目</div>${chemicals.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         if(recycling.length)html+=`<div><div style="font-size:11px;font-weight:600;color:#15803d;margin-bottom:3px">回收用具</div>${recycling.map(s=>`<div style="font-size:12px;padding:1px 0">・${escH(s)}</div>`).join('')}</div>`;
         html+=`</div>`;
@@ -3419,7 +3419,7 @@ async function approveVenueSelected(bookingId,approve,force){
   if(approve&&!force){
     const conflicts=selected.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
     if(conflicts.length){
-      showModal('⚠️ 時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+      showModal('時段衝突',`<p>以下勾選時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`approveVenueSelected(${ja(bookingId)},true,true)`}
       ]);
@@ -3445,7 +3445,7 @@ async function approveAllVenue(bookingId,approve,force){
     const pendingPeriods=(booking.periods||[]).filter(p=>p.status==='待審核');
     const conflicts=pendingPeriods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,bookingId));
     if(conflicts.length){
-      showModal('⚠️ 時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
+      showModal('時段衝突',`<p>以下時段已有核准／固定預約：</p><div style="margin-top:8px;font-size:13px">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div><p style="margin-top:6px;font-size:13px">仍要全部核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`approveAllVenue(${ja(bookingId)},true,true)`}
       ]);
@@ -4086,7 +4086,7 @@ async function setPeriodStatus(bookingId,date,period,venue,status,force){
   if(status==='已核准'&&!force){
     const conf=venueSlotConflict(date,period,venue,bookingId);
     if(conf){
-      showModal('⚠️ 時段衝突',`<p>此時段已有 <strong>${escH(conf.borrower_name)}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${escH(date)} ${escH(period)} ${escH(venue)}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
+      showModal('時段衝突',`<p>此時段已有 <strong>${escH(conf.borrower_name)}</strong> 的核准／固定預約。</p><p style="margin-top:6px;font-size:13px;color:var(--text2)">${escH(date)} ${escH(period)} ${escH(venue)}</p><p style="margin-top:6px;font-size:13px">仍要核准（造成重複預約）嗎？</p>`,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`setPeriodStatus(${ja(bookingId)},${ja(date)},${ja(period)},${ja(venue)},'已核准',true)`}
       ]);
@@ -4202,7 +4202,7 @@ async function adminAddVenue(date,period,dow){
   const conflicts=periods.filter(p=>venueSlotConflict(p.date,p.period,p.venue,null));
   if(conflicts.length){
     window._pendingVenueAdd=opts;
-    showModal('⚠️ 時段衝突',`
+    showModal('時段衝突',`
       <p>以下日期已有核准／固定預約：</p>
       <div style="margin-top:8px;font-size:13px;max-height:200px;overflow:auto">${conflicts.map(c=>`<div style="padding:3px 0;color:var(--danger)">${escH(c.date)} ${escH(c.period)} ${escH(c.venue)}</div>`).join('')}</div>
       <p style="margin-top:6px;font-size:13px">共 ${periods.length} 筆，其中 ${conflicts.length} 筆衝突。仍要新增（造成重複預約）嗎？</p>
@@ -4269,7 +4269,7 @@ function previewRecurrenceEdit(bookingId){
     <div style="font-size:13px;margin-bottom:8px">新週次範圍：第${newStart}～${newEnd}週</div>
     ${toAdd.length?`<div style="font-size:13px;color:var(--accent);margin-bottom:4px">將新增 ${toAdd.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${toAdd.join('、')}</div>`:''}
     ${toRemove.length?`<div style="font-size:13px;color:var(--danger);margin-bottom:4px">將移除 ${toRemove.length} 筆：</div><div style="font-size:12px;color:var(--text2);max-height:120px;overflow:auto;margin-bottom:8px">${escH(toRemove.map(p=>p.date).join('、'))}</div>`:''}
-    ${addConflicts.length?`<div style="font-size:13px;color:var(--danger);margin-top:6px">⚠️ 新增的日期中有 ${addConflicts.length} 筆與既有核准／固定預約衝突，新增後請至週曆檢查。</div>`:''}
+    ${addConflicts.length?`<div style="font-size:13px;color:var(--danger);margin-top:6px">新增的日期中有 ${addConflicts.length} 筆與既有核准／固定預約衝突，新增後請至週曆檢查。</div>`:''}
   `,[
     {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
     {label:'確認套用',cls:'btn-primary',fn:'applyRecurrenceEdit()'}
@@ -4338,11 +4338,11 @@ async function doApprove(id,force){
     });
     // 庫存不足：不再硬性阻擋，改為跳確認視窗，確認後可強制核准
     if(shortage.length&&!force){
-      showModal('⚠️ 庫存不足，仍要核准嗎？',`
+      showModal('庫存不足，仍要核准嗎？',`
         <p style="font-size:13px;margin-bottom:8px">以下器材目前的「系統可借量」不足：</p>
         <div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:8px;padding:10px 12px;font-size:13px;color:var(--danger)">${shortage.map(s=>'・'+s).join('<br>')}</div>
         <p style="font-size:13px;color:var(--text2);margin-top:10px">若你確定學校實際有這些器材（例如庫存數量還沒建檔完成），可以直接強制核准。</p>
-        <p style="font-size:12px;color:var(--text2);margin-top:6px">⚠️ 強制核准後，這些器材的可借量可能會暫時顯示為 0 或負數，等你之後到器材管理把實際總數補齊，就會自動恢復正常。</p>
+        <p style="font-size:12px;color:var(--text2);margin-top:6px">強制核准後，這些器材的可借量可能會暫時顯示為 0 或負數，等你之後到器材管理把實際總數補齊，就會自動恢復正常。</p>
       `,[
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
         {label:'仍要核准',cls:'btn-warn',fn:`doApprove(${ja(id)},true)`}
@@ -4531,9 +4531,9 @@ async function doExport(id){
     const chemicals=[],shared=[],recycling=[];
     let section='';
     lines.forEach(l=>{
-      if(l.startsWith(''))section='chem';
+      if(l.startsWith('🧪'))section='chem';
       else if(l.startsWith('⚠️'))section='shared';
-      else if(l.startsWith(''))section='recycle';
+      else if(l.startsWith('♻️'))section='recycle';
       else if(l.trim()){
         if(section==='chem')chemicals.push(l.replace(/^-\s*/,''));
         else if(section==='shared')shared.push(l.replace(/^-\s*/,''));
@@ -4677,7 +4677,7 @@ async function buildReportXlsx(meta,items,rec){
     ws2.addRow(['課程備註','']);ws2.mergeCells(`A1:B1`);
     const t=ws2.getRow(1);t.getCell(1).font={name:FONT,bold:true,size:14};t.height=28;
     ws2.addRow([]);
-    addSection('⚠️ 共用／數量待確認',meta.courseShared,'FFFEF3C7');
+    addSection('共用／數量待確認',meta.courseShared,'FFFEF3C7');
     addSection('藥品項目',meta.courseChemicals,'FFE0F2FE');
     addSection('回收用具',meta.courseRecycling,'FFD1FAE5');
   }
@@ -4733,7 +4733,7 @@ function confirmReturn(id){
 }
 function openDamageModal(id){
   const record=allRecords.find(r=>r.id===id);const items=record?.items||[];
-  showModal('⚠️ 損壞歸還',`
+  showModal('損壞歸還',`
     <div class="form-group"><label>損壞說明 *</label><textarea id="damageNoteInput" rows="2" placeholder="說明損壞情況"></textarea></div>
     <div class="damage-form">
       <div style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px">賠償計算</div>
@@ -4998,7 +4998,7 @@ function buildReferenceNote(otherItems, chemicals, recycling){
     lines.push('');
   }
   if(chemicals&&chemicals.length){
-    lines.push('藥品項目：');
+    lines.push('🧪 藥品項目：');
     chemicals.forEach(it=>{
       const qty=[it.qty_per_group,it.qty_total].filter(v=>v!=null&&v!=='').join(' / ');
       lines.push(`- ${it.name}${it.spec?'（'+it.spec+'）':''}${qty?'　'+qty:''}${it.note?'　'+it.note:''}`);
@@ -5006,7 +5006,7 @@ function buildReferenceNote(otherItems, chemicals, recycling){
     lines.push('');
   }
   if(recycling&&recycling.length){
-    lines.push('回收用具：');
+    lines.push('♻️ 回收用具：');
     recycling.forEach(it=>lines.push(`- ${it.name}${it.note?'　'+it.note:''}`));
   }
   return lines.join('\n').trim();
@@ -5040,7 +5040,7 @@ async function handleTemplateFile(input){
       const wb=XLSX.read(e.target.result,{type:'array'});
       const all=parseCourseTemplateSheets(wb,file.name);
       const sheetsTxt=`（檔案「${file.name}」共有 ${wb.SheetNames.length} 個工作表：${wb.SheetNames.join('、')}）`;
-      if(!all.length){msg.textContent='⚠️ 此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗'+sheetsTxt;return;}
+      if(!all.length){msg.textContent='此檔案不是「＿＿＿實驗紀錄表」格式，無法辨識為課綱實驗'+sheetsTxt;return;}
       if(all.length===1){loadTemplateIntoForm(all[0]);msg.textContent=`讀到工作表「${all[0].sheet_name}」的「${all[0].name}」，請確認後儲存${sheetsTxt}`;return;}
       // 好幾個工作表：檔名裡有提到的那個實驗優先；其他讓使用者挑
       const fn=String(file.name||'').replace(/\s+/g,'');
@@ -5681,7 +5681,7 @@ function handleTemplateImport(input){
         iMonth=idx('月份'),iWeek=idx('週次'),iClassCount=idx('班數'),iGroupCount=idx('組數'),iRoom=idx('預設科別'),
         iItemName=idx('器材名稱'),iSpec=idx('規格'),iQty=idx('數量'),iUnit=idx('單位'),iItemRoom=idx('器材科別'),
         iItemNote=idx('器材備註'),iRefNote=idx('參考備註');
-      if(iName<0){msg.textContent='⚠️ 找不到「課程名稱」欄位，請確認是用「匯出全部課綱實驗」產生的檔案格式';return;}
+      if(iName<0){msg.textContent='找不到「課程名稱」欄位，請確認是用「匯出全部課綱實驗」產生的檔案格式';return;}
       const groups=new Map();
       for(let r=1;r<rows.length;r++){
         const row=rows[r];if(!row||row.every(c=>c===null||c===''))continue;
@@ -5717,7 +5717,7 @@ function handleTemplateImport(input){
         }
       }
       const parsed=[...groups.values()].filter(g=>g.name);
-      if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的課程列';return;}
+      if(!parsed.length){msg.textContent='沒有解析到任何有效的課程列';return;}
       window._pendingTemplateImport=parsed;
       msg.innerHTML=`解析到 <strong>${parsed.length}</strong> 個課程，`+
         `<button class="btn btn-primary btn-sm" onclick="confirmTemplateImport()">確認匯入</button>`;
@@ -6431,7 +6431,7 @@ async function loadChemLocs(){
     allChemLocs=Array.isArray(rows)?rows:[];chemLocsReady=true;if(msg)msg.textContent='';
   }catch(e){
     allChemLocs=[];chemLocsReady=false;
-    if(msg)msg.innerHTML='⚠️ 資料庫還沒有「藥品櫃位置」資料表，請先到 Supabase 執行 <b>chem_cabinet.sql</b>（只要執行一次）。';
+    if(msg)msg.innerHTML='資料庫還沒有「藥品櫃位置」資料表，請先到 Supabase 執行 <b>chem_cabinet.sql</b>（只要執行一次）。';
   }
 }
 async function loadAdminChems() {
@@ -6460,7 +6460,7 @@ function renderChemCabOrphans(){
   if(!o.length){box.innerHTML='';return;}
   const where=o.slice(0,6).map(l=>`第${CAB_CN[l.cab]||l.cab}櫃第${l.layer}層第${l.col}排`).join('、');
   box.innerHTML=`<div style="margin:0 0 10px;padding:9px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7">
-    ⚠️ 有 <b>${o.length}</b> 個位置顯示「?」：它們對應的藥品已經不在藥品清單（通常是藥品被刪掉了，但櫃位還留著）。<br>
+    有 <b>${o.length}</b> 個位置顯示「?」：它們對應的藥品已經不在藥品清單（通常是藥品被刪掉了，但櫃位還留著）。<br>
     <span style="font-size:12px">${escH(where)}${o.length>6?' 等':''}</span><br>
     <button type="button" class="btn btn-danger-outline btn-sm" style="margin-top:6px" onclick="clearChemCabOrphans()">清掉這 ${o.length} 個「?」位置</button>
     <span style="font-size:12px;margin-left:6px">或直接重新匯入 Excel 並選「取代」，也會一起清掉、重新對應。</span></div>`;
@@ -6566,7 +6566,7 @@ function chemThumb(c){return (chemStructOk(c&&c.structure)&&chemStructSvg(c.stru
 const PC_BASE='https://pubchem.ncbi.nlm.nih.gov/rest/pug';
 const PC_GAP=3000,PC_MAX_REQ=1500,PC_TIMEOUT=20000;
 const PC={running:false,stop:false,reqs:0,last:0,log:[],results:new Map(),loaded:false,filter:'todo',shown:60,busyWait:0,q:'',sel:new Set()};
-const PC_STATUS={match:'對得上',diff:'⚠️ 有出入',multi:'好幾個候選',notfound:'查不到',noname:'沒有英文名／CAS',skip:'不適用',done:'✔ 已確認',error:'⚠️ 查詢失敗'};
+const PC_STATUS={match:'對得上',diff:'有出入',multi:'好幾個候選',notfound:'查不到',noname:'沒有英文名／CAS',skip:'不適用',done:'✔ 已確認',error:'查詢失敗'};
 const pcSleep=ms=>new Promise(r=>setTimeout(r,ms));
 // CAS：最後一碼是檢查碼（前面數字由右往左乘 1、2、3…加總，除以 10 的餘數）
 function casValid(s){
@@ -6845,7 +6845,7 @@ function pcRender(){
   rows.forEach(({r})=>{if(!r)cnt.none++;else if(r.status==='match')cnt.match++;else if(['diff','multi','error'].includes(r.status))cnt.todo2++;else if(r.status==='notfound')cnt.notfound++;else if(r.status==='noname')cnt.noname++;else if(r.status==='skip')cnt.skip++;else if(r.status==='done')cnt.done++;});
   const casMany=({c,r})=>{const d=r&&r.data;return !!d&&!d.casChosen&&(((d.casList||[]).length>1)||!!(c.cas&&(d.casList||[]).length&&!d.casList.includes(String(c.cas).trim())));};
   cnt.cas2=rows.filter(casMany).length;
-  const F=[['todo2','⚠️ 要看一下',cnt.todo2],['cas2','CAS 要確認',cnt.cas2],['match','對得上',cnt.match],['notfound','查不到',cnt.notfound],['noname','沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','不適用',cnt.skip],['none','還沒查',cnt.none]];
+  const F=[['todo2','要看一下',cnt.todo2],['cas2','CAS 要確認',cnt.cas2],['match','對得上',cnt.match],['notfound','查不到',cnt.notfound],['noname','沒英文名',cnt.noname],['done','✔ 已確認',cnt.done],['skip','不適用',cnt.skip],['none','還沒查',cnt.none]];
   if(PC.filter==='todo')PC.filter=cnt.todo2?'todo2':cnt.match?'match':'none';
   document.getElementById('pcFilter').innerHTML=F.map(([k,l,n])=>`<button type="button" class="${PC.filter===k?'on':''}" onclick="PC.filter='${k}';PC.shown=60;pcRender()">${l} ${n}</button>`).join('')+
     (cnt.match?`<button type="button" class="pc-all" onclick="pcConfirmAllMatch()">✔ 對得上的全部確認</button>`:'');
@@ -7452,7 +7452,7 @@ function showCabImportPreview(ok,manual,bad,grid){
         ${manual.length?`<details open><summary style="color:var(--danger)">核對欄填「改」的 ${manual.length} 筆不會匯入，請匯入後手動處理</summary><ul style="font-size:13px">${li(manual.map(m=>`第 ${m.row} 列 ${escH(m.name)}${m.fix?'：'+escH(m.fix):''}`))}</ul></details>`:''}
         ${bad.length?`<p style="color:var(--danger);font-size:13px">有 ${bad.length} 列的櫃／層／排／瓶數格式不對，會略過（第 ${bad.slice(0,8).map(b=>b.row).join('、')}${bad.length>8?'…':''} 列）</p>`:''}
         ${grid?`<p style="font-size:13px">讀到：${gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、')}${grid.labels.length?`，分區標籤 ${grid.labels.length} 個（例如「${escH(grid.labels[0].text)}」）`:''}</p>`:''}
-        ${grid&&grid.warn.length?`<div style="margin:8px 0;padding:8px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7"><b>⚠️ 有 ${grid.warn.length} 個櫃子沒讀到：</b><ul style="margin:4px 0 0;padding-left:18px">${li(grid.warn.map(escH))}</ul></div>`:''}
+        ${grid&&grid.warn.length?`<div style="margin:8px 0;padding:8px 12px;border-radius:8px;background:#fdecea;border:1px solid #f3c4bd;color:#9a3226;font-size:13px;line-height:1.7"><b>有 ${grid.warn.length} 個櫃子沒讀到：</b><ul style="margin:4px 0 0;padding-left:18px">${li(grid.warn.map(escH))}</ul></div>`:''}
         ${orphanN?`<p style="font-size:13px;color:#9a3226">目前有 ${orphanN} 個「?」位置，選「取代」會一起清掉。</p>`:''}
         <div class="form-group" style="margin-top:10px"><label><input type="radio" name="cabImpMode" value="replace" ${grid||!allChemLocs.length?'checked':''} style="width:auto"> 取代：先清空${grid?gridCabs.map(c=>'第'+CAB_CN[c]+'櫃').join('、'):'所有櫃子'}目前的位置（${curInCabs} 筆），再匯入</label>
         <label><input type="radio" name="cabImpMode" value="append" ${!grid&&allChemLocs.length?'checked':''} style="width:auto"> 加在現有位置後面</label></div>`,[
@@ -7674,7 +7674,7 @@ function renderCatManager(){
   if(!catDraft)catDraft=CHEM_CATS.map(c=>({...c,orig:c.name}));
   const live=catDraft.filter(c=>!c._del);
   const none=allAdminChems.filter(c=>!catName(c.category)).length;
-  box.innerHTML=`${window._catsFromDb?'':`<div class="hint" style="color:var(--danger);margin-bottom:8px">⚠️ 資料庫還沒有「藥品大類」資料表，目前顯示的是預設值。請先在 Supabase 執行「藥品大類.sql」，才能儲存修改。</div>`}
+  box.innerHTML=`${window._catsFromDb?'':`<div class="hint" style="color:var(--danger);margin-bottom:8px">資料庫還沒有「藥品大類」資料表，目前顯示的是預設值。請先在 Supabase 執行「藥品大類.sql」，才能儲存修改。</div>`}
     <div style="display:flex;flex-direction:column;gap:6px">${live.map(c=>{const i=catDraft.indexOf(c);return `
       <div style="display:grid;grid-template-columns:auto 44px minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:6px 8px;border:1px solid var(--border);border-radius:10px">
         <div style="display:flex;flex-direction:column;gap:2px"><button class="btn btn-secondary btn-sm" style="padding:0 8px;height:20px" onclick="moveCatRow(${i},-1)" aria-label="往上">▲</button><button class="btn btn-secondary btn-sm" style="padding:0 8px;height:20px" onclick="moveCatRow(${i},1)" aria-label="往下">▼</button></div>
@@ -8323,7 +8323,7 @@ function clearEquipForm(){
 function checkEquipLocationMismatch(){
   const flagged=allAdminEquipment.map(e=>({e,bad:equipLocationMismatches(e)})).filter(x=>x.bad.length);
   if(!flagged.length){
-    showModal('⚠️ 檢查位置代碼開頭',`<div class="empty"><p>沒有發現位置代碼開頭跟房間對不上的器材</p></div>`,[
+    showModal('檢查位置代碼開頭',`<div class="empty"><p>沒有發現位置代碼開頭跟房間對不上的器材</p></div>`,[
       {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
     ]);
     return;
@@ -8333,7 +8333,7 @@ function checkEquipLocationMismatch(){
       <strong>${escH(e.name)}</strong> <span style="color:var(--text2);font-size:12px">${escH(rn(e.room))}（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）</span>
       <div style="color:var(--danger);margin-top:2px">目前位置代碼：${escH(e.location)}　→　可疑：${escH(bad.join('、'))}</div>
     </div>`).join('');
-  showModal(`⚠️ 發現 ${flagged.length} 筆位置代碼開頭可能不對`,
+  showModal(`發現 ${flagged.length} 筆位置代碼開頭可能不對`,
     `<div style="font-size:12.5px;color:var(--text2);margin-bottom:10px">對照表：T=教具室、PC=理化、C=化學、B=生物、P=物理、G=地科（物理室自己的 PC 開頭櫃子已經自動排除，不會誤判）。</div>${rows}`,
     [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]
   );
@@ -8737,7 +8737,7 @@ function renderAdminEquipCard(e){
           ${e.restricted_note?`<div class="eq-x" style="font-size:12px;color:#7e22ce;margin-top:3px">選修專用：${escH(e.restricted_note)}</div>`:''}
           ${kitLines(e).length?`<details class="kit-box eq-x"><summary>套組・內含 ${kitLines(e).length} 項</summary><ul>${kitLines(e).map(x=>`<li>${escH(x)}</li>`).join('')}</ul></details>`:''}
           <div class="eq-x">${equipUsageHtml(e)}</div>
-          ${mismatches.length?`<div class="eq-x" style="font-size:11.5px;color:var(--danger);margin-top:4px">⚠️ 位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
+          ${mismatches.length?`<div class="eq-x" style="font-size:11.5px;color:var(--danger);margin-top:4px">位置代碼「${mismatches.map(escH).join('、')}」開頭跟房間（應該是「${ROOM_EXPECTED_PREFIX[e.room]}」開頭）對不上，請確認</div>`:''}
           ${e.last_counted_at?`<div class="eq-x" style="font-size:11px;color:var(--text2);margin-top:3px">上次盤點：${new Date(e.last_counted_at).toLocaleDateString('zh-TW')}</div>`:''}
         </div>
         <div class="eq-actions">
@@ -9288,7 +9288,7 @@ function handleEquipmentImport(input){
       const idx=name=>header.indexOf(name);
       const iId=idx('器材ID'),iRoom=idx('房間'),iName=idx('名稱'),iSpec=idx('規格'),iUnit=idx('單位'),
         iTotal=idx('總數'),iLoc=idx('櫃位編碼'),iAlias=idx('別名'),iImg=idx('照片網址'),iAsset=idx('財產編號');
-      if(iName<0||iRoom<0){msg.textContent='⚠️ 找不到「房間」或「名稱」欄位，請確認是用「匯出器材清單」產生的檔案格式';return;}
+      if(iName<0||iRoom<0){msg.textContent='找不到「房間」或「名稱」欄位，請確認是用「匯出器材清單」產生的檔案格式';return;}
       const gs=v=>(v===null||v===undefined)?'':String(v).trim();
       const parsed=[];
       for(let r=1;r<rows.length;r++){
@@ -9309,7 +9309,7 @@ function handleEquipmentImport(input){
           asset_no:iAsset>=0?gs(row[iAsset]).slice(0,500):undefined   // 舊版匯出檔沒有這欄 → 不動資料庫裡的編號
         });
       }
-      if(!parsed.length){msg.textContent='⚠️ 沒有解析到任何有效的器材列';return;}
+      if(!parsed.length){msg.textContent='沒有解析到任何有效的器材列';return;}
       buildEquipmentDiff(parsed);
     }catch(err){msg.textContent='解析失敗：'+err.message;}
   };
@@ -9896,7 +9896,7 @@ async function checkCalibOversized(){
     const all=Array.isArray(rows)?rows:[];
     const bad=all.filter(h=>parseFloat(h.width_pct)>CALIB_OVERSIZE_LIMIT||parseFloat(h.height_pct)>CALIB_OVERSIZE_LIMIT);
     if(!bad.length){
-      showModal('⚠️ 檢查異常尺寸',`<div class="empty"><p>沒有發現寬或高超過 ${CALIB_OVERSIZE_LIMIT}% 的異常熱區</p></div>`,[
+      showModal('檢查異常尺寸',`<div class="empty"><p>沒有發現寬或高超過 ${CALIB_OVERSIZE_LIMIT}% 的異常熱區</p></div>`,[
         {label:'關閉',cls:'btn-secondary',fn:'closeModal()'}
       ]);
       return;
@@ -9908,7 +9908,7 @@ async function checkCalibOversized(){
         <span style="flex:1"><strong>${escH(roomLabel(h.room))}・${escH(h.code)}</strong>　寬:${h.width_pct}% 高:${h.height_pct}%（#${h.id}）</span>
         <span style="font-size:11px;color:var(--danger)">建議刪除</span>
       </label>`).join('');
-    showModal(`⚠️ 發現 ${bad.length} 筆異常尺寸熱區`,
+    showModal(`發現 ${bad.length} 筆異常尺寸熱區`,
       `<div style="font-size:13px;color:var(--text2);margin-bottom:12px">寬或高超過 ${CALIB_OVERSIZE_LIMIT}%，正常一個櫃子不會這麼大，很可能是拖拉時手勢誤觸（例如手機上滑動被誤判成拖拉）產生的。預設全部勾選刪除，刪完請重新在該代碼上拖拉畫一個正常大小的框。</div>${rowsHtml}`,
       [
         {label:'取消',cls:'btn-secondary',fn:'closeModal()'},
