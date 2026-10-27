@@ -140,7 +140,7 @@
   .mini-venue{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;}
   .mini-venue th,.mini-venue td{border:1px solid var(--border);padding:3px 2px;text-align:center;vertical-align:middle;overflow:hidden;}
   .mini-venue th{background:var(--accent);color:#fff;font-weight:600;}
-  .mini-venue th.wk-end{background:#8a5a2b;}
+  .mini-venue th.wk-end{background:#be185d;}  /* 週末跟假期同色（2026-10-27） */
   .mini-venue th.hol{background:#be185d;}
   .mini-venue td.pcol{background:var(--surface2);font-weight:600;width:46px;color:var(--text2);}
   .mini-venue .venue-booking{display:block;font-size:10.5px;padding:1px 2px;margin:1px 0;pointer-events:none;line-height:1.25;white-space:normal;word-break:break-all;}
@@ -412,9 +412,9 @@
   /* 停課（颱風、地震等臨時停課）：灰藍斜線，跟粉紅的連假分開；格子裡的預約變淡、劃掉（2026-10-22） */
   .venue-table th.closed-col{background:#475569!important;color:#fff!important;}
   /* 週六、週日：赭褐表頭＋淡米色格子，跟平日的深綠區分（國定假日、停課的顏色優先） */
-  .venue-table th.wk-end{background:#8a5a2b;border-color:#6f4720;}
-  .venue-table td.wk-end:not(.holiday-col):not(.closed-col){background:#faf3e8;}
-  .venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col){background:#f3eadb;}
+  .venue-table th.wk-end:not(.closed-col){background:#fbcfe8;color:#831843;}  /* 週末跟假期同色（2026-10-27） */
+  .venue-table td.wk-end:not(.holiday-col):not(.closed-col){background:#fdf2f8;}
+  .venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col){background:#fce7f3;}
   .venue-table td.closed-col{background:repeating-linear-gradient(135deg,#e7ecf2 0 6px,#f4f6f9 6px 12px)!important;}
   .venue-table td.closed-col .venue-booking,.venue-table td.closed-col .vchip,.venue-table td.closed-col>div{opacity:.5;text-decoration:line-through;}
   .closed-tag{font-size:9px;font-weight:700;display:block;}
@@ -4114,7 +4114,7 @@ th,td{border:1px solid #888;padding:3px 5px;vertical-align:top}
 th{background:#1f5b4c;color:#fff;font-size:12pt;padding:4px}
 th span{display:block;font-size:9.5pt;font-weight:400}
 th em{display:block;font-style:normal;font-size:9pt;background:#f6d6e2;color:#7a1f45;border-radius:3px;margin-top:2px}
-th.wk-end{background:#8a5a2b}th.hol{background:#a33a65}th.hol.closed{background:#475569}
+th.wk-end,th.hol{background:#a33a65}th.hol.closed{background:#475569}
 .pc{width:14mm;text-align:center;vertical-align:middle;font-weight:700;font-size:11pt;background:#eef2f0}
 th.pc{background:#1f5b4c}
 tr.off td{background:#f4f1ea;height:10mm}
