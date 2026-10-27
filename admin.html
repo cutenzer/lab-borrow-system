@@ -1197,10 +1197,10 @@
 .vn-arrow:focus-visible,.vn-today:focus-visible,#adminWeekJump:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 @media(max-width:700px){.vn-nav{margin-left:0;width:100%}.vn-nav .week-selector{flex:1 1 auto;min-width:0}#adminWeekJump{max-width:none;width:100%}}
 
-/* 週六、週日：赭褐表頭＋淡米色格子，跟平日的深綠區分（假期、停課、今天的顏色優先） */
-.venue-table th.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#8a5a2b;border-color:#6f4720}
-.venue-table td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#faf3e8}
-.venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#f3eadb}
+/* 週六、週日：跟假期同一個粉紅（2026-10-27c 統一；颱風等停課維持灰藍、今天維持反白） */
+.venue-table th.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#fbcfe8;color:#831843}
+.venue-table td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#fdf2f8}
+.venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#fce7f3}
 /* 今天：表頭反白、整欄淡綠 */
 .venue-table th.is-today{background:var(--surface)!important;color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent)}
 .venue-table td.is-today{background:#eef6f1}
