@@ -140,6 +140,7 @@
   .mini-venue{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px;}
   .mini-venue th,.mini-venue td{border:1px solid var(--border);padding:3px 2px;text-align:center;vertical-align:middle;overflow:hidden;}
   .mini-venue th{background:var(--accent);color:#fff;font-weight:600;}
+  .mini-venue th.wk-end{background:#8a5a2b;}
   .mini-venue th.hol{background:#be185d;}
   .mini-venue td.pcol{background:var(--surface2);font-weight:600;width:46px;color:var(--text2);}
   .mini-venue .venue-booking{display:block;font-size:10.5px;padding:1px 2px;margin:1px 0;pointer-events:none;line-height:1.25;white-space:normal;word-break:break-all;}
@@ -410,6 +411,10 @@
   .holiday-tag{font-size:9px;font-weight:700;display:block;}
   /* 停課（颱風、地震等臨時停課）：灰藍斜線，跟粉紅的連假分開；格子裡的預約變淡、劃掉（2026-10-22） */
   .venue-table th.closed-col{background:#475569!important;color:#fff!important;}
+  /* 週六、週日：赭褐表頭＋淡米色格子，跟平日的深綠區分（國定假日、停課的顏色優先） */
+  .venue-table th.wk-end{background:#8a5a2b;border-color:#6f4720;}
+  .venue-table td.wk-end:not(.holiday-col):not(.closed-col){background:#faf3e8;}
+  .venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col){background:#f3eadb;}
   .venue-table td.closed-col{background:repeating-linear-gradient(135deg,#e7ecf2 0 6px,#f4f6f9 6px 12px)!important;}
   .venue-table td.closed-col .venue-booking,.venue-table td.closed-col .vchip,.venue-table td.closed-col>div{opacity:.5;text-decoration:line-through;}
   .closed-tag{font-size:9px;font-weight:700;display:block;}
@@ -2124,7 +2129,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-25a · 點週次看當週課表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-27a · 點週次看當週課表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2546,7 +2551,7 @@ async function renderHomeVenuePreview(){
     window._homeVenueTables={};
     const slides=HOME_VENUE_FILTERS.map(r=>{
       const labs=r.key?[r.key]:['生物','化學','理化','物理','地科'];
-      const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):''}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
+      const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
       // mode: full＝放大檢視完整版；slide＝單科輪播（每格一行，多筆顯示 +N）；dots＝全部輪播（科別色塊）
       const buildRows=mode=>PERIODS.map(period=>`<tr class="${OFF_PERIODS.includes(period)?'off-period':''}"><td class="pcol">${period}</td>${dates.map(d=>{
         const ds=fmtDate(d);
@@ -3687,6 +3692,7 @@ function getWeekDates(offset){
   return dates;
 }
 function fmtDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
+function isWeekendDate(d){const g=d.getDay();return g===0||g===6;} // 週六、週日
 function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
 function changeWeek(delta){venueWeekOffset+=delta;loadVenue();}
 function goThisWeek(){venueWeekOffset=0;loadVenue();}
@@ -4076,7 +4082,7 @@ function printVenueWeek(){
     const bk=venueBookings.filter(b=>b.displayVenue===vf&&b.periodStatus!=='已拒絕');
     const wkEndHas=dates.slice(5).some(d=>bk.some(b=>b.displayDate===fmtDate(d)));
     const ds=(venueShowWeekend||wkEndHas)?dates:dates.slice(0,5);
-    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):''}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
+    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
     const body=PERIODS.map(p=>{
       const off=OFF_PERIODS.includes(p);
       return `<tr class="${off?'off':''}"><td class="pc">${p}</td>${ds.map(d=>{
@@ -4108,7 +4114,7 @@ th,td{border:1px solid #888;padding:3px 5px;vertical-align:top}
 th{background:#1f5b4c;color:#fff;font-size:12pt;padding:4px}
 th span{display:block;font-size:9.5pt;font-weight:400}
 th em{display:block;font-style:normal;font-size:9pt;background:#f6d6e2;color:#7a1f45;border-radius:3px;margin-top:2px}
-th.hol{background:#a33a65}th.hol.closed{background:#475569}
+th.wk-end{background:#8a5a2b}th.hol{background:#a33a65}th.hol.closed{background:#475569}
 .pc{width:14mm;text-align:center;vertical-align:middle;font-weight:700;font-size:11pt;background:#eef2f0}
 th.pc{background:#1f5b4c}
 tr.off td{background:#f4f1ea;height:10mm}
@@ -4160,7 +4166,7 @@ function renderVenueTable(dates){
   const COMPACT_PERIODS=['早休','午休'];
   let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
     const holiday=holidayForDate(fmtDate(d));
-    return `<th class="${holCls(holiday)}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
+    return `<th class="${holCls(holiday)} ${isWeekendDate(d)?'wk-end':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   // 一格裡放「所有實驗室」的預約（合併模式，或早休/午休這種短時段）
   const mergedRow=(period,shade)=>{
@@ -4178,7 +4184,7 @@ function renderVenueTable(dates){
         if(!bks.some(b=>!isShareablePurpose(b.purpose)))freeLabs++;
         if(isVenuePicked(dateStr,period,vf))picks++;
       });
-      r+=`<td class="vcell ${COMPACT_PERIODS.includes(period)?'compact-vcell':''} ${hc}">${chips}`;
+      r+=`<td class="vcell ${COMPACT_PERIODS.includes(period)?'compact-vcell':''} ${hc} ${isWeekendDate(date)?'wk-end':''}">${chips}`;
       if(freeLabs||picks)r+=`<button class="venue-add-btn ${picks?'has-pick':''}" title="選實驗室" onclick="event.stopPropagation();openVenueLabChooser('${dateStr}','${period}')">${picks?'✓'+picks:'＋'}</button>`;
       r+=`</td>`;
     });
@@ -4196,7 +4202,7 @@ function renderVenueTable(dates){
         const hc=holCls(holidayForDate(dateStr,period));
         const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
         const blocking=cellBookings.some(b=>!isShareablePurpose(b.purpose));
-        html+=`<td class="vcell ${hc}">`;
+        html+=`<td class="vcell ${hc} ${isWeekendDate(date)?'wk-end':''}">`;
         cellBookings.forEach(b=>{html+=venueChipHtml(b,'',dateStr,period,venueFull);});
         if(!blocking){
           const picked=isVenuePicked(dateStr,period,venueFull);
