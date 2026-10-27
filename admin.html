@@ -1197,6 +1197,10 @@
 .vn-arrow:focus-visible,.vn-today:focus-visible,#adminWeekJump:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 @media(max-width:700px){.vn-nav{margin-left:0;width:100%}.vn-nav .week-selector{flex:1 1 auto;min-width:0}#adminWeekJump{max-width:none;width:100%}}
 
+/* 週六、週日：赭褐表頭＋淡米色格子，跟平日的深綠區分（假期、停課、今天的顏色優先） */
+.venue-table th.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#8a5a2b;border-color:#6f4720}
+.venue-table td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#faf3e8}
+.venue-table tr.band-shade td.wk-end:not(.holiday-col):not(.closed-col):not(.is-today){background:#f3eadb}
 /* 今天：表頭反白、整欄淡綠 */
 .venue-table th.is-today{background:var(--surface)!important;color:var(--accent)!important;box-shadow:inset 0 -3px 0 var(--accent)}
 .venue-table td.is-today{background:#eef6f1}
@@ -2486,7 +2490,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-27a';
+const ADMIN_VERSION='2026-10-27b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3603,6 +3607,7 @@ async function approveAllVenue(bookingId,approve,force){
 function getWeekDates(offset){const now=new Date(),day=now.getDay(),monday=new Date(now);monday.setDate(now.getDate()-((day+6)%7)+offset*7);monday.setHours(0,0,0,0);const dates=[];for(let i=0;i<7;i++){const d=new Date(monday);d.setDate(monday.getDate()+i);dates.push(d);}return dates;}
 function fmtDate(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 function fmtDateTW(d){return `${d.getMonth()+1}/${d.getDate()}`;}
+function isWeekendDate(d){const g=d.getDay();return g===0||g===6;} // 週六、週日
 function changeAdminWeek(delta){adminWeekOffset+=delta;loadAdminVenue();}
 function goAdminThisWeek(){adminWeekOffset=0;loadAdminVenue();}
 
@@ -4098,7 +4103,7 @@ function renderAdminVenueTable(dates,expanded){
   // 今天那一欄：表頭反白、整欄淡綠
   const todayStr=fmtDate(new Date());
   // 週六、週日跟平日一樣是完整欄位（假日也有人做實驗，要能直接新增）
-  const dayCls=dates.map(d=>fmtDate(d)===todayStr?'is-today':'');
+  const dayCls=dates.map(d=>[fmtDate(d)===todayStr?'is-today':'',isWeekendDate(d)?'wk-end':''].join(' ').trim());
   let html=`<thead><tr><th>節次</th>${showLabCol?'<th class="th-lab">實驗室</th>':''}${dates.map((d,i)=>{
     const ds=fmtDate(d),holiday=holidayForDate(ds);
     return `<th class="${holCls(holiday)} ${dayCls[i]}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
