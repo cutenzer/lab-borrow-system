@@ -2490,7 +2490,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-27b';
+const ADMIN_VERSION='2026-10-27c';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -3265,7 +3265,8 @@ function renderRecord(r,mode,inPane){
   const sc={'待審核':'badge-pending','已核准':'badge-approved','已拒絕':'badge-rejected','已歸還':'badge-returned','逾期':'badge-overdue','已歸還-損壞':'badge-damaged'}[r.status]||'badge-pending';
   const items=Array.isArray(r.items)?r.items:[];
   const today=new Date(),returnDate=r.returnDate?new Date(r.returnDate):null;
-  const overdueDays=returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
+  // 只有借出中（已核准、逾期）才算逾期天數；已歸還、已拒絕的單過了歸還日不算（2026-10-27c）
+  const overdueDays=(r.status==='已核准'||r.status==='逾期')&&returnDate&&today>returnDate?Math.floor((today-returnDate)/(1000*60*60*24)):0;
   const canEditItems=ieCanEdit(r);
   const editBtn=canEditItems?`<button type="button" class="ie-edit-btn" onclick="openItemEdit(${ja(r.id)})">編輯</button>`:'';
   const itemListHtml=items.length?`<div class="item-list"><div class="il-h">借用器材清單${editBtn}</div>${items.map((i,idx)=>`<div class="item-row"><span class="item-num">${idx+1}.</span><span class="item-name">${escH(i.name)}</span><span class="item-room">${escH(rn(i.room))}</span><span class="item-qty">× ${parseInt(i.quantity)||0} ${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.unit||'')?(i.unit||''):''}${i.loose?`<small class="loose-note">從${/^[\u4e00-\u9fa5A-Za-z]*$/.test(i.pack_unit||'')?i.pack_unit:'盒'}裡拿</small>`:''}${i.by_admin?'<small class="loose-note">管理員補登</small>':''}${ieIsUnreg(i)?`<button type="button" class="unreg-tag" onclick="ieGoCreate(${ja(i.name)})" title="到器材頁補建">未建檔・補建</button>`:''}</span></div>`).join('')}</div>`:'';
@@ -8790,7 +8791,7 @@ function filterAdminEquip(){
   window._stkItems=items;
   const list=document.getElementById('adminEquipList');
   window._stkPageIds=[];
-  if(!items.length){list.innerHTML=stkView==='todo'&&base.length?'<div class="empty"><p>這個範圍都盤點完了！</p></div>':'<div class="empty"><p>找不到符合器材</p></div>';return;}
+  if(!items.length){list.innerHTML=stkView==='todo'&&base.length?'<div class="empty"><p>這個範圍都盤點完了！</p></div>':'<div class="empty"><p>找不到符合器材</p></div>';eqPaneRender();return;}  // 清單空的也要畫右窗格，不然右邊是空框（2026-10-27c）
   const totalPages=Math.max(1,Math.ceil(items.length/ADMIN_EQ_PAGE));
   if(adminEquipPage>totalPages)adminEquipPage=totalPages;
   const pageItems=items.slice((adminEquipPage-1)*ADMIN_EQ_PAGE,adminEquipPage*ADMIN_EQ_PAGE);
@@ -8862,7 +8863,7 @@ function renderAdminEquipCard(e){
       <div class="eq-card-row" style="display:flex;gap:12px;align-items:flex-start">
         ${imgHtml}
         <div class="eq-body" style="flex:1;min-width:0">
-          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">已盤點 ${new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'})}</span>`:''}</div>
+          <div class="eq-name">${escH(e.name)} ${e.featured===true?'<span title="首頁精選" style="color:#b7791f">★</span> ':''}${kitLines(e).length?'<span class="kit-badge">套組</span> ':''}${e.is_available===false?'<span class="badge badge-rejected">已停用</span>':''}${e.restricted_note?`<span title="${escH(e.restricted_note)}" style="display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:10px;background:#f3e8ff;color:#7e22ce;margin-left:4px">選修專用</span>`:''}${stkIsDone(e)?`<span class="stk-done">已盤點${e.last_counted_at?' '+new Date(e.last_counted_at).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'}):'（建檔時）'}</span>`:''}</div>
           <div class="eq-sub">${escH(rn(e.room))}${e.spec?' ・ '+escH(e.spec):''}<span class="eq-flags">${mismatches.length?'<i class="w" title="位置代碼對不上">位置待確認</i>':''}${equipUsageHtml(e)?'<i title="有人在借或申請中">借用中</i>':''}</span></div>
           <div class="eq-meta">
             <span style="display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span style="white-space:nowrap">${equipOut(e)?'架上實點':'實點數量'}：</span><input type="number" min="0" id="stk-${e.id}" value="${stocktakePending[e.id]??stkShelfExpected(e)}" data-orig="${stkShelfExpected(e)}" oninput="markStocktake(${ja(e.id)},this.value,${stkShelfExpected(e)})" style="width:64px;padding:3px 6px;font-size:13px;${stkChanged?'border-color:#d97706;background:#fff7ed':''}"> ${escH(e.unit||'個')}
@@ -11393,5 +11394,120 @@ async function srSave(){
   }catch(e){showToast('儲存失敗：'+e.message,'error');}
 }
 </script>
+<!-- ═══ 器材管理分頁 eq-v1（2026-10-27c）：刪掉這段（到「eq-v1 結束」）即還原 ═══
+     做的事：頁首＋五個分頁（清單｜盤點｜首頁精選｜報廢紀錄｜匯入匯出），
+     清單分頁不顯示盤點輸入框；手機保留「編輯」「換照片」，其餘在 ⋯；盤點的東西只在「盤點」分頁出現；下面疊的四張卡各歸一個分頁。
+     不改任何資料、不改原本函式，只包裝 filterAdminEquip。 -->
+<style>
+.eqm-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin:14px 0 16px;overflow-x:auto;scrollbar-width:none}
+.eqm-tabs::-webkit-scrollbar{display:none}
+#panel-equipment .pg-head{position:relative}
+.eqm-acts{display:flex;gap:6px;align-items:center}
+@media(min-width:1100px){#panel-equipment .pg-head>.eqm-acts{position:absolute;right:0;top:2px}}
+@media(max-width:1099px){#panel-equipment .pg-head{display:flex;flex-direction:column}#panel-equipment .pg-head>.eqm-acts{order:-1;justify-content:flex-end;margin:0 0 4px}#panel-equipment .eqm-tabs{margin-top:0}}
+/* 原本卡片裡的「器材清單／盤點」標題 → 頁首已經寫了 */
+#panel-equipment .eq-listcard>.card-title{display:none}
+#panel-equipment .eq-listcard{padding-top:0}
+/* 各分頁只顯示自己的卡 */
+#panel-equipment[data-eqm] .eqm-card{display:none!important}
+#panel-equipment[data-eqm="feat"] .eqm-card[data-for="feat"],
+#panel-equipment[data-eqm="wo"] .eqm-card[data-for="wo"],
+#panel-equipment[data-eqm="io"] .eqm-card[data-for="io"],
+#panel-equipment[data-eqm="stk"] .eqm-card[data-for="stk"]{display:block!important}
+#panel-equipment[data-eqm="feat"] .eq-ws,#panel-equipment[data-eqm="wo"] .eq-ws,#panel-equipment[data-eqm="io"] .eq-ws{display:none!important}
+#panel-equipment .eqm-card{max-width:880px}
+/* 清單分頁：不是在盤點，就不要每一列都擺輸入框 */
+#panel-equipment[data-eqm="list"] #stkBar,
+#panel-equipment[data-eqm="list"] #stkSaveBar,
+#panel-equipment[data-eqm="list"] .eq-listcard>.info-box,
+#panel-equipment[data-eqm="list"] .eq-meta>span:first-child,
+#panel-equipment[data-eqm="list"] .eq-x,
+#panel-equipment[data-eqm="list"] .eq-name .stk-done{display:none!important}
+#panel-equipment[data-eqm="list"] .eq-item{padding:8px 12px}
+#panel-equipment[data-eqm="list"] .eq-thumb{width:28px;height:28px;border-radius:6px}
+#panel-equipment[data-eqm="list"] .eq-card-row{align-items:center!important}
+/* 一列一行：名稱｜房間・規格｜可借 */
+#panel-equipment[data-eqm="list"] .eq-body{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 80px;align-items:center;gap:0 16px}
+#panel-equipment[data-eqm="list"] .eq-name{font-size:14px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel-equipment[data-eqm="list"] .eq-sub{font-size:12.5px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel-equipment[data-eqm="list"] .eq-meta{margin:0;font-size:13px;white-space:nowrap;justify-content:flex-end}
+#panel-equipment[data-eqm="list"] .eq-meta>span:not(:nth-child(2)){display:none}
+#panel-equipment[data-eqm="list"] .eq-body>*{grid-row:1}
+#panel-equipment[data-eqm="list"] .eq-name{grid-column:1}
+#panel-equipment[data-eqm="list"] .eq-sub{grid-column:2}
+#panel-equipment[data-eqm="list"] .eq-meta{grid-column:3}
+#panel-equipment[data-eqm="list"] .eq-body>:not(.eq-name):not(.eq-sub):not(.eq-meta){display:none!important}
+/* 盤點分頁：狀態標籤在清單分頁不需要（「已盤點 10/20」每列都有，等於沒說） */
+.eqm-hint{font-size:12.5px;color:var(--text2);margin:-6px 0 12px}
+@media(max-width:1099px){
+  /* 手機：清單分頁名稱＋房間兩行，下面一排「編輯｜換照片｜⋯」 */
+  #panel-equipment[data-eqm="list"] .eq-body{grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}
+  #panel-equipment[data-eqm="list"] .eq-name{grid-column:1;grid-row:1}
+  #panel-equipment[data-eqm="list"] .eq-sub{grid-column:1;grid-row:2}
+  #panel-equipment[data-eqm="list"] .eq-meta{grid-column:2;grid-row:1/3}
+  #panel-equipment[data-eqm="list"] .eq-thumb{width:40px!important;height:40px!important}
+  #panel-equipment[data-eqm="list"] .eq-body{flex:1 1 auto!important;min-width:0}
+  #panel-equipment[data-eqm="list"] .eq-actions{margin-top:6px;padding-top:6px}
+  #panel-equipment[data-eqm="list"] .eq-item{margin-bottom:0;border-radius:0;border-width:0 0 1px}
+}
+</style>
+<script>
+(function(){
+  const P=document.getElementById('panel-equipment');if(!P||P.dataset.eqm)return;
+  const listCard=P.querySelector('.eq-listcard');
+  // 1) 頁首：跟器材借用、場地管理同一套
+  const head=document.createElement('div');head.className='pg-head';
+  head.innerHTML='<h2>器材管理</h2><p>器材資料、盤點、首頁精選與報廢紀錄</p><div class="eqm-tabs" role="tablist" aria-label="器材管理"></div>';
+  P.prepend(head);
+  // 新增器材、⋯ 兩顆鈕搬到頁首右邊
+  const btns=listCard&&listCard.querySelector('.card-title>span');
+  if(btns){btns.className='eqm-acts';btns.removeAttribute('style');head.appendChild(btns);}
+  // 2) 下面疊的卡各歸一個分頁
+  const cards=[...P.children].filter(c=>c.matches('.card:not(#eqAddCard),details.card'));
+  cards.forEach(c=>{
+    const t=(c.querySelector('.card-title')||c).textContent;
+    c.classList.add('eqm-card');
+    c.dataset.for=/精選/.test(t)?'feat':/報廢/.test(t)?'wo':/備份|匯入/.test(t)?'io':/盤點幫手/.test(t)?'stk':'';
+  });
+  // 精選卡的說明原本寫「在下方清單」，搬分頁後改字
+  const fh=P.querySelector('.eqm-card[data-for="feat"] .hint');if(fh)fh.textContent='點 ✕ 取消；要新增，到「清單」分頁點器材旁的 ⋯ →「設為精選」。';
+  // 3) 分頁
+  let mode='list';try{const v=localStorage.getItem('eqmMode');if(['list','stk','feat','wo','io'].includes(v))mode=v;}catch(_){}
+  function counts(){
+    const all=(typeof allAdminEquipment!=='undefined'&&allAdminEquipment)||[];
+    const todo=all.filter(e=>typeof stkIsDone==='function'&&!stkIsDone(e)).length;
+    const feat=all.filter(e=>e.featured===true).length;
+    return {all:all.length,todo,feat};
+  }
+  function paint(){
+    const c=counts();
+    const T=[['list','清單',c.all],['stk','盤點',c.todo,'待'],['feat','首頁精選',c.feat],['wo','報廢紀錄'],['io','匯入匯出']];
+    head.querySelector('.eqm-tabs').innerHTML=T.map(([k,l,n,pre])=>`<button type="button" role="tab" aria-selected="${k===mode}" class="bw-tab${k===mode?' on':''}" onclick="eqmSet('${k}')">${l}${n===undefined?'':`<span class="bw-n${n?'':' z'}">${pre&&n?pre+' ':''}${n}</span>`}</button>`).join('');
+    P.dataset.eqm=mode;
+  }
+  window.eqmSet=function(m){
+    mode=m;try{localStorage.setItem('eqmMode',m);}catch(_){}
+    if(m==='list'){stkView='all';}                 // 清單＝全部器材，不受盤點進度影響
+    if(m==='stk'){                                 // 盤點：待盤點是 0 就直接看全部，不要一進來空白
+      try{const v=localStorage.getItem('stkView');stkView=['todo','done','all'].includes(v)?v:'todo';}catch(_){}
+      if(stkView==='todo'&&counts().todo===0)stkView='all';
+    }
+    adminEquipPage=1;paint();
+    if(m==='list'||m==='stk')filterAdminEquip();
+    if(m==='feat'&&typeof renderFeaturedList==='function')renderFeaturedList();
+    if(m==='wo'&&typeof loadWriteoffLog==='function')loadWriteoffLog();
+  };
+  // 4) 包住原本的清單函式：分頁上的數字跟著更新
+  const _f=window.filterAdminEquip;
+  window.filterAdminEquip=function(){
+    if(mode==='list')stkView='all';
+    const r=_f.apply(this,arguments);
+    paint();
+    return r;
+  };
+  paint();
+})();
+</script>
+<!-- ═══ eq-v1 結束 ═══ -->
 </body>
 </html>
