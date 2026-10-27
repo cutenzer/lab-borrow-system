@@ -1174,7 +1174,11 @@
   .venue-ws>.card:not(.venue-pend-card){grid-column:1;grid-row:1;margin-bottom:0!important}
   .venue-pend-card .btn-sm{font-size:12.5px;padding:5px 9px}
   .vn-cal>.vn-title{display:none} /* 頁首已經寫「場地管理」 */
-  .venue-table{min-width:0} /* 週末收窄後放得下，不用再強制 700px 橫捲；真的太窄時格子最小寬度仍會撐出捲軸 */
+  /* 七天都完整顯示、平均分寬：不讓長名字把某一欄撐寬，1366 筆電一屏放得下整週（名字太長會以…結尾，滑過看全名） */
+  .venue-table{min-width:0;table-layout:fixed}
+  .venue-table th:first-child{width:44px}
+  .venue-table th.th-lab{width:52px}
+  .venue-table td{min-width:0}
 }
 
 /* ── 2026-10-26 場地頁 v2：週曆變安靜、待審核變清單（表頭維持深綠、色塊維持亮色） ── */
@@ -1198,10 +1202,6 @@
 .venue-table td.is-today{background:#eef6f1}
 .venue-table tr.band-shade td.is-today{background:#e5efe9}
 /* 週末沒預約：收窄成斜紋細欄，點表頭展開 */
-.venue-table th.wk-thin{width:34px;min-width:34px!important;max-width:34px;padding:7px 0;font-size:11px;cursor:pointer;opacity:.85}
-.venue-table th.wk-thin:hover{opacity:1;text-decoration:underline}
-.venue-table td.wk-thin{width:34px;min-width:34px!important;max-width:34px;padding:0;background:repeating-linear-gradient(135deg,transparent 0 5px,#e9e3d6 5px 6px)!important}
-.venue-table td.wk-thin>*{display:none!important}
 
 /* 「＋」滑過格子才出現（有滑鼠的電腦）；手機維持原本點空白處新增 */
 @media(hover:hover) and (min-width:701px){
@@ -1224,6 +1224,21 @@
 .venue-booking.st-conflict{background:#fdecea!important;color:var(--danger)!important}
 .venue-booking.st-conflict .vb-tag{color:var(--danger)}
 @media(max-width:700px){.vb-tag{display:none}}
+/* 一般寬度（1600 以下）欄寬不夠同時放名字和「待審」：「待審」字拿掉（白底虛線已表示待審），「衝突」保留 */
+@media(min-width:701px) and (max-width:1599px){
+  .venue-booking.st-pending:not(.st-conflict) .vb-tag{display:none}
+  .venue-booking.st-pending:not(.st-conflict){justify-content:center}
+}
+/* 放不下一行時名字換到第二行完整顯示，不截斷（放得下的照樣一行） */
+@media(min-width:701px) and (max-width:1599px){
+  .venue-table .venue-booking{display:block;text-align:center;line-height:1.3}
+  .venue-table .venue-booking .vb-txt{white-space:normal;overflow:visible;word-break:keep-all;overflow-wrap:anywhere} /* 優先在「-」後換行（班級／姓名各一行），太長才逐字斷 */
+  .venue-table .venue-booking .vb-tag{display:inline;margin-left:3px}
+}
+/* 1366 這類筆電：欄寬約 77px，字和內距再縮一點 */
+@media(min-width:701px) and (max-width:1399px){
+  .venue-table .venue-booking{font-size:10.5px;padding:2px 3px}
+}
 
 /* 圖例 */
 .vn-legend{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-top:10px;font-size:12px;color:var(--text2)}
@@ -1452,7 +1467,7 @@
       <span><i class="venue-booking cat-phys st-approved">已核准</i>顏色＝科目</span>
       <span><i class="venue-booking cat-phys st-pending">待審核</i></span>
       <span><i class="venue-booking cat-phys st-pending st-conflict">撞到已核准</i></span>
-      <span class="vn-legend-r">週末沒有預約會收窄，點表頭展開<b class="vn-hover-tip">　滑過格子出現 ＋ 可新增</b></span>
+      <span class="vn-legend-r vn-hover-tip">滑過格子出現 ＋ 可新增</span>
     </div>
   </div>
   </div>
@@ -2471,7 +2486,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-26a';
+const ADMIN_VERSION='2026-10-27a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -4046,7 +4061,6 @@ async function doDeleteSemester(id){
 }
 
 let adminVenueLabFilter='',adminVenueLabInit=false;
-const adminWeekendOpen=new Set(); // 使用者點開過的週末日期（收窄的細欄點表頭後展開）
 const VENUE_SHORT={'生物實驗室':'生物','化學實驗室':'化學','理化實驗室':'理化','物理實驗室':'物理','地科實驗室':'地科'};
 function initAdminVenueLab(){
   if(adminVenueLabInit)return;adminVenueLabInit=true;
@@ -4083,17 +4097,10 @@ function renderAdminVenueTable(dates,expanded){
   const COMPACT_PERIODS=['早休','午休'];
   // 今天那一欄：表頭反白、整欄淡綠
   const todayStr=fmtDate(new Date());
-  // 週六、週日：這一欄（目前篩選的實驗室）沒有任何預約、也不是今天，就收窄成斜紋細欄；點表頭展開
-  const shownVenues=LABS.map(l=>labFull[l]);
-  const dayCls=dates.map((d,i)=>{
-    const ds=fmtDate(d),c=[];
-    if(ds===todayStr)c.push('is-today');
-    if(i>=5&&ds!==todayStr&&!adminWeekendOpen.has(ds)&&!expanded.some(b=>b.displayDate===ds&&shownVenues.includes(b.displayVenue)))c.push('wk-thin');
-    return c.join(' ');
-  });
-  let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
+  // 週六、週日跟平日一樣是完整欄位（假日也有人做實驗，要能直接新增）
+  const dayCls=dates.map(d=>fmtDate(d)===todayStr?'is-today':'');
+  let html=`<thead><tr><th>節次</th>${showLabCol?'<th class="th-lab">實驗室</th>':''}${dates.map((d,i)=>{
     const ds=fmtDate(d),holiday=holidayForDate(ds);
-    if(dayCls[i].includes('wk-thin'))return `<th class="${holCls(holiday)} wk-thin" title="這天沒有預約，點一下展開" onclick="adminWeekendOpen.add('${ds}');loadAdminVenue()">週${DAYS[i]}</th>`;
     return `<th class="${holCls(holiday)} ${dayCls[i]}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   // 預約色塊：顏色＝科目（保留亮色）；待審核、撞到已核准另外標字
@@ -4102,7 +4109,7 @@ function renderAdminVenueTable(dates,expanded){
     const statusCls=b.periodStatus==='已拒絕'?'st-rejected':(b.periodStatus==='待審核'?'st-pending':'st-approved');
     const cf=b.periodStatus==='待審核'&&venueSlotConflict(dateStr,period,venueFull,b.id);
     const tag=cf?'<span class="vb-tag">衝突</span>':b.periodStatus==='待審核'?'<span class="vb-tag">待審</span>':'';
-    return `<div class="venue-booking ${catCls} ${statusCls}${cf?' st-conflict':''}" data-bid="${escH(b.id)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')"><span class="vb-txt">${prefix}${venueLabel(b)}</span>${tag}</div>`;
+    return `<div class="venue-booking ${catCls} ${statusCls}${cf?' st-conflict':''}" data-bid="${escH(b.id)}" title="${prefix}${venueLabel(b)}" onclick="clickAdminBooking(${ja(b.id)},'${dateStr}','${period}','${venueFull}')"><span class="vb-txt">${prefix}${venueLabel(b).replace(/-/g,'-<wbr>')}</span>${tag}</div>`;
   };
   PERIODS.forEach((period,pi)=>{
     const shade=pi%2===1;
