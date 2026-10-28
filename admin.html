@@ -2490,7 +2490,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-27c';
+const ADMIN_VERSION='2026-10-28b';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -5599,7 +5599,7 @@ function tplSortKey(t){const m=tplMonthNum(t);return [m==null?99:TPL_MONTH_ORDER
 // 器材品名比對（跟健檢同一套規則）：去空白、不分大小寫；品名相同，或品名＋規格包含模板寫的字
 function tplBuildEqIndex(eqs){
   const norm=s=>(s||'').toString().toLowerCase().replace(/\s+/g,'');
-  return {norm,list:(Array.isArray(eqs)?eqs:[]).map(e=>({n:norm(e.name),full:norm(e.name)+norm(e.spec)}))};
+  return {norm,list:(Array.isArray(eqs)?eqs:[]).map(e=>({n:norm(e.name),full:norm(e.name)+norm(e.spec),al:eqAliasList(e).map(norm)}))};
 }
 // ── 課綱實驗也可以放藥品（2026-10-20）：器材那一列的「科別」選「藥品」，或名稱跟藥品庫一模一樣 ──
 // 藥品比對：中文名、英文名、俗名（用、或,分開）完全一樣才算，避免「硫酸」對到「硫酸銅」
@@ -5622,7 +5622,7 @@ function tplMissItems(t){
   return (Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(it=>{const n=norm(it&&it.name);if(!n||it.no_stock)return false;
     if(chemOn&&tplChemOf(it.name))return false;
     if(it.room==='chemicals')return chemOn; // 標成藥品但藥品庫找不到
-    return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n)));});
+    return !list.some(e=>e.n===n||e.full.includes(n)||(e.n&&n.includes(e.n))||(e.al&&e.al.includes(n)));});
 }
 async function loadTemplates(){
   const list=document.getElementById('templateList');
@@ -5630,7 +5630,7 @@ async function loadTemplates(){
   try{
     const [rows,eqs]=await Promise.all([
       sb('GET','course_templates',{order:'created_at.desc'}),
-      (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec'}).catch(()=>null),
+      (Array.isArray(allEquipment)&&allEquipment.length)?Promise.resolve(allEquipment):sb('GET','equipment',{select:'name,spec,alias'}).catch(()=>null),
       tplLoadChems()
     ]);
     tplSetAll(rows);
@@ -10449,9 +10449,11 @@ function emScore(a,b){
   const ca=new Set(a),cb=new Set(b);let c=0;ca.forEach(x=>{if(cb.has(x))c++;});
   return Math.max(dice,0.85*c/Math.max(ca.size,cb.size)-0.1);
 }
+// 器材別名（2026-10-28b）：後台「別名」欄可以寫好幾個，用、或 , ; / 分開
+function eqAliasList(e){return String(e&&e.alias||'').split(/[、,，;；/／]/).map(x=>x.trim()).filter(Boolean);}
 function emEqNames(){
   const m=new Map();
-  (allEquipment||[]).forEach(e=>{const n=(e.name||'').trim();if(!n)return;const r=m.get(n)||{name:n,specs:new Set(),rooms:new Set(),avail:0,canon:emCanon(n)};if(e.spec)r.specs.add(String(e.spec));if(e.room)r.rooms.add(e.room);r.avail+=parseInt(e.available)||0;m.set(n,r);});
+  (allEquipment||[]).forEach(e=>{const n=(e.name||'').trim();if(!n)return;const r=m.get(n)||{name:n,specs:new Set(),rooms:new Set(),aliases:new Set(),avail:0,canon:emCanon(n)};if(e.spec)r.specs.add(String(e.spec));if(e.room)r.rooms.add(e.room);eqAliasList(e).forEach(a=>r.aliases.add(emKey(a)));r.avail+=parseInt(e.available)||0;m.set(n,r);});
   return [...m.values()];
 }
 function emItemOk(it){return !!it&&(it.no_stock||!tplMissItems({equipment_items:[it]}).length);}
@@ -10544,7 +10546,10 @@ const TE_ROOM_SHORT={'Chemistry':'化學','Biology':'生物','Physics':'物理',
 let teHi={};
 function teFind(q,lim,room){
   const eqn=room==='chemicals'?[]:emEqNames(),k=emKey(q),c=emCanon(q);if(!k)return [];
-  const eq=eqn.map(e=>{const ek=emKey(e.name);let s=ek===k?2:ek.startsWith(k)?1.6:ek.includes(k)?1.3:emScore(c,e.canon);return {e,s};});
+  const eq=eqn.map(e=>{const ek=emKey(e.name);let s=ek===k?2:ek.startsWith(k)?1.6:ek.includes(k)?1.3:emScore(c,e.canon);
+    // 別名也找得到（打「燒杯仔」→ 燒杯）
+    e.aliases&&e.aliases.forEach(a=>{const as=a===k?1.9:a.startsWith(k)?1.5:a.includes(k)?1.25:0;if(as>s)s=as;});
+    return {e,s};});
   // 藥品：中文名、英文名、俗名、CAS 號都可以找
   const ch=tplChemList().map(x=>{const ns=tplChemNames(x).map(emKey);let s=ns.includes(k)?2.1:ns.some(n=>n.startsWith(k))?1.7:ns.some(n=>n.includes(k))?1.35:(x.cas&&String(x.cas).replace(/\s/g,'').includes(q.trim())?1.5:0);
     return {e:{name:(x.name_zh||'').trim(),chem:x,avail:parseInt(x.bottles_left)||0},s};}).filter(x=>x.e.name);
@@ -10560,6 +10565,8 @@ function teStatus(id){
   if(chem&&(room==='chemicals'||!exact)){st.className='te-st ok';st.innerHTML=`✓ 藥品庫有：${escH(chem.name_zh||n)}・${escH(tplChemLine(chem))}${room!=='chemicals'?`　<button type="button" onclick="teSetChem(${id})">科別改成藥品</button>`:''}`;return;}
   if(row&&row.dataset.ns==='1'&&row.dataset.nsName===n){st.className='te-st no';st.innerHTML=`庫存沒有（已標記，老師借用時會請他自備）`;return;}
   if(exact){st.className='te-st ok';st.innerHTML=`✓ 庫存有：${escH(teEqLine(exact))}`;return;}
+  const byAlias=room==='chemicals'?null:eqn.find(e=>e.aliases&&e.aliases.has(emKey(n)));
+  if(byAlias){st.className='te-st ok';st.innerHTML=`✓ 是「${escH(byAlias.name)}」的別名・${escH(teEqLine(byAlias))}　<button type="button" onclick="tePick(${id},${ja(byAlias.name)})">改成「${escH(byAlias.name)}」</button>`;return;}
   const sug=teFind(n,3,room);
   const loose=!tplMissItems({equipment_items:[{name:n,room}]}).length;
   st.className='te-st '+(loose?'warn':'bad');
@@ -11018,7 +11025,7 @@ async function srGFillSave(){
 const SR_SUBJ_ROOM={'物理':'Physics','化學':'Chemistry','生物':'Biology','地科':'Geoscience','理化':'Physics Chemistry'};
 async function srEqPoolLoad(){
   // 器材頁沒開過時另外抓一份精簡清單（不動器材頁自己的資料）
-  if(!(allAdminEquipment||[]).length&&!window._srEqPool){try{const rows=await sb('GET','equipment',{select:'name,spec,unit,room'});window._srEqPool=Array.isArray(rows)?rows:[];}catch(_){window._srEqPool=[];}}
+  if(!(allAdminEquipment||[]).length&&!window._srEqPool){try{const rows=await sb('GET','equipment',{select:'name,spec,unit,room,alias'});window._srEqPool=Array.isArray(rows)?rows:[];}catch(_){window._srEqPool=[];}}
 }
 async function srGEq(gi){
   const g=srGroupArr[gi];if(!g||!g.runs.length)return;
@@ -11258,7 +11265,7 @@ function srEqSet(i,v){const it=srEq&&srEq.items[i];if(!it)return;it.quantity=Mat
 function srEqSearch(q){
   if(!srEq)return;srEq.q=q;const box=document.getElementById('srEqHits');if(!box)return;
   const k=String(q||'').trim().toLowerCase();if(!k){box.innerHTML='';return;}
-  window._srEqHits=((allAdminEquipment||[]).length?allAdminEquipment:(window._srEqPool||[])).filter(e=>`${e.name||''} ${e.spec||''}`.toLowerCase().includes(k)).slice(0,6);
+  window._srEqHits=((allAdminEquipment||[]).length?allAdminEquipment:(window._srEqPool||[])).filter(e=>`${e.name||''} ${e.spec||''} ${e.alias||''}`.toLowerCase().includes(k)).slice(0,6);
   box.innerHTML=window._srEqHits.map((e,i)=>`<button type="button" class="sr-eqhit" onclick="srEqAdd(${i})"><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}</small></button>`).join('')+
     `<button type="button" class="sr-eqhit" onclick="srEqAdd(-1)">找不到？直接加「${escH(String(q).trim().slice(0,60))}」</button>`;
 }
@@ -11509,5 +11516,210 @@ async function srSave(){
 })();
 </script>
 <!-- ═══ eq-v1 結束 ═══ -->
+<!-- ═══ 課綱實驗 tpl-v1.1（2026-10-28）：刪掉這段（到「tpl-v1.1 結束」）即還原 ═══
+     做的事：頁首跟其他頁同一套；拿掉外層大白卡；搜尋＋檢查籤一排；
+     年級／科目兩排籤拿掉（左邊課程清單已經分好年級、科目）；實驗一列一行、細線分隔；
+     「編輯 編輯」重複字修掉、列上按鈕改淡色但常駐；手機上課程清單改成下拉選單。不改資料、只包裝 renderTemplateList。 -->
+<style>
+#panel-templates .pg-head{position:relative}
+#panel-templates .tplm-acts{display:flex;gap:6px;align-items:center}
+@media(min-width:1100px){#panel-templates .pg-head>.tplm-acts{position:absolute;right:0;top:2px}}
+@media(max-width:1099px){#panel-templates .pg-head{display:flex;flex-direction:column}#panel-templates .pg-head>.tplm-acts{order:-1;justify-content:flex-end;margin:0 0 4px}}
+/* 外層大白卡 → 透明；舊標題列（課綱實驗 共 n 個）頁首已經有 */
+#panel-templates>.card:not(.tpl-sheet){background:none;border:0;box-shadow:none;padding:0}
+#panel-templates>.card:not(.tpl-sheet)>.card-title{display:none}
+/* 搜尋＋檢查籤一排；年級、科目籤不顯示（左邊清單就是年級→科目） */
+#panel-templates .tpl-tools{display:flex;flex-direction:row;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+#panel-templates #tplSearch{flex:0 1 300px;margin:0;height:34px}
+#panel-templates #tplFilter button{white-space:nowrap;flex:0 0 auto}
+#panel-templates #tplFilter{display:flex;min-width:0;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0}
+#panel-templates #tplGF{display:none!important}
+/* 左邊課程清單：拿掉外框，右邊一條細線 */
+@media(min-width:1100px){
+  #panel-templates .tplc{grid-template-columns:200px minmax(0,1fr);gap:0}
+  #panel-templates .tplc-nav{border:0;border-right:1px solid var(--border);border-radius:0;background:none;padding:0 12px 0 0}
+  #panel-templates .tplc-body{padding:0 6px 0 24px}
+  #panel-templates .tplc-gh{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--text2);padding:14px 10px 4px}
+  #panel-templates .tplc-g{padding:6px 10px;border-radius:6px;font-size:13.5px}
+}
+/* 實驗：一列一行，不再一筆一個框 */
+#panel-templates .tpl-row{border:0;border-bottom:1px solid var(--border);border-radius:0;background:none;margin:0;padding:10px 4px;align-items:center}
+#panel-templates .tpl-row:hover{background:var(--surface2)}
+#panel-templates .tpl-wk{flex-basis:44px;padding:0}
+#panel-templates .tpl-wk b{font-size:16px}
+#panel-templates .tpl-main .nm{font-size:14.5px}
+#panel-templates .tpl-month{margin:18px 0 0;padding-bottom:6px;border-bottom:1px solid var(--text)}
+#panel-templates .tpl-month::after{display:none}
+#panel-templates .tplc-sec h3{margin:0 0 4px}
+#panel-templates .tpl-iss{margin-top:4px}
+/* 每一列的科目、類型小標籤：上面段落標題已經寫了 */
+#panel-templates .tpl-main .nm .tpl-cls-s,#panel-templates .tpl-main .nm>.ttp{display:none}
+/* 「編輯 編輯」：按鈕字跟補充字重複 */
+#panel-templates .tpl-edit-txt{display:none!important}
+/* 列上的按鈕：常駐，只是改成淡色外框，滑過那一列才變深（按鈕都保留） */
+#panel-templates .tpl-act .btn{background:transparent;border-color:var(--border);color:var(--text2);box-shadow:none}
+#panel-templates .tpl-row:hover .tpl-act .btn,#panel-templates .tpl-act .btn:focus-visible,#panel-templates .tpl-act details[open]>.btn{border-color:var(--text2);color:var(--text)}
+/* 手機：課程清單改成下拉選單（年級分組，選項帶數量與「可能重複」） */
+.tplm-sel{display:none}
+@media(max-width:1099px){
+  #panel-templates #tplSearch{flex:1 1 100%}
+  #panel-templates #tplFilter{flex:1 1 100%;margin:0 -16px;padding:0 16px}
+  #panel-templates .tplc-nav{display:none!important}
+  #panel-templates .tplm-sel{display:block;width:100%;height:42px;font:inherit;font-size:15px;font-weight:700;padding:0 12px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text)}
+  #panel-templates .tpl-row{padding:10px 0}
+  #panel-templates .tpl-act{flex-direction:row}
+}
+</style>
+<script>
+(function(){
+  const P=document.getElementById('panel-templates');if(!P||P.dataset.tplm)return;P.dataset.tplm='1';
+  const card=[...P.children].find(c=>c.matches('.card:not(.tpl-sheet)'));
+  const head=document.createElement('div');head.className='pg-head';
+  head.innerHTML='<h2>課綱實驗</h2><p id="tplmSub">每年沿用的實驗清單，依年級、科目分好；器材對得到庫存，老師借用時直接帶入</p>';
+  P.insertBefore(head,P.querySelector('.tpl-sheet')||P.firstChild);
+  const btns=card&&[...card.querySelectorAll('.card-title>span')].find(s=>s.querySelector('button,details'));
+  if(btns){btns.className='tplm-acts';btns.removeAttribute('style');head.appendChild(btns);}
+  // 年級／科目籤藏起來了：之前存的篩選要清掉，不然會有看不到的篩選條件
+  try{localStorage.removeItem('tplGradeF');localStorage.removeItem('tplSubjF');}catch(_){}
+  if(typeof tplGradeF!=='undefined'){tplGradeF='all';tplSubjF='all';}
+  const _r=window.renderTemplateList;
+  window.renderTemplateList=function(){
+    tplGradeF='all';tplSubjF='all';
+    const out=_r.apply(this,arguments);
+    const s=document.getElementById('tplmSub'),n=(window.allTemplates||allTemplates||[]).length;
+    if(s&&n)s.textContent=`共 ${n} 個實驗，每年沿用；依年級、科目分好，器材對得到庫存，老師借用時直接帶入`;
+    // 手機下拉選單：照左邊清單的內容做（年級＝分組，課程＝選項）
+    const nav=P.querySelector('.tplc-nav');
+    if(nav){
+      let h='',open=false,gr='';
+      [...nav.children].forEach(el=>{
+        if(el.classList.contains('tplc-gh')){gr=el.textContent.trim();h+=(open?'</optgroup>':'')+`<optgroup label="${gr}">`;open=true;return;}
+        const m=(el.getAttribute('onclick')||'').match(/tplPickGroup\((.*)\)/);if(!m)return;
+        const key=m[1].replace(/^['"]|['"]$/g,'');
+        const sp=el.querySelector('span'),n=el.querySelector('b'),dup=el.querySelector('em');
+        const txt=key==='*'?'全部列出':gr+' '+(sp?[...sp.children].map(c=>c.textContent.trim()).filter(Boolean).join('・'):'');
+        h+=`<option value="${key.replace(/"/g,'&quot;')}"${el.classList.contains('on')?' selected':''}>${txt}（${n?n.textContent:0}）${dup?'・可能重複':''}</option>`;
+      });
+      if(open)h+='</optgroup>';
+      const sel=document.createElement('select');sel.className='tplm-sel';sel.setAttribute('aria-label','選課程');sel.innerHTML=h;
+      sel.onchange=()=>tplPickGroup(sel.value);
+      nav.parentNode.insertBefore(sel,nav);
+    }
+    if(typeof tplFitHeight==='function')tplFitHeight();
+    return out;
+  };
+  if(P.classList.contains('active'))renderTemplateList();
+})();
+</script>
+<!-- ═══ tpl-v1.1 結束 ═══ -->
+<!-- ═══ 學期實驗紀錄：同一堂多個實驗 srx-v1（2026-10-28）：刪掉這段（到「srx-v1 結束」）即還原 ═══
+     做的事：後台「學期實驗紀錄」的填寫／修改視窗多一顆「＋ 同一堂還做了別的實驗」。
+     存檔時，每個多加的實驗用同一個預約、日期、節次各寫一筆 experiment_runs，
+     前台「學期實驗・這學期」就會把這堂顯示成「A＋B」（前台判斷同一堂的規則不用改）。
+     已經填過一個實驗的課，按「修改」也能補第二個。
+     後台卡片把同一堂的實驗顯示成「A＋B」（不再跳「這組有不同實驗」）、節數算堂數；
+     「換實驗」遇到 A＋B 預設不改已填的。只包裝 srFormHtml、srSave、srGroupHtml、srGFill、srGEq。 -->
+<style>
+.srx-box{margin:-4px 0 12px}
+.srx-have{font-size:13px;color:var(--text2);margin:0 0 6px}
+.srx-have b{color:var(--text)}
+.srx-row{display:flex;gap:6px;align-items:center;margin:0 0 6px}
+.srx-row input{flex:1;min-width:0}
+.srx-row button{flex:0 0 auto;border:1px solid var(--border);background:transparent;color:var(--text2);border-radius:8px;width:34px;height:34px;font:inherit;cursor:pointer}
+.srx-row button:hover{color:var(--danger);border-color:var(--danger)}
+.srx-add{border:0;background:none;color:var(--accent);font:inherit;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer}
+.srx-add:focus-visible,.srx-row button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<script>
+(function(){
+  if(typeof srFormHtml!=='function'||typeof srSave!=='function'||window.srxOn)return;window.srxOn=true;
+  // 同一堂：同一筆預約＋日期＋節次；沒有預約時用 日期＋節次＋老師＋班級（跟前台 sxLessonKey 一樣）
+  const lessonKey=r=>r.booking_id?`b|${r.booking_id}|${r.run_date}|${r.period||''}`:(r.period?`l|${r.run_date}|${r.period}|${r.teacher||''}|${r.grade||''}`:'r'+r.id);
+  const runName=r=>{const t=r.template_id?srTpl(r.template_id):null;return t?(t.name||'').trim():String(r.title||'').trim();};
+  const findTpl=v=>allTemplates.find(x=>srTplLabel(x)===v)||(()=>{const m=allTemplates.filter(x=>(x.name||'').trim()===v);return m.length===1?m[0]:null;})();
+
+  // ── 後台卡片：同一堂好幾個實驗，顯示成「A＋B」，不當成「不同實驗」；節數算堂數 ──
+  const combos=g=>{const m=new Map();(g.runs||[]).forEach(it=>{const k=lessonKey(it.run),s=m.get(k)||new Set();const n=runName(it.run);if(n)s.add(n);m.set(k,s);});return m;};
+  const isCombo=g=>[...combos(g).values()].some(s=>s.size>1);
+  const _gh=window.srGroupHtml;
+  if(typeof _gh==='function')window.srGroupHtml=function(g){
+    let h=_gh.apply(this,arguments);if(!isCombo(g))return h;
+    const names=[...new Set([...combos(g).values()].map(s=>[...s].sort((a,b)=>a.localeCompare(b,'zh-Hant')).join('＋')))];
+    h=h.replace(/<div class="srg-t">[\s\S]*?<\/div>/,`<div class="srg-t">${escH(names.join('／'))}${names.length>1?'<span class="srg-warn">這組有不同實驗，請確認</span>':''}</div>`);
+    const lessons=combos(g).size+(g.todo||[]).length,n=g.items.length,i=h.indexOf('class="srg-m"');
+    if(i>=0&&lessons!==n)h=h.slice(0,i)+h.slice(i).replace(`${n} 節`,`${lessons} 節`);
+    return h;
+  };
+  // 「換實驗」：有 A＋B 的課，預設不勾「已填的也改成這個實驗」，免得兩個實驗被改成同一個
+  const _gf=window.srGFill;
+  if(typeof _gf==='function')window.srGFill=function(gi){
+    const r=_gf.apply(this,arguments),g=srGroupArr[gi];
+    const re=document.getElementById('srg-re');
+    if(g&&re&&isCombo(g)){re.checked=false;re.closest('.form-group').insertAdjacentHTML('beforeend','<div class="hint" style="margin-top:4px;color:#8a5a00">這組有同一堂做好幾個實驗的課（A＋B）。勾上面這格會把它們全部改成同一個實驗；只想改其中一個，請到「明細」改那一筆。</div>');}
+    return r;
+  };
+  const _ge=window.srGEq;
+  if(typeof _ge==='function')window.srGEq=function(gi){
+    const g=srGroupArr[gi];
+    if(g&&isCombo(g)){showToast('同一堂有好幾個實驗：到「明細」點那一筆的「修改」，各自調整器材','error');return;}
+    return _ge.apply(this,arguments);
+  };
+  window.srxAdd=function(){
+    const box=document.getElementById('srxRows');if(!box)return;
+    if(box.children.length>=5){showToast('同一堂最多再加 5 個','error');return;}
+    const row=document.createElement('div');row.className='srx-row';
+    row.innerHTML='<input class="srx-tpl" list="srTplList" maxlength="60" autocomplete="off" placeholder="第二個實驗（打字找課綱實驗）" aria-label="同一堂的另一個實驗"><button type="button" aria-label="這個不加" onclick="this.parentNode.remove()">✕</button>';
+    box.appendChild(row);row.querySelector('input').focus();
+  };
+  const _form=window.srFormHtml;
+  window.srFormHtml=function(r,ps){
+    let h=_form.apply(this,arguments);
+    // 修改舊紀錄時：列出這一堂已經有的其他實驗
+    let have='';
+    if(r&&r.id!=null&&Array.isArray(srRuns)){
+      const k=lessonKey(r),mates=srRuns.filter(x=>x.id!==r.id&&lessonKey(x)===k).map(runName).filter(Boolean);
+      if(mates.length)have=`<p class="srx-have">這一堂已經有：<b>${mates.map(escH).join('、')}</b></p>`;
+    }
+    const block=`<div class="srx-box">${have}<div id="srxRows"></div><button type="button" class="srx-add" onclick="srxAdd()">＋ 同一堂還做了別的實驗</button></div>`;
+    const i=h.indexOf('</datalist>');
+    return i<0?h+block:h.slice(0,i+11)+block+h.slice(i+11);
+  };
+  const _save=window.srSave;
+  window.srSave=async function(){
+    const extras=[...document.querySelectorAll('.srx-tpl')].map(el=>el.value.trim()).filter(Boolean);
+    if(!extras.length)return _save.apply(this,arguments);
+    // 沒有預約、也沒選節次：前台認不出是同一堂
+    const editing=srCtx&&srCtx.id!=null?srRuns.find(x=>x.id===srCtx.id):null;
+    if(!(srCtx&&srCtx.bid)&&!(editing&&editing.booking_id)&&!(document.getElementById('sr-period')||{}).value){showToast('同一堂做好幾個實驗，請選節次（才認得是同一堂）','error');return;}
+    const ctx=srCtx?{...srCtx}:null,before=new Set(srRuns.map(x=>x.id));
+    await _save.apply(this,arguments);
+    if(document.getElementById('modalOverlay').classList.contains('show'))return; // 沒存成功（或取消）
+    // 剛存好的那幾筆＝這一堂（填實驗時只算這筆預約勾的節次，不含「一起填」的其他班）
+    let saved=[];
+    if(ctx&&ctx.id!=null)saved=srRuns.filter(x=>x.id===ctx.id);
+    else saved=srRuns.filter(x=>!before.has(x.id)&&(!ctx||!ctx.bid||String(x.booking_id)===String(ctx.bid)));
+    const lessons=new Map();saved.forEach(r=>{const k=lessonKey(r);if(!lessons.has(k))lessons.set(k,r);});
+    const rows=[];
+    lessons.forEach((r,k)=>{
+      const have=new Set(srRuns.filter(x=>lessonKey(x)===k).map(runName));
+      extras.forEach(v=>{
+        const t=findTpl(v),name=t?(t.name||'').trim():v.slice(0,60);
+        if(have.has(name))return;have.add(name);
+        rows.push({run_date:r.run_date,period:r.period||null,venue:r.venue||null,booking_id:r.booking_id||null,
+          template_id:t?String(t.id):null,title:t?null:name,subject:r.subject||(t&&srTplSubj(t))||null,  // 跟這堂課同一科，後台才會放在同一張卡
+          
+          course_type:r.course_type||null,grade:r.grade||null,teacher:r.teacher,note:null,is_hidden:!!r.is_hidden});
+      });
+    });
+    if(!rows.length){showToast('這一堂已經有這些實驗了','success');return;}
+    try{
+      const res=await sb('POST','experiment_runs',{body:rows,prefer:'return=representation'});
+      if(!Array.isArray(res)||!res.length)throw new Error('資料庫沒有回傳新增的紀錄');
+      srRuns.push(...res);showToast(`已儲存，這一堂共 ${extras.length+1} 個實驗`,'success');srRender();
+    }catch(e){showToast('第一個實驗已存，其他實驗沒存到：'+e.message,'error');}
+  };
+})();
+</script>
+<!-- ═══ srx-v1 結束 ═══ -->
 </body>
 </html>
