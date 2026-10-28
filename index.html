@@ -2129,7 +2129,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-27a · 點週次看當週課表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-28b · 點週次看當週課表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -6246,7 +6246,7 @@ function cbSet(key,v){const n=Math.max(0,Math.min(String(key).startsWith('CHEM__
 function cbSearch(q){
   cb.q=q;const box=document.getElementById('cbSearchRes');if(!box)return;
   const k=q.trim().toLowerCase();if(!k){box.innerHTML='';return;}
-  const hits=allEquipment.filter(e=>`${e.name||''} ${e.spec||''}`.toLowerCase().includes(k)).slice(0,8);
+  const hits=sortBySearch(allEquipment.filter(e=>matchesEquip(e,q)),q).slice(0,8); // 名稱、規格、別名、財產編號都找得到（2026-10-28b）
   box.innerHTML=hits.length?hits.map(e=>`<button type="button" class="cb-hit" onclick="cbAddExtra(${ja(e.room)},${ja(e.name)})"><span><b>${escH(e.name)}</b><small>${escH(rn(e.room))}${e.spec?'・'+escH(e.spec):''}・可借 ${parseInt(e.available)||0}</small></span><i>＋ 加入</i></button>`).join(''):'<div class="cb-none">找不到，可以在備註寫給管理員</div>';
 }
 function cbAddExtra(room,name){
@@ -6442,6 +6442,8 @@ function tplPickEquip(it,t,want){
   const itName=norm(it.name),itSpec=norm(it.spec);
   let allCands=allEquipment.filter(e=>e.name===it.name);
   if(!allCands.length&&itName){allCands=allEquipment.filter(e=>{const ct=norm(e.name)+norm(e.spec);const en=norm(e.name);const nameOk=ct.includes(itName)||(en&&itName.includes(en));if(!nameOk)return false;if(itSpec&&!ct.includes(itSpec))return false;return true;});}
+  // 課綱寫的是別名（例如「燒杯仔」）：對到別名完全一樣的器材（2026-10-28b）
+  if(!allCands.length&&itName){allCands=allEquipment.filter(e=>String(e.alias||'').split(/[、,，;；/／]/).some(a=>norm(a)&&norm(a)===itName));}
   const specCands=itSpec?allCands.filter(e=>{const es=norm(e.spec);return es&&(es.includes(itSpec)||itSpec.includes(es));}):[];
   const cands=specCands.length?specCands:allCands;
   if(!cands.length)return null;
@@ -7890,5 +7892,90 @@ async function sxRunsForBooking(bookingId,periods,tplOrTitle,who,grade,bk){
 }
 // ==== 學期實驗（新版）結束 ====
 </script>
+<!-- ═══ 課綱借用：兩個實驗的器材合併 cbm-v2（2026-10-28）：刪掉這段（到「cbm-v2 結束」）即還原 ═══
+     貼在 index.html（前台）最後的 </body> 前。
+     做的事：同一張借用單選了兩個以上實驗時，同一樣器材——
+       ‧ 會回收再用的（燒杯、試管…）：同一堂先後做可以輪流用，取「最多的那個實驗」的數量
+       ‧ 用完就丟的（下面 CBM_DISPOSABLE）和藥品：照加總
+     老師可以自己選：器材清單上方一次選「輪流做（重複的取最多）／同時做（全部加總）」，
+     每一樣重複的器材也可以單獨點「取最多｜加總」。數量照樣可以用 − ＋ 改。
+     只包裝 cbItems、cbRender，送出的格式不變。 -->
+<style>
+.cbm-n{color:var(--text2)}
+.cbm-all{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:10px 0 4px;padding:10px 12px;border-radius:10px;background:var(--surface2,#f1ede4);font-size:13.5px}
+.cbm-all b{font-weight:700}
+.cbm-seg{display:inline-flex;border:1px solid var(--border,#d9d2c3);border-radius:8px;overflow:hidden;background:var(--surface,#fff)}
+.cbm-seg button{border:0;background:none;font:inherit;font-size:13px;padding:5px 10px;cursor:pointer;color:var(--text2,#666)}
+.cbm-seg button[aria-pressed="true"]{background:var(--accent,#1f5b4c);color:#fff;font-weight:700}
+.cbm-seg.sm button{font-size:11.5px;padding:1px 8px}
+.cbm-seg button:focus-visible{outline:2px solid var(--accent,#1f5b4c);outline-offset:-2px}
+.cbm-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:3px}
+</style>
+<script>
+// 用完就丟的：每一組的字都出現在「名稱＋規格」裡才算（例如「滴管」規格寫「塑膠」也算）
+const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
+(function(){
+  if(typeof cbItems!=='function'||typeof cbRender!=='function'||window.cbmOn)return;window.cbmOn=true;
+  const isDisp=o=>{const s=String(o.name||'')+String(o.spec||'');return CBM_DISPOSABLE.some(ws=>ws.every(w=>s.includes(w)));};
+  const _items=window.cbItems;
+  window.cbItems=function(){
+    if(!cb||!Array.isArray(cb.ids)||cb.ids.length<2)return _items.apply(this,arguments);
+    const full=_items.apply(this,arguments);           // 用來拿 groupsUsed（照原本的算法）
+    const ids=cb.ids,over=cb.over,extra=cb.extra,rowPick=cb.cbmRow||(cb.cbmRow={}),all=cb.cbmAll||'turn';
+    const per=[];
+    try{
+      cb.over={};cb.extra={};
+      ids.forEach(id=>{cb.ids=[id];per.push(_items.call(this).list);});
+    }finally{cb.ids=ids;cb.over=over;cb.extra=extra;}
+    const map=new Map();
+    per.forEach(list=>list.forEach(o=>{
+      const m=map.get(o.key);
+      if(!m){map.set(o.key,{...o,parts:[o.auto],perParts:[o.per]});return;}
+      m.parts.push(o.auto);m.perParts.push(o.per);
+    }));
+    map.forEach(m=>{
+      if(m.parts.length<2){m.auto=m.parts[0];m.per=m.perParts[0];return;}
+      m.cbmKind=m.chem?'藥品':isDisp(m)?'用完就丟':'';
+      // 預設：輪流做 → 回收再用的取最多、藥品和用完就丟的加總；同時做 → 全部加總。單獨點過的以單獨的為準
+      m.cbmMode=rowPick[m.key]||(all==='sum'||m.cbmKind?'sum':'max');
+      if(m.cbmMode==='max'){const i=m.parts.indexOf(Math.max(...m.parts));m.auto=m.parts[i];m.per=m.perParts[i];}
+      else{m.auto=m.parts.reduce((a,b)=>a+b,0);m.per=m.perParts.reduce((a,b)=>a+b,0);}
+    });
+    Object.values(cb.extra).forEach(e=>{if(!map.has(e.key))map.set(e.key,Object.assign({miss:false,auto:0,per:0,extra:true},e));});
+    const list=[...map.values()].map(o=>Object.assign(o,{qty:cb.over[o.key]!=null?cb.over[o.key]:(o.auto||1)})).filter(o=>o.qty>0);
+    return {list,groupsUsed:full.groupsUsed};
+  };
+  // 單獨一樣：取最多／加總（清掉手動改過的數量，重新算）
+  window.cbmPick=function(key,mode){if(!cb)return;(cb.cbmRow||(cb.cbmRow={}))[key]=mode;delete cb.over[key];cbRender();};
+  // 全部一起選：輪流做／同時做（單獨選過的、手動改過的重複器材都重設）
+  window.cbmAllSet=function(mode){
+    if(!cb)return;cb.cbmAll=mode;
+    cbItems().list.filter(o=>o.cbmMode).forEach(o=>{delete cb.over[o.key];});
+    cb.cbmRow={};cbRender();
+  };
+  const _render=window.cbRender;
+  window.cbRender=function(){
+    const r=_render.apply(this,arguments);
+    if(!cb||!Array.isArray(cb.ids)||cb.ids.length<2)return r;
+    const {list}=cbItems(),dup=list.filter(o=>o.cbmMode);
+    if(!dup.length)return r;
+    const seg=(cur,opts,sm)=>`<span class="cbm-seg${sm?' sm':''}" role="group">${opts.map(([v,l,fn])=>`<button type="button" aria-pressed="${cur===v}" onclick="${fn}">${l}</button>`).join('')}</span>`;
+    // 器材清單上方：一次選全部
+    const head=document.querySelector('#cbRoot .cb-card .cb-grp')||document.querySelector('#cbRoot .cb-card .cb-ct');
+    if(head)head.insertAdjacentHTML('afterend',`<div class="cbm-all"><span><b>${dup.length} 樣器材</b>兩個實驗都有：</span>${seg(cb.cbmAll||'turn',[['turn','輪流做，取最多',"cbmAllSet('turn')"],['sum','同時做，全部加總',"cbmAllSet('sum')"]])}</div>`);
+    document.querySelectorAll('#cbRoot .cb-eq').forEach(row=>{
+      const b=row.querySelector('button[onclick^="cbQty("]');if(!b)return;
+      const on=b.getAttribute('onclick'),o=dup.find(x=>on.startsWith('cbQty('+JSON.stringify(String(x.key))+','));
+      if(!o)return;
+      const sm=row.querySelector('.n small');if(!sm)return;
+      const t=o.cbmMode==='max'?`${o.parts.join('／')}，取 ${o.auto}`:`${o.parts.join('＋')}＝${o.auto}`;
+      const k=ja(o.key);
+      sm.insertAdjacentHTML('afterend',`<span class="cbm-row"><small class="cbm-n">各實驗 ${escH(t)}${o.cbmKind?`（${o.cbmKind}）`:''}</small>${seg(o.cbmMode,[['max','取最多',`cbmPick(${k},'max')`],['sum','加總',`cbmPick(${k},'sum')`]],true)}</span>`);
+    });
+    return r;
+  };
+})();
+</script>
+<!-- ═══ cbm-v2 結束 ═══ -->
 </body>
 </html>
