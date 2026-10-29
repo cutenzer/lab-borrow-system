@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<!-- maximum-scale=1：iPhone 點到小於 16px 的輸入框／下拉選單時不會自動放大、整頁跑掉（iOS 仍可以兩指放大） -->
 <title>實驗室管理後台</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&family=LXGW+WenKai+TC:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1926,7 +1927,7 @@
       <div class="form-group"><label>規格</label><input type="text" id="eq-spec"></div>
       <div class="form-group"><label>單位</label><input type="text" id="eq-unit" value="個"></div>
       <div class="form-group"><label>總數 *</label><input type="number" id="eq-total" min="0" value="0"></div>
-      <div class="form-group"><label>櫃位編碼</label><input type="text" id="eq-location" placeholder="例如：BB01-1"></div>
+      <div class="form-group"><label>櫃位編碼</label><input type="text" id="eq-location" placeholder="例如：BB01-1（櫃頂／桌面寫 BB01-0 或 BB01-頂）"></div>
       <div class="form-group"><label>別名（搜尋用，選填）</label><input type="text" id="eq-alias" placeholder="例如：beaker、燒杯仔"></div>
       <div class="form-group" style="grid-column:1/-1"><label>財產編號（選填；多個用「、」分開，連號寫「起～迄」）</label><input type="text" id="eq-asset" maxlength="500" placeholder="例如：5010101-03-0001～0010、5010101-03-0023"></div>
       <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;padding-top:18px">
@@ -11721,5 +11722,336 @@ async function srSave(){
 })();
 </script>
 <!-- ═══ srx-v1 結束 ═══ -->
+<!-- ═══ 換教室／時間＋手機版工具列 mv-v1（2026-10-29）：刪掉這段（到「mv-v1 結束」）即還原 ═══
+     做的事：
+     1. 換教室／時間：排錯教室、排錯節次或日期，直接改。入口有四個——
+        場地週曆點預約、待審核申請卡、學期實驗紀錄的卡片（「換教室」）、明細每一列。
+        改的是 venue_bookings 的時段；已經填好的實驗紀錄（experiment_runs）跟著一起搬，不會變成「沒填」。
+        固定課可以勾「之後每週同一時段也一起改」；整個系列都搬時，固定課設定（星期、節次、教室）也一起更新。
+        撞到別人已核准／固定課的時段會先列出來，確認才改。
+     2. 手機版學期實驗紀錄：學期／檢視／科目／狀態改成同一排四個下拉選單；跳到本週＋新增放第二排。
+     3. 手機版課綱實驗：檢查籤（全部／對不到器材／日期待確認…）改成下拉選單，跟搜尋框同一排。
+     只包裝 srBarHtml、srRender、srRowHtml、srGroupHtml、clickAdminBooking、renderVenuePending、renderTemplateList，不改原本函式。 -->
+<style>
+/* 換教室視窗 */
+.vmv-ps{display:flex;flex-direction:column;gap:2px;max-height:200px;overflow:auto;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13.5px}
+.vmv-ps label{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.vmv-ps input{width:auto}
+.vmv-ps small{color:var(--text2);margin-left:auto;padding-left:8px;white-space:nowrap}
+.vmv-3{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+.vmv-3 .form-group{margin:0}
+.vmv-ser{display:flex;align-items:center;gap:6px;font-size:13.5px;margin:8px 0 0;cursor:pointer}
+.vmv-ser input{width:auto}
+.vmv-sum{font-size:13.5px;line-height:1.6}
+.vmv-sum li{margin-left:18px}
+.vmv-cf{color:var(--danger)}
+.vmv-btn{white-space:nowrap}
+@media(max-width:520px){.vmv-3{grid-template-columns:1fr 1fr}.vmv-3 .form-group:first-child{grid-column:1/-1}}
+/* 手機版學期實驗紀錄工具列 */
+.srm{display:none}
+@media(max-width:760px){
+  #panel-semruns .card>.card-title{display:none}
+  #panel-semruns .card{padding:10px 12px}
+  #panel-semruns .sr-bar{margin:-2px -12px 6px;padding:8px 12px;display:block}
+  #panel-semruns .sr-bar>:not(.srm){display:none!important}
+  .srm{display:flex;flex-direction:column;gap:6px}
+  .srm-r{display:flex;gap:6px;align-items:center}
+  .srm-r select{flex:1 1 0;min-width:0;width:auto;height:36px;padding:0 18px 0 8px;font:inherit;font-size:13px;border-radius:8px;-webkit-appearance:none;appearance:none;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235f5b54' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 6px center;text-overflow:ellipsis}
+  .srm-r select.on{border-color:var(--text);font-weight:700}
+  .srm-r .sr-jump{flex:0 0 auto;padding:4px 0}
+  .srm-r .srm-add{margin-left:auto;flex:0 0 auto}
+  #panel-semruns .sr-sum .srm-rule{display:none}
+  #panel-semruns .sr-sum{margin-bottom:6px}
+}
+/* 手機版課綱實驗：檢查籤 → 下拉選單，和搜尋同一排 */
+.tplx-chk{display:none}
+@media(max-width:1099px){
+  #panel-templates .tpl-tools{flex-wrap:nowrap}
+  #panel-templates #tplSearch{flex:1 1 auto;min-width:0;height:38px}
+  #panel-templates .tpl-tools.has-chk #tplFilter{display:none!important}
+  #panel-templates .tplx-chk{display:block;flex:0 1 42%;min-width:0;width:auto;height:38px;padding:0 22px 0 10px;font:inherit;font-size:13.5px;border-radius:10px}
+  #panel-templates .tplx-chk.warn{border-color:#c2410c;color:#9a3412;font-weight:700}
+}
+</style>
+<script>
+(function(){
+  if(window.vmvOn)return;window.vmvOn=true;
+  // ── 共用 ──
+  const DOWS='日一二三四五六';
+  const md=d=>{const x=new Date(d+'T00:00:00');return isNaN(x)?String(d):`${x.getMonth()+1}/${x.getDate()}（${DOWS[x.getDay()]}）`;};
+  const addDays=(d,n)=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return fmtDate(x);};
+  const dayDiff=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5);
+  const monOf=d=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return fmtDate(x);};
+  const slot=p=>`${p.date}|${p.period}|${p.venue}`;
+  // 預約資料：場地頁（allVenueBookings）和學期實驗紀錄（srBks）各自載入，兩邊都找
+  function bkPool(){const m=new Map();[...(allVenueBookings||[]),...(typeof srBks!=='undefined'?srBks:[])].forEach(b=>{if(b&&!m.has(String(b.id)))m.set(String(b.id),b);});return [...m.values()];}
+  function bkById(id){return bkPool().find(b=>String(b.id)===String(id));}
+  const reg=[];window._vmvReg=reg;
+  // targets：[{bid,date,period,venue}]（預約的時段）或 [{rid,date,period,venue}]（沒借教室、只有紀錄）
+  window.vmvBtn=function(targets,label,cls){
+    if(!targets||!targets.length)return '';
+    const i=reg.push(targets)-1;
+    return `<button type="button" class="${cls||'btn btn-secondary btn-sm'} vmv-btn" onclick="vmvOpen(${i})" title="排錯教室、節次或日期，直接改">${label||'換教室'}</button>`;
+  };
+  let st=null;
+  window.vmvOpen=function(i,keepSel){
+    const raw=(reg[i]||[]).filter(t=>t&&t.date);if(!raw.length){showToast('找不到可以改的時段','error');return;}
+    // 同一筆時段只列一次；順序照日期、節次
+    const seen=new Set(),pi=p=>{const k=PERIODS.indexOf(p);return k<0?99:k;};
+    const ts=raw.filter(t=>{const k=(t.bid?'b'+t.bid:'r'+t.rid)+'|'+slot(t);if(seen.has(k))return false;seen.add(k);return true;})
+      .sort((a,b)=>String(a.date).localeCompare(String(b.date))||pi(a.period)-pi(b.period));
+    // 固定課：之後每週同一個時段（同一筆預約、同星期、同節次、同教室）
+    const later=[];
+    ts.forEach(t=>{
+      if(!t.bid)return;const b=bkById(t.bid);if(!b||!(b.is_fixed||b.recurrence))return;
+      const dw=new Date(t.date+'T00:00:00').getDay();
+      (b.periods||[]).forEach(p=>{
+        if(p.status==='已拒絕'||p.date<=t.date||p.period!==t.period||p.venue!==t.venue||new Date(p.date+'T00:00:00').getDay()!==dw)return;
+        const k='b'+b.id+'|'+slot(p);if(seen.has(k))return;seen.add(k);
+        later.push({bid:b.id,date:p.date,period:p.period,venue:p.venue});
+      });
+    });
+    st={i,ts,later};
+    const who=t=>{const b=t.bid?bkById(t.bid):null;const r=t.rid!=null&&typeof srRuns!=='undefined'?srRuns.find(x=>x.id===t.rid):null;return [b?b.grade:r&&r.grade,b?b.borrower_name:r&&r.teacher].filter(Boolean).join(' ');};
+    const v0=[...new Set(ts.map(t=>t.venue).filter(Boolean))],p0=[...new Set(ts.map(t=>t.period).filter(Boolean))];
+    const vOpt=['',...VENUES].map(v=>`<option value="${escH(v)}">${v?escH(v):'不改'+(v0.length===1?`（${escH(v0[0])}）`:'')}</option>`).join('');
+    const pOpt=['',...PERIODS].map(p=>`<option value="${escH(p)}">${p?escH(p):'不改'+(p0.length===1?`（${escH(p0[0])}）`:'')}</option>`).join('');
+    const multiDate=new Set(ts.map(t=>t.date)).size>1;
+    showModal('換教室／時間',`<div class="sr-form">
+      <div class="form-group"><label>要改的時段${ts.length>1?`（${ts.length} 節，可以只勾幾節）`:''}</label><div class="vmv-ps">${ts.map((t,k)=>`<label><input type="checkbox" data-k="${k}" checked> <b>${escH(md(t.date))} ${escH(t.period||'—')}</b> ${escH(VENUE_SHORT[t.venue]||t.venue||'沒借教室')}<small>${escH(who(t))}</small></label>`).join('')}</div>
+      ${later.length?`<label class="vmv-ser"><input type="checkbox" id="vmv-ser"> 之後每週同一時段也一起改（再 ${later.length} 節，到 ${escH(md(later.map(x=>x.date).sort().pop()))}）</label>`:''}</div>
+      <div class="vmv-3">
+        <div class="form-group"><label>改到哪間教室</label><select id="vmv-v">${vOpt}</select></div>
+        <div class="form-group"><label>節次</label><select id="vmv-p">${pOpt}</select></div>
+        <div class="form-group"><label>日期</label><input type="date" id="vmv-d" value="${escH(ts[0].date)}"></div>
+      </div>
+      <div class="hint" id="vmv-h" style="margin-top:6px;font-size:12.5px">${multiDate||later.length?'改日期時，勾選的每一節都往前／往後移同樣的天數。':'只改教室的話，節次、日期維持不動。'}</div>
+      <div class="hint" style="margin-top:2px;font-size:12.5px">已經填好的實驗紀錄會跟著搬過去。</div>
+    </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'下一步',cls:'btn-primary',fn:'vmvCheck()'}]);
+    if(keepSel){
+      document.querySelectorAll('.vmv-ps input').forEach(el=>{el.checked=keepSel.ks.includes(+el.dataset.k);});
+      const s=document.getElementById('vmv-ser');if(s)s.checked=keepSel.ser;
+      document.getElementById('vmv-v').value=keepSel.v;document.getElementById('vmv-p').value=keepSel.p;document.getElementById('vmv-d').value=keepSel.d;
+    }
+  };
+  window.vmvCheck=function(){
+    if(!st)return;
+    const ks=[...document.querySelectorAll('.vmv-ps input:checked')].map(el=>+el.dataset.k);
+    const ser=!!document.getElementById('vmv-ser')?.checked;
+    const v=document.getElementById('vmv-v').value,p=document.getElementById('vmv-p').value,d=document.getElementById('vmv-d').value;
+    // 只接受清單裡的教室、節次（不讓奇怪的字串寫進資料庫）
+    if(v&&!VENUES.includes(v)){showToast('教室不在清單裡','error');return;}
+    if(p&&!PERIODS.includes(p)){showToast('節次不在清單裡','error');return;}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(d)){showToast('請選日期','error');return;}
+    const sel=ks.map(k=>st.ts[k]).filter(Boolean);
+    if(!sel.length){showToast('至少勾一節','error');return;}
+    const first=sel[0].date,delta=dayDiff(first,d);
+    if(Math.abs(delta)>200){showToast('日期差太多了，請確認','error');return;}
+    const all=ser?[...sel,...st.later]:sel;
+    const moves=all.map(t=>({t,to:{date:addDays(t.date,delta),period:p||t.period,venue:v||t.venue}}))
+      .filter(m=>m.to.date!==m.t.date||m.to.period!==m.t.period||m.to.venue!==m.t.venue);
+    if(!moves.length){showToast('跟原本一樣，沒有要改的','error');return;}
+    // 檢查：同一筆預約搬完會不會兩節疊在同一格；會不會撞到別人已核准／固定課
+    const errs=[],cfs=[];
+    const byB=new Map();moves.filter(m=>m.t.bid).forEach(m=>{const k=String(m.t.bid);if(!byB.has(k))byB.set(k,[]);byB.get(k).push(m);});
+    byB.forEach((ms,bid)=>{
+      const b=bkById(bid);if(!b){errs.push('找不到預約，請重新整理');return;}
+      const movedOld=new Set(ms.map(m=>slot(m.t)));
+      const stay=new Set((b.periods||[]).filter(x=>!movedOld.has(slot(x))&&x.status!=='已拒絕').map(slot));
+      const nw=new Set();
+      ms.forEach(m=>{const k=slot(m.to);if(nw.has(k)||stay.has(k))errs.push(`${md(m.to.date)} ${m.to.period} ${VENUE_SHORT[m.to.venue]||m.to.venue}：${b.borrower_name||''} 這筆預約已經有這一格`);nw.add(k);});
+    });
+    const pool=bkPool();
+    moves.forEach(m=>{
+      if(!m.to.venue||!VENUES.includes(m.to.venue))return;
+      const c=pool.find(b=>String(b.id)!==String(m.t.bid||'')&&(b.periods||[]).some(x=>x.date===m.to.date&&x.period===m.to.period&&x.venue===m.to.venue&&x.status!=='已拒絕'&&(b.is_fixed||x.status==='已核准')));
+      if(c)cfs.push(`${md(m.to.date)} ${m.to.period} ${VENUE_SHORT[m.to.venue]||m.to.venue}：已經有 ${c.grade?c.grade+' ':''}${c.borrower_name||''}`);
+    });
+    // 搬到假期／停課：不擋（假日也有人做實驗），只提醒
+    const hol=[...new Set(moves.map(m=>{const h=typeof holidayForDate==='function'?holidayForDate(m.to.date,m.to.period):null;return h?`${md(m.to.date)} 是${typeof holClosed==='function'&&holClosed(h)?'停課':'假期'}（${h.label||'假期'}）`:null;}).filter(Boolean))];
+    if(errs.length){showToast(errs[0],'error');return;}
+    st.moves=moves;st.back={ks,ser,v,p,d};
+    const line=m=>`<li>${escH(md(m.t.date))} ${escH(m.t.period||'—')} ${escH(VENUE_SHORT[m.t.venue]||m.t.venue||'—')} → <b>${escH(md(m.to.date))} ${escH(m.to.period||'—')} ${escH(VENUE_SHORT[m.to.venue]||m.to.venue||'—')}</b></li>`;
+    const show=moves.slice(0,8).map(line).join('')+(moves.length>8?`<li>…還有 ${moves.length-8} 節</li>`:'');
+    showModal(cfs.length?'撞到別人的時段':'確認換教室／時間',`<div class="vmv-sum">
+      <p>要改 <b>${moves.length}</b> 節：</p><ul>${show}</ul>
+      ${cfs.length?`<p class="vmv-cf" style="margin-top:8px"><b>${cfs.length} 節撞到別人已核准或固定課：</b></p><ul class="vmv-cf">${cfs.slice(0,6).map(x=>`<li>${escH(x)}</li>`).join('')}${cfs.length>6?`<li>…還有 ${cfs.length-6} 節</li>`:''}</ul><p class="hint">仍要改的話，那一格會有兩筆預約，記得去週曆處理。</p>`:''}
+      ${hol.length?`<p class="hint" style="margin-top:6px;color:#8a5a00">${hol.map(escH).join('、')}</p>`:''}
+    </div>`,[{label:'返回修改',cls:'btn-secondary',fn:`vmvOpen(${st.i},window._vmvBack)`},{label:cfs.length?'仍要改':'確定改',cls:cfs.length?'btn-warn':'btn-primary',fn:'vmvApply()'}]);
+    window._vmvBack=st.back;
+  };
+  window.vmvApply=async function(){
+    if(!st||!st.moves)return;
+    const moves=st.moves,btn=document.querySelector('#modalActions .btn-primary,#modalActions .btn-warn');
+    if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+    let runN=0;
+    try{
+      const byB=new Map();moves.filter(m=>m.t.bid).forEach(m=>{const k=String(m.t.bid);if(!byB.has(k))byB.set(k,[]);byB.get(k).push(m);});
+      for(const [bid,ms] of byB){
+        const b=bkById(bid);if(!b)throw new Error('找不到預約，請重新整理');
+        const mp=new Map(ms.map(m=>[slot(m.t),m.to]));
+        const periods=(b.periods||[]).map(x=>{const to=mp.get(slot(x));return to?{...x,date:to.date,period:to.period,venue:to.venue}:x;});
+        const body={periods};
+        // 固定課整個系列都搬了（同一週內換星期、換節次、換教室）→ 固定課設定一起改，之後「編輯整學期排程」才對得上
+        const rec=b.recurrence;
+        if(rec){
+          const recPs=(b.periods||[]).filter(x=>x.period===rec.period&&x.venue===rec.venue);
+          const tos=recPs.map(x=>mp.get(slot(x)));
+          if(recPs.length&&tos.every(Boolean)){
+            const same=(f)=>new Set(tos.map(f)).size===1;
+            const sameWeek=recPs.every((x,k)=>monOf(x.date)===monOf(tos[k].date));
+            if(same(t=>t.period)&&same(t=>t.venue)&&same(t=>new Date(t.date+'T00:00:00').getDay())&&sameWeek){
+              const jd=new Date(tos[0].date+'T00:00:00').getDay();
+              body.recurrence={...rec,period:tos[0].period,venue:tos[0].venue,day_of_week:jd===0?7:jd};
+            }
+          }
+        }
+        await sb('PATCH','venue_bookings',{filter:'id=eq.'+encodeURIComponent(bid),body,prefer:'return=minimal'});
+        b.periods=periods;if(body.recurrence)b.recurrence=body.recurrence;
+        [allVenueBookings,typeof srBks!=='undefined'?srBks:[]].forEach(arr=>{const o=(arr||[]).find(x=>String(x.id)===bid);if(o&&o!==b){o.periods=periods;if(body.recurrence)o.recurrence=body.recurrence;}});
+        // 這筆預約已經填好的實驗紀錄：照 id 一筆一筆搬（不會因為兩節互換而搬錯）
+        const runs=await sb('GET','experiment_runs',{select:'id,run_date,period',filter:'booking_id=eq.'+encodeURIComponent(bid)});
+        const groups=new Map();
+        (Array.isArray(runs)?runs:[]).forEach(r=>{
+          const m=ms.find(m=>m.t.date===r.run_date&&(m.t.period||'')===(r.period||''));if(!m)return;
+          const k=slot(m.to);if(!groups.has(k))groups.set(k,{to:m.to,ids:[]});groups.get(k).ids.push(r.id);
+        });
+        for(const g of groups.values()){
+          const ids=g.ids.filter(Number.isInteger);if(!ids.length)continue;
+          const rb={run_date:g.to.date,period:g.to.period||null,venue:(g.to.venue||'').slice(0,30)||null};
+          await sb('PATCH','experiment_runs',{filter:'id=in.('+ids.join(',')+')',body:rb,prefer:'return=minimal'});
+          runN+=ids.length;
+          if(typeof srRuns!=='undefined')srRuns.forEach(x=>{if(ids.includes(x.id))Object.assign(x,rb);});
+        }
+      }
+      // 沒借教室、只有紀錄的：直接改紀錄
+      for(const m of moves.filter(m=>!m.t.bid&&Number.isInteger(m.t.rid))){
+        const rb={run_date:m.to.date,period:m.to.period||null,venue:(m.to.venue||'').slice(0,30)||null};
+        await sb('PATCH','experiment_runs',{filter:'id=eq.'+m.t.rid,body:rb,prefer:'return=minimal'});
+        runN++;if(typeof srRuns!=='undefined'){const r=srRuns.find(x=>x.id===m.t.rid);if(r)Object.assign(r,rb);}
+      }
+      closeModal();
+      showToast(`已改 ${moves.length} 節${runN?`，${runN} 筆實驗紀錄一起搬過去`:''}`,'success');
+      st=null;
+      if(typeof loadAll==='function')loadAll();
+      if(typeof srLoaded!=='undefined'&&srLoaded&&document.getElementById('panel-semruns')?.classList.contains('active'))srRender();
+    }catch(e){
+      showToast('改到一半失敗：'+e.message+'（請重新整理後確認）','error');
+      if(btn){btn.disabled=false;btn.textContent='再試一次';}
+    }
+  };
+
+  // ── 入口 1：場地週曆點預約 ──
+  if(typeof clickAdminBooking==='function'){
+    const _c=clickAdminBooking;
+    window.clickAdminBooking=function(bid,date,period,venue){
+      const r=_c.apply(this,arguments);
+      const b=bkById(bid),acts=document.getElementById('modalActions');
+      if(b&&acts){
+        const box=document.createElement('span');
+        box.innerHTML=vmvBtn([{bid:b.id,date,period,venue}],'換教室／時間','btn btn-secondary');
+        const btn=box.firstElementChild;if(btn)acts.insertBefore(btn,acts.children[1]||null);
+      }
+      return r;
+    };
+  }
+  // ── 入口 2：待審核申請卡（老師申請錯教室，核准前先改好）──
+  if(typeof renderVenuePending==='function'){
+    const _p=renderVenuePending;
+    window.renderVenuePending=function(){
+      const r=_p.apply(this,arguments);
+      document.querySelectorAll('#venuePendingList .venue-request-card').forEach(card=>{
+        const b=bkById(card.dataset.bid);if(!b||card.querySelector('.vmv-btn'))return;
+        const ts=(b.periods||[]).filter(p=>p.status==='待審核').map(p=>({bid:b.id,date:p.date,period:p.period,venue:p.venue}));
+        const show=card.querySelector('.vp-show');if(!show||!ts.length)return;
+        show.insertAdjacentHTML('beforebegin',vmvBtn(ts,'換教室／時間','vq-link'));
+      });
+      return r;
+    };
+  }
+  // ── 入口 3、4：學期實驗紀錄的卡片、明細每一列 ──
+  const runT=r=>{
+    if(!r)return null;
+    if(r.booking_id){
+      const b=bkById(r.booking_id);
+      const p=b&&(b.periods||[]).find(x=>x.date===r.run_date&&(x.period||'')===(r.period||''));
+      if(p)return {bid:b.id,date:p.date,period:p.period,venue:p.venue};
+    }
+    return {rid:r.id,date:r.run_date,period:r.period||'',venue:r.venue||''};
+  };
+  if(typeof srRender==='function'){
+    const _r=srRender;
+    window.srRender=function(){reg.length=0;const out=_r.apply(this,arguments);
+      const s=document.querySelector('#srRoot .sr-sum');
+      if(s){const t='同一週、同年段、同科目合成一張卡；同一班這週第二次上課，算第二個實驗・';s.innerHTML=s.innerHTML.replace(t,`<span class="srm-rule">${t}</span>`);}
+      return out;};
+  }
+  if(typeof srRowHtml==='function'){
+    const _row=srRowHtml;
+    window.srRowHtml=function(x){
+      const h=_row.apply(this,arguments);
+      const ts=x.kind==='run'?[runT(x.r)]:(x.ps||[]).map(p=>({bid:x.b.id,date:p.date,period:p.period,venue:p.venue}));
+      const btn=vmvBtn(ts.filter(Boolean));
+      return btn?h.replace(/<\/div><\/div>\s*$/,btn+'</div></div>'):h;
+    };
+  }
+  if(typeof srGroupHtml==='function'){
+    const _g=srGroupHtml;
+    window.srGroupHtml=function(g){
+      const h=_g.apply(this,arguments);
+      const ts=(g.items||[]).map(it=>it.run?runT(it.run):it.bk&&it.p?{bid:it.bk.id,date:it.p.date,period:it.p.period,venue:it.p.venue}:null).filter(Boolean);
+      const btn=vmvBtn(ts);if(!btn)return h;
+      // 放在「明細」後面、「刪除」前面
+      const i=h.lastIndexOf('<button type="button" class="sr-del"');
+      return i>0?h.slice(0,i)+btn+h.slice(i):h.replace(/<\/div>\s*<\/div>\s*$/,btn+'</div>\n  </div>');
+    };
+  }
+  // ── 手機版工具列：同一排四個下拉選單 ──
+  if(typeof srBarHtml==='function'){
+    const _b=srBarHtml;
+    window.srBarHtml=function(nowIdx,weeks){
+      const h=_b.apply(this,arguments);
+      const plan=typeof srIsPlan==='function'&&srIsPlan();
+      // hi：篩選類（科目、狀態）不是預設值時框線加深，一眼看出有篩選
+      const sel=(opts,cur,fn,lab,hi)=>`<select class="${hi&&String(opts[0][0])!==String(cur)?'on':''}" aria-label="${lab}" onchange="${fn}">${opts.map(([k,l])=>`<option value="${escH(k)}"${String(k)===String(cur)?' selected':''}>${escH(l)}</option>`).join('')}</select>`;
+      const m=`<div class="srm">
+        <div class="srm-r">
+          ${sel([['1','上學期'],['2','下學期']],String(srTerm),'srTerm=+this.value;srRender()','學期')}
+          ${sel([['card','卡片'],['list','清單'],['grade','年級表'],['wk','週次表']],srView,"srView=this.value;srSelClear();srRender()",'檢視')}
+          ${sel([['全部','全科'],...SR_SUBJ.map(s=>[s,s])],srSubj,'srSubj=this.value;srRender()','科目',1)}
+          ${plan?'':sel([['all','全部'],['empty','沒填實驗'],['run','已填']],srMode,'srMode=this.value;srRender()','狀態',1)}
+        </div>
+        <div class="srm-r">
+          ${nowIdx>=0&&!plan?`<button type="button" class="sr-jump" onclick="document.getElementById('srw-${weeks[nowIdx].week}')?.scrollIntoView({behavior:'smooth',block:'start'})">跳到本週</button>`:''}
+          <button type="button" class="btn btn-primary btn-sm srm-add" onclick="srEdit()">＋ 新增紀錄</button>
+        </div></div>`;
+      return h.replace(/<\/div>\s*$/,m+'</div>');
+    };
+  }
+  // ── 手機版課綱實驗：檢查籤改下拉選單 ──
+  if(typeof window.renderTemplateList==='function'){
+    const _t=window.renderTemplateList;
+    window.renderTemplateList=function(){
+      const out=_t.apply(this,arguments);
+      const fb=document.getElementById('tplFilter'),tools=document.querySelector('#panel-templates .tpl-tools');
+      if(fb&&tools){
+        let s=tools.querySelector('.tplx-chk');
+        const bs=[...fb.querySelectorAll('button')];
+        if(bs.length<2){if(s)s.remove();tools.classList.remove('has-chk');return out;}
+        if(!s){s=document.createElement('select');s.className='tplx-chk';s.setAttribute('aria-label','檢查');
+          s.onchange=()=>{const b=[...document.querySelectorAll('#tplFilter button')][+s.value];if(b)b.click();};
+          const q=document.getElementById('tplSearch');q?q.insertAdjacentElement('afterend',s):tools.prepend(s);}
+        const on=Math.max(0,bs.findIndex(b=>b.classList.contains('on')));
+        s.innerHTML=bs.map((b,k)=>`<option value="${k}"${k===on?' selected':''}>${escH(b.textContent.replace(/[⚠️\s]+/g,' ').trim())}</option>`).join('');
+        s.classList.toggle('warn',on>0);
+        tools.classList.add('has-chk');
+      }
+      return out;
+    };
+    if(document.getElementById('panel-templates')?.classList.contains('active'))renderTemplateList();
+  }
+})();
+</script>
+<!-- ═══ mv-v1 結束 ═══ -->
 </body>
 </html>
