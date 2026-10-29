@@ -2403,8 +2403,21 @@ function expandLocationCode(raw){
   return tokens.map(t=>prefix+baseNumStr+'-'+t);
 }
 // 拆解一整個位置欄位字串：先用 & 和 / 拆成各自獨立的代碼區塊，每塊再展開範圍/清單寫法
+// 每一塊最後可以寫「×數量」＝這裡放幾個（BA05×20、BD08-13×2＝BD08～BD13 各 2 台；* 或 x 也可以）（2026-10-29）
+// 找櫃位只看代碼，數量另外用 expandLocationQty 拿
+const LOC_QTY_RE=/\s*[×xX*＊]\s*(\d{1,5})\s*$/;
 function expandLocationField(field){
-  return (field||'').split(/[&\/]/).map(s=>s.trim()).filter(Boolean).flatMap(expandLocationCode);
+  return (field||'').split(/[&\/]/).map(s=>s.trim().replace(LOC_QTY_RE,'').trim()).filter(Boolean).flatMap(expandLocationCode);
+}
+// 每個位置＋那裡放幾個：[{code:'BD08',qty:2},…]；沒寫數量的 qty＝null
+function expandLocationQty(field){
+  const out=[];
+  (field||'').split(/[&\/]/).forEach(s=>{
+    s=s.trim();if(!s)return;
+    const m=s.match(LOC_QTY_RE),q=m?parseInt(m[1],10):null;
+    expandLocationCode(s.replace(LOC_QTY_RE,'').trim()).forEach(code=>out.push({code,qty:q}));
+  });
+  return out;
 }
 function locCodeMatches(field,hotspotCode){
   const expanded=expandLocationField(field);
@@ -8027,6 +8040,11 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 .ldk-legs{display:flex;justify-content:space-between;margin:0 4px;padding:0 4px}
 .ldk-legs span{width:5px;height:10px;background:var(--ink)}
 .fp-row-hide{display:none!important}
+.nm-link{cursor:pointer;text-decoration:underline;text-decoration-color:rgba(31,91,76,.35);text-underline-offset:3px}
+.nm-link:hover,.nm-link:focus-visible{text-decoration-color:var(--accent);outline:none}
+.lev-chip.nm-link{text-decoration:none}
+.lev-chip.nm-link:hover{border-color:var(--accent);color:var(--accent)}
+.lq{display:block;font-size:12px;font-weight:400;color:var(--accent);margin-top:1px}
 /* 打開的那一層：標題黏在上面，器材往下捲也看得到是哪一層 */
 .lev-body{overflow:visible}
 .lev-body>.lev-grp:not(:first-child)>.lev-l{border-top:1.2px solid var(--ink)}
@@ -8109,14 +8127,16 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   // 櫃子種類：頂上叫什麼、怎麼稱呼（跟「器材標籤對照說明」同一套代號）
   const TOPWORD={A:'櫃頂',B:'架頂',C:'櫃頂',D:'桌面',E:'檯面'};
   const KIND={A:'鐵櫃',B:'鐵架',C:'玻璃鐵櫃',D:'桌子的櫃子',E:'抽氣櫃的櫃子'};
+  const LAYER_MAX=6;
   const layerCache=new Map();let layerVer=-1;
   function layersOf(room,base){
     const list=(typeof allEquipment!=='undefined'&&allEquipment)||[];
     if(layerVer!==list.length){layerCache.clear();layerVer=list.length;}
     const k=room+'|'+base;if(layerCache.has(k))return layerCache.get(k);
     let n=0;
-    list.forEach(e=>{if(e.room!==room||!e.location)return;expandLocationField(e.location).forEach(c=>{const p=locParse(c);if(p.base===base&&typeof p.layer==='number')n=Math.max(n,p.layer);});});
-    n=Math.min(Math.max(n,1),8);layerCache.set(k,n);return n;
+    list.forEach(e=>{if(e.room!==room||!e.location)return;expandLocationField(e.location).forEach(c=>{const p=locParse(c);if(p.base===base&&typeof p.layer==='number'&&p.layer<=LAYER_MAX)n=Math.max(n,p.layer);});});
+    // 學校的櫃子最多 6 層：寫到 7 以上的當成寫錯，不多畫一層
+    n=Math.min(Math.max(n,1),LAYER_MAX);layerCache.set(k,n);return n;
   }
   // ── 小圖示（SVG）──
   function glyph(p,room,nOver){
@@ -8169,7 +8189,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     const codes=expandLocationField(e&&e.location);
     if(!codes.length)return escH(e&&e.location||'');
     const p=locParse(codes[0]);
-    const more=codes.length>1?` <span style="opacity:.75">＋${codes.length-1}</span>`:'';
+    const more=codes.length>1?` <span style="opacity:.75">＋${codes.length-1} 處</span>`:'';
     // 代碼用等寬字（跟櫃子上貼的標籤一樣），層數用一般字
     const t=shortTxt(p),k=p.base&&t.startsWith(p.base)?p.base.length:0;
     return `${glyph(p,e.room)}<span class="lg-t">${k?`<span class="lg-c">${escH(t.slice(0,k))}</span>`:''}${escH(t.slice(k))}</span>${more}`;
@@ -8190,6 +8210,30 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     };
   }
 
+  // ── 一個器材分在好幾處、每處幾個（BD08-13×2 & BD20×1）──
+  // 這個櫃位（含它的每一層）放幾個；都沒寫數量就是 null
+  function qtyAt(e,code){
+    let n=0,any=false;
+    expandLocationQty(e&&e.location).forEach(x=>{if((x.code===code||x.code.startsWith(code+'-'))&&x.qty!=null){n+=x.qty;any=true;}});
+    return any?n:null;
+  }
+  window.locQtyAt=qtyAt;
+  // 分幾處、合計幾個（每一處都有寫數量才算合計）
+  function qtySum(e){
+    const xs=expandLocationQty(e&&e.location);
+    return {places:xs.length,total:xs.length&&xs.every(x=>x.qty!=null)?xs.reduce((a,x)=>a+x.qty,0):null};
+  }
+  // 器材卡、提示：每一處都寫出來，有數量就加「×2」
+  if(typeof decodeLocation==='function'){
+    window.decodeLocation=function(code,room){
+      if(!code)return '';
+      const def=(typeof ROOM_TO_CODE!=='undefined'&&ROOM_TO_CODE[room])||'';
+      const xs=expandLocationQty(code);
+      if(!xs.length)return String(code);
+      return xs.map(x=>decodeLocationPart(x.code,def).replace(/\s*\([^)]*\)$/,'')+(x.qty!=null?` ×${x.qty}`:'')+` (${x.code})`).join('　＋　');
+    };
+  }
+
   // ── 「器材標籤對照說明」：櫃別旁邊放小圖示，再補一段「後面的數字」怎麼看 ──
   if(typeof showLocationGuide==='function'){
     window.showLocationGuide=function(){
@@ -8204,6 +8248,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
         ${row(`<span class="lgd-i">${glyph({base:'XQ',type:'A',layer:null},'',1)}<b class="lg-c">BA02</b></span>`,'沒寫＝櫃子裡只有一層')}
         ${row(`<span class="lgd-i">${g('A','top')}<b class="lg-c">BA02-0</b></span>`,'0 或「頂」＝櫃頂（桌子是桌面）')}
         ${row(`<span class="lgd-i"><b class="lg-c">BD01-04</b></span>`,'兩位數＝BD01 到 BD04 都有')}
+        ${row(`<span class="lgd-i"><b class="lg-c">BD08-13×2</b></span>`,'×數量＝每一處放幾個')}
         <p style="font-size:12px;color:var(--text2);margin-top:10px">同一個器材放在好幾個地方，用 &amp; 或 / 隔開，清單上會顯示「＋1」。</p>`,
         [{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
     };
@@ -8222,6 +8267,8 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
         const pd=window._locPend;if(pd&&pd.base===code){fpLayer=pd.layer;window._locPend=null;}}
       const out=_r.apply(this,arguments);
       try{drawElevation(code);}catch(err){console.warn('櫃子正面圖',err);}
+      try{markQty(code);}catch(err){console.warn('位置數量',err);}
+      try{linkNames(code);}catch(err){console.warn('器材名稱',err);}
       return out;
     };
   }
@@ -8240,6 +8287,57 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   }
   // 點一層：那一層在櫃子裡「拉開」，器材就列在那一層正下方；再點一次收起來
   // 器材列是把原本畫好的那一列「搬」進去（數量按鈕、展開照片都照常可以用）
+  // 點器材名稱：跳出器材資料卡（點卡片外面就關掉）；名稱以外的地方照原本的動作（展開、加數量）
+  function openCard(e,ev){if(ev){ev.stopPropagation();ev.preventDefault();}if(e&&typeof openEquipDetailFor==='function')openEquipDetailFor(e,()=>renderFloorplanLocModalBody());}
+  function nameLink(el,e){
+    if(!el||el.dataset.card)return;el.dataset.card='1';el.classList.add('nm-link');
+    el.setAttribute('role','button');el.tabIndex=0;el.title='看器材資料';
+    el.addEventListener('click',ev=>openCard(e,ev));
+    el.addEventListener('keydown',ev=>{if(ev.key==='Enter')openCard(e,ev);});
+  }
+  function linkNames(code){
+    const side=typeof fpSideMode==='function'&&fpSideMode();
+    const box=document.getElementById(side?'floorplanSide':'fpSheetBody');if(!box)return;
+    const items=window._fpItems||[];
+    items.forEach((e,i)=>{
+      const el=rowEl(box,side,i);if(!el)return;
+      const nm=side?el.querySelector('.nm b'):el.querySelector('div[style*="font-weight:600"]');
+      // 名稱那一行（不含後面加的「這裡 ×2」）
+      if(nm)nameLink(nm.firstChild&&nm.firstChild.nodeType===3?wrapText(nm):nm,e);
+    });
+    // 櫃子正面的品名小標籤也可以點
+    box.querySelectorAll('.lev .lev-chip[data-i]').forEach(ch=>nameLink(ch,items[+ch.dataset.i]));
+  }
+  function wrapText(nm){const t=nm.firstChild,sp=document.createElement('span');sp.textContent=t.textContent;nm.replaceChild(sp,t);return sp;}
+  // 借用清單（右下角購物車）裡的器材名稱也一樣
+  if(typeof renderCart==='function'){
+    const _c=renderCart;
+    window.renderCart=function(){
+      const r=_c.apply(this,arguments);
+      const its=window._cartItems||[];
+      document.querySelectorAll('#cartBody .cart-item').forEach((row,i)=>{
+        const it=its[i];if(!it||it._isChem)return;
+        const eq=(allEquipment||[]).find(x=>x.room===it.room&&x.name===it.name);if(!eq)return;
+        const nm=row.querySelector('.cart-item-name');if(!nm||nm.dataset.card)return;
+        nm.dataset.card='1';nm.classList.add('nm-link');nm.setAttribute('role','button');nm.tabIndex=0;nm.title='看器材資料';
+        const go=ev=>{ev.stopPropagation();openEquipDetailFor(eq,()=>renderCart());};
+        nm.addEventListener('click',go);nm.addEventListener('keydown',ev=>{if(ev.key==='Enter')go(ev);});
+      });
+      return r;
+    };
+  }
+  // 分在好幾處的器材：列上加「這裡 ×2・全部 13，分 7 處」
+  function markQty(code){
+    const side=typeof fpSideMode==='function'&&fpSideMode();
+    const box=document.getElementById(side?'floorplanSide':'fpSheetBody');if(!box)return;
+    (window._fpItems||[]).forEach((e,i)=>{
+      const q=qtyAt(e,code),S=qtySum(e);if(q==null&&S.places<2)return;
+      const el=rowEl(box,side,i);if(!el)return;
+      const nm=side?el.querySelector('.nm b'):el.querySelector('div[style*="font-weight:600"]');if(!nm||nm.querySelector('.lq'))return;
+      const tail=S.places>1?`全部 ${S.total!=null?S.total:(parseInt(e.total)||0)}，分 ${S.places} 處`:'';
+      nm.insertAdjacentHTML('beforeend',`<span class="lq">${q!=null?`這裡 ×${q}`:''}${q!=null&&tail?'・':''}${tail}</span>`);
+    });
+  }
   function drawElevation(code){
     const side=typeof fpSideMode==='function'&&fpSideMode();
     const box=document.getElementById(side?'floorplanSide':'fpSheetBody');if(!box)return;
@@ -8247,7 +8345,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
     const items=window._fpItems||[];
     const lay=items.map(e=>layerOfItem(e,code));
-    const chips=arr=>arr.slice(0,2).map(e=>`<span class="lev-chip">${escH(e.name)}</span>`).join('')+(arr.length>2?`<span class="lev-chip">＋${arr.length-2}</span>`:'');
+    const chips=arr=>arr.slice(0,2).map(e=>{const q=qtyAt(e,code),ix=items.indexOf(e);return `<span class="lev-chip"${ix>=0?` data-i="${ix}"`:''}>${escH(e.name)}${q!=null?` ×${q}`:''}</span>`;}).join('')+(arr.length>2?`<span class="lev-chip">＋${arr.length-2}</span>`:'');
     const ar=v=>`aria-expanded="${fpLayer===v}"`;
     let html='',groups=[];   // groups：[哪一層, 要搬進去的器材編號]
     if(p.type==='D'){
@@ -8268,6 +8366,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     }else{
       const n=layersOf(room,p.base),T=p.type,TW=TOPWORD[T]||'櫃頂';
       // 只有一層的櫃子：沒寫層數的器材就在那一層裡
+      lay.forEach((v,i)=>{if(typeof v==='number'&&(v<1||v>n))lay[i]=null;});   // 層數寫錯（例如 -9）：列在櫃子下面
       if(n===1)lay.forEach((v,i)=>{if(v==null)lay[i]=1;});
       const idx=v=>items.map((e,i)=>lay[i]===v?i:-1).filter(i=>i>=0);
       const top=idx('top'),none=items.map((e,i)=>lay[i]==null?i:-1).filter(i=>i>=0);
@@ -8282,7 +8381,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
         ${fpLayer==='top'?'<div class="lev-in top" data-g="top"></div>':''}</div>
         <div class="lev-body">${ks.map(grp).join('')}</div>
         <div class="lev-legs"><span></span><span></span></div>
-        ${none.length&&n>1?`<div class="lev-h" style="margin:8px 0 0"><span>沒寫第幾層的 ${none.length} 樣</span></div>`:''}</div>`;
+        ${none.length&&n>1?`<div class="lev-h" style="margin:8px 0 0"><span>沒寫（或寫錯）第幾層的 ${none.length} 樣</span></div>`:''}</div>`;
       if(fpLayer!=null)groups=[[String(fpLayer),idx(fpLayer)]];
       // 有寫層數的器材：沒打開的那幾層先收著（沒寫層數的照常列在櫃子下面）
       items.forEach((e,i)=>{if(lay[i]!=null&&lay[i]!==fpLayer){const el=rowEl(box,side,i);if(el)el.classList.add('fp-row-hide');}});
