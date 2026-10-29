@@ -12053,5 +12053,163 @@ async function srSave(){
 })();
 </script>
 <!-- ═══ mv-v1 結束 ═══ -->
+<!-- ═══ 平面圖校正：櫃位裡直接改器材 qe-v1（2026-10-29）：刪掉這段（到「qe-v1 結束」）即還原 ═══
+     做的事：平面圖校正點櫃位 → 器材清單每一列按「改」，就在同一個視窗改名稱、規格、單位、架上數量、櫃位、開放借用、換照片，
+     不用跳到器材管理。「存好，下一項」可以站在櫃子前一項一項點過去（跟盤點一樣）。
+     架上數量＝現在櫃子裡看得到的；存回總數時把借出中的加回去，並記一次盤點時間（跟盤點分頁同一套算法）。
+     改名稱時，如果還有申請中／借出中的單，跳出跟器材管理一樣的確認（可以連同借用單一起改）。
+     其他欄位（別名、財產編號、套組內容…）按「完整編輯」才去器材管理。只取代 openCalibLocEditor。 -->
+<style>
+.qe-list .qe-r{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2)}
+.qe-list .qe-r:last-child{border-bottom:0}
+.qe-th{width:40px;height:40px;border-radius:7px;object-fit:cover;background:var(--surface2);border:1px solid var(--border);flex:none}
+.qe-m{flex:1;min-width:0}
+.qe-m b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qe-m small{display:block;font-size:12px;color:var(--text2)}
+.qe-m small code{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text)}
+.qe-g{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qe-g .full{grid-column:1/-1}
+.qe-g .form-group{margin:0}
+.qe-qty{display:flex;align-items:center;gap:6px}
+.qe-qty button{width:40px;height:40px;flex:none;border:1.5px solid var(--border);border-radius:8px;background:var(--surface);font:inherit;font-size:18px;cursor:pointer}
+.qe-qty input{text-align:center;font-weight:700}
+.qe-note{font-size:12px;color:var(--text2);margin-top:4px}
+.qe-photo{display:flex;align-items:center;gap:10px}
+.qe-photo img{width:64px;height:64px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:var(--surface2)}
+.qe-pos{font-size:12px;color:var(--text2);margin-top:2px}
+.qe-noph{width:64px;height:64px;border-radius:8px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text2);text-align:center}
+@media(max-width:520px){.qe-g{grid-template-columns:1fr 1fr}}
+</style>
+<script>
+(function(){
+  if(window.qeOn)return;window.qeOn=true;
+  const okId=id=>/^[A-Za-z0-9_-]+$/.test(String(id));
+  const eqById=id=>allAdminEquipment.find(x=>String(x.id)===String(id));
+  let ctx=null,photo=null,busy=false;   // ctx：{hotspotId, ids:[這個櫃位的器材], i}
+  // 櫃位清單：每一列「改」＝就地編輯
+  window.openCalibLocEditor=async function(hotspotId){
+    const h=allCalibHotspots.find(x=>String(x.id)===String(hotspotId));if(!h)return;
+    const room=FLOORPLAN_KEY_TO_ROOM[calibRoom];
+    const items=allAdminEquipment.filter(e=>e.room===room&&adminLocCodeMatches(e.location,h.code))
+      .sort((a,b)=>String(a.location||'').localeCompare(String(b.location||''),'zh-Hant',{numeric:true})||String(a.name).localeCompare(String(b.name),'zh-Hant'));
+    ctx={hotspotId:h.id,ids:items.map(e=>String(e.id)),i:0};
+    const rows=items.map((e,i)=>{
+      const img=typeof e.image_url==='string'&&/^https:\/\//.test(e.image_url)?`<img class="qe-th" src="${escH(e.image_url)}" alt="" loading="lazy">`:'<span class="qe-th"></span>';
+      return `<div class="qe-r">${img}<div class="qe-m"><b>${escH(e.name)}</b><small>${e.spec?escH(e.spec)+'・':''}總數 ${escH(String(e.total??0))}・可借 ${equipAvailable(e)}・<code>${escH(e.location||'')}</code></small></div>
+        <button class="btn btn-secondary btn-sm" onclick="qeOpen(${i})">改</button></div>`;
+    }).join('')||'<div style="font-size:13px;color:var(--text2)">目前這個位置還沒有登記任何器材</div>';
+    const ja=v=>escH(JSON.stringify(String(v??'')));
+    showModal(`${h.code}（${rn(room)}）・${items.length} 項`,
+      `<div class="qe-list" style="margin-bottom:10px">${rows}</div>
+       <button class="btn btn-primary btn-sm" onclick="openQuickAddToLocation(${ja(room)},${ja(h.code)},${ja(h.id)})">＋ 新增器材到這裡</button>`,
+      [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'}]);
+  };
+  // 編輯一項
+  window.qeOpen=function(i){
+    if(!ctx)return;ctx.i=i;
+    const e=eqById(ctx.ids[i]);if(!e){showToast('找不到這項器材，請重新整理','error');return;}
+    if(photo){URL.revokeObjectURL(photo.url);photo=null;}
+    const out=equipOut(e),shelf=Math.max(0,(parseInt(e.total)||0)-out);
+    const img=typeof e.image_url==='string'&&/^https:\/\//.test(e.image_url)?escH(e.image_url):'';
+    const last=i>=ctx.ids.length-1;
+    showModal(`改器材（${i+1}／${ctx.ids.length}）`,`<div class="qe-g">
+      <div class="form-group full"><label>名稱 *</label><input type="text" id="qe-name" maxlength="60" value="${escH(e.name)}"></div>
+      <div class="form-group"><label>規格</label><input type="text" id="qe-spec" maxlength="60" value="${escH(e.spec||'')}"></div>
+      <div class="form-group"><label>單位</label><input type="text" id="qe-unit" maxlength="8" value="${escH(e.unit||'個')}"></div>
+      <div class="form-group full"><label>架上數量（現在櫃子裡看得到的）</label>
+        <div class="qe-qty"><button type="button" onclick="qeStep(-1)" aria-label="減少">−</button><input type="number" id="qe-shelf" min="0" max="100000" inputmode="numeric" value="${shelf}" data-orig="${shelf}" onfocus="this.select()"><button type="button" onclick="qeStep(1)" aria-label="增加">＋</button></div>
+        <div class="qe-note">${out?`借出中 ${out}，存檔後總數＝架上＋借出中`:'沒有借出中的，架上＝總數'}；數量有改會記一次盤點時間</div></div>
+      <div class="form-group full"><label>櫃位</label><input type="text" id="qe-loc" maxlength="40" value="${escH(e.location||'')}" placeholder="例如 BB02-2；櫃頂寫 BB02-0 或 BB02-頂" oninput="qePos()"><div class="qe-pos" id="qe-pos"></div></div>
+      <div class="form-group full"><label>照片</label><div class="qe-photo"><span id="qe-prev">${img?`<img src="${img}" alt="">`:'<span class="qe-noph">沒有照片</span>'}</span>
+        <label class="btn btn-secondary btn-sm" style="margin:0;cursor:pointer">${img?'換照片':'拍照／選照片'}<input type="file" accept="image/*" style="display:none" onchange="qePhoto(this)"></label></div></div>
+      <label class="full" style="display:flex;align-items:center;gap:6px;font-size:13.5px;cursor:pointer"><input type="checkbox" id="qe-avail" style="width:auto"${e.is_available!==false?' checked':''}> 開放借用</label>
+      <div class="full" style="font-size:12.5px"><a href="#" onclick="event.preventDefault();closeModal();jumpEditEquipFromCalib(${escH(JSON.stringify(String(e.id)))})">別名、財產編號、套組內容… 到「完整編輯」</a></div>
+    </div>`,[
+      {label:'回櫃位',cls:'btn-secondary',fn:`openCalibLocEditor(${escH(JSON.stringify(String(ctx.hotspotId)))})`},
+      ...(last?[]:[{label:'存好，下一項',cls:'btn-secondary',fn:'qeSave(1)'}]),
+      {label:'儲存',cls:'btn-primary',fn:'qeSave(0)'}]);
+    qePos();
+  };
+  window.qeStep=function(d){const el=document.getElementById('qe-shelf');if(!el)return;el.value=Math.max(0,Math.min(100000,(parseInt(el.value)||0)+d));};
+  // 櫃位打字當下，用白話顯示會被讀成什麼
+  window.qePos=function(){
+    const v=(document.getElementById('qe-loc')?.value||'').trim(),el=document.getElementById('qe-pos');if(!el)return;
+    if(!v){el.textContent='';return;}
+    const parts=expandLocationField(v).map(c=>{
+      const m=c.match(/^([A-Za-z]+\d+)(?:-(.+))?$/);if(!m)return c;
+      const s=m[2];const w=!s?'整個櫃子':(s==='0'||s==='頂')?(/D\d+$/.test(m[1])?'桌面':'櫃頂'):/^\d+$/.test(s)?`第 ${parseInt(s,10)} 層`:s;
+      return `${m[1]} ${w}`;
+    });
+    el.textContent='會讀成：'+parts.join('、');
+  };
+  window.qePhoto=function(input){
+    const f=input.files&&input.files[0];if(!f)return;
+    if(!/^image\//.test(f.type||'')){showToast('請選擇圖片檔','error');input.value='';return;}
+    if(f.size>25*1024*1024){showToast('照片超過 25MB，請換一張','error');input.value='';return;}
+    if(photo)URL.revokeObjectURL(photo.url);
+    photo={file:f,url:URL.createObjectURL(f)};
+    const box=document.getElementById('qe-prev');if(box)box.innerHTML=`<img src="${photo.url}" alt="預覽">`;
+  };
+  window.qeSave=async function(next){
+    if(busy||!ctx)return;
+    const id=ctx.ids[ctx.i],e=eqById(id);if(!e||!okId(id)){showToast('找不到這項器材，請重新整理','error');return;}
+    const g=k=>(document.getElementById(k)?.value||'').trim();
+    const name=g('qe-name').slice(0,60),shelfEl=document.getElementById('qe-shelf');
+    const shelf=parseInt(shelfEl?.value,10),orig=parseInt(shelfEl?.dataset.orig,10);
+    if(!name){showToast('請填寫名稱','error');return;}
+    if(!Number.isFinite(shelf)||shelf<0||shelf>100000){showToast('數量請填 0～100000','error');return;}
+    if(name!==e.name&&allAdminEquipment.some(x=>String(x.id)!==String(id)&&x.room===e.room&&x.name===name)){showToast('這個房間已經有相同名稱的器材','error');return;}
+    const body={name,spec:g('qe-spec').slice(0,60),unit:g('qe-unit').slice(0,8)||'個',location:g('qe-loc').slice(0,40),is_available:!!document.getElementById('qe-avail')?.checked};
+    if(shelf!==orig){body.total=shelf+equipOut(e);body.last_counted_at=new Date().toISOString();}
+    const ph=photo;
+    // 改名稱、還有申請中／借出中的單：跟器材管理一樣先問
+    const refs=name!==e.name?activeRecordsUsing(e.room,e.name):[];
+    if(refs.length){
+      window._qePend={id,body,ph,next,old:{room:e.room,name:e.name}};
+      showModal('這項器材還在借用中',`<p style="font-size:14px;line-height:1.7">「${escH(e.name)}」還有 <strong>${refs.length}</strong> 筆申請中或借出中的單。系統是用「房間＋名稱」對應這些單的，只改器材不改單，可借數量會算錯。</p>`,
+        [{label:'取消',cls:'btn-secondary',fn:`qeOpen(${ctx.i})`},{label:'只改器材',cls:'btn-secondary',fn:'qeDo(false)'},{label:'連同這些單一起改',cls:'btn-primary',fn:'qeDo(true)'}]);
+      return;
+    }
+    window._qePend={id,body,ph,next,old:null};await qeDo(false);
+  };
+  window.qeDo=async function(withRecords){
+    const p=window._qePend;if(!p||busy)return;window._qePend=null;busy=true;
+    const btn=document.querySelector('#modalActions .btn-primary');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+    try{
+      await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(p.id),body:p.body,prefer:'return=minimal'});
+      let msg=`已更新「${p.body.name}」`;
+      if(withRecords&&p.old){
+        let n=0;
+        for(const r of activeRecordsUsing(p.old.room,p.old.name)){
+          const items=(r.items||[]).map(it=>(it&&it.room===p.old.room&&it.name===p.old.name)?Object.assign({},it,{name:p.body.name}):it);
+          try{await sb('PATCH','borrow_records',{filter:'id=eq.'+encodeURIComponent(r.id),body:{items},prefer:'return=minimal'});n++;}catch(_){}
+        }
+        msg+=`，同步 ${n} 筆借用單`;loadAll();
+      }
+      if(p.ph){
+        try{
+          let small=null;try{small=await compressImageBlob(p.ph.file);}catch(_){small=null;}
+          const f=p.ph.file,useSmall=small&&small.size<f.size;
+          const url=useSmall?await uploadEquipImageBlob(p.id,small,'jpg','image/jpeg'):await uploadEquipImageBlob(p.id,f,(f.name||'').split('.').pop(),f.type||'application/octet-stream');
+          await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(p.id),body:{image_url:url},prefer:'return=minimal'});
+          p.body.image_url=url;
+        }catch(err){msg+='，但照片上傳失敗：'+err.message;}
+        URL.revokeObjectURL(p.ph.url);if(photo===p.ph)photo=null;
+      }
+      const e=eqById(p.id);if(e)Object.assign(e,p.body);
+      showToast(msg,/失敗/.test(msg)?'error':'success');
+      busy=false;
+      if(p.next&&ctx&&ctx.i<ctx.ids.length-1)qeOpen(ctx.i+1);
+      else{await loadAdminEquipment();openCalibLocEditor(ctx.hotspotId);}
+      if(typeof renderCalibOverlay==='function')renderCalibOverlay();
+    }catch(err){
+      busy=false;showToast('儲存失敗：'+err.message,'error');
+      if(btn){btn.disabled=false;btn.textContent='再試一次';}
+      window._qePend=p;
+    }
+  };
+})();
+</script>
+<!-- ═══ qe-v1 結束 ═══ -->
 </body>
 </html>
