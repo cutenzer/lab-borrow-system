@@ -8730,8 +8730,21 @@ function expandLocationCode(raw){
   }
   return tokens.map(t=>prefix+baseNumStr+'-'+t);
 }
+// 每一塊最後可以寫「×數量」＝這裡放幾個（BA05×20、BD08-13×2＝BD08～BD13 各 2 台；* 或 x 也可以）（2026-10-29）
+// 找櫃位只看代碼，數量另外用 expandLocationQty 拿
+const LOC_QTY_RE=/\s*[×xX*＊]\s*(\d{1,5})\s*$/;
 function expandLocationField(field){
-  return (field||'').split(/[&\/]/).map(s=>s.trim()).filter(Boolean).flatMap(expandLocationCode);
+  return (field||'').split(/[&\/]/).map(s=>s.trim().replace(LOC_QTY_RE,'').trim()).filter(Boolean).flatMap(expandLocationCode);
+}
+// 每個位置＋那裡放幾個：[{code:'BD08',qty:2},…]；沒寫數量的 qty＝null
+function expandLocationQty(field){
+  const out=[];
+  (field||'').split(/[&\/]/).forEach(s=>{
+    s=s.trim();if(!s)return;
+    const m=s.match(LOC_QTY_RE),q=m?parseInt(m[1],10):null;
+    expandLocationCode(s.replace(LOC_QTY_RE,'').trim()).forEach(code=>out.push({code,qty:q}));
+  });
+  return out;
 }
 function adminLocCodeMatches(field,hotspotCode){
   return expandLocationField(field).some(c=>c===hotspotCode||c.startsWith(hotspotCode+'-'));
@@ -12095,7 +12108,9 @@ async function srSave(){
     ctx={hotspotId:h.id,ids:items.map(e=>String(e.id)),i:0};
     const rows=items.map((e,i)=>{
       const img=typeof e.image_url==='string'&&/^https:\/\//.test(e.image_url)?`<img class="qe-th" src="${escH(e.image_url)}" alt="" loading="lazy">`:'<span class="qe-th"></span>';
-      return `<div class="qe-r">${img}<div class="qe-m"><b>${escH(e.name)}</b><small>${e.spec?escH(e.spec)+'・':''}總數 ${escH(String(e.total??0))}・可借 ${equipAvailable(e)}・<code>${escH(e.location||'')}</code></small></div>
+      const here=expandLocationQty(e.location).filter(x=>(x.code===h.code||x.code.startsWith(h.code+'-'))&&x.qty!=null).reduce((a,x)=>a+x.qty,0);
+      const nPl=expandLocationQty(e.location).length;
+      return `<div class="qe-r">${img}<div class="qe-m"><b>${escH(e.name)}${here?`<span style="font-weight:400;color:var(--accent);font-size:13px">　這裡 ×${here}</span>`:''}</b><small>${e.spec?escH(e.spec)+'・':''}總數 ${escH(String(e.total??0))}・可借 ${equipAvailable(e)}・${nPl>1?`分 ${nPl} 處`:`<code>${escH(e.location||'')}</code>`}</small></div>
         <button class="btn btn-secondary btn-sm" onclick="qeOpen(${i})">改</button></div>`;
     }).join('')||'<div style="font-size:13px;color:var(--text2)">目前這個位置還沒有登記任何器材</div>';
     const ja=v=>escH(JSON.stringify(String(v??'')));
@@ -12108,6 +12123,7 @@ async function srSave(){
   window.qeOpen=function(i){
     if(!ctx)return;ctx.i=i;
     const e=eqById(ctx.ids[i]);if(!e){showToast('找不到這項器材，請重新整理','error');return;}
+    window._qeCurId=e.id;
     if(photo){URL.revokeObjectURL(photo.url);photo=null;}
     const out=equipOut(e),shelf=Math.max(0,(parseInt(e.total)||0)-out);
     const img=typeof e.image_url==='string'&&/^https:\/\//.test(e.image_url)?escH(e.image_url):'';
@@ -12135,10 +12151,10 @@ async function srSave(){
   window.qePos=function(){
     const v=(document.getElementById('qe-loc')?.value||'').trim(),el=document.getElementById('qe-pos');if(!el)return;
     if(!v){el.textContent='';return;}
-    const parts=expandLocationField(v).map(c=>{
-      const m=c.match(/^([A-Za-z]+\d+)(?:-(.+))?$/);if(!m)return c;
-      const s=m[2];const w=!s?'整個櫃子':(s==='0'||s==='頂')?(/D\d+$/.test(m[1])?'桌面':'櫃頂'):/^\d+$/.test(s)?`第 ${parseInt(s,10)} 層`:s;
-      return `${m[1]} ${w}`;
+    const parts=expandLocationQty(v).map(({code:c,qty})=>{
+      const m=c.match(/^([A-Za-z]+\d+)(?:-(.+))?$/);if(!m)return c+(qty!=null?` ×${qty}`:'');
+      const s=m[2];const w=!s?(qty!=null?'':'整個櫃子'):(s==='0'||s==='頂')?(/D\d+$/.test(m[1])?'桌面':'櫃頂'):/^\d+$/.test(s)?(parseInt(s,10)>6?`第 ${parseInt(s,10)} 層（櫃子最多 6 層，確認一下）`:`第 ${parseInt(s,10)} 層`):s;
+      return `${m[1]} ${w}${qty!=null?` ×${qty}`:''}`;
     });
     el.textContent='會讀成：'+parts.join('、');
   };
@@ -12211,5 +12227,152 @@ async function srSave(){
 })();
 </script>
 <!-- ═══ qe-v1 結束 ═══ -->
+<!-- ═══ 位置分配 la-v1（2026-10-29）：刪掉這段（到「la-v1 結束」）即還原 ═══
+     做的事：同一種器材分在好幾個地方（加熱板每張學生桌 2 台、顯微鏡一櫃 10 台），只建一筆器材，櫃位寫成
+     「BD08-13×2 & BD20×1」。櫃位欄下面多一個小表格（櫃位｜數量｜再加一處），不用自己打那串字；
+     每一處都填了數量時，對一下合計跟總數（分配 12／總數 13）。
+     用在：平面圖校正的「改」、器材管理的編輯、新增器材、平面圖校正的新增器材。
+     平面圖校正新增時名稱跟房間裡已有的一樣：問要不要把這一處併進現有那筆（數量加上去），不再只說「重複」。 -->
+<style>
+.la{margin-top:6px;border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface)}
+.la-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--text2);margin-bottom:4px}
+.la-r{display:grid;grid-template-columns:minmax(0,1fr) auto 64px 32px;gap:6px;align-items:center;margin:4px 0}
+.la-r input{height:36px;padding:0 8px;font-size:14px}
+.la-r .la-c{font-family:'DM Mono',monospace}
+.la-r .la-q{text-align:center}
+.la-r span{font-size:13px;color:var(--text2)}
+.la-r button{height:32px;width:32px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--text2);cursor:pointer;font:inherit}
+.la-r button:hover{color:var(--danger);border-color:var(--danger)}
+.la-add,.la-open{border:0;background:none;color:var(--accent);font:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:4px 0}
+.la-sum{font-size:12.5px;margin-top:2px;color:var(--text2)}
+.la-sum.bad{color:#9a3412;font-weight:700}
+.la-sum.ok{color:var(--accent)}
+div:has(>.la)+.qe-pos{display:none}
+.la-hd{display:grid;grid-template-columns:minmax(0,1fr) auto 64px 32px;gap:6px;font-size:11px;color:var(--text2)}
+</style>
+<script>
+(function(){
+  if(window.laOn)return;window.laOn=true;
+  const parse=v=>String(v||'').split(/[&\/]/).map(s=>s.trim()).filter(Boolean).map(s=>{const m=s.match(LOC_QTY_RE);return {code:s.replace(LOC_QTY_RE,'').trim(),qty:m?m[1]:''};});
+  const build=rows=>rows.filter(r=>r.code.trim()).map(r=>r.code.trim().slice(0,30)+(/^\d{1,5}$/.test(String(r.qty))&&+r.qty>0?'×'+(+r.qty):'')).join(' & ');
+  // 掛在一個櫃位輸入框下面；totalFn：拿目前的總數來對（拿不到就不對）
+  window.locAllocAttach=function(inp,totalFn){
+    if(!inp||inp.dataset.la)return;inp.dataset.la='1';
+    const box=document.createElement('div');inp.insertAdjacentElement('afterend',box);
+    let rows=parse(inp.value),open=rows.length>1||rows.some(r=>r.qty);
+    const sync=()=>{inp.value=build(rows);inp.dispatchEvent(new Event('input',{bubbles:true}));sum();};
+    const sum=()=>{
+      const el=box.querySelector('.la-sum');if(!el)return;
+      const rs=rows.filter(r=>r.code.trim());
+      if(!rs.length){el.textContent='';return;}
+      if(rs.some(r=>!r.qty)){el.className='la-sum';el.textContent='有位置還沒填數量';return;}
+      const n=rs.reduce((a,r)=>a+expandLocationCode(r.code).length*(+r.qty),0),T=totalFn?parseInt(totalFn(),10):NaN;
+      if(!Number.isFinite(T)){el.className='la-sum';el.textContent=`分配合計 ${n}`;return;}
+      el.className='la-sum '+(n===T?'ok':'bad');el.textContent=n===T?`分配 ${n}／總數 ${T}，對得上`:`分配 ${n}／總數 ${T}，差 ${T-n}`;
+    };
+    const draw=()=>{
+      if(!open){box.innerHTML=`<button type="button" class="la-open">放在好幾個地方？分配數量 ›</button>`;box.querySelector('.la-open').onclick=()=>{open=true;if(!rows.length)rows=[{code:'',qty:''}];draw();};return;}
+      if(!rows.length)rows=[{code:'',qty:''}];
+      box.innerHTML=`<div class="la"><div class="la-h"><span>位置分配（每一處放幾個）</span><span>BD08-13＝BD08～BD13</span></div>
+        <div class="la-hd"><span>櫃位</span><span></span><span style="text-align:center">數量</span><span></span></div>
+        ${rows.map((r,i)=>`<div class="la-r" data-i="${i}"><input class="la-c" maxlength="30" value="${escH(r.code)}" placeholder="BA05" aria-label="櫃位"><span>×</span><input class="la-q" type="number" min="1" max="99999" inputmode="numeric" value="${escH(r.qty)}" aria-label="數量"><button type="button" aria-label="刪掉這一處">✕</button></div>`).join('')}
+        <button type="button" class="la-add">＋ 再加一處</button><div class="la-sum"></div></div>`;
+      box.querySelectorAll('.la-r').forEach(el=>{
+        const i=+el.dataset.i,[c,q]=el.querySelectorAll('input');
+        c.oninput=()=>{rows[i].code=c.value;sync();};
+        q.oninput=()=>{rows[i].qty=q.value.replace(/\D/g,'').slice(0,5);sync();};
+        el.querySelector('button').onclick=()=>{rows.splice(i,1);sync();draw();};
+      });
+      box.querySelector('.la-add').onclick=()=>{rows.push({code:'',qty:''});draw();const cs=box.querySelectorAll('.la-c');cs[cs.length-1]?.focus();};
+      sum();
+    };
+    // 直接在上面那格打字：表格跟著更新
+    inp.addEventListener('change',()=>{rows=parse(inp.value);if(rows.length>1||rows.some(r=>r.qty))open=true;draw();});
+    window.addEventListener('la-total',sum);
+    draw();
+  };
+  const totalChanged=()=>window.dispatchEvent(new Event('la-total'));
+  document.addEventListener('input',e=>{if(e.target&&/^(qe-shelf|qa-total|eq-total)$/.test(e.target.id))totalChanged();});
+
+  // 1. 平面圖校正的「改」：總數＝架上＋借出中
+  if(typeof window.qeOpen==='function'){
+    const _o=window.qeOpen;
+    window.qeOpen=function(){
+      const r=_o.apply(this,arguments);
+      const id=document.getElementById('qe-name')&&window._qeCurId;
+      locAllocAttach(document.getElementById('qe-loc'),()=>{const e=allAdminEquipment.find(x=>String(x.id)===String(window._qeCurId));return (parseInt(document.getElementById('qe-shelf')?.value)||0)+(e?equipOut(e):0);});
+      return r;
+    };
+  }
+  // 2. 器材管理的編輯
+  if(typeof toggleInlineEditEquip==='function'){
+    const _t=toggleInlineEditEquip;
+    window.toggleInlineEditEquip=function(id){
+      const r=_t.apply(this,arguments);
+      setTimeout(()=>{const e=allAdminEquipment.find(x=>String(x.id)===String(id));locAllocAttach(document.getElementById('ie-location-'+id),()=>e?e.total:NaN);},0);
+      return r;
+    };
+  }
+  // 3. 新增器材表單
+  const addInp=document.getElementById('eq-location');
+  if(addInp)locAllocAttach(addInp,()=>document.getElementById('eq-total')?.value);
+  // 4. 平面圖校正的新增：櫃位、數量
+  if(typeof openQuickAddToLocation==='function'){
+    const _q=openQuickAddToLocation;
+    window.openQuickAddToLocation=function(){
+      const r=_q.apply(this,arguments);
+      locAllocAttach(document.getElementById('qa-loc'),()=>document.getElementById('qa-total')?.value);
+      const h=document.getElementById('qa-dup');if(h)h.style.color='';
+      return r;
+    };
+  }
+  if(typeof qaDupHint==='function'){
+    window.qaDupHint=function(){
+      const n=(document.getElementById('qa-name')?.value||'').trim(),el=document.getElementById('qa-dup');if(!el||!quickAddCtx)return;
+      const dup=n&&allAdminEquipment.find(e=>e.room===quickAddCtx.room&&e.name===n);
+      el.textContent=dup?`這個房間已經有「${n}」（總數 ${dup.total??0}，櫃位 ${dup.location||'未填'}）。存檔時可以把這一處併進去，不用另外建一筆。`:'';
+    };
+  }
+  // 同名：問要不要併進現有那筆（這一處的數量加到總數，櫃位多一處）
+  if(typeof saveQuickAdd==='function'){
+    const _s=saveQuickAdd;
+    window.saveQuickAdd=function(again){
+      if(!quickAddCtx)return;
+      const name=(document.getElementById('qa-name')?.value||'').trim();
+      const dup=name&&allAdminEquipment.find(e=>e.room===quickAddCtx.room&&e.name===name);
+      if(!dup)return _s.apply(this,arguments);
+      const qty=parseInt(document.getElementById('qa-total')?.value,10);
+      const loc=(document.getElementById('qa-loc')?.value||quickAddCtx.code).trim().replace(LOC_QTY_RE,'');
+      if(!Number.isFinite(qty)||qty<1||qty>100000){showToast('數量請填 1～100000','error');return;}
+      if(!loc){showToast('請填櫃位','error');return;}
+      // 原本只寫一個位置、沒寫數量：把原本的總數補成那一處的數量，合計才對得上
+      const segs=String(dup.location||'').split(/[&\/]/).map(x=>x.trim()).filter(Boolean);
+      // 「*」「x」統一寫成「×」
+      let base=segs.map(x=>x.replace(LOC_QTY_RE,(_,n)=>'×'+n)).join(' & ');
+      if(segs.length===1&&!LOC_QTY_RE.test(segs[0])&&(parseInt(dup.total)||0)>0)base=segs[0]+'×'+(parseInt(dup.total)||0);
+      const same=expandLocationQty(dup.location).some(x=>expandLocationCode(loc).includes(x.code));
+      window._laMerge={id:dup.id,again,body:{location:(base?base+' & ':'')+loc+'×'+qty,total:(parseInt(dup.total)||0)+qty,last_counted_at:new Date().toISOString()}};
+      showModal('併進現有的器材？',`<p style="font-size:14px;line-height:1.7">這個房間已經有「<b>${escH(name)}</b>」，總數 ${escH(String(dup.total??0))}。</p>
+        <p style="font-size:14px;line-height:1.7;margin-top:6px">併進去以後：總數 <b>${window._laMerge.body.total}</b>，櫃位 <code style="font-family:'DM Mono',monospace">${escH(window._laMerge.body.location)}</code></p>
+        ${same?`<p class="hint" style="color:#9a3412;margin-top:6px">原本就有寫 ${escH(loc)}，併進去會變成同一處寫兩次，建議改用「改」調整那一處的數量。</p>`:''}`,
+        [{label:'返回',cls:'btn-secondary',fn:`openQuickAddToLocation(${escH(JSON.stringify(String(quickAddCtx.room)))},${escH(JSON.stringify(String(quickAddCtx.code)))},${escH(JSON.stringify(String(quickAddCtx.hotspotId??'')))})`},
+         {label:'併進去',cls:'btn-primary',fn:'laMergeDo()'}]);
+    };
+  }
+  window.laMergeDo=async function(){
+    const m=window._laMerge;if(!m||!/^[A-Za-z0-9_-]+$/.test(String(m.id)))return;window._laMerge=null;
+    try{
+      await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(m.id),body:m.body,prefer:'return=minimal'});
+      const e=allAdminEquipment.find(x=>String(x.id)===String(m.id));if(e)Object.assign(e,m.body);
+      showToast(`已併進去，總數 ${m.body.total}`,'success');
+      const {room,code,hotspotId}=quickAddCtx;
+      if(m.again)openQuickAddToLocation(room,code,hotspotId);
+      else{closeModal();await loadAdminEquipment();if(hotspotId!=null&&hotspotId!=='')openCalibLocEditor(hotspotId);}
+      if(typeof renderCalibList==='function')renderCalibList();
+    }catch(err){showToast('合併失敗：'+err.message,'error');}
+  };
+})();
+</script>
+<!-- ═══ la-v1 結束 ═══ -->
 </body>
 </html>
