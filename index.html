@@ -8027,10 +8027,44 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 .ldk-legs{display:flex;justify-content:space-between;margin:0 4px;padding:0 4px}
 .ldk-legs span{width:5px;height:10px;background:var(--ink)}
 .fp-row-hide{display:none!important}
+/* 打開的那一層：標題黏在上面，器材往下捲也看得到是哪一層 */
+.lev-body{overflow:visible}
+.lev-body>.lev-grp:not(:first-child)>.lev-l{border-top:1.2px solid var(--ink)}
+.lev.t-C .lev-body>.lev-grp:not(:first-child)>.lev-l{border-top-color:#7f9aa3}
+.lev.t-B .lev-body>.lev-grp>.lev-l{border-top:3px solid var(--ink)}
+.lev-body>.lev-grp:first-child>.lev-l{border-top:0}
+.lev.t-B .lev-body>.lev-grp:first-child>.lev-l{border-top:3px solid var(--ink)}
+.lev-l.on,.lev-top.on,.ldk-row.stick{position:sticky;top:0;z-index:3}
+/* 電腦版側欄有 16px 內距：黏在最邊上，上面不會露出一條捲動中的器材 */
+.fp-side .lev-l.on,.fp-side .lev-top.on,.fp-side .ldk-row.stick{top:-16px}
+.lev-l.on{background:#e3eee9;box-shadow:inset 4px 0 0 var(--accent),0 6px 10px -8px rgba(0,0,0,.35)}
+.lev-top.on{background:#f7efd2;box-shadow:0 6px 10px -8px rgba(0,0,0,.35)}
+.ldk-row.stick{box-shadow:0 6px 10px -8px rgba(0,0,0,.35)}
+.lev.t-C .lev-l.on{background:#dcebe4}
+.lgd{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lgd-h{font-weight:700;font-size:13px;margin-bottom:4px}
+.lgd-r{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--surface2);font-size:13.5px}
+.lgd-i{display:inline-flex;align-items:center;gap:6px}
+.lgd .lg-c,.lgd-r .lg-c{font-family:'DM Mono',monospace}
+/* 櫃子種類：鐵架＝兩根柱子、沒有門、看得到後面；玻璃鐵櫃＝淡藍玻璃；鐵櫃＝實心；抽氣櫃的櫃子＝上面有抽氣罩 */
+.lev.t-B .lev-top{border:0;padding-left:40px}
+.lev.t-B .lev-body{background:transparent;border:0;border-left:5px solid var(--ink);border-right:5px solid var(--ink);border-radius:0}
+.lev.t-B .lev-l{border-top:3px solid var(--ink)}
+.lev.t-B .lev-l:first-child{border-top:3px solid var(--ink)}
+.lev.t-B .lev-body>:last-child{border-bottom:3px solid var(--ink)}
+.lev.t-B .lev-legs span{width:5px;height:14px;background:var(--ink);border:0}
+.lev.t-B .lev-legs{padding:0}
+.lev.t-C .lev-body{background:linear-gradient(118deg,#e6eff2 0 38%,#f4f8f9 38% 44%,#e6eff2 44% 100%)}
+.lev.t-C .lev-l{border-top-color:#7f9aa3}
+.lev.t-A .lev-body{border-top-width:5px}
+.lev.t-A .lev-l::after,.lev.t-C .lev-l::after{content:"";position:absolute;right:3px;top:50%;width:3px;height:12px;margin-top:-6px;border-radius:2px;background:#9a9488}
+.lev.t-E .lev-hood{margin:0 6%;height:26px;background:#dcd5c8;clip-path:polygon(9% 0,91% 0,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:3px;color:#5f5b54}
+.lev.t-E .lev-top{border-top:0;border-radius:0}
+.lev.one .lev-l{min-height:56px;padding-left:56px}
 /* 打開的那一層：器材直接列在那一層下面 */
 .lev-in{background:var(--surface);border-top:1.2px solid var(--ink);padding:2px 12px 4px;animation:levOpen .18s ease-out}
 .lev-in.top{border:1.2px dashed #9a9488;border-top:0;border-bottom:0;margin:0}
-.ldk-row+.lev-in{margin:0 4px;border:2px solid var(--ink);border-top:0;border-radius:0 0 3px 3px}
+.ldk-row+.lev-in,.lev-grp>.ldk-row+.lev-in{margin:0 4px;border:2px solid var(--ink);border-top:0;border-radius:0 0 3px 3px}
 .lev-in>*{border-bottom-color:var(--surface2)!important}
 .lev-in .fp-item:last-child,.lev-in>div:last-child{border-bottom:0!important}
 .lev-open{font-size:12.5px;font-weight:700;color:var(--accent)}
@@ -8071,7 +8105,10 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     return {codes:grp.map(s=>s.code),idx:grp.indexOf(me)};
   }
   window.locDeskOf=deskOf;
-  // 這個櫃子有幾層：看登記在這個櫃子的器材裡，最大的層數（至少 3 層）
+  // 這個櫃子有幾層：看登記在這個櫃子的器材裡寫的最大層數；都沒寫層數＝櫃子裡只有一層
+  // 櫃子種類：頂上叫什麼、怎麼稱呼（跟「器材標籤對照說明」同一套代號）
+  const TOPWORD={A:'櫃頂',B:'架頂',C:'櫃頂',D:'桌面',E:'檯面'};
+  const KIND={A:'鐵櫃',B:'鐵架',C:'玻璃鐵櫃',D:'桌子的櫃子',E:'抽氣櫃的櫃子'};
   const layerCache=new Map();let layerVer=-1;
   function layersOf(room,base){
     const list=(typeof allEquipment!=='undefined'&&allEquipment)||[];
@@ -8079,10 +8116,10 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     const k=room+'|'+base;if(layerCache.has(k))return layerCache.get(k);
     let n=0;
     list.forEach(e=>{if(e.room!==room||!e.location)return;expandLocationField(e.location).forEach(c=>{const p=locParse(c);if(p.base===base&&typeof p.layer==='number')n=Math.max(n,p.layer);});});
-    n=Math.min(Math.max(n,3),8);layerCache.set(k,n);return n;
+    n=Math.min(Math.max(n,1),8);layerCache.set(k,n);return n;
   }
   // ── 小圖示（SVG）──
-  function glyph(p,room){
+  function glyph(p,room,nOver){
     if(p.fridge)return `<svg width="13" height="18" viewBox="0 0 13 18" aria-hidden="true"><rect x="1" y="1" width="11" height="16" rx="2" fill="none" stroke="${INK}" stroke-width="1.4"/><path d="M1 6.5h11M3.5 3v2M3.5 8.5v3" stroke="${INK}" stroke-width="1.1"/></svg>`;
     if(p.other||!p.base)return `<svg width="12" height="16" viewBox="0 0 12 16" aria-hidden="true"><path d="M6 15s5-5 5-9A5 5 0 0 0 1 6c0 4 5 9 5 9z" fill="none" stroke="${INK}" stroke-width="1.3"/><circle cx="6" cy="6" r="1.6" fill="${INK}"/></svg>`;
     if(p.type==='D'){
@@ -8097,12 +8134,26 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
       if(p.side)g+=`<rect x="${W+.5}" y="10" width="1.5" height="7" fill="#5f5b54"/>`;
       return g+'</svg>';
     }
-    const n=layersOf(room,p.base),top=5,bh=12,lh=bh/n;
-    let g=`<svg width="14" height="19" viewBox="0 0 14 19" aria-hidden="true"><path d="M1.5 ${top}V2.2h11V${top}" fill="none" stroke="${MUTE}" stroke-width=".9" stroke-dasharray="1.6 1.4"/>`;
-    if(p.layer==='top')g+=`<rect x="3.5" y="1" width="7" height="3.4" rx=".8" fill="${TOP}"/>`;
-    g+=`<rect x="1.5" y="${top}" width="11" height="${bh}" rx=".8" fill="none" stroke="${INK}" stroke-width="1.3"/>`;
-    for(let k=1;k<n;k++)g+=`<path d="M1.5 ${(top+lh*k).toFixed(2)}h11" stroke="${INK}" stroke-width=".6"/>`;
-    if(typeof p.layer==='number'&&p.layer>=1&&p.layer<=n)g+=`<rect x="2.3" y="${(top+lh*(p.layer-1)+.5).toFixed(2)}" width="9.4" height="${(lh-1).toFixed(2)}" fill="${ACC}"/>`;
+    // 一般櫃子（直的）：A 鐵櫃＝實心外框；B 鐵架＝兩根柱子＋層板、沒有門；C 玻璃鐵櫃＝淡藍玻璃；E 抽氣櫃的櫃子＝矮寬、上面是抽氣罩
+    const n=nOver||layersOf(room,p.base),T=p.type;
+    const E=T==='E',top=E?8:5,bh=E?9.5:12,x0=E?.8:1.5,w=E?12.4:11,lh=bh/n;
+    let g=`<svg width="14" height="19" viewBox="0 0 14 19" aria-hidden="true">`;
+    if(E)g+=`<path d="M3 .8h8l2.2 5.4H.8z" fill="#dcd5c8" stroke="${MUTE}" stroke-width=".7"/><rect x=".8" y="6.4" width="12.4" height="1.2" fill="${INK}"/>`;
+    else if(T!=='B')g+=`<path d="M${x0} ${top}V2.2h${w}V${top}" fill="none" stroke="${MUTE}" stroke-width=".9" stroke-dasharray="1.6 1.4"/>`;
+    if(p.layer==='top')g+=E?`<rect x="4" y="2.2" width="6" height="3" rx=".8" fill="${TOP}"/>`:`<rect x="3.5" y="1" width="7" height="3.4" rx=".8" fill="${TOP}"/>`;
+    if(T==='B'){
+      g+=`<path d="M2 ${top-.6}V18.5M12 ${top-.6}V18.5" stroke="${INK}" stroke-width="1.5"/>`;
+      for(let k=0;k<=n;k++)g+=`<path d="M2 ${(top+lh*k).toFixed(2)}h10" stroke="${INK}" stroke-width="${k===0||k===n?1.2:.9}"/>`;
+    }else{
+      g+=`<rect x="${x0}" y="${top}" width="${w}" height="${bh}" rx=".8" fill="${T==='C'?'#e2edf1':'none'}" stroke="${INK}" stroke-width="1.3"/>`;
+      if(T==='C')g+=`<path d="M${x0+2} ${top+bh-1}l5-${bh-2}" stroke="#fff" stroke-width="1.4" opacity=".9"/>`;
+      if(T==='A')g+=`<rect x="${x0-.6}" y="${top-1.2}" width="${w+1.2}" height="1.3" fill="${INK}"/>`;
+      for(let k=1;k<n;k++)g+=`<path d="M${x0} ${(top+lh*k).toFixed(2)}h${w}" stroke="${INK}" stroke-width=".6"/>`;
+      if(!E)g+=`<path d="M3 ${top+bh}v1.6M11 ${top+bh}v1.6" stroke="${INK}" stroke-width="1.1"/>`;
+    }
+    // 塗色：第幾層；只有一層的櫃子，沒寫層數＝整個櫃子
+    const L=typeof p.layer==='number'?p.layer:(p.layer==null&&!p.side&&n===1?1:0);
+    if(L>=1&&L<=n){const iX=T==='B'?2.6:x0+.8,iW=T==='B'?8.8:w-1.6;g+=`<rect x="${iX}" y="${(top+lh*(L-1)+.6).toFixed(2)}" width="${iW}" height="${Math.max(.8,lh-1.2).toFixed(2)}" fill="${ACC}"/>`;}
     if(p.side)g+=`<rect x="0" y="12" width="1.2" height="6" fill="#5f5b54"/>`;
     return g+'</svg>';
   }
@@ -8110,7 +8161,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   function shortTxt(p){
     if(p.fridge||p.other||!p.base)return p.raw;
     if(p.side)return p.base+' 旁';
-    const w=p.layer==='top'?(p.type==='D'?'桌面':'櫃頂'):typeof p.layer==='number'?`第 ${p.layer} 層`:'';
+    const w=p.layer==='top'?(TOPWORD[p.type]||'櫃頂'):typeof p.layer==='number'?`第 ${p.layer} 層`:'';
     return p.base+(w?'・'+w:'');
   }
   // 清單上位置標籤的內容（原本只寫代碼的地方改呼叫這個）
@@ -8133,9 +8184,28 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
       const p=locParse(code);
       if(p.base&&(p.layer==='top'||p.side)){
         const t=_d(p.base,defaultRoomCode).replace(/\s*\([^)]*\)$/,'');
-        return `${t}・${p.side?'旁邊':p.type==='D'?'桌面（'+p.base+' 上方）':'櫃頂'} (${code})`;
+        return `${t}・${p.side?'旁邊':p.type==='D'?'桌面（'+p.base+' 上方）':(TOPWORD[p.type]||'櫃頂')} (${code})`;
       }
       return _d.apply(this,arguments);
+    };
+  }
+
+  // ── 「器材標籤對照說明」：櫃別旁邊放小圖示，再補一段「後面的數字」怎麼看 ──
+  if(typeof showLocationGuide==='function'){
+    window.showLocationGuide=function(){
+      const row=(l,r)=>`<div class="lgd-r"><span>${l}</span><span>${r}</span></div>`;
+      const rooms=(typeof ROOM_CODE_INFO!=='undefined'?ROOM_CODE_INFO:[]).map(r=>row(`<b class="lg-c">${escH(r.code)}</b>`,escH(r.name))).join('');
+      const cabs=Object.entries(CABINET_CODE_MAP).map(([c,v])=>row(`<b class="lg-c">${escH(c)}</b>`,`<span class="lgd-i">${glyph({base:'X'+c,type:c,layer:2},'',4)}${escH(v.name)}</span>`)).join('');
+      const g=(t,l)=>glyph({base:'XB',type:t||'B',layer:l},'',4);
+      showModal('器材標籤對照說明',`<p style="font-size:13px;color:var(--text2);margin-bottom:10px">每個器材都有一個位置編碼，例如 <b class="lg-c" style="color:var(--text)">BB02-2</b>＝生物室・鐵架 02 號・第 2 層。</p>
+        <div class="lgd"><div><div class="lgd-h">① 實驗室代號</div>${rooms}</div><div><div class="lgd-h">② 櫃別代號</div>${cabs}</div></div>
+        <div class="lgd-h" style="margin-top:14px">③ 「-」後面的數字</div>
+        ${row(`<span class="lgd-i">${g('A',2)}<b class="lg-c">BA02-2</b></span>`,'第 2 層（第 1 層在最上面）')}
+        ${row(`<span class="lgd-i">${glyph({base:'XQ',type:'A',layer:null},'',1)}<b class="lg-c">BA02</b></span>`,'沒寫＝櫃子裡只有一層')}
+        ${row(`<span class="lgd-i">${g('A','top')}<b class="lg-c">BA02-0</b></span>`,'0 或「頂」＝櫃頂（桌子是桌面）')}
+        ${row(`<span class="lgd-i"><b class="lg-c">BD01-04</b></span>`,'兩位數＝BD01 到 BD04 都有')}
+        <p style="font-size:12px;color:var(--text2);margin-top:10px">同一個器材放在好幾個地方，用 &amp; 或 / 隔開，清單上會顯示「＋1」。</p>`,
+        [{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
     };
   }
 
@@ -8190,24 +8260,29 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
       html=`<div class="lev"><div class="lev-h"><span>${n>1?`同一張桌子・${n} 個門`:'桌子的櫃子'}</span><span>${fpLayer==='top'?'桌面上的':open?'點門收起':'點門打開'}</span></div>
         <div class="ldk-top" style="grid-template-columns:repeat(${n},1fr)">${d.codes.map(c=>{const t=tops(c);return `<div>${t.slice(0,2).map(e=>`<span class="lev-chip" style="border-color:#c9a227;background:#f7efd2">${escH(e.name)}</span>`).join('')}${t.length>2?`<span class="lev-chip">＋${t.length-2}</span>`:''}</div>`;}).join('')}</div>
         <div class="ldk-slab${fpLayer==='top'?' on':''}" ${nTop?`style="cursor:pointer" role="button" tabindex="0" title="看桌面上的" ${ar('top')} onclick="locPickLayer('top')" onkeydown="if(event.key==='Enter')locPickLayer('top')"`:''}></div>
-        <div class="ldk-row" style="grid-template-columns:repeat(${n},1fr)">${d.codes.map(c=>`<button type="button" class="ldk-d${c===code?' on'+(open&&fpLayer!=='top'?' open':''):''}" onclick="${c===code?(fpLayer==='top'?'locPickLayer(null)':"locPickLayer('closed')"):`openFloorplanLocModal(${ja(c)})`}" aria-label="${escH(c)}"><b>${escH(c)}</b><small>${cnt(c)} 樣</small></button>`).join('')}</div>
-        <div class="lev-in" data-g="d"></div>
+        <div class="lev-grp"><div class="ldk-row${open||fpLayer==='top'?' stick':''}" style="grid-template-columns:repeat(${n},1fr)">${d.codes.map(c=>`<button type="button" class="ldk-d${c===code?' on'+(open&&fpLayer!=='top'?' open':''):''}" onclick="${c===code?(fpLayer==='top'?'locPickLayer(null)':"locPickLayer('closed')"):`openFloorplanLocModal(${ja(c)})`}" aria-label="${escH(c)}"><b>${escH(c)}</b><small>${cnt(c)} 樣</small></button>`).join('')}</div>
+        <div class="lev-in" data-g="d"></div></div>
         <div class="ldk-legs"><span></span><span></span></div></div>`;
       const want=fpLayer==='top'?(v=>v==='top'):open?(v=>v!=='top'):(()=>false);
       groups=[['d',items.map((e,i)=>want(lay[i])?i:-1).filter(i=>i>=0)]];
     }else{
-      const n=layersOf(room,p.base);
+      const n=layersOf(room,p.base),T=p.type,TW=TOPWORD[T]||'櫃頂';
+      // 只有一層的櫃子：沒寫層數的器材就在那一層裡
+      if(n===1)lay.forEach((v,i)=>{if(v==null)lay[i]=1;});
       const idx=v=>items.map((e,i)=>lay[i]===v?i:-1).filter(i=>i>=0);
       const top=idx('top'),none=items.map((e,i)=>lay[i]==null?i:-1).filter(i=>i>=0);
       const ks=[];for(let k=1;k<=n;k++)ks.push(k);
       const band=(k)=>{const ii=idx(k),a=ii.map(i=>items[i]);
-        return `<button type="button" class="lev-l${fpLayer===k?' on':''}" ${ar(k)} onclick="locPickLayer(${k})" ${a.length?'':'disabled'}><span class="lev-n">${k}</span>${fpLayer===k?`<span class="lev-open">第 ${k} 層・${a.length} 樣</span>`:chips(a)}<span class="lev-c">${a.length?(fpLayer===k?'收起 ▴':a.length+' ▾'):''}</span></button>${fpLayer===k?`<div class="lev-in" data-g="${k}"></div>`:''}`;};
-      html=`<div class="lev${fpLayer!=null?' pick':''}"><div class="lev-h"><span>櫃子正面・第 1 層在最上面</span><span>點一層打開</span></div>
-        <div class="lev-top${top.length?'':' empty'}${fpLayer==='top'?' on':''}" ${top.length?`role="button" tabindex="0" ${ar('top')} onclick="locPickLayer('top')" onkeydown="if(event.key==='Enter')locPickLayer('top')"`:''}>${top.length?`<span class="lev-n">櫃頂</span>${fpLayer==='top'?`<span class="lev-open">櫃頂・${top.length} 樣</span>`:chips(top.map(i=>items[i]))}<span class="lev-c">${fpLayer==='top'?'收起 ▴':top.length+' ▾'}</span>`:''}</div>
-        ${fpLayer==='top'?'<div class="lev-in top" data-g="top"></div>':''}
-        <div class="lev-body">${ks.map(band).join('')}</div>
+        return `<button type="button" class="lev-l${fpLayer===k?' on':''}" ${ar(k)} onclick="locPickLayer(${k})" ${a.length?'':'disabled'}><span class="lev-n">${n===1?'櫃內':k}</span>${fpLayer===k?`<span class="lev-open">${n===1?'櫃內':`第 ${k} 層`}・${a.length} 樣</span>`:chips(a)}<span class="lev-c">${a.length?(fpLayer===k?'收起 ▴':a.length+' ▾'):''}</span></button>`;};
+      // 打開的那一層和它的器材包成一組：往下捲時，那一層的標題黏在上面，捲過這一層才放開
+      const grp=k=>fpLayer===k?`<div class="lev-grp">${band(k)}<div class="lev-in" data-g="${k}"></div></div>`:band(k);
+      html=`<div class="lev t-${T}${n===1?' one':''}${fpLayer!=null?' pick':''}"><div class="lev-h"><span>${escH(KIND[T]||'櫃子')}・${n===1?'只有一層':`${n} 層，第 1 層在最上面`}</span><span>${n===1?'點一下打開':'點一層打開'}</span></div>
+        ${T==='E'?'<div class="lev-hood"><span>抽氣櫃</span></div>':''}
+        <div class="lev-grp"><div class="lev-top${top.length?'':' empty'}${fpLayer==='top'?' on':''}" ${top.length?`role="button" tabindex="0" ${ar('top')} onclick="locPickLayer('top')" onkeydown="if(event.key==='Enter')locPickLayer('top')"`:''}>${top.length?`<span class="lev-n">${TW}</span>${fpLayer==='top'?`<span class="lev-open">${TW}・${top.length} 樣</span>`:chips(top.map(i=>items[i]))}<span class="lev-c">${fpLayer==='top'?'收起 ▴':top.length+' ▾'}</span>`:''}</div>
+        ${fpLayer==='top'?'<div class="lev-in top" data-g="top"></div>':''}</div>
+        <div class="lev-body">${ks.map(grp).join('')}</div>
         <div class="lev-legs"><span></span><span></span></div>
-        ${none.length?`<div class="lev-h" style="margin:8px 0 0"><span>沒寫第幾層的 ${none.length} 樣</span></div>`:''}</div>`;
+        ${none.length&&n>1?`<div class="lev-h" style="margin:8px 0 0"><span>沒寫第幾層的 ${none.length} 樣</span></div>`:''}</div>`;
       if(fpLayer!=null)groups=[[String(fpLayer),idx(fpLayer)]];
       // 有寫層數的器材：沒打開的那幾層先收著（沒寫層數的照常列在櫃子下面）
       items.forEach((e,i)=>{if(lay[i]!=null&&lay[i]!==fpLayer){const el=rowEl(box,side,i);if(el)el.classList.add('fp-row-hide');}});
