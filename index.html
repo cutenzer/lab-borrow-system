@@ -2801,7 +2801,7 @@ function renderEquipDetail(){
   const qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
   const photo=e.image_url?`<img src="${escH(e.image_url)}" alt="" style="width:100%;max-height:260px;object-fit:contain;border-radius:10px;background:var(--surface2);cursor:zoom-in" onclick="openLightbox(window._detailEq.image_url,window._detailEq.name)">`:'';
   const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
-  const loc=e.location?`<span class="eq-tag eq-loc" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">${escH(e.location)}　看平面圖位置 ›</span>`:'';
+  const loc=e.location?`<span class="eq-tag eq-loc loc-g" title="${(typeof locTagTitle==='function'?locTagTitle(e):'點我看平面圖位置')}" onclick="closeModal();jumpToFloorplanLocation(window._detailEq.room,window._detailEq.location,window._detailEq.name)">${(typeof locTagInner==='function'?locTagInner(e):escH(e.location))}<span>　看平面圖位置 ›</span></span>${typeof decodeLocation==='function'?`<div class="hint" style="margin-top:4px">${escH(decodeLocation(e.location,e.room))}</div>`:''}`:'';
   const action=avail<=0?`<button type="button" class="home-eq-add" disabled style="width:100%">目前無法借用</button>`
     :qty>0?`<div class="equip-row-qty" style="justify-content:center"><button type="button" class="qty-btn" onclick="detailQty(-1)">−</button>${qtyNum(qty,avail,'detailSet(this.value)',true)}<button type="button" class="qty-btn" onclick="detailQty(1)">+</button></div><div class="hint" style="text-align:center;margin-top:4px">✓ 已加入借用清單</div>`
     :`<button type="button" class="home-eq-add" style="width:100%" onclick="detailQty(1)">加入借用清單</button>`;
@@ -3029,7 +3029,7 @@ function renderFloorplanLocModalBody(){
       (items.length?items.map((e,i)=>{
         const avail=parseInt(e.available)||0,img=safeUrl(e.image_url),qty=selectedItems[e.room+'__'+e.name]?.quantity||0;
         return `<div class="fp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy" style="cursor:zoom-in" onclick="fpZoom(${i})">`:'<div class="ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>'}
-          <div class="nm"><b>${escH(e.name)}</b><span>${e.spec?escH(e.spec)+'・':''}${escH(e.location||'')}</span><div class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借 '+avail+' '+escH(e.unit||''):'目前沒有可借'}</div></div>
+          <div class="nm"><b>${escH(e.name)}</b><span>${e.spec?escH(e.spec)+'・':''}<span class="loc-g" style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle">${(typeof locTagInner==='function'?locTagInner(e):escH(e.location))}</span></span><div class="${avail>0?'avail-ok':'avail-no'}" style="font-size:12px">${avail>0?'可借 '+avail+' '+escH(e.unit||''):'目前沒有可借'}</div></div>
           ${avail>0?(qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="fpQty(${i},-1)" aria-label="減少">−</button><span style="min-width:22px;text-align:center;font-weight:700">${qty}</span><button type="button" class="qty-btn" onclick="fpQty(${i},1)" aria-label="增加">+</button></div>`:`<button type="button" class="btn btn-primary btn-sm" onclick="fpQty(${i},1)">加入</button>`):''}
         </div>`;
       }).join(''):(chems.length?'':'<div class="hint">（沒有找到對應器材資料）</div>'))+chemHtml;
@@ -3054,7 +3054,7 @@ function renderFloorplanLocModalBody(){
         ${photoHtml}
         <div style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--text2)">
           <div>總數：${total} ${escH(e.unit||'個')}</div>
-          ${e.location?`<div>位置代碼：${escH(e.location)}</div>`:''}
+          ${e.location?`<div>位置：${escH(typeof decodeLocation==='function'?decodeLocation(e.location,e.room):e.location)}</div>`:''}
           ${e.alias?`<div>別名：${escH(e.alias)}</div>`:''}
           ${e.asset_no?`<div>財產編號：${escH(e.asset_no)}</div>`:''}
         </div>
@@ -4493,7 +4493,7 @@ function renderBorrowSidePanel(){
     const eq=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(eq?.image_url);
     return `<div class="bsp-item">${img?`<img src="${escH(img)}" alt="" loading="lazy">`:'<div class="ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>'}
-      <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・'+escH(eq.location):''}</span></div>
+      <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・<span class="loc-g" style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle">'+(typeof locTagInner==='function'?locTagInner(eq):escH(eq.location))+'</span>':''}</span></div>
       <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button>${i._isChem?`<span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span>`:qtyNum(i.quantity,null,`sideItemSet(${idx},this.value)`)+(i.loose?`<small>${escH(itemUnitLabel(i))}</small>`:'')}<button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
   }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「找器材」分頁挑</div>';
@@ -4572,7 +4572,7 @@ function searchResultRowHTML(listName,e,i,withBorrower){
   const hasLoc=!!e.location;
   // 名稱 → 器材資料卡；位置 → 平面圖（2026-10-19）
   const nameHtml=`<div class="sr-name sr-link" title="點我看器材資料" onclick="srDetail('${listName}',${i})">${escH(e.name)}</div>`;
-  const locHtml=hasLoc?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="srLoc('${listName}',${i})">${escH(e.location)}</span>`:'';
+  const locHtml=hasLoc?`<span class="eq-tag eq-loc loc-g" title="${(typeof locTagTitle==='function'?locTagTitle(e):'點我看平面圖位置')}" onclick="srLoc('${listName}',${i})">${(typeof locTagInner==='function'?locTagInner(e):escH(e.location))}</span>`:'';
   return `<div class="search-result-item">
     ${imgHtml}
     <div style="flex:1;min-width:0">${nameHtml}<div class="sr-room">${escH(rn(e.room))} ${locHtml}</div>${e.spec?`<div class="sr-spec">${escH(e.spec)}</div>`:''}${withBorrower?getBorrowerInfo(e.name,e.room):''}</div>
@@ -4643,7 +4643,7 @@ function renderCart(){
     const equip=allEquipment.find(e=>e.room===i.room&&e.name===i.name);
     const img=safeUrl(equip?.image_url);
     const imgHtml=img?`<img class="cart-item-thumb" src="${escH(img)}" loading="lazy" onerror="this.style.display='none'">`:`<div class="cart-item-thumb-ph"><svg class="ph-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>`;
-    const loc=equip?.location?` <span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="cartItemLoc(${idx})">${escH(equip.location)}</span>`:'';
+    const loc=equip?.location?` <span class="eq-tag eq-loc loc-g" title="${(typeof locTagTitle==='function'?locTagTitle(equip):'點我看平面圖位置')}" onclick="cartItemLoc(${idx})">${(typeof locTagInner==='function'?locTagInner(equip):escH(equip.location))}</span>`:'';
     return `<div class="cart-item">${imgHtml}
       <div class="cart-item-info"><div class="cart-item-name ${equip?'sr-link':''}" ${equip?`onclick="cartItemDetail(${idx})" title="點我看器材資料"`:''}>${escH(i.name)}</div><div class="cart-item-sub">${escH(rn(i.room))}${i.spec?' ・ '+escH(i.spec):''}${loc} ${electiveTagHtml(i.room,i.name)}${(()=>{const k=kitLinesOf((allEquipment||[]).find(x=>x.room===i.room&&x.name===i.name));return k.length?` <span class="eq-tag kit">套組・${k.length} 項</span>`:'';})()}</div>
         ${isPackUnit(i.unit)?`<div class="loose-toggle" role="group" aria-label="借用方式">
@@ -5619,7 +5619,7 @@ function renderEquipBrowse(items){
     if(e.restricted_note)tags.push(electiveTagHtml(e.room,e.name));
     if(e.kit_contents)tags.push(`<span class="eq-tag kit" title="整盒借出，內含 ${kitLinesOf(e).length} 項">套組</span>`);
     if(avail<=0&&total>0){const nr=nextReturnDate(e.name,e.room);if(nr)tags.push(`<span class="eq-tag next">最早 ${escH(md(nr))} 還</span>`);}
-    const loc=e.location?`<span class="eq-tag eq-loc" title="點我看平面圖位置" onclick="browseLoc(${i})">${escH(e.location)}</span>`:'';
+    const loc=e.location?`<span class="eq-tag eq-loc loc-g" title="${(typeof locTagTitle==='function'?locTagTitle(e):'點我看平面圖位置')}" onclick="browseLoc(${i})">${(typeof locTagInner==='function'?locTagInner(e):escH(e.location))}</span>`:'';
     const pill=avail>0?`<span class="home-eq-pill pill-ok">可借 ${avail}／${total} ${escH(e.unit||'')}</span>`:`<span class="home-eq-pill pill-no">${total>0?'借出中':'無庫存'}</span>`;
     const action=avail<=0?`<button type="button" class="home-eq-add" disabled>加入</button>`
       :qty>0?`<div class="equip-row-qty"><button type="button" class="qty-btn" onclick="browseQty(${i},-1)">−</button>${qtyNum(qty,avail,`browseSet(${i},this.value)`)}<button type="button" class="qty-btn" onclick="browseQty(${i},1)">+</button></div>`
@@ -7376,7 +7376,7 @@ window.renderEquipBrowse=function(items){
   orig(items);
   const list=window._browseItems||[];
   document.querySelectorAll('#equipBrowseGrid .home-eq-row').forEach((row,i)=>{
-    row.querySelectorAll('.eq-loc').forEach(el=>{const t=el.textContent.replace(/^\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
+    row.querySelectorAll('.eq-loc:not(.loc-g)').forEach(el=>{const t=el.textContent.replace(/^\s*/,'');el.textContent=t;el.insertAdjacentHTML('afterbegin',PIN);});
     if(wide.matches&&list[i])stepper(row,i,list[i]);
   });
 };
@@ -7977,5 +7977,227 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 })();
 </script>
 <!-- ═══ cbm-v2 結束 ═══ -->
+<!-- ═══ 位置顯示 loc-v1（2026-10-29）：櫃頂、分層、桌子的櫃子 ═══
+     做的事：
+     1. 位置代碼的新寫法：BB02-0 或 BB02-頂 ＝櫃頂（桌子的櫃子就是「桌面」，例如 BD03-頂＝桌面、在 BD03 上方）。
+        第 1 層在最上面。舊代碼都不用改。
+     2. 清單上的位置小標籤：前面多一個小櫃子圖示，塗色的那格就是第幾層；櫃頂塗黃色。
+        桌子的櫃子畫成橫的：一張桌子幾個門、在第幾個門。櫃旁、冰箱各有自己的圖示。
+     3. 平面圖點櫃位：上面先畫出櫃子正面（櫃頂＋每一層），點哪一層，下面只列那一層；
+        點到桌子的櫃子：畫出整張桌子和每個門，點門就換到那個門。
+     哪幾個門算同一張桌子：看平面圖校正畫的框——代號是 D、高度一樣、左右相接，就是同一張桌子，不用另外設定。
+     只包裝 decodeLocationPart、renderFloorplanLocModalBody；清單標籤是在原本畫標籤的地方改呼叫 locTagInner()。 -->
+<style>
+.eq-tag.eq-loc.loc-g{font-family:inherit;gap:5px;white-space:nowrap}
+.loc-g .lg-t{white-space:nowrap}
+.eq-tag.eq-loc.loc-g .lg-c{font-family:'DM Mono',monospace}
+.loc-g svg{flex:none;display:block}
+/* 平面圖：櫃子正面 */
+.lev{margin:2px 0 12px}
+.lev-h{display:flex;align-items:baseline;justify-content:space-between;font-size:12px;color:var(--text2);margin:0 0 6px}
+.lev-h button{border:0;background:none;font:inherit;font-size:12px;color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:2px 0}
+.lev-top{display:flex;align-items:center;gap:6px;min-height:34px;padding:4px 8px 4px 40px;border:1.2px dashed #9a9488;border-bottom:0;border-radius:6px 6px 0 0;position:relative;cursor:pointer;flex-wrap:wrap}
+.lev-top.empty{min-height:14px;padding:0;cursor:default}
+.lev-body{border:2px solid var(--ink);border-radius:3px;background:#f6f2ea;overflow:hidden}
+.lev-l{display:flex;align-items:center;gap:5px;min-height:40px;padding:5px 34px 5px 40px;border-top:1.2px solid var(--ink);position:relative;cursor:pointer;flex-wrap:wrap;width:100%;text-align:left;font:inherit;background:none;border-left:0;border-right:0;border-bottom:0;color:var(--text)}
+.lev-l:first-child{border-top:0}
+.lev-n{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:13px}
+.lev-top .lev-n{font-family:inherit;font-size:11px;color:var(--text2);left:8px}
+.lev-c{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-family:'DM Mono',monospace;font-size:11px;color:#9a9488}
+.lev-chip{font-size:11px;border:1px solid var(--border);background:var(--surface);border-radius:4px;padding:1px 6px;white-space:nowrap;max-width:9em;overflow:hidden;text-overflow:ellipsis}
+.lev-top .lev-chip{border-color:#c9a227;background:#f7efd2}
+.lev-l.on{background:#e3eee9;box-shadow:inset 4px 0 0 var(--accent)}
+.lev-l.on .lev-n{color:var(--accent);font-weight:700}
+.lev-top.on{background:#f7efd2}
+.lev.pick .lev-l:not(.on) .lev-chip{color:#9a9488}
+.lev-legs{display:flex;justify-content:space-between;padding:0 8px}
+.lev-legs span{width:9px;height:8px;border:2px solid var(--ink);border-top:0}
+.lev-l:focus-visible,.lev-top:focus-visible,.ldk-d:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* 桌子 */
+.ldk-top{display:grid;align-items:end;min-height:30px;padding:0 4px;gap:4px}
+.ldk-top>div{display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:flex-end}
+.ldk-slab{height:10px;background:var(--ink);border-radius:2px}
+.ldk-row{display:grid;margin:0 4px;border:2px solid var(--ink);border-top:0;border-radius:0 0 3px 3px;background:#f6f2ea}
+.ldk-d{border:0;border-left:1.2px solid var(--ink);background:none;font:inherit;color:var(--text);padding:10px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;min-width:0}
+.ldk-d:first-child{border-left:0}
+.ldk-d b{font-family:'DM Mono',monospace;font-size:12.5px;font-weight:400}
+.ldk-d small{font-size:11px;color:#9a9488}
+.ldk-d.on{background:#e3eee9;box-shadow:inset 0 -4px 0 var(--accent)}
+.ldk-d.on b{color:var(--accent);font-weight:700}
+.ldk-legs{display:flex;justify-content:space-between;margin:0 4px;padding:0 4px}
+.ldk-legs span{width:5px;height:10px;background:var(--ink)}
+.fp-row-hide{display:none!important}
+</style>
+<script id="loc-v1-js">
+(function(){
+  if(window.locV1)return;window.locV1=true;
+  const INK='#1f2326',ACC='#1f5b4c',TOP='#c9a227',MUTE='#9a9488';
+  // ── 解析一個位置代碼（已經拆成單一代碼，例如 BB02-2、BB02-頂、BA05旁、生物冰箱）──
+  // 回傳：base＝櫃子代碼（BB02）、type＝A～E（D＝桌子的櫃子）、layer＝數字／'top'／null、side、fridge
+  function locParse(raw){
+    const s=String(raw||'').trim();
+    if(/冰箱/.test(s))return {raw:s,fridge:true};
+    const side=/旁$/.test(s);
+    const m=s.replace(/旁$/,'').trim().match(/^(PC|[TCBPG])?([A-E])(\d+)(?:-(.+))?$/);
+    if(!m)return {raw:s,other:true};
+    const suf=(m[4]||'').trim();
+    const layer=!suf?null:(suf==='0'||suf==='頂')?'top':/^\d+$/.test(suf)?parseInt(suf,10):null;
+    return {raw:s,base:(m[1]||'')+m[2]+m[3],room:m[1]||'',type:m[2],num:m[3],layer,side};
+  }
+  window.locParse=locParse;
+  // ── 同一張桌子：平面圖上代號 D、高度一樣、左右相接的框 ──
+  function deskOf(room,base){
+    const key=(typeof ROOM_TO_FLOORPLAN_KEY_MAP!=='undefined'?ROOM_TO_FLOORPLAN_KEY_MAP:{})[room];
+    const spots=((typeof FLOORPLAN_HOTSPOTS!=='undefined'&&FLOORPLAN_HOTSPOTS[key])||[]).filter(s=>{const p=locParse(s.code);return p.type==='D';});
+    const me=spots.find(s=>s.code===base);if(!me)return null;
+    const same=(a,b)=>Math.abs(a.top-b.top)<1.5&&Math.abs(a.height-b.height)<2;
+    const touch=(a,b)=>Math.abs(a.left+a.width-b.left)<1.2||Math.abs(b.left+b.width-a.left)<1.2;
+    const grp=[me];let grew=true;
+    while(grew){grew=false;spots.forEach(s=>{if(!grp.includes(s)&&grp.some(g=>same(g,s)&&touch(g,s))){grp.push(s);grew=true;}});}
+    grp.sort((a,b)=>a.left-b.left);
+    return {codes:grp.map(s=>s.code),idx:grp.indexOf(me)};
+  }
+  window.locDeskOf=deskOf;
+  // 這個櫃子有幾層：看登記在這個櫃子的器材裡，最大的層數（至少 3 層）
+  const layerCache=new Map();let layerVer=-1;
+  function layersOf(room,base){
+    const list=(typeof allEquipment!=='undefined'&&allEquipment)||[];
+    if(layerVer!==list.length){layerCache.clear();layerVer=list.length;}
+    const k=room+'|'+base;if(layerCache.has(k))return layerCache.get(k);
+    let n=0;
+    list.forEach(e=>{if(e.room!==room||!e.location)return;expandLocationField(e.location).forEach(c=>{const p=locParse(c);if(p.base===base&&typeof p.layer==='number')n=Math.max(n,p.layer);});});
+    n=Math.min(Math.max(n,3),8);layerCache.set(k,n);return n;
+  }
+  // ── 小圖示（SVG）──
+  function glyph(p,room){
+    if(p.fridge)return `<svg width="13" height="18" viewBox="0 0 13 18" aria-hidden="true"><rect x="1" y="1" width="11" height="16" rx="2" fill="none" stroke="${INK}" stroke-width="1.4"/><path d="M1 6.5h11M3.5 3v2M3.5 8.5v3" stroke="${INK}" stroke-width="1.1"/></svg>`;
+    if(p.other||!p.base)return `<svg width="12" height="16" viewBox="0 0 12 16" aria-hidden="true"><path d="M6 15s5-5 5-9A5 5 0 0 0 1 6c0 4 5 9 5 9z" fill="none" stroke="${INK}" stroke-width="1.3"/><circle cx="6" cy="6" r="1.6" fill="${INK}"/></svg>`;
+    if(p.type==='D'){
+      const d=deskOf(room,p.base),n=d?d.codes.length:1,i=d?d.idx:0;
+      const W=26,x0=1,cw=W/n;
+      let g=`<svg width="${W+2}" height="18" viewBox="0 0 ${W+2} 18" aria-hidden="true">`;
+      if(p.layer==='top')g+=`<rect x="${x0+cw*i+cw/2-3.5}" y="0.5" width="7" height="3.5" rx="1" fill="${TOP}"/>`;
+      g+=`<rect x="0" y="4.5" width="${W+2}" height="2.4" fill="${INK}"/><rect x="${x0}" y="6.9" width="${W}" height="8.6" fill="none" stroke="${INK}" stroke-width="1.2"/>`;
+      for(let k=1;k<n;k++)g+=`<path d="M${x0+cw*k} 6.9v8.6" stroke="${INK}" stroke-width=".8"/>`;
+      if(p.layer!=='top'&&!p.side)g+=`<rect x="${x0+cw*i+.7}" y="7.6" width="${cw-1.4}" height="7.2" fill="${ACC}"/>`;
+      g+=`<path d="M2 15.5v2M${W} 15.5v2" stroke="${INK}" stroke-width="1.3"/>`;
+      if(p.side)g+=`<rect x="${W+.5}" y="10" width="1.5" height="7" fill="#5f5b54"/>`;
+      return g+'</svg>';
+    }
+    const n=layersOf(room,p.base),top=5,bh=12,lh=bh/n;
+    let g=`<svg width="14" height="19" viewBox="0 0 14 19" aria-hidden="true"><path d="M1.5 ${top}V2.2h11V${top}" fill="none" stroke="${MUTE}" stroke-width=".9" stroke-dasharray="1.6 1.4"/>`;
+    if(p.layer==='top')g+=`<rect x="3.5" y="1" width="7" height="3.4" rx=".8" fill="${TOP}"/>`;
+    g+=`<rect x="1.5" y="${top}" width="11" height="${bh}" rx=".8" fill="none" stroke="${INK}" stroke-width="1.3"/>`;
+    for(let k=1;k<n;k++)g+=`<path d="M1.5 ${(top+lh*k).toFixed(2)}h11" stroke="${INK}" stroke-width=".6"/>`;
+    if(typeof p.layer==='number'&&p.layer>=1&&p.layer<=n)g+=`<rect x="2.3" y="${(top+lh*(p.layer-1)+.5).toFixed(2)}" width="9.4" height="${(lh-1).toFixed(2)}" fill="${ACC}"/>`;
+    if(p.side)g+=`<rect x="0" y="12" width="1.2" height="6" fill="#5f5b54"/>`;
+    return g+'</svg>';
+  }
+  // 短文字：BB02・第 2 層／BB02・櫃頂／BD03・桌面／BA05 旁／生物冰箱
+  function shortTxt(p){
+    if(p.fridge||p.other||!p.base)return p.raw;
+    if(p.side)return p.base+' 旁';
+    const w=p.layer==='top'?(p.type==='D'?'桌面':'櫃頂'):typeof p.layer==='number'?`第 ${p.layer} 層`:'';
+    return p.base+(w?'・'+w:'');
+  }
+  // 清單上位置標籤的內容（原本只寫代碼的地方改呼叫這個）
+  window.locTagInner=function(e){
+    const codes=expandLocationField(e&&e.location);
+    if(!codes.length)return escH(e&&e.location||'');
+    const p=locParse(codes[0]);
+    const more=codes.length>1?` <span style="opacity:.75">＋${codes.length-1}</span>`:'';
+    // 代碼用等寬字（跟櫃子上貼的標籤一樣），層數用一般字
+    const t=shortTxt(p),k=p.base&&t.startsWith(p.base)?p.base.length:0;
+    return `${glyph(p,e.room)}<span class="lg-t">${k?`<span class="lg-c">${escH(t.slice(0,k))}</span>`:''}${escH(t.slice(k))}</span>${more}`;
+  };
+  // 標籤的滑鼠提示：完整的白話位置
+  window.locTagTitle=function(e){return escH((typeof decodeLocation==='function'?decodeLocation(e.location,e.room):e.location)+'　點我看平面圖位置');};
+
+  // ── 完整文字（器材卡、提示）：櫃頂／桌面 ──
+  if(typeof decodeLocationPart==='function'){
+    const _d=decodeLocationPart;
+    window.decodeLocationPart=function(code,defaultRoomCode){
+      const p=locParse(code);
+      if(p.base&&(p.layer==='top'||p.side)){
+        const t=_d(p.base,defaultRoomCode).replace(/\s*\([^)]*\)$/,'');
+        return `${t}・${p.side?'旁邊':p.type==='D'?'桌面（'+p.base+' 上方）':'櫃頂'} (${code})`;
+      }
+      return _d.apply(this,arguments);
+    };
+  }
+
+  // ── 平面圖點櫃位：上面畫出櫃子正面（或整張桌子）──
+  let fpLayer=null,fpLayerCode='';
+  window.locPickLayer=function(v){fpLayer=(fpLayer===v)?null:v;renderFloorplanLocModalBody();};
+  const layerOfItem=(e,code)=>{for(const c of expandLocationField(e.location)){if(c===code)return null;if(c.startsWith(code+'-')){const p=locParse(c);return p.layer;}}return undefined;};
+  if(typeof renderFloorplanLocModalBody==='function'){
+    const _r=renderFloorplanLocModalBody;
+    window.renderFloorplanLocModalBody=function(){
+      const code=floorplanOpenLoc;
+      if(code!==fpLayerCode){fpLayer=null;fpLayerCode=code;
+        // 從器材「看平面圖位置」跳過來：直接亮那一層
+        const pd=window._locPend;if(pd&&pd.base===code){fpLayer=pd.layer;window._locPend=null;}}
+      const out=_r.apply(this,arguments);
+      try{drawElevation(code);}catch(err){console.warn('櫃子正面圖',err);}
+      return out;
+    };
+  }
+  if(typeof jumpToFloorplanLocation==='function'){
+    const _j=jumpToFloorplanLocation;
+    window.jumpToFloorplanLocation=function(room,code,name){
+      const p=locParse(expandLocationField(code)[0]||'');
+      window._locPend=p.base&&p.layer!=null?{base:p.base,layer:p.layer}:null;fpLayerCode='';
+      return _j.apply(this,arguments);
+    };
+  }
+  function drawElevation(code){
+    const side=typeof fpSideMode==='function'&&fpSideMode();
+    const box=document.getElementById(side?'floorplanSide':'fpSheetBody');if(!box)return;
+    const p=locParse(code);if(!p.base||p.layer!=null)return;   // 只有點到「整個櫃子」才畫
+    const room=FLOORPLAN_KEY_TO_ROOM[currentFloorplan];
+    const items=window._fpItems||[];
+    const lay=items.map(e=>layerOfItem(e,code));
+    const chips=arr=>arr.slice(0,2).map(e=>`<span class="lev-chip">${escH(e.name)}</span>`).join('')+(arr.length>2?`<span class="lev-chip">＋${arr.length-2}</span>`:'');
+    let html='';
+    if(p.type==='D'){
+      const d=deskOf(room,p.base)||{codes:[p.base],idx:0},n=d.codes.length;
+      const all=(allEquipment||[]).filter(e=>e.room===room&&e.location);
+      const cnt=c=>all.filter(e=>expandLocationField(e.location).some(x=>x===c||(x.startsWith(c+'-')&&locParse(x).layer!=='top'))).length;
+      const tops=c=>all.filter(e=>expandLocationField(e.location).some(x=>x.startsWith(c+'-')&&locParse(x).layer==='top'));
+      html=`<div class="lev"><div class="lev-h"><span>${n>1?`同一張桌子・${n} 個門`:'桌子的櫃子'}</span>${fpLayer!=null?'<button type="button" onclick="locPickLayer(null)">全部列出</button>':''}</div>
+        <div class="ldk-top" style="grid-template-columns:repeat(${n},1fr)">${d.codes.map(c=>{const t=tops(c);return `<div>${t.slice(0,2).map(e=>`<span class="lev-chip" style="border-color:#c9a227;background:#f7efd2">${escH(e.name)}</span>`).join('')}${t.length>2?`<span class="lev-chip">＋${t.length-2}</span>`:''}</div>`;}).join('')}</div>
+        <div class="ldk-slab"></div>
+        <div class="ldk-row" style="grid-template-columns:repeat(${n},1fr)">${d.codes.map(c=>`<button type="button" class="ldk-d${c===code?' on':''}" onclick="openFloorplanLocModal(${ja(c)})" aria-label="${escH(c)}"><b>${escH(c)}</b><small>${cnt(c)} 樣</small></button>`).join('')}</div>
+        <div class="ldk-legs"><span></span><span></span></div></div>`;
+      // 這個門的桌面：可以只看桌面上的
+      const nTop=lay.filter(v=>v==='top').length;
+      if(nTop)html=html.replace('<div class="ldk-slab"></div>',`<div class="ldk-slab" style="cursor:pointer" role="button" tabindex="0" title="只看桌面上的" onclick="locPickLayer('top')"></div>`);
+    }else{
+      const n=layersOf(room,p.base);
+      const by=v=>items.filter((e,i)=>lay[i]===v);
+      const top=by('top'),none=items.filter((e,i)=>lay[i]==null);
+      const rows=[];for(let k=1;k<=n;k++)rows.push(k);
+      html=`<div class="lev${fpLayer!=null?' pick':''}"><div class="lev-h"><span>櫃子正面・第 1 層在最上面</span>${fpLayer!=null?'<button type="button" onclick="locPickLayer(null)">全部列出</button>':''}</div>
+        <div class="lev-top${top.length?'':' empty'}${fpLayer==='top'?' on':''}" ${top.length?`role="button" tabindex="0" onclick="locPickLayer('top')" onkeydown="if(event.key==='Enter')locPickLayer('top')"`:''}>${top.length?`<span class="lev-n">櫃頂</span>${chips(top)}`:''}</div>
+        <div class="lev-body">${rows.map(k=>{const a=by(k);return `<button type="button" class="lev-l${fpLayer===k?' on':''}" onclick="locPickLayer(${k})" ${a.length?'':'disabled'}><span class="lev-n">${k}</span>${chips(a)}<span class="lev-c">${a.length||''}</span></button>`;}).join('')}</div>
+        <div class="lev-legs"><span></span><span></span></div>
+        ${none.length&&fpLayer==null?`<div class="lev-h" style="margin:6px 0 0"><span>沒寫第幾層的 ${none.length} 樣，列在下面</span></div>`:''}</div>`;
+    }
+    // 放在清單最前面（電腦版放在櫃位代碼標題下面）
+    const anchor=side?box.querySelector('.fp-bar'):null;
+    if(anchor)anchor.insertAdjacentHTML('afterend',html);else box.insertAdjacentHTML('afterbegin',html);
+    // 選了某一層：其他層的器材先藏起來
+    if(fpLayer==null)return;
+    items.forEach((e,i)=>{
+      if(lay[i]===fpLayer)return;
+      let el=null;
+      if(side)el=box.querySelectorAll('.fp-item')[i];
+      else{const t=box.querySelector(`[onclick="toggleFloorplanEquipRow('fploc-${i}')"]`);el=t&&t.parentElement;}
+      if(el)el.classList.add('fp-row-hide');
+    });
+  }
+})();
+</script>
+<!-- ═══ loc-v1 結束 ═══ -->
 </body>
 </html>
