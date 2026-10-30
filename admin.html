@@ -2345,6 +2345,8 @@ function renderOverview(){
   if(unreg.length)rows.push({lv:'warn',t:`${unreg.length} 項器材還沒建檔`,s:unreg.slice(0,3).map(escH).join('、')+(unreg.length>3?'…':'')+'（補登時加的）',tab:'equipment',b:'去建檔'});
   if(depIn.length)rows.push({lv:'mute',t:`${depIn.length} 筆保證金待收`,s:'NT$'+depIn.reduce((a,r)=>a+(parseInt(r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
   if(depOut.length)rows.push({lv:'mute',t:`${depOut.length} 筆保證金待退`,s:'NT$'+depOut.reduce((a,r)=>a+(parseInt(r.finalRefund??r.depositAmount)||0),0).toLocaleString(),tab:'deposit',b:'保證金'});
+  // 訪查模式開著：一直提醒，免得訪查結束忘了關（vm-v1，2026-10-30）
+  if(window.visitModeOn)rows.push({lv:'warn',t:'對外課表是訪查模式',s:'前台只顯示週一～五、不標假日；訪查結束記得關掉',tab:'semester',b:'去關閉'});
   // 備份提醒：超過 30 天沒備份（這台電腦記錄的）就提醒
   const lastB=parseInt(localStorage.getItem('lab_last_backup')||'0');
   const bDays=lastB?Math.floor((Date.now()-lastB)/86400000):null;
@@ -12624,5 +12626,82 @@ div:has(>.la)+.qe-pos{display:none}
 })();
 </script>
 <!-- ═══ rc-v1 結束 ═══ -->
+<!-- ═══ 訪查模式 vm-v1（2026-10-30）：刪掉這段（到「vm-v1 結束」）即還原 ═══
+     做的事：設定 → 學期與假日 最上面一張卡「對外課表：訪查模式」。打開後，前台的場地課表、首頁本週課表、列印課表、
+     學期實驗週表都只顯示週一～五，不標假日／停課（那天看起來跟平常一樣）。後台自己的週曆不受影響，照樣看得到假日。
+     資料存在 deposit_settings.visit_mode（要先執行「訪查模式.sql」加欄位）；前台任何人都能讀，只有登入的管理員能改（沿用原本的 RLS）。
+     開著的時候，總覽會一直提醒「訪查結束記得關掉」。 -->
+<style>
+.vm-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.vm-row label{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;cursor:pointer}
+.vm-row label input{width:auto}
+.vm-st{font-size:13px;font-weight:700;padding:2px 10px;border-radius:999px;background:var(--surface2);color:var(--text2)}
+.vm-st.on{background:#fde8d0;color:#9a3412}
+.vm-msg{font-size:12.5px;margin-top:6px}
+.vm-msg.bad{color:var(--danger)}
+</style>
+<script>
+(function(){
+  if(window.vmOn)return;window.vmOn=true;
+  window.visitModeOn=false;let row=null,busy=false;
+  async function fetchVM(){
+    try{const r=await sb('GET','deposit_settings',{});row=Array.isArray(r)&&r[0]?r[0]:null;window.visitModeOn=!!(row&&row.visit_mode===true);}
+    catch(_){row=null;}
+    return row;
+  }
+  function card(){
+    let c=document.getElementById('vmCard');
+    if(!c){
+      const head=document.querySelector('#panel-semester .pg-head');if(!head)return null;
+      head.insertAdjacentHTML('afterend',`<div class="card set-sec" id="vmCard"><div class="card-title">對外課表：訪查模式</div>
+        <div class="vm-row"><label><input type="checkbox" class="set-sw" id="vmSw" onchange="vmSave(this.checked)">只顯示週一～五、不標假日</label><span class="vm-st" id="vmSt">關閉</span></div>
+        <p class="hint" style="margin-top:8px;line-height:1.7">前台所有課表（場地、首頁、列印、學期實驗）不顯示週六日，假日當天看起來跟平常一樣。只改畫面；後台週曆、預約規則照舊。訪查結束記得關掉。</p>
+        <div class="vm-msg" id="vmMsg"></div></div>`);
+      c=document.getElementById('vmCard');
+    }
+    return c;
+  }
+  function paint(){
+    if(!card())return;
+    const sw=document.getElementById('vmSw'),st=document.getElementById('vmSt'),m=document.getElementById('vmMsg');
+    const missing=row&&!('visit_mode' in row);
+    sw.checked=window.visitModeOn;sw.disabled=!row||missing;
+    st.textContent=window.visitModeOn?'開啟中':'關閉';st.classList.toggle('on',window.visitModeOn);
+    m.className='vm-msg'+(missing||!row?' bad':'');
+    m.textContent=!row?'讀不到設定，請重新整理':missing?'資料庫還沒有這個欄位：請先在 Supabase 的 SQL Editor 執行「訪查模式.sql」':'';
+  }
+  window.vmSave=async function(on){
+    if(busy||!row)return;busy=true;
+    const sw=document.getElementById('vmSw');if(sw)sw.disabled=true;
+    try{
+      await sb('PATCH','deposit_settings',{filter:'id=eq.'+encodeURIComponent(row.id),body:{visit_mode:!!on},prefer:'return=minimal'});
+      row.visit_mode=!!on;window.visitModeOn=!!on;
+      showToast(on?'訪查模式已開啟：前台重新整理後只顯示週一～五、不標假日':'訪查模式已關閉：前台恢復顯示週末和假日','success');
+      if(typeof renderOverview==='function')try{renderOverview();}catch(_){}
+    }catch(e){showToast('儲存失敗：'+e.message,'error');}
+    finally{busy=false;paint();}
+  };
+  // 進到「學期與假日」就讀一次
+  if(typeof window.showTab==='function'){
+    const _s=window.showTab;
+    window.showTab=function(tab){
+      const out=_s.apply(this,arguments);
+      if(tab==='semester'){card();paint();fetchVM().then(paint);}
+      return out;
+    };
+  }
+  // 登入後讀一次（總覽提醒用）
+  if(typeof window.loadAll==='function'){
+    const _l=window.loadAll;
+    window.loadAll=async function(){
+      const out=await _l.apply(this,arguments);
+      const before=window.visitModeOn;await fetchVM();
+      if(before!==window.visitModeOn&&typeof renderOverview==='function')try{renderOverview();}catch(_){}
+      return out;
+    };
+  }
+})();
+</script>
+<!-- ═══ vm-v1 結束 ═══ -->
 </body>
 </html>
