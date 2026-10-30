@@ -2559,12 +2559,12 @@ async function renderHomeVenuePreview(){
       });
     });
     // 平常只放週一～週五（字才夠大）；這週週六有排課（例如菁英課程）才多顯示週六
-    const dates=list.some(x=>x.displayDate===endStr&&x.periodStatus!=='已拒絕')?wk.slice(0,6):wk.slice(0,5);
+    const dates=!VISIT_MODE&&list.some(x=>x.displayDate===endStr&&x.periodStatus!=='已拒絕')?wk.slice(0,6):wk.slice(0,5);
     const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
     window._homeVenueTables={};
     const slides=HOME_VENUE_FILTERS.map(r=>{
       const labs=r.key?[r.key]:['生物','化學','理化','物理','地科'];
-      const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
+      const head=`<tr><th>節次</th>${dates.map((d,i)=>{const h=holidayShown(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}">週${DAYS[i]}<br>${fmtDateTW(d)}</th>`;}).join('')}</tr>`;
       // mode: full＝放大檢視完整版；slide＝單科輪播（每格一行，多筆顯示 +N）；dots＝全部輪播（科別色塊）
       const buildRows=mode=>PERIODS.map(period=>`<tr class="${OFF_PERIODS.includes(period)?'off-period':''}"><td class="pcol">${period}</td>${dates.map(d=>{
         const ds=fmtDate(d);
@@ -2657,7 +2657,7 @@ function updateHeroStats(opt){
   const now=new Date(),today=fmtDate(now);
   let wk='';
   try{const info=activeSemester?getWeekInfo(now,activeSemester):null;if(info)wk='・'+weekBadgeText(info);}catch(e){}
-  const hol=holidayForDate(today);
+  const hol=holidayShown(today);
   $('heroDate').textContent=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}（週${DAYS[(now.getDay()+6)%7]}）${wk}${hol?'・'+hol.label:''}`;
   const box=$('todayLabs');
   if(!box||!opt.venueList)return;
@@ -3808,7 +3808,15 @@ function holTag(h){
   return holClosed(h)?`停課・${lb}${h.from_period?`（${h.from_period}起）`:''}`:''+lb;
 }
 let allHolidaysFront=[];
+// 訪查模式（2026-10-30）：後台「學期與假日」開了以後，前台課表只顯示週一～五、不標假日／停課（給訪查看）
+// 只影響「畫面顯示」；算歸還日、預約規則還是用真正的假日（holidayForDate）
+let VISIT_MODE=false,_visitP=null;
+function loadVisitMode(){
+  return _visitP||(_visitP=sb('GET','deposit_settings',{}).then(r=>{VISIT_MODE=!!(Array.isArray(r)&&r[0]&&r[0].visit_mode===true);}).catch(()=>{VISIT_MODE=false;}));
+}
+function holidayShown(dateStr,period){return VISIT_MODE?undefined:holidayForDate(dateStr,period);}
 async function loadHolidaysFront(){
+  await loadVisitMode();
   try{
     const rows=await sb('GET','holidays',{order:'start_date'});
     allHolidaysFront=Array.isArray(rows)?rows:[];
@@ -3860,14 +3868,15 @@ function applyVenueViewMode(){
 function toggleVenueViewMode(){venueViewMode=(venueViewMode==='day')?'week':'day';applyVenueViewMode();}
 function setVenueDay(i){venueDayIdx=i;if(window._venueDates)renderVenueDayView(window._venueDates);}
 function renderVenueDayView(dates){
+  if(VISIT_MODE&&dates.length>5){dates=dates.slice(0,5);if(venueDayIdx!==null&&venueDayIdx>4)venueDayIdx=4;}
   window._venueDates=dates;
   const box=document.getElementById('venueDayView');if(!box)return;
   if(venueDayIdx===null){const t=fmtDate(new Date());const i=dates.findIndex(d=>fmtDate(d)===t);venueDayIdx=i>=0?i:0;}
   const labFull={'生物':'生物實驗室','化學':'化學實驗室','理化':'理化實驗室','物理':'物理實驗室','地科':'地科實驗室'};
   const LABS=venueLabFilter?[venueLabFilter]:['生物','化學','理化','物理','地科'];
   const dateStr=fmtDate(dates[venueDayIdx]);
-  const hol=holidayForDate(dateStr);
-  const days=`<div class="vd-days">${dates.map((d,i)=>`<button type="button" class="vd-day ${i===venueDayIdx?'active':''} ${(h=>!h?'':holClosed(h)?'closed':'holiday')(holidayForDate(fmtDate(d)))}" onclick="setVenueDay(${i})">週${DAYS[i]}<br><small>${fmtDateTW(d)}</small></button>`).join('')}</div>`;
+  const hol=holidayShown(dateStr);
+  const days=`<div class="vd-days">${dates.map((d,i)=>`<button type="button" class="vd-day ${i===venueDayIdx?'active':''} ${(h=>!h?'':holClosed(h)?'closed':'holiday')(holidayShown(fmtDate(d)))}" onclick="setVenueDay(${i})">週${DAYS[i]}<br><small>${fmtDateTW(d)}</small></button>`).join('')}</div>`;
   const body=PERIODS.map(period=>{
     const rows=LABS.map(lab=>{
       const vf=labFull[lab];
@@ -4097,16 +4106,16 @@ function printVenueWeek(){
     const bk=venueBookings.filter(b=>b.displayVenue===vf&&b.periodStatus!=='已拒絕');
     const ds=dates;
     const xc=ds.map(d=>{
-      const ymd=fmtDate(d),h=holidayForDate(ymd),n=bk.filter(b=>b.displayDate===ymd).length;
+      const ymd=fmtDate(d),h=holidayShown(ymd),n=bk.filter(b=>b.displayDate===ymd).length;
       const we=isWeekendDate(d),ho=!we&&!!h&&!holClosed(h);
       if(we)weBk+=n;else if(ho)hoBk+=n;
       return we?' x-we':ho?' x-ho':'';
     });
-    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}${xc[i]}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
+    const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayShown(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}${xc[i]}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
     const body=PERIODS.map(p=>{
       const off=OFF_PERIODS.includes(p);
       return `<tr class="${off?'off':''}"><td class="pc">${p}</td>${ds.map((d,i)=>{
-        const ymd=fmtDate(d),h=holidayForDate(ymd,p);
+        const ymd=fmtDate(d),h=holidayShown(ymd,p);
         const cells=bk.filter(b=>b.displayDate===ymd&&b.displayPeriod===p).map(b=>{
           const pend=b.periodStatus==='待審核';
           return `<div class="bk ${pend?'pend':''}"><b>${escH(what(b))}</b><span>${escH(who(b))}${pend?'（待審核）':''}</span></div>`;
@@ -4156,8 +4165,8 @@ body.no-we .x-we,body.no-ho .x-ho{display:none}
 @media screen{.page{border:1px solid #ccc;margin:12px auto;width:192mm;max-width:100%;padding:6mm;height:auto;min-height:278mm}}
 </style></head><body>
 <div class="bar"><button onclick="window.print()">列印</button>
-<label><input type="checkbox" id="pWe" onchange="hdSet(1)">印週末</label>
-<label><input type="checkbox" id="pHo" onchange="hdSet(1)">印國定假日</label>
+<label${VISIT_MODE?' style="display:none"':''}><input type="checkbox" id="pWe" onchange="hdSet(1)">印週末</label>
+<label${VISIT_MODE?' style="display:none"':''}><input type="checkbox" id="pHo" onchange="hdSet(1)">印國定假日</label>
 <span class="hn" id="hdNote"></span>
 <span>共 ${labs.length} 張 A4（直式）。手機上請在列印畫面選「儲存為 PDF」或直接印。</span></div>
 ${pages}
@@ -4171,6 +4180,7 @@ function hdSet(save){
 }
 var s0='';try{s0=localStorage.getItem('venuePrintHd2')||'';}catch(e){}
 if(!/^[01]{2}$/.test(s0))s0='01';   // 第一次：只印週一～五（週末有課也不印，要印再勾）；平日的國定假日照印
+if(${VISIT_MODE})s0='01';   // 訪查模式：固定只印週一～五（假日本來就不標）
 document.getElementById('pWe').checked=s0[0]==='1';document.getElementById('pHo').checked=s0[1]==='1';
 hdSet(0);
 <\/script></body></html>`;
@@ -4184,6 +4194,8 @@ function renderVenueTable(dates){
   const wkEnd=dates.slice(5).map(d=>fmtDate(d));
   const wkEndCount=venueBookings.filter(x=>wkEnd.includes(x.displayDate)&&x.periodStatus!=='已拒絕'&&(!venueLabFilter||x.displayVenue===venueLabFilter+'實驗室')).length;
   const wBtn=document.getElementById('venueWeekendBtn');
+  if(wBtn)wBtn.style.display=VISIT_MODE?'none':'';   // 訪查模式：沒有週末按鈕，固定週一～五
+  if(VISIT_MODE)venueShowWeekend=false;
   if(wBtn){wBtn.textContent=venueShowWeekend?'－收起週末':`＋週末${wkEndCount?'（'+wkEndCount+'）':''}`;wBtn.classList.toggle('btn-warn',!venueShowWeekend&&wkEndCount>0);}
   if(!venueShowWeekend)dates=dates.slice(0,5);
   syncVenueLabTabs();
@@ -4207,7 +4219,7 @@ function renderVenueTable(dates){
   const tw=document.getElementById('venueTableWrapEl');if(tw)tw.classList.toggle('fit-wrap',!venueShowWeekend);
   const COMPACT_PERIODS=['早休','午休'];
   let html=`<thead><tr><th>節次</th>${showLabCol?'<th>實驗室</th>':''}${dates.map((d,i)=>{
-    const holiday=holidayForDate(fmtDate(d));
+    const holiday=holidayShown(fmtDate(d));
     return `<th class="${holCls(holiday)} ${isWeekendDate(d)?'wk-end':''}">週${DAYS[i]}<br><span style="font-size:10px;font-weight:400">${fmtDateTW(d)}</span>${holiday?`<span class="holiday-tag">${escH(holTag(holiday))}</span>`:''}</th>`;
   }).join('')}</tr></thead><tbody>`;
   // 一格裡放「所有實驗室」的預約（合併模式，或早休/午休這種短時段）
@@ -4217,7 +4229,7 @@ function renderVenueTable(dates){
     if(showLabCol)r+=`<td class="lab-cell">－</td>`;
     dates.forEach(date=>{
       const dateStr=fmtDate(date);
-      const hc=holCls(holidayForDate(dateStr,period));
+      const hc=holCls(holidayShown(dateStr,period));
       let chips='',freeLabs=0,picks=0;
       VENUE_LABS.forEach(lab=>{
         const vf=VENUE_LAB_FULL[lab];
@@ -4241,7 +4253,7 @@ function renderVenueTable(dates){
       if(showLabCol)html+=`<td class="lab-cell lab-${lab}">${lab}</td>`;
       dates.forEach(date=>{
         const dateStr=fmtDate(date),venueFull=VENUE_LAB_FULL[lab];
-        const hc=holCls(holidayForDate(dateStr,period));
+        const hc=holCls(holidayShown(dateStr,period));
         const cellBookings=venueBookings.filter(b=>b.displayDate===dateStr&&b.displayPeriod===period&&b.displayVenue===venueFull);
         const blocking=cellBookings.some(b=>!isShareablePurpose(b.purpose));
         html+=`<td class="vcell ${hc} ${isWeekendDate(date)?'wk-end':''}">`;
@@ -7466,6 +7478,7 @@ function wkData(w){
   });});
   sxRuns.forEach(r=>{if(r.booking_id||r.is_hidden||r.run_date<a||r.run_date>z)return;const t=r.template_id?sxTpl(r.template_id):null;
     add(r.run_date,r.period||'未填節次',{subj:r.subject||'其他',cls:r.grade||'',who:r.teacher||'',exp:t?(t.name||'').trim():(r.title||''),out:r.venue||'班上',tpl:t?t.id:null});});
+  if(VISIT_MODE)[...cells.keys()].forEach(k=>{if(k.startsWith(days[5].date))cells.delete(k);});   // 訪查模式：不放週六
   const used=new Set([...cells.keys()].map(k=>k.split('|')[1]));
   const per=[...PERIODS.filter(p=>used.has(p)),...[...used].filter(p=>!PERIODS.includes(p))];
   const sat=[...cells.keys()].some(k=>k.startsWith(days[5].date));
@@ -7474,7 +7487,7 @@ function wkData(w){
   return {days:sat?days:days.slice(0,5),cells,per};
 }
 // 表頭：假期、停課寫在星期下面
-function wkHolTag(ds){const h=holidayForDate(ds);return h?`<em class="wk-hol${holClosed(h)?' closed':''}">${escH(holClosed(h)?'停課'+(h.from_period?'・'+h.from_period+'起':''):(h.label||'假期'))}</em>`:'';}
+function wkHolTag(ds){const h=holidayShown(ds);return h?`<em class="wk-hol${holClosed(h)?' closed':''}">${escH(holClosed(h)?'停課'+(h.from_period?'・'+h.from_period+'起':''):(h.label||'假期'))}</em>`:'';}
 function wkChip(e){
   const col=semColor(e.subj),tint=SP_TINT[e.subj]||SP_TINT['其他'];
   const on=e.tpl?` onclick="spOpen(${ja(e.tpl)})"`:'';
@@ -7497,11 +7510,11 @@ function wkRender(){
     if(!wkSel||!cells.has(wkSel)){const td=fmtDate(new Date());wkSel=[...cells.keys()].sort().find(k=>k>=td)||[...cells.keys()].sort()[0];}
     const sl=cells.get(wkSel)||[],[sd,sp]=wkSel.split('|'),sdd=new Date(sd+'T00:00:00');
     body=`<div class="wk-mg" style="grid-template-columns:34px repeat(${days.length},1fr)"><div></div>${days.map(x=>`<div class="wk-mh"><b>${wd[x.i]}</b><small>${md(x.d)}</small>${wkHolTag(x.date)}</div>`).join('')}`+
-      per.map(p=>`<div class="wk-mp">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>{const k=x.date+'|'+p,l=cells.get(k)||[];return `<button type="button" class="wk-mc${k===wkSel?' on':''}${holClosed(holidayForDate(x.date,p))?' closed':''}" ${l.length?`onclick="wkSel=${ja(k)};wkRender()"`:'disabled'}>${l.slice(0,4).map(e=>`<i class="${e.pend?'pd':''}" style="--c:${semColor(e.subj)}">${escH(WK_SUB[e.subj]||'・')}</i>`).join('')}${l.length>4?`<small>+${l.length-4}</small>`:''}</button>`;}).join('')).join('')+'</div>'+
+      per.map(p=>`<div class="wk-mp">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>{const k=x.date+'|'+p,l=cells.get(k)||[];return `<button type="button" class="wk-mc${k===wkSel?' on':''}${holClosed(holidayShown(x.date,p))?' closed':''}" ${l.length?`onclick="wkSel=${ja(k)};wkRender()"`:'disabled'}>${l.slice(0,4).map(e=>`<i class="${e.pend?'pd':''}" style="--c:${semColor(e.subj)}">${escH(WK_SUB[e.subj]||'・')}</i>`).join('')}${l.length>4?`<small>+${l.length-4}</small>`:''}</button>`;}).join('')).join('')+'</div>'+
       `<div class="wk-det"><div class="wk-dt">${wd[sdd.getDay()-1]||''} ${md(sdd)}・${escH(sp||'')}</div>${sl.map(wkChip).join('')}</div>`;
   }else{
     body=`<div class="wk-grid" style="grid-template-columns:52px repeat(${days.length},minmax(0,1fr))"><div class="wk-h"></div>${days.map(x=>`<div class="wk-h"><b>${wd[x.i]}</b> ${md(x.d)}${wkHolTag(x.date)}</div>`).join('')}`+
-      per.map(p=>`<div class="wk-p">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>`<div class="wk-td${holClosed(holidayForDate(x.date,p))?' closed':''}">${(cells.get(x.date+'|'+p)||[]).map(wkChip).join('')}</div>`).join('')).join('')+'</div>';
+      per.map(p=>`<div class="wk-p">${escH(p.replace(/^第(\d)節$/,'$1'))}</div>`+days.map(x=>`<div class="wk-td${holClosed(holidayShown(x.date,p))?' closed':''}">${(cells.get(x.date+'|'+p)||[]).map(wkChip).join('')}</div>`).join('')).join('')+'</div>';
   }
   const legend=SX_SUBJ.map(s=>`<span style="--c:${semColor(s)};--t:${SP_TINT[s]}"><i>${WK_SUB[s]}</i>${s}</span>`).join('');
   let o=document.getElementById('wkSheet');
