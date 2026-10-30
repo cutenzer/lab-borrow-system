@@ -1356,11 +1356,12 @@
 /* 工具列固定（2026-10-25）：學期實驗紀錄往下捲時，上方的學期／檢視／科目／篩選／新增那一列留在畫面頂端（電腦版）
    頁首（標題）不固定；子分頁放在頁首裡面 */
 .pg-head .bw-subtabs{margin:14px 0 0;}
-@media(min-width:1100px){
-  .sr-bar{position:sticky;top:0;z-index:30;background:var(--surface);margin:-8px -20px 8px;padding:10px 20px;border-radius:0 0 10px 10px;transition:box-shadow .15s;}
-  .sr-bar.stuck{box-shadow:0 1px 0 var(--border),0 8px 14px -12px rgba(0,0,0,.28);}
-  .sr-wk{scroll-margin-top:72px;}
-}
+/* 2026-10-29：電腦、手機都固定；手機黏在頁首（56px 深色那條）下面，不再被頁首蓋住 */
+.sr-bar{position:sticky;top:56px;z-index:30;background:var(--surface);margin:-8px -20px 8px;padding:10px 20px;border-radius:0 0 10px 10px;transition:box-shadow .15s;}
+.sr-bar.stuck{box-shadow:0 1px 0 var(--border),0 8px 14px -12px rgba(0,0,0,.28);}
+.sr-wk{scroll-margin-top:150px;}
+.sr-bar .sr-wsel{max-width:150px}
+@media(min-width:1100px){.sr-bar{top:0;}.sr-wk{scroll-margin-top:90px;}}  /* 電腦版沒有頂端黑條，貼最上面 */
 @media print{.sr-bar{position:static!important;box-shadow:none!important;}}
 </style>
 </head>
@@ -2724,8 +2725,38 @@ function showTab(tab,opts){
   if(tab==='backup')renderBackupInfo();
 }
 // 學期實驗紀錄的工具列黏在頂端時，下緣加一條細線（看得出下面的內容是捲到它底下）
-function srBarStuck(){document.querySelectorAll('#panel-semruns.active .sr-bar').forEach(b=>b.classList.toggle('stuck',b.getBoundingClientRect().top<=1&&window.scrollY>0));}
-window.addEventListener('scroll',srBarStuck,{passive:true});
+// 2026-10-29：工具列改黏在頁首下面，所以「黏住」的判斷改成頁首高度；順便讓「週次」選單跟著目前捲到的週次變
+function srHdrH(){const h=document.querySelector('#adminWrap>header');return h?h.offsetHeight:0;}  // 電腦版頁首藏起來＝0
+function srBarStuck(){
+  const bar=document.querySelector('#panel-semruns.active .sr-bar');if(!bar)return;
+  const hdr=srHdrH();
+  bar.classList.toggle('stuck',bar.getBoundingClientRect().top<=hdr+1&&window.scrollY>0);
+  const sels=bar.querySelectorAll('.sr-wsel');if(!sels.length)return;
+  const lim=hdr+bar.offsetHeight+16,secs=document.querySelectorAll('#srRoot .sr-wk');
+  let cur=secs[0];for(const x of secs){if(x.getBoundingClientRect().top<=lim)cur=x;else break;}
+  if(cur){const v=cur.id.slice(4);sels.forEach(x=>{if(x.value!==v)x.value=v;});}
+}
+// 跳到某一週：扣掉頁首和工具列的高度，週次標題才不會躲在工具列底下；那週被篩選掉沒東西，就跳到下一個有東西的週
+function srJumpWeek(wk,smooth){
+  const secs=[...document.querySelectorAll('#srRoot .sr-wk')];if(!secs.length)return;
+  const n=Number(wk);
+  const t=document.getElementById('srw-'+n)||secs.find(x=>Number(x.id.slice(4))>=n)||secs[secs.length-1];
+  const bar=document.querySelector('#panel-semruns.active .sr-bar');
+  const y=t.getBoundingClientRect().top+window.scrollY-srHdrH()-(bar?bar.offsetHeight:0)-6;
+  window.scrollTo({top:Math.max(0,y),behavior:smooth?'smooth':'auto'});
+}
+// 週次選單：這學期每一週；目前篩選下沒東西的週變灰（還是能選，會跳到下一個有東西的週）
+function srWselHtml(weeks,nowIdx){
+  if(!weeks.length)return '';
+  return `<select class="sr-wsel" aria-label="跳到週次" onchange="srJumpWeek(this.value,1)">${weeks.map((w,i)=>`<option value="${escH(String(w.week))}">W${escH(String(w.week))}　${srMD(w.date)}${i===nowIdx?'・本週':''}</option>`).join('')}</select>`;
+}
+function srWselSync(){
+  const have=new Set([...document.querySelectorAll('#srRoot .sr-wk')].map(x=>x.id.slice(4)));
+  document.querySelectorAll('#srRoot .sr-wsel option').forEach(o=>{o.style.color=have.has(o.value)?'':'#aaa';});
+  srBarStuck();
+}
+let srSpyRaf=0;
+window.addEventListener('scroll',()=>{if(srSpyRaf)return;srSpyRaf=requestAnimationFrame(()=>{srSpyRaf=0;srBarStuck();});},{passive:true});
 // 選單要「黏在按鈕下面」：用整頁座標定位（position:absolute），頁面上下捲動時會跟著按鈕一起走；
 // 分頁列左右滑動、視窗大小改變時重新對齊；按鈕被捲出畫面就自動收起
 function positionTabMoreMenu(){
@@ -10647,7 +10678,7 @@ async function loadSemRuns(force){
     const first=!srLoaded;
     srRuns=Array.isArray(runs)?runs:[];srBks=Array.isArray(bks)?bks:[];srLoaded=true;
     srRender();
-    if(first){const n=document.querySelector('#srRoot .sr-wk.now');if(n)n.scrollIntoView({block:'start'});}
+    if(first){const n=document.querySelector('#srRoot .sr-wk.now');if(n)srJumpWeek(n.id.slice(4));}
   }catch(e){box.innerHTML=`<div class="empty"><p>載入失敗</p><p style="font-size:12px;color:var(--danger)">${escH(e.message)}</p></div>`;}
 }
 // 這學期每一週的項目：實驗紀錄一筆一列；預約裡還沒填實驗的節次，合成一列
@@ -10710,7 +10741,8 @@ function srBarHtml(nowIdx,weeks){
       <div class="sr-seg" title="卡片：同一週、同年段、同科目合成一張；清單：一節一列；年級表／週次表：整學期一張，印成 A3 紙本保存">${[['card','卡片'],['list','清單'],['grade','年級表'],['wk','週次表']].map(([k,l])=>`<button type="button" class="${srView===k?'on':''}" onclick="srView='${k}';srSelClear();srRender()">${l}</button>`).join('')}</div>
       <select onchange="srSubj=this.value;srRender()" aria-label="科目">${['全部',...SR_SUBJ].map(s=>`<option value="${s}"${s===srSubj?' selected':''}>${s==='全部'?'全部科目':s}</option>`).join('')}</select>
       ${srIsPlan()?'':`<div class="sr-seg">${[['all','全部'],['empty','沒填實驗'],['run','已填']].map(([k,l])=>`<button type="button" class="${srMode===k?'on':''}" onclick="srMode='${k}';srRender()">${l}</button>`).join('')}</div>`}
-      ${nowIdx>=0&&!srIsPlan()?`<button type="button" class="sr-jump" onclick="document.getElementById('srw-${weeks[nowIdx].week}')?.scrollIntoView({behavior:'smooth',block:'start'})">跳到本週</button>`:''}
+      ${srIsPlan()?'':srWselHtml(weeks,nowIdx)}
+      ${nowIdx>=0&&!srIsPlan()?`<button type="button" class="sr-jump" onclick="srJumpWeek(${weeks[nowIdx].week},1)">跳到本週</button>`:''}
       <button type="button" class="btn btn-primary btn-sm sr-add" onclick="srEdit()">＋ 新增實驗紀錄</button>
     </div>`;
 }
@@ -10736,7 +10768,7 @@ function srRender(){
   box.innerHTML=`${srBarHtml(nowIdx,weeks)}
     <div class="sr-sum">${srView==='card'?'同一週、同年段、同科目合成一張卡；同一班這週第二次上課，算第二個實驗・':''}已填 ${total} 筆・預約還沒填實驗 ${empty} 筆${cal.real?'':'・學期週次是估計的（學期設定還沒設這學期）'}</div>
     ${body||'<div class="empty"><p>這學期還沒有紀錄</p></div>'}`;
-  srBar();
+  srBar();srWselSync();
 }
 // ── 各年級安排表／各週次安排表（2026-10-21）：學期結束、都填完後，整學期印成一張 A3 紙本保存 ──
 // 資料＝學期實驗紀錄裡「已填」的；分組跟卡片一樣（同週＋同年段＋同科目＋同類型）
@@ -11772,6 +11804,7 @@ async function srSave(){
   .srm-r select{flex:1 1 0;min-width:0;width:auto;height:36px;padding:0 18px 0 8px;font:inherit;font-size:13px;border-radius:8px;-webkit-appearance:none;appearance:none;background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%235f5b54' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 6px center;text-overflow:ellipsis}
   .srm-r select.on{border-color:var(--text);font-weight:700}
   .srm-r .sr-jump{flex:0 0 auto;padding:4px 0}
+  .srm-r select.sr-wsel{flex:0 1 150px;max-width:none}
   .srm-r .srm-add{margin-left:auto;flex:0 0 auto}
   #panel-semruns .sr-sum .srm-rule{display:none}
   #panel-semruns .sr-sum{margin-bottom:6px}
@@ -12035,7 +12068,8 @@ async function srSave(){
           ${plan?'':sel([['all','全部'],['empty','沒填實驗'],['run','已填']],srMode,'srMode=this.value;srRender()','狀態',1)}
         </div>
         <div class="srm-r">
-          ${nowIdx>=0&&!plan?`<button type="button" class="sr-jump" onclick="document.getElementById('srw-${weeks[nowIdx].week}')?.scrollIntoView({behavior:'smooth',block:'start'})">跳到本週</button>`:''}
+          ${plan?'':srWselHtml(weeks,nowIdx)}
+          ${nowIdx>=0&&!plan?`<button type="button" class="sr-jump" onclick="srJumpWeek(${weeks[nowIdx].week},1)">跳到本週</button>`:''}
           <button type="button" class="btn btn-primary btn-sm srm-add" onclick="srEdit()">＋ 新增紀錄</button>
         </div></div>`;
       return h.replace(/<\/div>\s*$/,m+'</div>');
@@ -12374,5 +12408,221 @@ div:has(>.la)+.qe-pos{display:none}
 })();
 </script>
 <!-- ═══ la-v1 結束 ═══ -->
+<!-- ═══ 整櫃改代碼 rc-v1（2026-10-30）：刪掉這段（到「rc-v1 結束」）即還原 ═══
+     做的事：標籤貼錯（例如 TD01 其實是 TA01），一次把「器材的櫃位」和「平面圖上的框」都從舊代碼改成新代碼。
+     入口：平面圖校正點櫃位 →「整櫃改代碼」；器材管理 → 更多 →「整櫃改代碼」。
+     規則：TD01、TD01-2（第 2 層）、TD01-頂 都跟著換；範圍 TD01-04 只把 TD01 拆出來（→ TA01 & TD02-04），數量 ×2 兩邊都保留；
+     新代碼本來就有的器材，同一項同一格寫兩次會合併（有數量就相加）。PC 開頭物理、理化都有用，所以一次只改一個房間。
+     代碼開頭換到別的房間（例如 T→P）時，器材的房間可以一起改；平面圖的框屬於原房間，不搬。改完 toast 可以按「復原」。
+     不動：藥品櫃（藥品櫃是固定格子另一套）、借用單（借用單用名稱對器材，不記櫃位）。 -->
+<style>
+.rc-io{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
+.rc-io .form-group{margin:0}
+.rc-io input{font-family:'DM Mono',monospace;font-size:17px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.rc-io .rc-ar{padding-bottom:10px;color:var(--text2);font-size:18px}
+.rc-room{margin-top:10px}
+.rc-msg{margin-top:12px;font-size:13px;color:var(--text2)}
+.rc-msg.bad{color:var(--danger)}
+.rc-list{margin-top:8px;border:1px solid var(--border);border-radius:10px;max-height:46vh;overflow:auto}
+.rc-r{padding:8px 12px;border-bottom:1px solid var(--surface2);font-size:13.5px}
+.rc-r:last-child{border-bottom:0}
+.rc-r b{font-weight:600}
+.rc-r .rc-d{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:2px;font-family:'DM Mono',monospace;font-size:12.5px}
+.rc-r .rc-d s{color:var(--text2)}
+.rc-r .rc-d ins{text-decoration:none;color:var(--accent);font-weight:700}
+.rc-r .rc-w{font-size:12px;color:#9a3412;margin-top:2px}
+.rc-note{margin-top:8px;padding:8px 10px;border-radius:8px;background:var(--surface2);font-size:12.5px;line-height:1.6}
+.rc-chk{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:13.5px;cursor:pointer}
+.rc-chk input{width:auto}
+</style>
+<script>
+(function(){
+  if(window.rcOn)return;window.rcOn=true;
+  const CAB=/^[A-Z]{1,3}\d{1,4}$/;                 // 一個櫃子的代碼：英文 1～3 個＋數字
+  const up=v=>String(v||'').trim().toUpperCase().replace(/\s+/g,'');
+  const roomByPrefix=p=>Object.keys(ROOM_EXPECTED_PREFIX).find(r=>ROOM_EXPECTED_PREFIX[r]===p)||'';
+  let st=null,busy=false;                          // st：{from,to,room,lockRoom,hs:[全部平面圖框]}
+
+  // 連號壓回範圍：TD02、TD03、TD04、TD06 → TD02-04、TD06
+  function compress(codes){
+    const ps=codes.map(c=>{const m=c.match(/^([A-Z]+)(\d+)$/);return m?{p:m[1],n:+m[2],w:m[2].length,c}:{c};});
+    const out=[];let i=0;
+    while(i<ps.length){
+      const a=ps[i];if(a.p==null){out.push(a.c);i++;continue;}
+      let j=i;while(j+1<ps.length&&ps[j+1].p===a.p&&ps[j+1].w===a.w&&ps[j+1].n===ps[j].n+1)j++;
+      out.push(j>i?a.c+'-'+String(ps[j].n).padStart(a.w,'0'):a.c);i=j+1;
+    }
+    return out;
+  }
+  // 同一格寫兩次（TA01×2 & TA01×3）→ 合併成一個（TA01×5）；只合併單純的寫法，範圍不動
+  function mergeDup(field){
+    const segs=field.split(/\s*[&\/]\s*/).map(s=>s.trim()).filter(Boolean);
+    const seen=new Map(),out=[];
+    segs.forEach(s=>{
+      const m=s.match(LOC_QTY_RE),code=s.replace(LOC_QTY_RE,'').trim().toUpperCase(),q=m?+m[1]:null;
+      const k=seen.get(code);
+      if(k&&!/^[A-Z]+\d+-\d+$/.test(code)){if(q!=null)k.q=(k.q||0)+q;return;}
+      const o={code:s.replace(LOC_QTY_RE,'').trim(),q};seen.set(code,o);out.push(o);
+    });
+    return {text:out.map(o=>o.code+(o.q!=null?'×'+o.q:'')).join(' & '),merged:segs.length!==out.length};
+  }
+  // 把一筆器材的櫃位欄裡的 from 換成 to；沒有用到 from 就回傳 null
+  function renameField(field,from,to){
+    const parts=String(field||'').split(/(\s*[&\/]\s*)/);   // 單數格＝一段位置，雙數格＝原本的分隔符號（保留）
+    let changed=false;
+    for(let k=0;k<parts.length;k+=2){
+      const raw=parts[k],t=raw.trim();if(!t)continue;
+      const qm=t.match(LOC_QTY_RE),qs=qm?qm[0].trim():'';
+      const code=t.replace(LOC_QTY_RE,'').trim(),U=code.toUpperCase();
+      const m=U.match(/^([A-Z]+)(\d+)(?:-(.+))?$/);if(!m)continue;  // 自由文字備註不動
+      const base=m[1]+m[2],toks=m[3]?m[3].split(/[、,，]/).map(s=>s.trim()).filter(Boolean):[];
+      const isRange=toks.length&&/^\d+$/.test(toks[0])&&toks[0].length===m[2].length;
+      if(!isRange){
+        if(base!==from)continue;
+        parts[k]=raw.replace(code,to+code.slice(base.length));changed=true;continue;
+      }
+      const codes=expandLocationCode(U);
+      if(!codes.some(c=>c===from||c.startsWith(from+'-')))continue;
+      const moved=[],keep=[];
+      codes.forEach(c=>{if(c===from)moved.push(to);else if(c.startsWith(from+'-'))moved.push(to+c.slice(from.length));else keep.push(c);});
+      const pieces=[...new Set(moved),...compress(keep)].map(p=>p+qs);
+      const lead=raw.match(/^\s*/)[0],trail=raw.match(/\s*$/)[0];
+      parts[k]=lead+pieces.join(' & ')+trail;changed=true;
+    }
+    if(!changed)return null;
+    const joined=parts.join(''),md=mergeDup(joined);
+    return {text:md.merged?md.text:joined,merged:md.merged};
+  }
+  window.rcRenameField=renameField;   // 給自我測試用
+
+  function plan(){
+    const {from,to}=st;
+    if(!CAB.test(from)||!CAB.test(to)||from===to)return {err:!from||!to?'':from===to?'新舊代碼一樣':'代碼格式要像 TA01（英文＋數字，只寫到櫃子，不寫層）'};
+    const uses=c=>e=>expandLocationField(e.location).some(x=>x===c||x.startsWith(c+'-'));
+    const hit=allAdminEquipment.filter(uses(from));
+    const rooms=[...new Set([...hit.map(e=>e.room),...st.hs.filter(h=>up(h.code)===from).map(h=>h.room)])];
+    if(!st.lockRoom&&(!st.room||!rooms.includes(st.room)))st.room=rooms.includes(roomByPrefix(locationSegmentPrefix(from)))?roomByPrefix(locationSegmentPrefix(from)):rooms[0]||'';
+    const room=st.room;
+    const pf=locationSegmentPrefix(from),pt=locationSegmentPrefix(to);
+    const newRoom=pf!==pt?roomByPrefix(pt):'';
+    const moveRoom=!!newRoom&&newRoom!==room;
+    const items=hit.filter(e=>e.room===room).map(e=>{
+      const r=renameField(e.location,from,to);if(!r)return null;
+      const body={location:r.text};let warn='';
+      if(moveRoom&&st.moveRoom){
+        const segs=r.text.split(/[&\/]/).map(s=>s.trim()).filter(Boolean);
+        if(segs.every(s=>locationSegmentPrefix(s)===pt))body.room=newRoom;else warn=`這項還有放在別的櫃子，房間沒改（仍是${rn(room)}）`;
+      }
+      if(r.merged)warn=(warn?warn+'；':'')+`原本就有 ${to}，同一格已合併`;
+      return {e,body,old:{location:e.location,room:e.room},warn};
+    }).filter(Boolean);
+    const already=allAdminEquipment.filter(e=>e.room===(moveRoom&&st.moveRoom?newRoom:room)&&uses(to)(e)&&!items.some(i=>i.e.id===e.id)).length;
+    const hsFrom=st.hs.find(h=>h.room===room&&up(h.code)===from),hsTo=st.hs.find(h=>h.room===room&&up(h.code)===to);
+    let hs=null,hsNote='';
+    if(hsFrom){
+      if(moveRoom&&st.moveRoom)hsNote=`平面圖上 ${from} 的框在${rn(room)}，不會搬過去；要的話到${rn(newRoom)}的平面圖再畫一個 ${to}，舊框可以在平面圖校正刪掉。`;
+      else if(hsTo)hsNote=`平面圖上已經有 ${to} 的框，${from} 的框沒動（不要了可以在平面圖校正刪掉）。`;
+      else hs=hsFrom;
+    }
+    return {room,rooms,items,already,hs,hsNote,newRoom,moveRoom};
+  }
+
+  function render(){
+    const box=document.getElementById('rcOut');if(!box||!st)return;
+    const p=plan(),btn=document.querySelector('#modalActions .rc-go');
+    const rs=document.getElementById('rcRoomBox');
+    if(rs)rs.innerHTML=!p.err&&p.rooms&&p.rooms.length>1&&!st.lockRoom?`<div class="form-group rc-room"><label>${st.from} 在好幾個房間都有用到，這次改哪一間？</label><select onchange="rcSetRoom(this.value)">${p.rooms.map(r=>`<option value="${escH(r)}"${r===p.room?' selected':''}>${escH(rn(r))}</option>`).join('')}</select></div>`:'';
+    if(p.err!=null){box.innerHTML=p.err?`<div class="rc-msg bad">${escH(p.err)}</div>`:'';if(btn)btn.disabled=true;return;}
+    const n=p.items.length+(p.hs?1:0);
+    if(btn){btn.disabled=!n;btn.textContent=n?`改成 ${st.to}`:'沒有要改的';}
+    if(!p.items.length&&!p.hs&&!p.hsNote){box.innerHTML=`<div class="rc-msg">${p.room?escH(rn(p.room))+'裡':''}沒有器材或平面圖的框用到 <b>${escH(st.from)}</b></div>`;return;}
+    const list=p.items.map(it=>`<div class="rc-r"><b>${escH(it.e.name)}</b>${it.e.spec?`<span style="color:var(--text2)">　${escH(it.e.spec)}</span>`:''}
+      <div class="rc-d"><s>${escH(it.old.location)}</s><span>→</span><ins>${escH(it.body.location)}</ins>${it.body.room?`<span style="font-family:inherit;color:var(--accent)">・房間改成${escH(rn(it.body.room))}</span>`:''}</div>
+      ${it.warn?`<div class="rc-w">${escH(it.warn)}</div>`:''}</div>`).join('');
+    box.innerHTML=`<div class="rc-msg">${escH(rn(p.room))}：<b style="color:var(--text)">${p.items.length}</b> 項器材${p.hs?`＋平面圖上的框 <b style="color:var(--text)">${escH(st.from)}</b>`:''}會改成 <b style="color:var(--text)">${escH(st.to)}</b></div>
+      ${p.items.length?`<div class="rc-list">${list}</div>`:''}
+      ${p.moveRoom?`<label class="rc-chk"><input type="checkbox"${st.moveRoom?' checked':''} onchange="rcSetMove(this.checked)"> ${escH(st.to)} 是${escH(rn(p.newRoom))}的代碼，器材的房間一起改成${escH(rn(p.newRoom))}</label>`:''}
+      ${p.already||p.hsNote?`<div class="rc-note">${p.already?`${escH(st.to)} 本來就有 ${p.already} 項器材，改完會跟這些放在一起。`:''}${p.already&&p.hsNote?'<br>':''}${escH(p.hsNote)}</div>`:''}`;
+  }
+  window.rcSetRoom=r=>{if(st){st.room=r;render();}};
+  window.rcSetMove=v=>{if(st){st.moveRoom=!!v;render();}};
+  window.rcInput=()=>{if(!st)return;st.from=up(document.getElementById('rcFrom')?.value);st.to=up(document.getElementById('rcTo')?.value);render();};
+
+  // from：預填舊代碼；room：從平面圖點進來時固定那個房間；hotspotId：改完回到那個櫃位
+  window.rcOpen=async function(from,room,hotspotId){
+    st={from:up(from),to:'',room:room||'',lockRoom:!!room,hs:[],moveRoom:true,hotspotId:hotspotId??null};
+    showModal('整櫃改代碼',`<p style="font-size:13px;color:var(--text2);margin:0 0 10px;line-height:1.6">標籤貼錯時用：器材的櫃位和平面圖上的框一次改好。層（TD01-2）、櫃頂（TD01-頂）、數量（×2）都會跟著。</p>
+      <div class="rc-io"><div class="form-group"><label>原代碼</label><input id="rcFrom" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${escH(st.from)}" placeholder="TD01" oninput="rcInput()"></div>
+      <span class="rc-ar">→</span>
+      <div class="form-group"><label>改成</label><input id="rcTo" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="TA01" oninput="rcInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();document.querySelector('#modalActions .rc-go:not([disabled])')?.click();}"></div></div>
+      ${room?`<div class="rc-msg" style="margin-top:6px">只改${escH(rn(room))}</div>`:''}
+      <div id="rcRoomBox"></div><div id="rcOut"><div class="loading"><div class="spinner"></div>載入中…</div></div>`,
+      [{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'改成…',cls:'btn-primary rc-go',fn:'rcDo()'}]);
+    document.querySelector('#modalActions .rc-go').disabled=true;
+    setTimeout(()=>document.getElementById(st.from?'rcTo':'rcFrom')?.focus(),50);
+    try{
+      const jobs=[sb('GET','floorplan_hotspots',{order:'room,code'})];
+      if(!allAdminEquipment.length)jobs.push(loadAdminEquipment());
+      const [hs]=await Promise.all(jobs);
+      if(!st)return;st.hs=Array.isArray(hs)?hs:[];render();
+    }catch(e){const o=document.getElementById('rcOut');if(o)o.innerHTML=`<div class="rc-msg bad">載入失敗：${escH(e.message)}</div>`;}
+  };
+
+  async function apply(items,hs,toCode,label){
+    const ok=[],bad=[];
+    for(const it of items){
+      try{await sb('PATCH','equipment',{filter:'id=eq.'+encodeURIComponent(it.id),body:it.body,prefer:'return=minimal'});ok.push(it);}
+      catch(e){bad.push(it);}
+    }
+    let hsOk=false;
+    if(hs){try{await sb('PATCH','floorplan_hotspots',{filter:'id=eq.'+encodeURIComponent(hs.id),body:{code:toCode},prefer:'return=minimal'});hsOk=true;}catch(_){}}
+    return {ok,bad,hsOk};
+  }
+  async function refresh(hotspotId){
+    await loadAdminEquipment();
+    if(document.getElementById('panel-floorplan')?.classList.contains('active')){
+      if(typeof loadCalibHotspots==='function')await loadCalibHotspots();
+      if(hotspotId!=null&&typeof openCalibLocEditor==='function'&&allCalibHotspots.some(h=>String(h.id)===String(hotspotId)))openCalibLocEditor(hotspotId);
+    }
+  }
+  window.rcDo=async function(){
+    if(busy||!st)return;const p=plan();if(p.err!=null||(!p.items.length&&!p.hs))return;
+    busy=true;const btn=document.querySelector('#modalActions .rc-go');if(btn){btn.disabled=true;btn.textContent='改中…';}
+    const {from,to,hotspotId}=st;
+    try{
+      const r=await apply(p.items.map(it=>({id:it.e.id,body:it.body,old:it.old})),p.hs,to);
+      closeModal();st=null;
+      await refresh(hotspotId);
+      const undo={items:r.ok.map(it=>({id:it.id,body:{location:it.old.location,room:it.old.room}})),hs:r.hsOk?p.hs:null};
+      const msg=`${from} → ${to}：${r.ok.length} 項器材${r.hsOk?'＋平面圖的框':''}${r.bad.length||(p.hs&&!r.hsOk)?`；${r.bad.length+(p.hs&&!r.hsOk?1:0)} 筆沒改成功，請重新整理再試`:''}`;
+      showToast(msg,r.bad.length?'error':'success',{label:'復原',ms:10000,fn:async()=>{
+        const u=await apply(undo.items,undo.hs,from);
+        await refresh(hotspotId);
+        showToast(u.bad.length?`復原時 ${u.bad.length} 筆失敗，請手動檢查`:`已復原成 ${from}`,u.bad.length?'error':'success');
+      }});
+    }catch(e){showToast('改代碼失敗：'+e.message,'error');}
+    finally{busy=false;}
+  };
+
+  // 入口 1：平面圖校正的櫃位視窗
+  if(typeof window.openCalibLocEditor==='function'){
+    const _o=window.openCalibLocEditor;
+    window.openCalibLocEditor=async function(hotspotId){
+      const out=await _o.apply(this,arguments);
+      const h=allCalibHotspots.find(x=>String(x.id)===String(hotspotId));
+      const add=document.querySelector('#modalBody button[onclick^="openQuickAddToLocation"]');
+      if(h&&add&&!document.querySelector('#modalBody .rc-entry')){
+        const ja=v=>escH(JSON.stringify(String(v??'')));
+        add.insertAdjacentHTML('afterend',` <button type="button" class="btn btn-secondary btn-sm rc-entry" onclick="rcOpen(${ja(h.code)},${ja(FLOORPLAN_KEY_TO_ROOM[calibRoom])},${ja(h.id)})">整櫃改代碼</button>`);
+      }
+      return out;
+    };
+  }
+  // 入口 2：器材管理「更多」
+  const pop=document.querySelector('.act-pop button[onclick*="checkEquipLocationMismatch"]')?.parentElement;  // 器材管理的「更多」（標題列會被搬到頁首，所以用按鈕找）
+  if(pop&&!pop.querySelector('.rc-menu'))pop.insertAdjacentHTML('beforeend',`<button type="button" class="rc-menu" onclick="this.closest('details').removeAttribute('open');rcOpen('')">整櫃改代碼（標籤貼錯）</button>`);
+})();
+</script>
+<!-- ═══ rc-v1 結束 ═══ -->
 </body>
 </html>
