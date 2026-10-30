@@ -4081,9 +4081,9 @@ function printVenueWeek(){
   const labs=venueLabFilter?[venueLabFilter]:VENUE_LABS;
   const weekTxt=(document.getElementById('venueWeekLabel')?.textContent||'').replace(/\s+/g,' ').trim();
   // 2026-10-30：右下角不印列印日期；假日（週末、國定假日）要不要印，在列印頁上方自己選
-  // 每一欄都先產生，再用 class 決定藏不藏：x-we＝週末、x-ho＝平日的假日（停課不算，停課照印）、x-e＝這間這天沒有預約
+  // 每一欄都先產生，再用 class 決定藏不藏：x-we＝週末、x-ho＝平日的假日（停課不算，停課照印）
   const site=(location.origin+location.pathname).replace(/index\.html$/,'');
-  let hdBk=0;   // 假日裡有幾筆預約（選「不印」時提醒會少印）
+  let weBk=0,hoBk=0;   // 週末、平日假日各有幾筆預約（不印時提醒會少印幾筆）
   const who=b=>{
     if(b.role==='學生')return '學生';
     return String(b.borrower_name||'');
@@ -4099,8 +4099,8 @@ function printVenueWeek(){
     const xc=ds.map(d=>{
       const ymd=fmtDate(d),h=holidayForDate(ymd),n=bk.filter(b=>b.displayDate===ymd).length;
       const we=isWeekendDate(d),ho=!we&&!!h&&!holClosed(h);
-      if(we||ho)hdBk+=n;
-      return (we?' x-we':ho?' x-ho':'')+(n?'':' x-e');
+      if(we)weBk+=n;else if(ho)hoBk+=n;
+      return we?' x-we':ho?' x-ho':'';
     });
     const head=`<tr><th class="pc">節次</th>${ds.map((d,i)=>{const h=holidayForDate(fmtDate(d));return `<th class="${h?(holClosed(h)?'hol closed':'hol'):(isWeekendDate(d)?'wk-end':'')}${xc[i]}">週${DAYS[i]}<span>${fmtDateTW(d)}</span>${h?`<em>${escH(holTag(h).replace(/^/,''))}</em>`:''}</th>`;}).join('')}</tr>`;
     const body=PERIODS.map(p=>{
@@ -4149,28 +4149,30 @@ footer{display:flex;justify-content:space-between;font-size:9pt;color:#444;margi
 .bar button{font-size:16px;padding:8px 16px}
 @media print{.bar{display:none}}
 .bar label{display:flex;align-items:center;gap:6px;font-weight:700}
-.bar select{font:inherit;font-size:15px;padding:6px 8px}
 .bar .hn{color:#9a3412;font-size:13px}
-body.m-auto .x-we.x-e{display:none}
-body.m-none .x-we,body.m-none .x-ho{display:none}
+body.no-we .x-we,body.no-ho .x-ho{display:none}
+.bar label input{width:18px;height:18px}
 @media screen and (max-width:600px){.bar{flex-wrap:wrap}}
 @media screen{.page{border:1px solid #ccc;margin:12px auto;width:192mm;max-width:100%;padding:6mm;height:auto;min-height:278mm}}
 </style></head><body>
 <div class="bar"><button onclick="window.print()">列印</button>
-<label>假日<select id="hdMode" onchange="hdSet(this.value)">
-<option value="auto">週末有預約才印</option><option value="all">週末、假日都印</option><option value="none">週末、假日都不印</option></select></label>
+<label><input type="checkbox" id="pWe" onchange="hdSet(1)">印週末</label>
+<label><input type="checkbox" id="pHo" onchange="hdSet(1)">印國定假日</label>
 <span class="hn" id="hdNote"></span>
 <span>共 ${labs.length} 張 A4（直式）。手機上請在列印畫面選「儲存為 PDF」或直接印。</span></div>
 ${pages}
 <script>
-function hdSet(m){
-  if(!/^(auto|all|none)$/.test(m))m='auto';
-  document.body.className='m-'+m;document.getElementById('hdMode').value=m;
-  document.getElementById('hdNote').textContent=m==='none'&&${hdBk}?'假日有 ${hdBk} 筆預約不會印出來':'';
-  try{localStorage.setItem('venuePrintHd',m);}catch(e){}
+// 勾選＝印；沒勾＝那幾天整欄拿掉（就算有課）。選過的記在這台裝置，下次照用
+function hdSet(save){
+  var we=document.getElementById('pWe').checked,ho=document.getElementById('pHo').checked,n=(we?0:${weBk})+(ho?0:${hoBk});
+  document.body.className=(we?'':'no-we ')+(ho?'':'no-ho');
+  document.getElementById('hdNote').textContent=n?'有 '+n+' 筆預約在沒印的日子':'';
+  if(save)try{localStorage.setItem('venuePrintHd2',(we?'1':'0')+(ho?'1':'0'));}catch(e){}
 }
-var m0='${venueShowWeekend?'all':'auto'}';try{m0=localStorage.getItem('venuePrintHd')||m0;}catch(e){}
-hdSet(m0);
+var s0='';try{s0=localStorage.getItem('venuePrintHd2')||'';}catch(e){}
+if(!/^[01]{2}$/.test(s0))s0='01';   // 第一次：只印週一～五（週末有課也不印，要印再勾）；平日的國定假日照印
+document.getElementById('pWe').checked=s0[0]==='1';document.getElementById('pHo').checked=s0[1]==='1';
+hdSet(0);
 <\/script></body></html>`;
   const w=window.open('','_blank');
   if(!w){showToast('瀏覽器擋住了新視窗，請允許彈出視窗後再試','error');return;}
