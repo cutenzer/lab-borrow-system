@@ -2494,7 +2494,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-10-28b';
+const ADMIN_VERSION='2026-11-01a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -10654,7 +10654,7 @@ function teSetChem(id){
 // ── 學期實驗紀錄（後台）：這學期每一週做了什麼實驗；可以新增、補填、修改、刪除，也可以決定預約要不要出現在前台學期頁 ──
 const SR_SUBJ=['物理','化學','生物','地科','理化'];
 const SR_COL={'物理':'#3d5a99','化學':'#b5612a','生物':'#2f7a4f','地科':'#8a6a1f','理化':'#7a4b8f'};
-const SR_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','課程':'一般'};
+const SR_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','能力競賽':'競賽培訓','課程':'一般'}; // 前台的借用目的叫「能力競賽」（2026-11-01 補）
 let srRuns=[],srBks=[],srTerm=null,srSubj='全部',srMode='all',srLoaded=false;
 function srTpl(id){return tplById(id);}
 function srVenueSubj(v){v=String(v||'');return SR_SUBJ.find(s=>v.startsWith(s))||'';}
@@ -10791,13 +10791,15 @@ function srPlanLayout(kind){
   const cal=semCalendar(srTerm,activeSemester),weeks=cal.weeks;
   const cols=new Map();let todo=0,groups=0;
   weeks.forEach((w,wi)=>srWeekGroups(w).forEach(g=>{
-    todo+=g.todo.length;if(!g.runs.length)return;groups++;
+    // 競賽培訓通常不登記實驗：沒填也直接放進表裡，不算「沒填」（2026-11-01）
+    const comp=g.type==='競賽培訓'&&!g.runs.length;
+    if(!comp)todo+=g.todo.length;if(!g.runs.length&&!comp)return;groups++;
     const titles=[...new Set(g.runs.map(it=>{const t=it.run.template_id?srTpl(it.run.template_id):null;return t?(t.name||'').trim():String(it.run.title||'').trim();}).filter(Boolean))];
-    const title=titles.join('／')||'（未填名稱）',lv=g.lv||'其他',ty=g.type||'';
+    const title=titles.join('／')||(comp?'競賽培訓':'（未填名稱）'),lv=g.lv||'其他',ty=g.type||'';
     let ck,tag;
     const sk=ty==='探究'?'探究':(g.subj||'其他');
     // 年級表（2026-10-22）：年級底下再分科目欄，同一科連續幾週就一定能合併，不會同一格上下疊兩個實驗
-    if(kind==='grade'){ck=lv+'|'+sk;tag=ty==='探究'?'':srTypeShort(ty);}
+    if(kind==='grade'){ck=lv+'|'+sk;tag=ty==='探究'||comp?'':srTypeShort(ty);}
     else{ck=sk;tag=(SR_LV_SHORT[lv]||lv)+(ty==='探究'?'':srTypeShort(ty));}
     const key=[lv,g.subj,ty,title].join('|');
     const c=cols.get(ck)||{key:ck,lv,sk,cells:new Map()};
@@ -10845,8 +10847,8 @@ function srWeekRange(w){
 }
 // 科目底色（物藍、化橙、生綠、地紫、理化青）；探究用斜紋。A3 黑白印也看得出深淺不同
 const SRP_SUBJ_CLS={'物理':'s-phy','化學':'s-chem','生物':'s-bio','地科':'s-geo','理化':'s-pc'};
-const SRP_SUBJ_ARGB={'s-phy':'FFD6E4F5','s-chem':'FFFBE3C8','s-bio':'FFDCEFD5','s-geo':'FFE7DEF3','s-pc':'FFD3ECEA','s-inq':'FFEEF0F2'};
-function srpCellCls(x){const b=x.items[0]||{};return b.type==='探究'?'s-inq':(SRP_SUBJ_CLS[b.subj]||'');}
+const SRP_SUBJ_ARGB={'s-phy':'FFD6E4F5','s-chem':'FFFBE3C8','s-bio':'FFDCEFD5','s-geo':'FFE7DEF3','s-pc':'FFD3ECEA','s-inq':'FFEEF0F2','s-comp':'FFFDE4E1'};
+function srpCellCls(x){const b=x.items[0]||{};return b.type==='探究'?'s-inq':b.type==='競賽培訓'?'s-comp':(SRP_SUBJ_CLS[b.subj]||'');}
 function srPlanTableHtml(L){
   const colsN=L.cols.reduce((a,c)=>a+c.heads.length,0);
   const two=L.cols.some(c=>c.grp);
@@ -10881,7 +10883,8 @@ const SRP_CSS=`.srp{border-collapse:collapse;width:100%;table-layout:fixed;font-
 .srp td.w small{display:block;font-size:.82em;color:#666;font-weight:400}
 .srp tr.sub th{font-size:.92em}
 .srp td.s-phy,.srp th.s-phy{background:#d6e4f5}.srp td.s-chem,.srp th.s-chem{background:#fbe3c8}.srp td.s-bio,.srp th.s-bio{background:#dcefd5}.srp td.s-geo,.srp th.s-geo{background:#e7def3}.srp td.s-pc,.srp th.s-pc{background:#d3ecea}
-.srp td.s-inq,.srp th.s-inq{background:repeating-linear-gradient(135deg,#eef0f2 0 5px,#fff 5px 10px)}`;
+.srp td.s-inq,.srp th.s-inq{background:repeating-linear-gradient(135deg,#eef0f2 0 5px,#fff 5px 10px)}
+.srp td.s-comp{background:#fde4e1}`;
 function srPlanRender(box,cal){
   if(!document.getElementById('srpCss')){const st=document.createElement('style');st.id='srpCss';st.textContent=SRP_CSS;document.head.appendChild(st);}
   const L=srPlanLayout(srView==='grade'?'grade':'wk');
