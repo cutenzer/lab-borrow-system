@@ -1770,38 +1770,16 @@ body.wk-open{overflow:hidden}
     <button type="button" onclick="showPage('chemicals')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8M9 3v5l-3 5v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-6l-3-5V3"/></svg>藥品查詢</button>
     <button type="button" onclick="showPage('myrecords')"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>我的記錄</button>
   </div>
-  <section class="today-labs" aria-label="今日實驗室使用">
-    <div class="tl-head"><h2>今日實驗室使用</h2><span class="tl-note">虛線框＝有待審核</span><button type="button" class="tl-more" onclick="showPage('venue')">看本週課表 ›</button></div>
-    <div class="tl-grid" id="todayLabs"></div>
-  </section>
+  <!-- 2026-11-01：拿掉「今日實驗室使用」、下方「藥品快查／器材借用」輪播；課表可以選週次；加上本學期年級表 -->
   <div class="home-section">
-    <div class="card-title">本週課表</div>
+    <div class="hv-head"><div class="card-title" id="hvTitle">本週課表</div><div class="hv-week" id="hvWeek"></div></div>
     <div class="hint" style="margin-bottom:10px">點課表可以放大，左右滑動換實驗室</div>
     <div id="homeVenuePreview"></div>
   </div>
-  <div class="home-duo">
-  <div class="home-col">
-  <!-- 電腦版左欄：藥品快查（跟右邊「器材借用」對稱） -->
-  <div class="home-section desk-only" id="homeChemSection">
-    <div class="card-title">藥品快查</div>
-    <div class="hint" style="margin-bottom:10px">查藥品在哪、還剩幾瓶，可直接申請</div>
-    <div class="home-chem-cats" id="homeChemCats"></div>
-    <div class="search-wrap home-eq-search" style="margin-top:10px">
-      <span class="search-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span>
-      <input class="search-input" type="text" id="homeChemSearch" placeholder="搜尋藥品中文、英文名稱或 CAS…" oninput="renderHomeChem()" autocomplete="off">
-    </div>
-    <div class="home-chem-list" id="homeChemList"></div>
-    <span class="home-eq-more" onclick="showPage('chemicals')">查看全部藥品 ›</span>
-  </div>
-  </div>
-  <div class="home-section">
-    <div class="card-title">器材借用</div>
-    <div class="hint" style="margin-bottom:10px">精選常用儀器，點進去可以直接加入借用清單；要找其他器材請用上方搜尋框</div>
-    <div id="homeEquipFeatured"></div>
-
-    <span class="home-eq-more" onclick="showPage('equipment')">查看全部器材 ›</span>
-
-  </div>
+  <div class="home-section" id="homeGradeSection">
+    <div class="hv-head"><div class="card-title">本學期各年級實驗</div><button type="button" class="tl-more" onclick="showPage('semester')">看學期實驗 ›</button></div>
+    <div class="hint" id="gtHint" style="margin-bottom:10px">連續幾週做同一個實驗會合成一格；淡綠那一列是本週</div>
+    <div id="homeGradeTable"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
 </div>
 
@@ -2543,13 +2521,15 @@ const HOME_VENUE_FILTERS=[
   {key:'物理',label:'物理',emoji:'',c1:'#f97316',c2:'#c2410c'},
   {key:'地科',label:'地科',emoji:'',c1:'#06b6d4',c2:'#0e7490'}
 ];
+let hvOffset=0; // 首頁課表看哪一週：0＝本週
 async function renderHomeVenuePreview(){
   const box=document.getElementById('homeVenuePreview');if(!box)return;
+  hvRenderWeekSel();
   if(!box.innerHTML)box.innerHTML='<div class="loading"><div class="spinner"></div>載入本週課表…</div>';
   try{
     if(!allTeachersFront.length)await loadTeachersFront();
     if(!allHolidaysFront.length)await loadHolidaysFront();
-    const wk=getWeekDates(0);
+    const wk=getWeekDates(hvOffset);
     const startStr=fmtDate(wk[0]),endStr=fmtDate(wk[5]);
     const all=await sb('GET','venue_bookings',{order:'created_at'});
     const list=[];
@@ -2595,7 +2575,116 @@ async function renderHomeVenuePreview(){
     });
     buildAutoCarousel('homeVenuePreview',slides,8000);
     updateHeroStats({venueList:list});
-  }catch(e){box.innerHTML='<div class="hint">本週課表載入失敗，請點右上角選單進入「場地預約」查看</div>';}
+  }catch(e){box.innerHTML='<div class="hint">課表載入失敗，請點右上角選單進入「場地預約」查看</div>';}
+}
+// ── 首頁課表：選週次（沒選＝本週；選了就跳到那一週）2026-11-01 ──
+function hvMonday(off){const d=getWeekDates(off||0)[0];d.setHours(0,0,0,0);return d;}
+function hvWeekList(){
+  // 有學期設定：列出整學期每一週（第幾週＋日期）；沒有就列前 4 週到後 16 週
+  const m0=hvMonday(0),out=[];
+  let ws=[];try{ws=activeSemester?getSemesterWeeks(activeSemester):[];}catch(e){ws=[];}
+  if(ws.length)ws.forEach(w=>{const d=new Date(w.date);d.setHours(0,0,0,0);out.push({off:Math.round((d-m0)/604800000),name:w.type&&w.type!=='開學週期'?(w.label||w.type):`第${w.week}週`,d});});
+  else for(let i=-4;i<=16;i++)out.push({off:i,name:'',d:hvMonday(i)});
+  if(!out.some(x=>x.off===0))out.push({off:0,name:'',d:m0});
+  if(!out.some(x=>x.off===hvOffset))out.push({off:hvOffset,name:'',d:hvMonday(hvOffset)});
+  return out.sort((a,b)=>a.off-b.off);
+}
+function hvRange(d){const e=new Date(d);e.setDate(d.getDate()+4);return `${d.getMonth()+1}/${d.getDate()}–${e.getMonth()!==d.getMonth()?(e.getMonth()+1)+'/':''}${e.getDate()}`;}
+function hvRenderWeekSel(){
+  const box=document.getElementById('hvWeek');if(!box)return;
+  const list=hvWeekList(),i=list.findIndex(x=>x.off===hvOffset);
+  const opt=x=>`<option value="${x.off}"${x.off===hvOffset?' selected':''}>${x.name?x.name+'　':''}${hvRange(x.d)}${x.off===0?'（本週）':''}</option>`;
+  box.innerHTML=`<button type="button" class="hv-nav" onclick="hvGo(${list[i-1]?list[i-1].off:hvOffset-1})" aria-label="上一週">‹</button>`
+    +`<label class="hv-sel"><select id="hvWeekSel" aria-label="選擇週次" onchange="hvGo(+this.value)">${list.map(opt).join('')}</select></label>`
+    +`<button type="button" class="hv-nav" onclick="hvGo(${list[i+1]?list[i+1].off:hvOffset+1})" aria-label="下一週">›</button>`
+    +(hvOffset!==0?`<button type="button" class="hv-now" onclick="hvGo(0)">回本週</button>`:'');
+  const t=document.getElementById('hvTitle');
+  if(t){const cur=list[i];t.textContent=hvOffset===0?'本週課表':(cur&&cur.name?cur.name+'課表':'課表　'+hvRange(hvMonday(hvOffset)));}
+}
+function hvGo(off){hvOffset=off;hvRenderWeekSel();renderHomeVenuePreview();}
+
+// ── 首頁：本學期各年級實驗（跟後台「學期實驗紀錄 → 年級表」同一種排法）2026-11-01 ──
+// 一欄一個年段＋科目；連續幾週做同一個實驗合成一格；競賽培訓沒填實驗也會出現
+const GT_LV=['高三','高二','高一','國三','國二','國一']; // 跟後台年級表同一個順序
+const GT_SUBJ_SHORT={'物理':'物','化學':'化','生物':'生','地科':'地','理化':'理'};
+const GT_TYPE_SHORT={'探究':'探','菁英':'菁','選修':'選','競賽培訓':'競','科學研究':'研'};
+const GT_COLS=['物理','化學','生物','地科','理化','探究'];
+const GT_CLS={'物理':'s-phy','化學':'s-chem','生物':'s-bio','地科':'s-geo','理化':'s-pc'};
+function gtLevel(g){const m=String(g||'').replace(/\s/g,'').match(/^(國|高)([一二三123])/);return m?m[1]+({'1':'一','2':'二','3':'三'}[m[2]]||m[2]):'';}
+function gtType(t){t=String(t||'').trim();return t==='一般'?'':t;}
+function gtTerm(){const m=new Date().getMonth()+1;return [8,9,10,11,12,1].includes(m)?1:2;}
+function gtLayout(){
+  const cal=semCalendar(gtTerm(),activeSemester),weeks=cal.weeks;
+  const cols=new Map();let n=0;
+  const put=(wi,lv,subj,ty,title)=>{
+    lv=lv||'其他';const sk=ty==='探究'?'探究':(subj||'其他');
+    const ck=lv+'|'+sk,tag=ty==='探究'||ty==='競賽培訓'&&title==='競賽培訓'?'':(GT_TYPE_SHORT[ty]||String(ty||'').slice(0,1));
+    const c=cols.get(ck)||{lv,sk,cells:new Map()};const key=[ty,title].join('|');
+    const x=c.cells.get(key)||{tag,title,subj,type:ty,wis:new Set()};x.wis.add(wi);c.cells.set(key,x);cols.set(ck,c);n++;
+  };
+  weeks.forEach((w,wi)=>{
+    const a=fmtDate(w.date),e=fmtDate(sxAddDays(w.date,6));
+    const runs=sxLatestRuns(sxRuns.filter(r=>r.run_date>=a&&r.run_date<=e&&!r.is_hidden));
+    const filled=new Set(runs.filter(r=>r.booking_id).map(r=>`${r.booking_id}|${r.run_date}|${r.period||''}`));
+    runs.forEach(r=>{
+      const t=r.template_id?sxTpl(r.template_id):null,b=r.booking_id?sxBookings.find(x=>x.id===r.booking_id):null;
+      const title=sxRunTitle(r);if(!title)return;
+      const subj=(t&&sxTplSubj(t))||r.subject||(b&&sxBkSubj(b))||'';
+      const ty=gtType(r.course_type||(b&&sxBkType(b))||(t&&sxTplType(t)));
+      put(wi,gtLevel(r.grade||(b&&b.grade)||(t&&t.grade)),subj,ty,title);
+    });
+    // 競賽培訓：通常不會登記實驗，預約本身就放進表裡
+    sxBookings.forEach(b=>{
+      if(b.status==='已拒絕'||sxBkType(b)!=='競賽培訓'||b.semester_show===false)return;
+      const ps=(b.periods||[]).filter(p=>p.date>=a&&p.date<=e&&p.status!=='已拒絕'&&!filled.has(`${b.id}|${p.date}|${p.period}`));
+      if(!ps.length)return;
+      put(wi,gtLevel(b.grade),sxBkSubj(b),'競賽培訓','競賽培訓');
+    });
+  });
+  const oi=(arr,k)=>{const i=arr.indexOf(k);return i<0?99:i;},ov=(a,b)=>a.s<=b.e&&b.s<=a.e;
+  const out=[...cols.values()].sort((a,b)=>oi(GT_LV,a.lv)-oi(GT_LV,b.lv)||oi(GT_COLS,a.sk)-oi(GT_COLS,b.sk)).map(c=>{
+    const blocks=[];
+    c.cells.forEach(x=>{const ws=[...x.wis].sort((p,q)=>p-q);let st=ws[0],p=ws[0];
+      ws.slice(1).concat([null]).forEach(v=>{if(v===p+1){p=v;return;}blocks.push({...x,s:st,e:p,long:x.type==='探究'||p-st>=3});st=p=v;});});
+    const lanes=[[]],longs=blocks.filter(b=>b.long).sort((a,b)=>a.s-b.s),shorts=blocks.filter(b=>!b.long);
+    longs.forEach(b=>{let k=0;for(;;k++){if(!lanes[k])lanes[k]=[];if(lanes[k].some(x=>ov(x,b)))continue;if(k===0&&shorts.some(x=>ov(x,b)))continue;break;}lanes[k].push(b);});
+    const singles=new Map();
+    shorts.forEach(b=>{if(b.s<b.e&&!lanes[0].some(x=>ov(x,b))&&!shorts.some(x=>x!==b&&ov(x,b)))lanes[0].push(b);else for(let i=b.s;i<=b.e;i++){if(!singles.has(i))singles.set(i,[]);singles.get(i).push(b);}});
+    const grid=lanes.map((ln,k)=>{const g=weeks.map(()=>null);ln.forEach(b=>{g[b.s]={span:b.e-b.s+1,items:[b]};for(let i=b.s+1;i<=b.e;i++)g[i]='skip';});
+      if(k===0)singles.forEach((list,i)=>{g[i]={span:1,items:list};});return g;});
+    const label=c.sk==='探究'?'探究':(GT_SUBJ_SHORT[c.sk]||c.sk);
+    // 多開的欄：裡面都是同一種類型就標出來（化競賽培訓、化菁英）
+    const heads=lanes.map((ln,k)=>{if(!k)return label;const ts=[...new Set(ln.map(b=>b.type))];return label+(ts.length===1&&ts[0]&&!label.includes(ts[0])?ts[0]:'');});
+    return {lv:c.lv,sk:c.sk,heads,grid};
+  });
+  const today=new Date();today.setHours(0,0,0,0);
+  const rows=weeks.map(w=>{const d=semThu(w.date),e=sxAddDays(w.date,4);return {name:w.type&&w.type!=='開學週期'?(w.label||w.type):`第${w.week}週`,range:`${w.date.getMonth()+1}/${w.date.getDate()}–${e.getDate()}`,mon:`${d.getMonth()+1}月`,now:today>=w.date&&today<sxAddDays(w.date,7),exam:cal.real&&typeof examLabelForWeek==='function'?examLabelForWeek(w.week)||'':''};});
+  return {rows,cols:out,n,real:cal.real};
+}
+function gtCellCls(x){const b=x.items[0]||{};return b.type==='探究'?'s-inq':b.type==='競賽培訓'?'s-comp':(GT_CLS[b.subj]||'');}
+function gtRender(){
+  const box=document.getElementById('homeGradeTable');if(!box)return;
+  if(!document.getElementById('page-home').classList.contains('active'))return;
+  if(!sxLoaded){box.innerHTML='<div class="loading"><div class="spinner"></div>載入中…</div>';return;}
+  const L=gtLayout();
+  if(!L.n){box.innerHTML='<div class="hint">這學期還沒有登記的實驗</div>';return;}
+  const grps=[];L.cols.forEach(c=>{const last=grps[grps.length-1];if(last&&last.g===c.lv)last.n+=c.heads.length;else grps.push({g:c.lv,n:c.heads.length});});
+  const head=`<tr><th class="m" rowspan="2">月</th><th class="w" rowspan="2">週次</th>${grps.map(x=>`<th colspan="${x.n}">${escH(x.g)}</th>`).join('')}</tr>`
+    +`<tr class="sub">${L.cols.map(c=>c.heads.map(h=>`<th class="${c.sk==='探究'?'s-inq':(GT_CLS[c.sk]||'')}">${escH(h)}</th>`).join('')).join('')}</tr>`;
+  const body=L.rows.map((r,i)=>{
+    let h=`<tr class="${r.now?'now':''}${r.exam?' exam':''}">`;
+    if(i===0||L.rows[i-1].mon!==r.mon){let k=1;while(L.rows[i+k]&&L.rows[i+k].mon===r.mon)k++;h+=`<td class="m" rowspan="${k}">${escH(r.mon)}</td>`;}
+    h+=`<td class="w"${r.now?' id="gtNow"':''}>${escH(r.name)}<small>${escH(r.exam||r.range)}</small></td>`;
+    L.cols.forEach(c=>c.grid.forEach(g=>{const x=g[i];if(x==='skip')return;if(!x){h+='<td></td>';return;}
+      h+=`<td class="ex ${gtCellCls(x)}"${x.span>1?` rowspan="${x.span}"`:''}>${x.items.map(b=>`<div>${b.tag?`<b>${escH(b.tag)}</b>`:''}${escH(b.title)}</div>`).join('')}</td>`;}));
+    return h+'</tr>';
+  }).join('');
+  const colsN=L.cols.reduce((a,c)=>a+c.heads.length,0);
+  box.innerHTML=`<div class="gt-wrap"><table class="gt" style="min-width:${120+colsN*92}px"><thead>${head}</thead><tbody>${body}</tbody></table></div>`
+    +`<div class="gt-legend"><span><i class="s-phy"></i>物理</span><span><i class="s-chem"></i>化學</span><span><i class="s-bio"></i>生物</span><span><i class="s-geo"></i>地科</span><span><i class="s-pc"></i>理化</span><span><i class="s-inq"></i>探究</span><span><i class="s-comp"></i>競賽培訓</span>${L.real?'':'<span>・週次是估計的</span>'}</div>`;
+  // 捲到本週（只捲表格自己，不動整頁）
+  const wrap=box.querySelector('.gt-wrap'),now=box.querySelector('#gtNow');
+  if(wrap&&now){const top=now.getBoundingClientRect().top-wrap.getBoundingClientRect().top+wrap.scrollTop;wrap.scrollTop=Math.max(0,top-wrap.querySelector("thead").offsetHeight-now.offsetHeight-4);}
 }
 // ── 首頁藥品快查（電腦版左欄）──
 // 沒打字時：顯示「存量偏少」的藥品（提醒老師要用請提早申請）；打字或點分類時：顯示搜尋結果
@@ -3713,7 +3802,7 @@ function goThisWeek(){venueWeekOffset=0;loadVenue();}
 async function loadActiveSemester(){
   try{
     const rows=await sb('GET','semester_settings',{filter:'is_active=eq.true',order:'created_at.desc'});
-    activeSemester=rows.length?rows[0]:null;buildWeekSelector();spTerm=null;spSel=null;spRender();
+    activeSemester=rows.length?rows[0]:null;buildWeekSelector();spTerm=null;spSel=null;spRender();hvRenderWeekSel();gtRender();
   }catch(e){activeSemester=null;}
 }
 function getMondayOfOffset(offset){
@@ -5751,7 +5840,7 @@ function showPage(page,opts){
   if(page!=='semester')spCloseSheet();
   if(page==='semester')spRender();
   if(page==='coursebook')cbRender();
-  if(page==='home'){renderHomeVenuePreview();renderHomeEquipFeatured();renderHomeChem();}
+  if(page==='home'){renderHomeVenuePreview();gtRender();if(!sxLoaded)sxLoad();}
   if(page==='myrecords')autoLoadMyRecords();
   if(page==='borrow')prefillBorrowIdentity();
   if(page==='floorplan'){
@@ -6448,7 +6537,7 @@ async function cbSubmit(){
 }
 // ==== 課綱借用頁 結束 ====
 async function loadCourseTemplates(){
-  try{const rows=await sb('GET','course_templates',{order:'name'});tplAllVersions=Array.isArray(rows)?rows:[];allCourseTemplates=tplLatestOnly(tplAllVersions);renderTemplatePicker();renderSemTable();}catch(e){}
+  try{const rows=await sb('GET','course_templates',{order:'name'});tplAllVersions=Array.isArray(rows)?rows:[];allCourseTemplates=tplLatestOnly(tplAllVersions);renderTemplatePicker();renderSemTable();gtRender();}catch(e){}
 }
 function renderTemplatePicker(){
   if(!document.getElementById('tplPickerSelect'))return; // 借用單已經不放課綱選單（改到學期實驗）
@@ -7536,7 +7625,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElement
 // 「實驗庫」：歷年所有課綱實驗，五科分欄、可搜尋篩選，點開看器材與做過的紀錄
 // 實驗紀錄（experiment_runs）：哪天、哪節、誰、哪班、做了哪個實驗；可以不借教室（帶到班上做）
 const SX_SUBJ=['物理','化學','生物','地科','理化'];
-const SX_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','課程':'一般'};
+const SX_TYPE_FROM_PURPOSE={'探究':'探究','菁英':'菁英','選修':'選修','競賽':'競賽培訓','能力競賽':'競賽培訓','課程':'一般'};
 let sxView='sem',sxRuns=[],sxTypes=[],sxBookings=[],sxLoaded=false,sxLoading=false,sxWeek=null;
 let sxLibQ='',sxLibGrade='全部',sxLibType='全部',sxLibTerm=0,sxLibSubj='化學',sxLibOpen='';
 function sxTpl(id){return tplById(id);}
@@ -7563,7 +7652,7 @@ async function sxLoad(force){
     sxRuns=Array.isArray(runs)?runs:[];sxTypes=(Array.isArray(types)?types:[]).filter(t=>t.is_active!==false).map(t=>t.name);
     sxBookings=Array.isArray(bks)?bks:[];sxLoaded=true;
   }catch(e){sxLoaded=true;}
-  sxLoading=false;sxDatalist();spRender();
+  sxLoading=false;sxDatalist();spRender();gtRender();
 }
 // 選實驗用的清單（可以打字找）：「名稱｜年級」
 // 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
@@ -8443,6 +8532,36 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 </script>
 <!-- ═══ loc-v1 結束 ═══ -->
 <!-- ===== fix-1101（2026-11-01）：首頁主視覺變矮、入口改長方形、搜尋框整併；整段刪掉即還原 ===== -->
+<style id="home-1101">
+/* ── 2026-11-01：首頁課表選週次、本學期各年級實驗表 ── */
+.hv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:6px;}
+.hv-head .card-title{margin:0;}
+.hv-week{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.hv-nav{width:34px;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font:inherit;font-size:18px;line-height:1;color:var(--text);cursor:pointer;}
+.hv-sel select{height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font:inherit;font-size:14px;padding:0 8px;color:var(--text);max-width:230px;}
+.hv-now{height:34px;border:none;border-radius:9px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;padding:0 12px;cursor:pointer;}
+.gt-wrap{overflow:auto;max-height:520px;border:1px solid var(--border);border-radius:12px;background:var(--surface);}
+.gt{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed;font-size:12.5px;}
+.gt th,.gt td{border-right:1px solid #ddd5c6;border-bottom:1px solid #ddd5c6;padding:4px 6px;vertical-align:middle;overflow-wrap:anywhere;line-height:1.35;}
+.gt thead th{position:sticky;top:0;z-index:2;background:#eee8dc;font-weight:700;text-align:center;}
+.gt thead tr.sub th{top:27px;font-size:12px;}
+.gt .m{width:38px;text-align:center;color:var(--text2);background:var(--surface);position:sticky;left:0;z-index:1;}
+.gt .w{width:78px;text-align:center;white-space:nowrap;background:var(--surface);position:sticky;left:38px;z-index:1;}
+.gt thead th.m,.gt thead th.w{z-index:3;background:#eee8dc;}
+.gt td.w small{display:block;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace;}
+.gt td.ex div+div{border-top:1px dashed #c8c0b0;margin-top:3px;padding-top:3px;}
+.gt td.ex b{font-size:11px;margin-right:3px;padding:0 4px;border-radius:4px;background:rgba(0,0,0,.08);}
+.gt tr.now td{box-shadow:inset 0 2px 0 var(--accent),inset 0 -2px 0 var(--accent);}
+.gt tr.now td.w{background:#dcebe3;color:var(--accent);font-weight:700;}
+.gt tr.exam td.w small{color:#a45a10;font-weight:700;}
+.gt .s-phy{background:#d6e4f5;}.gt .s-chem{background:#fbe3c8;}.gt .s-bio{background:#dcefd5;}.gt .s-geo{background:#e7def3;}.gt .s-pc{background:#d3ecea;}
+.gt .s-inq{background:repeating-linear-gradient(135deg,#eef0f2 0 5px,#fff 5px 10px);}
+.gt .s-comp{background:#fde4e1;}
+.gt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px;color:var(--text2);}
+.gt-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.08);}
+.gt-legend .s-phy{background:#d6e4f5}.gt-legend .s-chem{background:#fbe3c8}.gt-legend .s-bio{background:#dcefd5}.gt-legend .s-geo{background:#e7def3}.gt-legend .s-pc{background:#d3ecea}.gt-legend .s-inq{background:repeating-linear-gradient(135deg,#eef0f2 0 3px,#fff 3px 6px)}.gt-legend .s-comp{background:#fde4e1}
+@media(max-width:700px){.gt-wrap{max-height:440px}.hv-sel select{max-width:178px;font-size:13px;padding:0 4px}.hv-head .card-title{font-size:17px}}
+</style>
 <style id="fix-1101">
 /* 4. 首頁深色主視覺變矮：標題一行，手機拿掉標語 */
 #page-home .hero2-title br{display:none;}
