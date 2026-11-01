@@ -12703,5 +12703,45 @@ div:has(>.la)+.qe-pos{display:none}
 })();
 </script>
 <!-- ═══ vm-v1 結束 ═══ -->
+<!-- ===== fix-1101（2026-11-01）：器材清單欄寬、分頁字重、藥品頁搜尋框合一；整段刪掉即還原 ===== -->
+<style id="fix-1101">
+@media(min-width:1100px){
+  /* 3. 字重：頁標題、選中分頁粗，其餘一般 */
+  .pg-head h2,.ov-title{font-weight:600;}
+  .bw-tab{font-weight:500;}
+  .bw-tab.on{font-weight:700;}
+  /* 3. 器材清單：名稱欄可伸縮（長名稱不被切），房間與數量固定在名稱後面 */
+  #panel-equipment[data-eqm="list"] .eq-body{grid-template-columns:minmax(240px,420px) 200px 110px!important;justify-content:start;}
+  /* 5b. 藥品頁：左邊藥品櫃的搜尋框同時篩選右邊清單，清單上方那個拿掉 */
+  #adminChemSearch{display:none;}
+}
+</style>
+<script id="fix-1101-js">
+(function(){
+  // 5b：兩個搜尋框互相同步（手機分頁切換時，打過的字也會留著）
+  let syncing=false;
+  document.addEventListener('input',e=>{
+    if(syncing)return;const t=e.target;
+    if(t.matches&&t.matches('#adminChemCab .cab-q')){
+      const b=document.getElementById('adminChemSearch');
+      if(b){b.value=t.value;filterAdminChems();}
+    }else if(t.id==='adminChemSearch'){
+      const q=document.querySelector('#adminChemCab .cab-q');
+      if(q){q.value=t.value;syncing=true;q.dispatchEvent(new Event('input'));syncing=false;}
+    }
+  });
+  // 按 ✕ 清除時，清單也一起還原
+  document.addEventListener('click',e=>{
+    if(e.target.closest&&e.target.closest('#adminChemCab .cab-qx')){
+      const b=document.getElementById('adminChemSearch');if(b){b.value='';filterAdminChems();}
+    }
+  });
+  // 電腦版：藥品櫃搜尋框的提示改成「清單同時篩選」
+  const tip=()=>{const q=document.querySelector('#adminChemCab .cab-q');
+    if(q&&matchMedia('(min-width:1100px)').matches)q.placeholder='找藥品：中文、英文、俗名、分子式、CAS（右邊清單同時篩選）';};
+  new MutationObserver(tip).observe(document.body,{childList:true,subtree:true});tip();
+})();
+</script>
+
 </body>
 </html>
