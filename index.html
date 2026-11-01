@@ -1750,7 +1750,7 @@ body.wk-open{overflow:hidden}
       <path d="M450 50v170a14 14 0 0 0 28 0v-170M486 50v170a14 14 0 0 0 28 0v-170"/><path d="M40 260h480"/>
     </svg>
     <div class="hero2-date" id="heroDate"></div>
-    <h2 class="hero2-title">今天，<br>要做什麼實驗？</h2>
+    <h2 class="hero2-title">找東西？交給我</h2>
     <div class="hero2-line" aria-hidden="true"></div>
     <label class="hero2-search">
       <svg class="ico" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -1761,21 +1761,19 @@ body.wk-open{overflow:hidden}
   </section>
   <div class="hero2-results" id="heroResults" aria-live="polite"></div>
   <div class="entry-cards">
-    <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材</b><span>選器材、填借用單</span></button>
-    <button type="button" class="entry-card" onclick="showPage('semester')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M3 15h18"/></svg><b>學期實驗</b><span>看每週做什麼實驗</span></button>
-    <button type="button" class="entry-card" onclick="showPage('venue')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>預約場地</b><span>看課表、預約節次</span></button>
-    <button type="button" class="entry-card" onclick="showPage('floorplan')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><b>平面圖</b><span>看櫃子在哪裡</span></button>
+    <button type="button" class="entry-card" onclick="showPage('equipment')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg><b>借器材／藥品</b></button>
+    <button type="button" class="entry-card" onclick="showPage('semester')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M9 9v12M15 9v12M3 15h18"/></svg><b>學期實驗</b></button>
+    <button type="button" class="entry-card" onclick="showPage('venue')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><b>預約場地</b></button>
+    <button type="button" class="entry-card" onclick="showPage('floorplan')"><svg class="ico" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h7v12M14 3v8h7"/></svg><b>平面圖</b></button>
   </div>
   <!-- 2026-11-01：藥品查詢、我的紀錄只放在選單裡 -->
   <!-- 2026-11-01：拿掉「今日實驗室使用」、下方「藥品快查／器材借用」輪播；課表可以選週次；加上本學期年級表 -->
   <div class="home-section">
     <div class="hv-head"><div class="card-title" id="hvTitle">本週課表</div><div class="hv-week" id="hvWeek"></div></div>
-    <div class="hint" style="margin-bottom:10px">點課表可以放大，左右滑動換實驗室</div>
     <div id="homeVenuePreview"></div>
   </div>
   <div class="home-section" id="homeLabUseSection">
-    <div class="hv-head"><div class="card-title">實驗室使用次數</div><button type="button" class="tl-more" onclick="showPage('venue')">看場地預約 ›</button></div>
-    <div class="hint" style="margin-bottom:10px">只算已核准的節次；點下面的數字，看那一週那間實驗室的課表</div>
+    <div class="hv-head"><div class="card-title">實驗室使用次數</div></div>
     <div id="homeLabUse"><div class="loading"><div class="spinner"></div>載入中…</div></div>
   </div>
 </div>
@@ -2083,7 +2081,6 @@ body.wk-open{overflow:hidden}
       <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoom(0.5)">＋</button>
       <button type="button" class="btn btn-secondary btn-sm" onclick="floorplanZoomReset()">↺</button>
     </div>
-    <div class="hint" style="margin-top:6px">格子太小點不準的話，先按「＋」放大，再用手指或滑鼠滾軸/拖曳捲軸左右上下移動查看，放大後點擊會準很多。</div>
     <div class="fp-layout">
     <div style="text-align:center;margin-top:10px;min-width:0">
       <div id="floorplanScrollWrap" style="overflow:auto;max-width:100%;border-radius:8px">
@@ -2563,11 +2560,10 @@ async function renderHomeVenuePreview(){
         return `<td>${found.length?`<div class="mini-one">${chip(found[0],false)}${found.length>1?`<span class="mini-more">+${found.length-1}</span>`:''}</div>`:''}</td>`;
       }).join('')}</tr>`).join('');
       const table=`<table class="mini-venue"><thead>${head}</thead><tbody>${buildRows('full')}</tbody></table>`;
-      const slideTable=`<table class="mini-venue mini-fixed"><thead>${head}</thead><tbody>${buildRows(r.key?'slide':'dots')}</tbody></table><div class="mini-legend">${r.key?'「+N」＝同一節還有其他組':'色塊＝該節有課（生／化／理／物／地）'}，點課表看完整內容</div>`;
+      const slideTable=`<table class="mini-venue mini-fixed"><thead>${head}</thead><tbody>${buildRows(r.key?'slide':'dots')}</tbody></table><div class="mini-legend">${r.key?'「+N」＝同一節還有其他組':'色塊＝該節有課（生／化／理／物／地）'}</div>`;
       window._homeVenueTables[r.key]={title:`${r.emoji} ${r.label}課表　${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}`,table};
       return `<div class="auto-carousel-slide venue-slide" onclick="openHomeVenueZoom('${r.key}')">
         <div class="venue-slide-title"><span>${r.emoji} ${r.label}課表 <small>${fmtDateTW(dates[0])}～${fmtDateTW(dates[dates.length-1])}</small></span><button type="button" class="venue-book-btn" onclick="event.stopPropagation();goHomeVenue('${r.key}')">我要預約</button></div>
-        <div class="venue-slide-hint">點課表可放大檢視・左右滑動換科別</div>
         ${slideTable}
       </div>`;
     });
@@ -2581,23 +2577,33 @@ function hvWeekList(){
   // 有學期設定：列出整學期每一週（第幾週＋日期）；沒有就列前 4 週到後 16 週
   const m0=hvMonday(0),out=[];
   let ws=[];try{ws=activeSemester?getSemesterWeeks(activeSemester):[];}catch(e){ws=[];}
-  if(ws.length)ws.forEach(w=>{const d=new Date(w.date);d.setHours(0,0,0,0);out.push({off:Math.round((d-m0)/604800000),name:w.type&&w.type!=='開學週期'?(w.label||w.type):`第${w.week}週`,d});});
+  if(ws.length)ws.forEach(w=>{const d=new Date(w.date);d.setHours(0,0,0,0);out.push({off:Math.round((d-m0)/604800000),name:w.type&&w.type!=='開學週期'?(w.label||w.type):`第${w.week}週`,week:w.week,d});});
   else for(let i=-4;i<=16;i++)out.push({off:i,name:'',d:hvMonday(i)});
   if(!out.some(x=>x.off===0))out.push({off:0,name:'',d:m0});
   if(!out.some(x=>x.off===hvOffset))out.push({off:hvOffset,name:'',d:hvMonday(hvOffset)});
   return out.sort((a,b)=>a.off-b.off);
 }
+// 這一週的特別標示：定期評量（學期設定的考試週）、這週裡的假日／停課（2026-11-01）
+function hvTags(x){
+  const tags=[];
+  if(x&&x.week!=null){try{const ex=examLabelForWeek(x.week);if(ex)tags.push({t:ex,k:'exam'});}catch(e){}}
+  const d0=x?x.d:hvMonday(hvOffset);
+  for(let i=0;i<6;i++){const d=new Date(d0);d.setDate(d0.getDate()+i);const h=holidayShown(fmtDate(d));if(!h)continue;
+    const t=holClosed(h)?'停課':(h.label||'假期');if(!tags.some(g=>g.t===t))tags.push({t,k:holClosed(h)?'closed':'hol'});}
+  return tags;
+}
 function hvRange(d){const e=new Date(d);e.setDate(d.getDate()+4);return `${d.getMonth()+1}/${d.getDate()}–${e.getMonth()!==d.getMonth()?(e.getMonth()+1)+'/':''}${e.getDate()}`;}
 function hvRenderWeekSel(){
   const box=document.getElementById('hvWeek');if(!box)return;
   const list=hvWeekList(),i=list.findIndex(x=>x.off===hvOffset);
-  const opt=x=>`<option value="${x.off}"${x.off===hvOffset?' selected':''}>${x.name?x.name+'　':''}${hvRange(x.d)}${x.off===0?'（本週）':''}</option>`;
+  const opt=x=>{const tg=hvTags(x).map(g=>g.t);return `<option value="${x.off}"${x.off===hvOffset?' selected':''}>${x.name?x.name+'　':''}${hvRange(x.d)}${x.off===0?'（本週）':''}${tg.length?'・'+escH(tg.join('、')):''}</option>`;};
   box.innerHTML=`<button type="button" class="hv-nav" onclick="hvGo(${list[i-1]?list[i-1].off:hvOffset-1})" aria-label="上一週">‹</button>`
     +`<label class="hv-sel"><select id="hvWeekSel" aria-label="選擇週次" onchange="hvGo(+this.value)">${list.map(opt).join('')}</select></label>`
     +`<button type="button" class="hv-nav" onclick="hvGo(${list[i+1]?list[i+1].off:hvOffset+1})" aria-label="下一週">›</button>`
     +(hvOffset!==0?`<button type="button" class="hv-now" onclick="hvGo(0)">回本週</button>`:'');
   const t=document.getElementById('hvTitle');
-  if(t){const cur=list[i];t.textContent=hvOffset===0?'本週課表':(cur&&cur.name?cur.name+'課表':'課表　'+hvRange(hvMonday(hvOffset)));}
+  if(t){const cur=list[i];const nm=hvOffset===0?'本週課表':(cur&&cur.name?cur.name+'課表':'課表　'+hvRange(hvMonday(hvOffset)));
+    t.innerHTML=escH(nm)+hvTags(cur).map(g=>`<span class="hv-tag ${g.k}">${escH(g.t)}</span>`).join('');}
 }
 function hvGo(off){hvOffset=off;hvRenderWeekSel();renderHomeVenuePreview();}
 
@@ -8501,9 +8507,14 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 /* ── 2026-11-01：首頁課表選週次、本學期各年級實驗表 ── */
 .hv-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:space-between;margin-bottom:6px;}
 .hv-head .card-title{margin:0;}
+.hv-tag{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;vertical-align:3px;background:#fbecd0;color:#8a5a00;}
+.hv-tag.hol{background:#fce7f3;color:#9d174d;}
+.hv-tag.closed{background:#e2e8f0;color:#334155;}
+@media(max-width:700px){.hv-tag{font-size:12px;padding:1px 8px;margin-left:6px}}
+
 .hv-week{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .hv-nav{width:34px;height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font:inherit;font-size:18px;line-height:1;color:var(--text);cursor:pointer;}
-.hv-sel select{height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font:inherit;font-size:14px;padding:0 8px;color:var(--text);max-width:230px;}
+.hv-sel select{height:34px;border:1px solid var(--border);border-radius:9px;background:var(--surface);font:inherit;font-size:14px;padding:0 8px;color:var(--text);max-width:320px;}
 .hv-now{height:34px;border:none;border-radius:9px;background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:700;padding:0 12px;cursor:pointer;}
 .lu-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
 .lu-tile{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--c);}
@@ -8570,7 +8581,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 /* 4b. 四個入口改成橫的長方形：圖示在左，標題＋說明在右 */
 .entry-cards{margin:-28px 12px 0;gap:8px;}
 .entry-card{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:10px;row-gap:1px;align-items:center;padding:11px 12px;border-radius:12px;}
-.entry-card .ico{grid-row:1/span 2;width:24px;height:24px;}
+.entry-card .ico{grid-row:1;width:24px;height:24px;}
 .entry-card b{font-size:15.5px;line-height:1.3;}
 .entry-card span{font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media(min-width:901px){
