@@ -8528,6 +8528,29 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 @media(max-width:700px){.lu-tiles{gap:5px}.lu-tile{padding:8px 6px;align-items:center}.lu-tile b{font-size:21px}.lu-t .lu-w{width:76px;padding-left:6px}.lu-n{height:30px;font-size:14px}.lu-wrap{max-height:380px}}
 @media(max-width:700px){.hv-sel select{max-width:178px;font-size:13px;padding:0 4px}.hv-head .card-title{font-size:17px}}
 </style>
+<style id="eqhero-1101">
+/* ── 2026-11-01：器材借用（找器材／借用單）上方深色區塊縮小 ── */
+#page-equipment .page-hero .hero2-date,#page-borrow .page-hero .hero2-date{display:none;}
+@media(max-width:900px){
+  #page-equipment .page-hero,#page-borrow .page-hero{padding:14px 14px 14px;gap:9px;margin-bottom:12px;}
+  #page-equipment .page-hero .hero2-title,#page-borrow .page-hero .hero2-title{font-size:23px;}
+  #page-equipment .page-hero .hero2-line,#page-borrow .page-hero .hero2-line{width:110px;height:4px;margin-top:-6px;}
+  #page-equipment .page-hero .hero2-search{height:44px;}
+  #page-borrow .bw-hero .bw-hero-sub{display:none;}
+  #page-equipment .ph-tabs,#page-borrow .ph-tabs{max-width:none;margin:0;}
+  #page-equipment .ph-tabs button,#page-borrow .ph-tabs button{padding:6px;}
+  #page-equipment .page-hero .hero2-art,#page-borrow .page-hero .hero2-art{width:230px;right:-40px;top:-14px;}
+}
+@media(min-width:901px){
+  #page-equipment .page-hero,#page-borrow .page-hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;column-gap:18px;row-gap:10px;align-items:center;padding:22px 36px 24px;margin-bottom:16px;}
+  #page-equipment .page-hero .hero2-title,#page-borrow .page-hero .hero2-title{grid-column:1/-1;font-size:32px;}
+  #page-equipment .page-hero .hero2-line,#page-borrow .page-hero .hero2-line{grid-column:1/-1;width:150px;margin-top:-10px;}
+  #page-equipment .page-hero .hero2-search{grid-column:1;max-width:none;height:48px;}
+  #page-borrow .bw-hero .bw-hero-sub{grid-column:1;margin:0;font-size:15px;}
+  #page-equipment .ph-tabs,#page-borrow .ph-tabs{grid-column:2;max-width:none;margin:0;}
+  #page-equipment .page-hero .hero2-art,#page-borrow .page-hero .hero2-art{width:380px;top:-20px;right:-10px;opacity:.08;}
+}
+</style>
 <style id="fix-1101">
 /* 4. 首頁深色主視覺變矮：標題一行，手機拿掉標語 */
 #page-home .hero2-title br{display:none;}
