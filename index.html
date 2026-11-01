@@ -7605,7 +7605,9 @@ function sxTplType(t){return t&&t.course_type||'';}
 function sxVenueSubj(v){v=String(v||'');return SX_SUBJ.find(s=>v.startsWith(s))||'';}
 // 科目＝這堂課的科目，不是實驗室（國一生物在理化教室上，還是生物）（2026-10-20）
 function sxBkSubj(b){return SX_SUBJ.includes(b.subject)?b.subject:SX_SUBJ.includes(b.lab_subject)?b.lab_subject:sxVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
-function sxBkType(b){return b.course_type||SX_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
+// 競賽培訓：後台建的預約是「年級＝競賽培訓」、目的寫課程或其他，所以看年級／科目欄有沒有「競賽」（2026-11-01）
+function sxIsComp(...v){return v.some(x=>/競賽/.test(String(x||'')));}
+function sxBkType(b){if(sxIsComp(b.grade,b.subject))return '競賽培訓';return b.course_type||SX_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
 // 沒填實驗的預約要不要出現：後台設了就照設的；沒設＝有課程類型（課程、探究、菁英…）才出現，純借場地的不出現
 function sxShow(b){return b.semester_show===true||(b.semester_show!==false&&!!sxBkType(b));}
 function sxTypeTxt(t){return t&&t!=='一般'?t:'';}
@@ -7623,7 +7625,19 @@ async function sxLoad(force){
     sxRuns=Array.isArray(runs)?runs:[];sxTypes=(Array.isArray(types)?types:[]).filter(t=>t.is_active!==false).map(t=>t.name);
     sxBookings=Array.isArray(bks)?bks:[];sxLoaded=true;
   }catch(e){sxLoaded=true;}
-  sxLoading=false;sxDatalist();spRender();
+  sxLoading=false;
+  // 2026-11-01：實驗紀錄指到的課綱實驗，前台沒有載到（例如課綱實驗還在下載、或是這個分頁開很久，後台新增的課綱實驗沒更新）
+  // → 重新抓一次課綱實驗再畫，不然卡片會變成「未填實驗」而且點不開
+  if(sxTplMissing().length)await sxReloadTpl(true);
+  sxDatalist();spRender();
+}
+function sxTplMissing(){return [...new Set(sxRuns.filter(r=>r.template_id&&!tplById(r.template_id)).map(r=>String(r.template_id)))];}
+let sxTplReloading=null;
+async function sxReloadTpl(quiet){
+  if(!sxTplReloading)sxTplReloading=loadCourseTemplates().finally(()=>{sxTplReloading=null;});
+  await sxTplReloading;
+  if(!quiet){const n=sxTplMissing().length;showToast(n?`還有 ${n} 個課綱實驗找不到，可能已經在後台刪除`:'已重新載入課綱實驗',n?'error':'success');}
+  spRender();
 }
 // 選實驗用的清單（可以打字找）：「名稱｜年級」
 // 同名同年級的課綱實驗（不同年度各一份）多加老師名字，選的時候才分得出來
@@ -7676,10 +7690,10 @@ function sxWeekItems(w){
     // 用實驗名稱合併（課綱實驗裡有同名重複的也算同一個）；同一堂做好幾個實驗 → 合成一張「A＋B」
     const cardTitle=multi?combo.join('＋'):title;
     // 同名實驗也要依課程類型分開（菁英、探究、一般可能取一樣的名字）（2026-10-20）
-    const rtype=r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'';
+    const rtype=sxIsComp(r.grade,b&&b.grade)?'競賽培訓':(r.course_type||(t&&sxTplType(t))||(b&&sxBkType(b))||'');
     const key='x|'+String(cardTitle).replace(/\s+/g,'').toLowerCase()+'|'+subj+'|'+sxTypeTxt(rtype);
     const first=!lessonSeen.has(lk);lessonSeen.add(lk);
-    const c=add(key,{subj,type:rtype,title:cardTitle,tpl:multi?null:(t?t.id:null),fixed:false,venues:[],parts:multi?new Map():null},r.grade||(b&&b.grade)||(t&&t.grade)||'',sxClassTeacher(b,r),first?1:0,r.run_date);
+    const c=add(key,{subj,type:rtype,title:cardTitle||(r.template_id&&!t?'課綱實驗讀取中…':''),tplMissing:!!(r.template_id&&!t),tpl:multi?null:(t?t.id:null),fixed:false,venues:[],parts:multi?new Map():null},r.grade||(b&&b.grade)||(t&&t.grade)||'',sxClassTeacher(b,r),first?1:0,r.run_date);
     if(b&&b.is_fixed)c.fixed=true;
     // 有好幾個版本時，卡片上標出用的是哪一版（例如 115學年度）
     if(!multi&&t&&tplFamilyOf(t).length>1)c.ver=tplVerName(t);
@@ -7738,7 +7752,7 @@ function sxOpenPart(j){const p=(window._sxParts||[])[j];if(!p||!p.tpl)return;spO
 function sxCardHtml(c,mobile){
   const col=semColor(c.subj||'其他'),tint=SP_TINT[c.subj]||SP_TINT['其他'];
   const ci=sxCardArr.push(c)-1;
-  const on=(c.tpl||c.parts)?`sxOpenCard(${ci})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:'';
+  const on=(c.tpl||c.parts)?`sxOpenCard(${ci})`:c.bid?`sxFill(${ja(c.bid)},${ja(c.a)},${ja(c.e)})`:c.tplMissing?'sxReloadTpl()':'';
   return `<button type="button" class="${mobile?'pm-item':'ps-chip'}${c.title?'':' noexp'}" style="--c:${col};--t:${tint}" ${on?`onclick="${on}"`:'disabled'}>
     <span class="sx-ct"><b>${escH(c.title||'未填實驗')}${c.ver?`<span style="font-weight:400;opacity:.7;font-size:.85em"> ${escH(c.ver)}</span>`:''}${c.fixed&&!mobile?'<em>固定</em>':''}</b><small>${escH(sxCardSub(c))}</small></span>${c.fixed&&mobile?'<em>固定課</em>':''}</button>`;
 }
