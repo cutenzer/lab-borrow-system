@@ -4550,7 +4550,7 @@ function renderBorrowSidePanel(){
       <div class="nm"><b>${escH(i.name)}</b><span class="${eq?.location?'sr-link':''}" ${eq?.location?`onclick="sideItemLoc(${idx})" title="看平面圖位置"`:''}>${escH(rn(i.room))}${eq?.location?'・<span class="loc-g" style="display:inline-flex;align-items:center;gap:3px;vertical-align:middle">'+(typeof locTagInner==='function'?locTagInner(eq):escH(eq.location))+'</span>':''}</span></div>
       <div class="equip-row-qty"><button type="button" class="qty-btn" onclick="sideItemQty(${idx},-1)" aria-label="減少">−</button>${i._isChem?`<span style="min-width:24px;text-align:center;font-weight:700">${parseInt(i.quantity)||0}</span>`:qtyNum(i.quantity,null,`sideItemSet(${idx},this.value)`)+(i.loose?`<small>${escH(itemUnitLabel(i))}</small>`:'')}<button type="button" class="qty-btn" onclick="sideItemQty(${idx},1)" aria-label="增加">+</button></div>
     </div>`;
-  }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用下面的搜尋，或到「找器材」分頁挑</div>';
+  }).join(''):'<div class="bsp-empty">還沒有選器材<br>可以用上面的搜尋，或到「找器材」分頁挑</div>';
   box.innerHTML=`<div class="bsp-head"><h3>借用清單</h3><span>${items.length} 項・${total} 件</span></div>
     <div class="search-wrap" style="margin:0"><span class="search-icon"><svg class="ti" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></span><input class="search-input" type="text" id="sidePanelSearch" placeholder="搜尋器材，直接加入…" oninput="sidePanelSearch(this.value)" autocomplete="off"></div>
     <div id="sidePanelResults"></div>
@@ -8442,5 +8442,52 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 })();
 </script>
 <!-- ═══ loc-v1 結束 ═══ -->
+<!-- ===== fix-1101（2026-11-01）：首頁主視覺變矮、入口改長方形、搜尋框整併；整段刪掉即還原 ===== -->
+<style id="fix-1101">
+/* 4. 首頁深色主視覺變矮：標題一行，手機拿掉標語 */
+#page-home .hero2-title br{display:none;}
+@media(max-width:900px){
+  #page-home .hero2{padding:16px 16px 40px;gap:10px;}
+  #page-home .hero2-title{font-size:25px;}
+  #page-home .hero2-slogan{display:none;}
+  #page-home .hero2-art{width:250px;right:-50px;top:-4px;opacity:.12;}
+}
+@media(min-width:901px){
+  #page-home .hero2{padding:28px 40px 52px;gap:14px;}
+  #page-home .hero2-title{font-size:38px;}
+  #page-home .hero2-line{margin-top:-8px;}
+  #page-home .hero2-art{width:400px;top:10px;}
+  #page-home .hero2-slogan{top:30px;font-size:16px;}
+}
+/* 4b. 四個入口改成橫的長方形：圖示在左，標題＋說明在右 */
+.entry-cards{margin:-28px 12px 0;gap:8px;}
+.entry-card{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:10px;row-gap:1px;align-items:center;padding:11px 12px;border-radius:12px;}
+.entry-card .ico{grid-row:1/span 2;width:24px;height:24px;}
+.entry-card b{font-size:15.5px;line-height:1.3;}
+.entry-card span{font-size:12px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(min-width:901px){
+  .entry-cards{margin:-30px 28px 0;gap:14px;}
+  .entry-card{padding:14px 18px;column-gap:14px;}
+  .entry-card .ico{width:28px;height:28px;}
+  .entry-card b{font-size:17px;}
+  .entry-card span{font-size:13px;}
+}
+/* 5a. 首頁「藥品快查」不再有自己的搜尋框（上方大搜尋框已能搜藥品、CAS） */
+#homeChemSection .home-eq-search{display:none;}
+/* 5c. 電腦版借用單：右邊「借用清單」已有搜尋框，左邊表單裡的那個拿掉 */
+@media(min-width:1100px){
+  #bfg-items>.search-wrap,#borrowPageSearchResults{display:none;}
+  #bfg-items>.hint{font-size:0;}
+  #bfg-items>.hint::before{content:"在右邊「借用清單」搜尋加入，或到「找器材」分頁挑。";font-size:14px;}
+}
+</style>
+<script id="fix-1101-js">
+(function(){
+  // 5a：說明文字跟右邊「器材借用」一致
+  const h=document.querySelector('#homeChemSection .hint');
+  if(h)h.textContent='查藥品在哪、還剩幾瓶，可直接申請；要找其他藥品請用上方搜尋框';
+})();
+</script>
+
 </body>
 </html>
