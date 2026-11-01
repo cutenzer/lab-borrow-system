@@ -10663,7 +10663,9 @@ function srVenueSubj(v){v=String(v||'');return SR_SUBJ.find(s=>v.startsWith(s))|
 function srBkSubj(b){return SR_SUBJ.includes(b.subject)?b.subject:SR_SUBJ.includes(b.lab_subject)?b.lab_subject:srVenueSubj((b.periods||[])[0]&&b.periods[0].venue);}
 // 套了課綱實驗，就以課綱實驗的科目為準
 function srTplSubj(t){return t&&SR_SUBJ.includes(t.subject)?t.subject:'';}
-function srBkType(b){return b.course_type||SR_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
+// 競賽培訓：後台建的預約是「年級＝競賽培訓」、目的寫課程或其他，所以看年級／科目欄有沒有「競賽」（2026-11-01）
+function srIsComp(...v){return v.some(x=>/競賽/.test(String(x||'')));}
+function srBkType(b){if(srIsComp(b.grade,b.subject))return '競賽培訓';return b.course_type||SR_TYPE_FROM_PURPOSE[b.purpose]||(['探究','菁英','選修'].includes(b.subject)?b.subject:'');}
 function srShowAuto(b){return !!srBkType(b);}
 function srShown(b){return b.semester_show===true||(b.semester_show!==false&&srShowAuto(b));}
 function srTermNow(){const m=new Date().getMonth()+1;return [8,9,10,11,12,1].includes(m)?1:2;}
@@ -10691,7 +10693,7 @@ function srWeekRows(w,raw){
     if(r.booking_id)filled.add(`${r.booking_id}|${r.run_date}|${r.period||''}`);
     const t=r.template_id?srTpl(r.template_id):null,b=r.booking_id?srBks.find(x=>x.id===r.booking_id):null;
     rows.push({kind:'run',r,b,date:r.run_date,period:r.period||'',title:t?(t.name||'').trim():(r.title||''),tplGrade:t&&t.grade,
-      subj:srTplSubj(t)||r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:r.course_type||(b&&srBkType(b))||(t&&t.course_type)||'',who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
+      subj:srTplSubj(t)||r.subject||(b&&srBkSubj(b))||'',grade:r.grade||'',type:srIsComp(r.grade,b&&b.grade)?'競賽培訓':(r.course_type||(b&&srBkType(b))||(t&&t.course_type)||''),who:r.teacher||'',venue:r.venue||(b&&((b.periods||[])[0]||{}).venue)||'',hidden:r.is_hidden,fixed:!!(b&&b.is_fixed)});
   });
   srBks.forEach(b=>{
     if(b.status==='已拒絕')return;
