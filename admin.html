@@ -2494,7 +2494,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-11-01a';
+const ADMIN_VERSION='2026-11-02a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -12745,6 +12745,87 @@ div:has(>.la)+.qe-pos{display:none}
   const tip=()=>{const q=document.querySelector('#adminChemCab .cab-q');
     if(q&&matchMedia('(min-width:1100px)').matches)q.placeholder='找藥品：中文、英文、俗名、分子式、CAS（右邊清單同時篩選）';};
   new MutationObserver(tip).observe(document.body,{childList:true,subtree:true});tip();
+})();
+</script>
+
+<!-- ===== eqgrid-1102（2026-11-02）：器材清單欄位化（科目色點｜名稱・規格｜櫃位｜房間｜可借／總數｜動作）；整段刪掉即還原 ===== -->
+<style id="eqgrid-1102">
+.eqg,.eqg-head{display:none}
+/* 沒照片：清單分頁用科目色圓點取代空灰框（手機、電腦都適用） */
+#panel-equipment[data-eqm="list"] .eq-thumb.eqg-dot{background:transparent!important;border:0!important;display:flex!important;align-items:center;justify-content:center}
+#panel-equipment[data-eqm="list"] .eq-thumb.eqg-dot::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--sc,#9ca3af)}
+@media(min-width:1100px){
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-body{grid-template-columns:minmax(180px,1fr) 104px 128px 176px!important;grid-template-rows:auto auto;column-gap:18px!important;justify-content:stretch!important;row-gap:0!important}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-body>.eq-sub,
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-body>.eq-meta{display:none!important}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-body>.eqg{display:block!important}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-name{grid-column:1;grid-row:1}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-sub{grid-column:1;grid-row:2;font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-sub:empty{display:none!important}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-sub .eq-flags i{margin-left:0;margin-right:4px}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-loc{grid-column:2;grid-row:1/3;align-self:center;font-family:"DM Mono",ui-monospace,monospace;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-room{grid-column:3;grid-row:1/3;align-self:center;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-bar{grid-column:4;grid-row:1/3;align-self:center;display:flex!important;align-items:center;gap:10px}
+  .eqg-track{flex:1;height:8px;border-radius:99px;background:var(--border,#e2dccf);overflow:hidden;min-width:60px}
+  .eqg-fill{display:block;height:100%;border-radius:99px;background:var(--accent,#1f5b4c)}
+  .eqg-bar.low .eqg-fill{background:var(--danger,#b42318)}
+  .eqg-num{font-family:"DM Mono",ui-monospace,monospace;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:46px;text-align:right}
+  .eqg-bar.low .eqg-num b{color:var(--danger,#b42318)}
+  /* 動作：按鈕留著（顏色、數量不變），固定在最右欄 */
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-actions{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;justify-content:flex-end;gap:2px!important;margin:0!important;padding:0!important;border:0!important;width:178px;flex-shrink:0}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-actions .btn,#panel-equipment[data-eqm="list"] #adminEquipList .eq-actions summary.btn{background:transparent!important;border-color:transparent!important;box-shadow:none!important;color:var(--accent,#1f5b4c)!important;padding:3px 8px!important;font-size:13px!important;font-weight:600}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-actions .btn:hover,#panel-equipment[data-eqm="list"] #adminEquipList .eq-actions summary.btn:hover{background:var(--surface2,#efe9dd)!important}
+  #panel-equipment[data-eqm="list"] #adminEquipList .eq-body>.eqg.eqg-bar{display:flex!important}
+  /* 右窗格打開時清單變窄：欄位縮小，「換照片」交給右窗格 */
+  #panel-equipment[data-eqm="list"] .eq-ws:not(:has(.eq-pane-empty)) #adminEquipList .eq-body{grid-template-columns:minmax(130px,1fr) 72px 96px 132px!important;column-gap:12px!important}
+  #panel-equipment[data-eqm="list"] .eq-ws:not(:has(.eq-pane-empty)) .eqg-head .h-body{grid-template-columns:minmax(130px,1fr) 72px 96px 132px;column-gap:12px}
+  #panel-equipment[data-eqm="list"] .eq-ws:not(:has(.eq-pane-empty)) #adminEquipList .eq-actions>.btn:nth-child(2){display:none!important}
+  #panel-equipment[data-eqm="list"] .eq-ws:not(:has(.eq-pane-empty)) #adminEquipList .eq-actions,#panel-equipment[data-eqm="list"] .eq-ws:not(:has(.eq-pane-empty)) .eqg-head .h-act{width:112px}
+  /* 欄位標題 */
+  #panel-equipment[data-eqm="list"] #adminEquipList .eqg-head{display:flex;gap:12px;align-items:center;padding:8px 14px;font-size:12px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);background:var(--surface,#fbf8f1);position:sticky;top:0;z-index:2}
+  .eqg-head .h-dot{width:32px;flex-shrink:0}
+  .eqg-head .h-body{flex:1;min-width:0;display:grid;grid-template-columns:minmax(180px,1fr) 104px 128px 176px;column-gap:18px}
+  .eqg-head .h-act{flex-shrink:0;width:178px;text-align:right;padding-right:8px}
+}
+</style>
+<script id="eqgrid-1102-js">
+(function(){
+  if(typeof renderAdminEquipCard!=='function')return;
+  const SC={Chemistry:'#b45309',Biology:'#15803d',Physics:'#1d4ed8','Physics Chemistry':'#6d28d9',Geoscience:'#0e7490',TeachingMaterialRoom:'#6b7280',chemicals:'#b45309'};
+  const orig=renderAdminEquipCard;
+  renderAdminEquipCard=function(e){
+    let h=orig(e);
+    try{
+      // 1) 沒照片的空灰框 → 科目色點
+      h=h.replace('<div class="eq-thumb"></div>',`<div class="eq-thumb eqg-dot" style="--sc:${SC[e.room]||'#9ca3af'}" title="${escH(rn(e.room))}"></div>`);
+      // 2) 新增欄位（只有電腦版清單分頁顯示）
+      const total=parseInt(e.total)||0,avail=equipAvailable(e);
+      const pct=total>0?Math.max(0,Math.min(100,Math.round(avail/total*100))):0;
+      const low=total>0?(avail<=0||avail/total<0.25):false;
+      const mism=equipLocationMismatches(e).length,using=!!equipUsageHtml(e);
+      const flags=(mism?'<i class="w" title="位置代碼對不上">位置待確認</i>':'')+(using?'<i title="有人在借或申請中">借用中</i>':'');
+      const sub=[e.spec?escH(e.spec):'',e.alias?'別名：'+escH(e.alias):''].filter(Boolean).join(' ・ ');
+      const cells=`<div class="eqg eqg-sub">${sub}${flags?`<span class="eq-flags">${sub?' ':''}${flags}</span>`:''}</div>`+
+        `<div class="eqg eqg-loc" title="${escH(e.location||'')}">${e.location?escH(e.location):'<span style="color:var(--text2)">—</span>'}</div>`+
+        `<div class="eqg eqg-room">${escH(rn(e.room))}</div>`+
+        `<div class="eqg eqg-bar${low?' low':''}" title="可借 ${avail}／總數 ${total}">${total>0?`<span class="eqg-track"><span class="eqg-fill" style="width:${pct}%"></span></span>`:''}<span class="eqg-num"><b>${avail}</b>/${total}</span></div>`;
+      const k=h.indexOf('<div class="eq-sub">');
+      if(k>0)h=h.slice(0,k)+cells+h.slice(k);
+    }catch(err){}
+    return h;
+  };
+  // 3) 欄位標題：清單畫完後插在最上面
+  if(typeof filterAdminEquip==='function'){
+    const of=filterAdminEquip;
+    filterAdminEquip=function(){
+      const r=of.apply(this,arguments);
+      try{
+        const rl=document.querySelector('#adminEquipList .record-list');
+        if(rl&&!rl.querySelector('.eqg-head'))rl.insertAdjacentHTML('afterbegin','<div class="eqg-head"><span class="h-dot">科目</span><div class="h-body"><span>名稱・規格</span><span>櫃位</span><span>房間</span><span>可借／總數</span></div><span class="h-act">動作</span></div>');
+      }catch(err){}
+      return r;
+    };
+  }
 })();
 </script>
 
