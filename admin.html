@@ -12829,7 +12829,7 @@ div:has(>.la)+.qe-pos{display:none}
 })();
 </script>
 
-<!-- ===== ws-semruns-1104（2026-11-04）：學期實驗紀錄「工作台」（左邊一節一列、右邊點建議就填好並跳下一節）＋總覽：常駐 0 的待處理格收成一行、最上面加「學期實驗」一組；整段刪掉即還原 ===== -->
+<!-- ===== ws-semruns-1104（2026-11-04）：學期實驗紀錄「工作台」（左邊一節一列、右邊點建議就填好並跳下一節）＋總覽：常駐 0 的待處理格收成一行、格子對齊；整段刪掉即還原 ===== -->
 <style id="ws-semruns-1104">
 /* 工作台：左清單＋右窗格（電腦版撐滿畫面高度，兩邊各自捲動） */
 .ws-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(360px,32%,520px);gap:14px;align-items:stretch;min-height:420px}
@@ -12930,10 +12930,15 @@ div:has(>.la)+.qe-pos{display:none}
 }
 @media(prefers-reduced-motion:reduce){.ws-pane{transition:none}}
 /* 總覽：都沒事的待處理格收成一行 */
-.stat-ok{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);border:1px dashed var(--border);border-radius:10px;padding:10px 14px;min-height:44px}
-.stat-ok b{color:#1f5b4c;margin-right:6px;font-weight:700}
-.stat-ok .ok-dot{width:8px;height:8px;border-radius:50%;background:#1f5b4c;flex-shrink:0}
-@media(max-width:700px){.stat-ok{grid-column:1/-1;min-height:0;padding:8px 12px;font-size:12px}}
+.stat-ok{display:flex;align-items:center;gap:8px;font-size:12.5px;line-height:1.6;color:var(--text2);padding:0 6px;min-width:0}
+.stat-ok b{color:#1f5b4c;margin-right:6px;font-weight:700;white-space:nowrap}
+.stat-ok .ok-dot{width:7px;height:7px;border-radius:50%;background:#1f5b4c;flex-shrink:0}
+/* 每一組都是同樣 5 欄：格子上下對齊，不會一列寬一列窄；副標只留一行，每列一樣高（完整文字滑過看） */
+@media(min-width:701px){
+  #statsGrid .stats-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  #statsGrid .stat-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media(max-width:700px){.stat-ok{padding:2px 4px;font-size:12px}}
 </style>
 <script id="ws-semruns-1104-js">
 (function(){
@@ -13236,7 +13241,6 @@ div:has(>.la)+.qe-pos{display:none}
     try{
       const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
       if(Array.isArray(res))srRuns.push(...res);
-      ovRuns=null;
       const left=x.todo.length-use.length;
       if(!left)wsSel=nx?nx.key:null;
       wsPick=0;showToast(`已填「${name}」${use.length>1?`（${use.length} 節）`:''}`,'success');
@@ -13295,9 +13299,6 @@ div:has(>.la)+.qe-pos{display:none}
     document.getElementById('wsBack')?.remove();
     return _render.apply(this,arguments);
   };
-  // 紀錄有新增／修改／刪除（每次都會重畫）：總覽的「學期實驗」數字跟著更新
-  const _r2=window.srRender;
-  window.srRender=function(){const out=_r2.apply(this,arguments);if(srLoaded&&document.getElementById('statsGrid')?.children.length){clearTimeout(window._wsStT);window._wsStT=setTimeout(()=>{try{renderStats();}catch(_){}},300);}return out;};
   // 其他檢視的工具列也加上「工作台」
   const _bar=window.srBarHtml;
   window.srBarHtml=function(){
@@ -13307,35 +13308,21 @@ div:has(>.la)+.qe-pos{display:none}
     return h;
   };
 
-  // ── 總覽：待處理的格子是 0 就收成一行；最上面加「學期實驗」──
-  let ovRuns=null,ovBusy=false;
-  const OV_ACTION=['器材待審核','器材借用中','逾期未還','待收保證金','待退保證金','場地待審核','庫存不足器材','超過一年未盤點','位置代碼異常'];
-  function ovFetch(){
-    if(ovBusy)return;ovBusy=true;
-    sb('GET','experiment_runs',{select:'id,booking_id,run_date,period'}).then(r=>{ovRuns=Array.isArray(r)?r:[];}).catch(()=>{ovRuns=[];window._ovRunsErr=true;})
-      .finally(()=>{ovBusy=false;try{renderStats();}catch(_){}});
+  // ── 總覽：待處理的格子是 0 就收成一行 ──
+    const OV_ACTION=['器材待審核','器材借用中','逾期未還','待收保證金','待退保證金','場地待審核','庫存不足器材','超過一年未盤點','位置代碼異常'];
+  // 格子整理：「理化」這種文字不是 0，不要變灰；「都沒有」那行補滿這一列剩下的欄；副標完整文字放滑過提示
+  function ovTidy(){
+    const g=document.getElementById('statsGrid');if(!g)return;
+    g.querySelectorAll('.stat-card.is-zero').forEach(c=>{const t=(c.querySelector('.stat-num')||{}).textContent||'';if(/[^\d,.%\s─0]/.test(t))c.classList.remove('is-zero');});
+    g.querySelectorAll('.stat-sub').forEach(x=>{x.title=x.textContent;});
+    g.querySelectorAll('.stats-grid').forEach(grid=>{
+      const ok=grid.querySelector('.stat-ok');if(!ok)return;
+      const cols=getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length||1;
+      const n=grid.querySelectorAll('.stat-card').length%cols;
+      ok.style.gridColumn=n?`span ${cols-n}`:'1 / -1';
+    });
   }
-  function semGroup(){
-    const runs=srLoaded?srRuns:ovRuns;if(!runs)return '';
-    const term=srTermNow(),cal=semCalendar(term,activeSemester),weeks=cal.weeks,ni=nowIdxOf(weeks);if(!weeks.length)return '';
-    const i=ni>=0?ni:0,w=weeks[i],[a,e]=wkRange(w);
-    const bks=allVenueBookings||[];
-    const now=countRange(a,e,bks,runs);
-    const before=countRange(fmtDate(weeks[0].date),addDays(a,-1),bks,runs);
-    const sem=countRange(fmtDate(weeks[0].date),e,bks,runs);
-    const nx=weeks[i+1]?countRange(...wkRange(weeks[i+1]),bks,runs):null;
-    const bw=before.first?(weeks.find(x=>{const [s,t]=wkRange(x);return before.first>=s&&before.first<=t;})||{}).week:null;
-    const pc=sem.tot?Math.round((sem.tot-sem.todo)/sem.tot*100):null;
-    const card=(num,label,color,fn,sub,zero)=>{const [full,short]=label.split('|');return `<div class="stat-card${zero?' is-zero':''}" onclick="${fn}"><div class="stat-num" style="color:${color}">${num}</div><div class="stat-label"><span class="sl-full">${full}</span><span class="sl-short">${short||full}</span></div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;};
-    const cards=[
-      card(now.todo,'本週還沒填實驗（節）|本週沒填',now.todo?WARN:'#1f5b4c',`wsGo(${w.week},'todo')`,`W${w.week}・共 ${now.tot} 節，已填 ${now.tot-now.todo}`,false),
-      before.todo?card(before.todo,'前幾週還沒填（節）|之前沒填',WARN,`wsGo(${bw||w.week},'todo')`,bw?`最早在 W${bw}`:'',false):'',
-      card(pc==null?'─':pc+'%','本學期已填|學期已填',"#34506b",`wsGo(${w.week},'all')`,`${sem.tot-sem.todo}／${sem.tot} 節（到本週）`,false),
-      nx?card(nx.tot,'下週已排實驗課（節）|下週已排','#34506b',`wsGo(${weeks[i+1].week},'todo')`,nx.tot?`已先填 ${nx.tot-nx.todo} 節`:'',!nx.tot):''
-    ].join('');
-    const ok=before.todo?'':`<div class="stat-ok"><span class="ok-dot"></span><span><b>都填好了</b>前幾週的實驗</span></div>`;
-    return `<section class="stat-grp" aria-label="學期實驗"><div class="stat-grp-h">學期實驗</div><div class="stats-grid">${cards}${ok}</div></section>`;
-  }
+  window.addEventListener('resize',()=>{clearTimeout(window._ovTT);window._ovTT=setTimeout(ovTidy,150);});
   const _stats=window.renderStats;
   window.renderStats=function(){
     const out=_stats.apply(this,arguments);
@@ -13347,13 +13334,10 @@ div:has(>.la)+.qe-pos{display:none}
         grid.querySelectorAll('.stat-card.is-zero').forEach(c=>{const l=(c.querySelector('.sl-full')||{}).textContent;if(l&&OV_ACTION.includes(l.trim())){gone.push(l.trim());c.remove();}});
         if(gone.length)grid.insertAdjacentHTML('beforeend',`<div class="stat-ok"><span class="ok-dot"></span><span><b>都沒有</b>${gone.map(escH).join('、')}</span></div>`);
       });
-      if(!srLoaded&&ovRuns==null&&!ovBusy)ovFetch();
-      g.insertAdjacentHTML('afterbegin',semGroup());
+      ovTidy();
     }catch(err){console.error(err);}
     return out;
   };
-  // 按「重新整理」：總覽的學期實驗數字也重抓
-  if(typeof window.loadAll==='function'){const _la=window.loadAll;window.loadAll=function(){ovRuns=null;return _la.apply(this,arguments);};}
   try{if(document.getElementById('statsGrid')?.children.length)renderStats();}catch(_){}
 })();
 </script>
