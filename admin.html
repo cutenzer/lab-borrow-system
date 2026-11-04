@@ -2494,7 +2494,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-11-02a';
+const ADMIN_VERSION='2026-11-04a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -12826,6 +12826,535 @@ div:has(>.la)+.qe-pos{display:none}
       return r;
     };
   }
+})();
+</script>
+
+<!-- ===== ws-semruns-1104（2026-11-04）：學期實驗紀錄「工作台」（左邊一節一列、右邊點建議就填好並跳下一節）＋總覽：常駐 0 的待處理格收成一行、最上面加「學期實驗」一組；整段刪掉即還原 ===== -->
+<style id="ws-semruns-1104">
+/* 工作台：左清單＋右窗格（電腦版撐滿畫面高度，兩邊各自捲動） */
+.ws-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(360px,32%,520px);gap:14px;align-items:stretch;min-height:420px}
+.ws-list{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:auto;min-height:0}
+.ws-pane{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:auto;min-height:0;display:flex;flex-direction:column}
+.ws-day{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;padding:7px 12px;font-size:12.5px;font-weight:700;background:var(--surface2);border-bottom:1px solid var(--border)}
+.ws-day em{font-style:normal;font-weight:500;color:var(--text2)}
+.ws-day em.todo{color:#a4561a;font-weight:700}
+.ws-row{display:grid;grid-template-columns:70px 10px minmax(96px,150px) minmax(56px,84px) minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;min-height:44px}
+.ws-row:hover{background:var(--surface2)}
+.ws-row.sel{background:#e3eee9;box-shadow:inset 3px 0 0 var(--accent)}
+.ws-row:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.ws-row.skip{opacity:.55}
+.ws-pd{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);white-space:nowrap}
+.ws-dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.ws-cls{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-cls small{font-weight:500;color:var(--text2);margin-left:4px;font-size:11.5px}
+.ws-who{font-size:12.5px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-x{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+.ws-x.todo{color:#a4561a}
+.ws-x.todo::before{content:"";display:inline-block;width:10px;height:10px;border:1.5px dashed #a4561a;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.ws-x .part{color:#a4561a;font-size:12px;margin-left:6px}
+.ws-room{font-size:11.5px;color:var(--text2);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.ws-empty{padding:28px 16px;text-align:center;color:var(--text2);font-size:14px;line-height:1.8}
+.ws-empty b{display:block;color:var(--text);font-size:15px}
+/* 右窗格 */
+.ws-pbody{padding:14px 16px;display:flex;flex-direction:column;gap:12px;flex:1}
+.ws-hd{font-size:17px;font-weight:700;line-height:1.35}
+.ws-hd small{display:block;font-size:12.5px;font-weight:400;color:var(--text2);margin-top:3px}
+.ws-hd .ws-last{color:var(--text2);font-size:12px;font-weight:400;display:block;margin-top:2px}
+.ws-lbl{font-size:11.5px;color:var(--text2);font-weight:700;letter-spacing:.5px;margin-bottom:5px}
+.ws-note{font-size:12.5px;background:#f6e6d6;color:#7a3f12;border-radius:8px;padding:7px 10px}
+.ws-ps{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.ws-ps label{display:flex;align-items:center;gap:5px;cursor:pointer}
+.ws-ps input{width:auto;margin:0}
+.ws-sg{display:flex;flex-direction:column;gap:6px}
+.ws-sg button{all:unset;box-sizing:border-box;cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center;font-size:13.5px;background:var(--surface)}
+.ws-sg button:hover,.ws-sg button.on{border-color:var(--accent);background:#e3eee9}
+.ws-sg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.ws-sg b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-sg kbd{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:0 5px;background:var(--surface2)}
+.ws-sg .tg{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px;font-size:11px;color:var(--text2)}
+.ws-sg .tg i{font-style:normal;border-radius:4px;padding:0 5px;background:var(--surface2)}
+.ws-sg .tg i.peer{background:#dfeae3;color:#1f5b4c}
+.ws-sg .tg i.done{background:#f6e6d6;color:#7a3f12}
+.ws-q{display:flex;gap:6px}
+.ws-q input{flex:1;min-width:0;height:36px;font-size:13.5px}
+.ws-eq{width:100%;border-collapse:collapse;font-size:12.5px}
+.ws-eq th{font-size:11px;color:var(--text2);font-weight:500;text-align:left;padding:3px 4px;border-bottom:1px solid var(--border)}
+.ws-eq td{padding:5px 4px;border-bottom:1px dashed var(--border);vertical-align:top}
+.ws-eq tr:last-child td{border-bottom:0}
+.ws-eq .n{text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+.ws-eq .loc{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text2);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-eq tr.short td{color:var(--danger);font-weight:700}
+.ws-eq small{color:var(--text2);font-weight:400}
+.ws-none{font-size:12.5px;color:var(--text2)}
+.ws-done{display:flex;flex-direction:column;gap:6px}
+.ws-run{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13.5px}
+.ws-run>span{flex:1;min-width:0}
+.ws-run small{display:block;color:var(--text2);font-size:12px}
+.ws-act{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ws-act .btn-primary{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-act .ws-more{margin-left:auto;font-size:12.5px;color:var(--text2);background:none;border:0;cursor:pointer;text-decoration:underline;padding:4px}
+.ws-keys{font-size:11px;color:var(--text2);padding:0 16px 10px}
+.ws-front{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text2)}
+.ws-front select{width:auto;height:30px;font-size:12.5px;padding:0 6px}
+.ws-close{display:none}
+/* 工具列 */
+.ws-bar .ws-d{display:flex;flex-wrap:wrap;gap:8px;align-items:center;width:100%}
+.ws-wk{display:flex;align-items:center;gap:4px}
+.ws-wk button{border:1.5px solid var(--border);background:var(--surface);border-radius:8px;width:30px;height:32px;cursor:pointer;font-size:15px;line-height:1}
+.ws-wk select{height:34px;max-width:200px}
+.ws-prog{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);white-space:nowrap}
+.ws-pb{width:110px;height:8px;border-radius:4px;background:var(--border);overflow:hidden;display:inline-block}
+.ws-pb i{display:block;height:100%;background:var(--accent)}
+.ws-bar .sr-add{margin-left:auto}
+.ws-est{font-size:12px;color:#8a5a00}
+/* 手機、平板：清單照頁面捲；點一列從下面滑出窗格 */
+@media(max-width:1099px){
+  .ws-grid{display:block;height:auto!important;min-height:0}
+  .ws-list{overflow:visible}
+  .ws-row{grid-template-columns:62px 8px minmax(0,1fr) auto;grid-template-areas:"pd dot cls room" "pd dot x x";row-gap:2px;padding:9px 12px}
+  .ws-row .ws-pd{grid-area:pd}.ws-row .ws-dot{grid-area:dot}.ws-row .ws-cls{grid-area:cls}.ws-row .ws-room{grid-area:room}.ws-row .ws-x{grid-area:x}
+  .ws-row .ws-who{display:none}
+  .ws-day{top:var(--wsStick,0px)}
+  .ws-pane{position:fixed;left:0;right:0;bottom:0;z-index:300;max-height:78vh;border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.2);transform:translateY(105%);transition:transform .2s;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .ws-pane.open{transform:none}
+  .ws-close{display:block;position:absolute;top:8px;right:10px;border:0;background:var(--surface2);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;z-index:2}
+  .ws-back{position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.28)}
+  .ws-keys{display:none}
+  .ws-act{padding:10px 14px}
+}
+@media(max-width:760px){
+  .ws-bar .srm .ws-wk{flex:1 1 auto;min-width:0}
+  .ws-bar .srm .ws-wk select{flex:1;min-width:0;max-width:none;height:36px}
+  .ws-bar .srm .ws-prog{font-size:12px}
+  .ws-bar .srm .ws-pb{flex:1;width:auto}
+}
+@media(prefers-reduced-motion:reduce){.ws-pane{transition:none}}
+/* 總覽：都沒事的待處理格收成一行 */
+.stat-ok{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text2);border:1px dashed var(--border);border-radius:10px;padding:10px 14px;min-height:44px}
+.stat-ok b{color:#1f5b4c;margin-right:6px;font-weight:700}
+.stat-ok .ok-dot{width:8px;height:8px;border-radius:50%;background:#1f5b4c;flex-shrink:0}
+@media(max-width:700px){.stat-ok{grid-column:1/-1;min-height:0;padding:8px 12px;font-size:12px}}
+</style>
+<script id="ws-semruns-1104-js">
+(function(){
+  'use strict';
+  if(typeof srRender!=='function'||typeof srBarHtml!=='function'||typeof renderStats!=='function')return;
+  const VIEWS=['ws','card','list','grade','wk'];
+  // 上次用哪個檢視（這台電腦記得）；沒記錄就用工作台
+  try{const v=localStorage.getItem('lab_sr_view');srView=VIEWS.includes(v)?v:'ws';}catch(_){srView='ws';}
+  const WARN='#a4561a';
+  const PI=p=>{const i=PERIODS.indexOf(p);return i<0?99:i;};
+  const closed=p=>{try{return typeof holClosed==='function'&&typeof holidayForDate==='function'&&!!holClosed(holidayForDate(p.date,p.period));}catch(_){return false;}};
+  // 這一節要不要算：沒被拒絕、不是停課
+  const isOn=p=>!!(p&&p.date&&p.status!=='已拒絕'&&!closed(p));
+  // 第2節、第3節 → 第2–3節
+  function perText(ps){
+    const a=[...new Set(ps.filter(Boolean))].sort((x,y)=>PI(x)-PI(y));if(!a.length)return '—';
+    const n=a.map(p=>{const m=String(p).match(/^第(\d+)節$/);return m?+m[1]:null;});
+    if(!n.every(x=>x!=null))return a.join('、');
+    const out=[];let s=n[0],e=n[0];
+    for(let i=1;i<=n.length;i++){if(i<n.length&&n[i]===e+1){e=n[i];continue;}out.push(s===e?String(s):`${s}–${e}`);if(i<n.length)s=e=n[i];}
+    return `第${out.join('、')}節`;
+  }
+  function wkRange(w){const a=fmtDate(w.date),x=new Date(w.date);x.setDate(x.getDate()+6);return [a,fmtDate(x)];}
+  const addDays=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtDate(d);};
+  function nowIdxOf(weeks){const t=new Date();t.setHours(0,0,0,0);return weeks.findIndex(w=>{const e=new Date(w.date);e.setDate(e.getDate()+7);return t>=w.date&&t<e;});}
+  // 要不要填實驗：前台學期頁不顯示的預約、競賽培訓（年級表也不算它沒填）都不用
+  function wsNeed(b){return srShown(b)&&srBkType(b)!=='競賽培訓';}
+  // 一段日期裡，要填實驗的節數、還沒填的節數（前台不顯示的預約不算；subj＝只算某科）
+  function countRange(a,e,bks,runs,subj){
+    const filled=new Set();(runs||[]).forEach(r=>{if(r.booking_id&&r.run_date>=a&&r.run_date<=e)filled.add(`${r.booking_id}|${r.run_date}|${r.period||''}`);});
+    let tot=0,todo=0,first=null;
+    (bks||[]).forEach(b=>{
+      if(!b||b.status==='已拒絕'||!wsNeed(b))return;
+      if(subj&&subj!=='全部'&&srBkSubj(b)!==subj)return;
+      (b.periods||[]).forEach(p=>{if(!isOn(p)||p.date<a||p.date>e)return;tot++;if(!filled.has(`${b.id}|${p.date}|${p.period}`)){todo++;if(!first||p.date<first)first=p.date;}});
+    });
+    return {tot,todo,first};
+  }
+
+  // ── 工作台狀態 ──
+  let wsWeek=null,wsTermOf=null,wsFilter='todo',wsSel=null,wsPick=0,wsBusy=false,wsSheet=false;
+  let wsRows=[],wsShown=[],wsSugg=[],wsCal=null,wsTW=new Map(),wsBk=new Map();
+  const tplName=t=>(t.name||'').trim()+(tplFamilyOf(t).length>1?`（${tplVerName(t)}）`:'');
+  const runName=r=>{const t=r.template_id?srTpl(r.template_id):null;return t?tplName(t):String(r.title||'').trim()||'（未填名稱）';};
+
+  // 這一週的列：同一筆預約、同一天＝一列（連堂合成一列）；沒對到預約的紀錄自己一列
+  function build(w){
+    const [a,e]=wkRange(w),m=new Map(),filled=new Map();
+    srRuns.forEach(r=>{if(r.booking_id&&r.run_date>=a&&r.run_date<=e){const k=`${r.booking_id}|${r.run_date}|${r.period||''}`;if(!filled.has(k))filled.set(k,[]);filled.get(k).push(r);}});
+    srBks.forEach(b=>{
+      if(b.status==='已拒絕')return;
+      (b.periods||[]).forEach(p=>{
+        if(!isOn(p)||p.date<a||p.date>e)return;
+        const k='b|'+b.id+'|'+p.date;let x=m.get(k);
+        if(!x){x={key:k,b,date:p.date,todo:[],runs:[],ps:[]};m.set(k,x);}
+        x.ps.push(p);
+        const rs=filled.get(`${b.id}|${p.date}|${p.period}`);
+        if(rs)rs.forEach(r=>{if(!x.runs.includes(r))x.runs.push(r);});else x.todo.push(p);
+      });
+    });
+    const used=new Set();m.forEach(x=>x.runs.forEach(r=>used.add(r.id)));
+    srRuns.forEach(r=>{
+      if(r.run_date<a||r.run_date>e||used.has(r.id))return;
+      const b=r.booking_id?wsBk.get(String(r.booking_id))||null:null;
+      const k='x|'+(b?b.id:'r'+r.id)+'|'+r.run_date;let x=m.get(k);
+      if(!x){x={key:k,b,date:r.run_date,todo:[],runs:[],ps:[],loose:true};m.set(k,x);}
+      x.runs.push(r);x.ps.push({date:r.run_date,period:r.period||'',venue:r.venue||''});
+    });
+    const ord=s=>{const i=SR_SUBJ.indexOf(s);return i<0?9:i;};
+    return [...m.values()].map(x=>{
+      const r0=x.runs[0],b=x.b,t=r0&&r0.template_id?srTpl(r0.template_id):null;
+      x.subj=(b&&srBkSubj(b))||srTplSubj(t)||(r0&&r0.subject)||'';
+      x.grade=String((b?b.grade:r0&&r0.grade)||'').trim();
+      x.type=b?srBkType(b):(r0&&r0.course_type)||'';
+      x.who=String((b?b.borrower_name:r0&&r0.teacher)||'').trim();
+      x.venue=[...new Set(x.ps.map(p=>p.venue).filter(Boolean))].join('、');
+      x.skip=!!(b&&!x.loose&&!wsNeed(b));
+      x.pi=Math.min(...x.ps.map(p=>PI(p.period)));
+      x.st=x.todo.length?(x.runs.length?'part':(x.skip?'skip':'todo')):'done';
+      return x;
+    }).filter(x=>srSubj==='全部'||x.subj===srSubj)
+      .sort((p,q)=>p.date.localeCompare(q.date)||p.pi-q.pi||ord(p.subj)-ord(q.subj)||p.grade.localeCompare(q.grade,'zh-Hant'));
+  }
+  const shownOf=rows=>rows.filter(x=>wsFilter==='all'||(wsFilter==='todo'?(x.st==='todo'||x.st==='part'):(x.st==='done'||x.st==='part')));
+  const cur=()=>wsShown.find(x=>x.key===wsSel)||null;
+
+  // ── 建議：同年段、同科目；排在這週附近的課綱實驗優先，同年級其他班這週做的更優先，這班做過的往後 ──
+  function tplType(t){const k=srTypeKey(t.course_type);if(k)return k;const g=String(t.grade||'');return /菁英/.test(g)?'菁英':/探究/.test(g)?'探究':/選修/.test(g)?'選修':/競賽/.test(g)?'競賽培訓':'';}
+  function tplSubj(t){return srTplSubj(t)||SR_SUBJ.find(s=>String(t.grade||'').includes(s))||'';}
+  function tplWeeks(t){if(!wsTW.has(t.id)){let ws=[];try{ws=(semPlace(t,wsCal).weeks)||[];}catch(_){}wsTW.set(t.id,ws);}return wsTW.get(t.id);}
+  function suggest(x,wk){
+    const lv=srLevel(x.grade);if(!lv)return [];
+    const ty=srTypeKey(x.type),ck=x.b?srClassKey(x.b):null,w=wsCal.weeks.find(y=>y.week===wk);
+    const [a,e]=w?wkRange(w):[x.date,x.date],pa=addDays(a,-7);
+    const doneFam=new Set(),peerW=new Map(),peerP=new Map(),same=new Set();
+    srRuns.forEach(r=>{
+      const t=r.template_id?srTpl(r.template_id):null;if(!t)return;const f=tplFam(t);
+      const b=r.booking_id?wsBk.get(String(r.booking_id)):null;
+      if(x.runs.includes(r)){same.add(f);return;}
+      if(ck&&b&&srClassKey(b)===ck&&r.run_date!==x.date){doneFam.add(f);return;}
+      const g=b?b.grade:r.grade;if(srLevel(g)!==lv)return;
+      const sj=b?srBkSubj(b):(srTplSubj(t)||r.subject);if(x.subj&&sj&&sj!==x.subj)return;
+      if(r.run_date>=a&&r.run_date<=e)peerW.set(f,(peerW.get(f)||0)+1);
+      else if(r.run_date>=pa&&r.run_date<a)peerP.set(f,(peerP.get(f)||0)+1);
+    });
+    const out=[];
+    allTemplates.forEach(t=>{
+      if(!t||!String(t.name||'').trim()||srLevel(t.grade)!==lv)return;
+      const ts=tplSubj(t);if(ts&&x.subj&&ts!==x.subj)return;
+      const f=tplFam(t),ws=tplWeeks(t),dist=ws.length?Math.min(...ws.map(n=>Math.abs(n-wk))):99;
+      const pw=peerW.get(f)||0,pp=peerP.get(f)||0,dn=doneFam.has(f),sm=same.has(f);
+      if(!(dist<=2||pw||pp||sm))return;
+      const tt=tplType(t),off=tt===ty?0:1;
+      out.push({t,ws,dist,pw,pp,dn,sm,tt,off,score:off*6+Math.min(dist,6)-(pw?5:0)-(pp?2:0)-(sm?10:0)+(dn?12:0)});
+    });
+    return out.sort((p,q)=>p.score-q.score||String(p.t.name).localeCompare(String(q.t.name),'zh-Hant')).slice(0,5);
+  }
+
+  // ── 器材：課綱列的器材 → 櫃位、可借數（不夠變紅）──
+  // 比對方式跟課綱實驗健檢一樣（品名去空白、互相包含、別名）；同名好幾種時用規格、房間挑最像的
+  function eqIndex(){
+    const borrowed={};
+    (allRecords||[]).filter(r=>r.status==='已核准'||r.status==='逾期').forEach(r=>(r.items||[]).forEach(it=>{if(it.loose)return;const k=it.room+'__'+it.name;borrowed[k]=(borrowed[k]||0)+(parseInt(it.quantity)||0);}));
+    const norm=v=>String(v||'').toLowerCase().replace(/\s+/g,'');
+    const list=(allEquipment||[]).filter(e=>e.is_available!==false).map(e=>({e,n:norm(e.name),full:norm(e.name)+norm(e.spec),al:(typeof eqAliasList==='function'?eqAliasList(e):[]).map(norm),
+      loc:e.location||'',avail:Math.max(0,(parseInt(e.total)||0)-(borrowed[e.room+'__'+e.name]||0))}));
+    const memo=new Map();
+    return {get(it){
+      const n=norm(it.name),sp=norm(it.spec),k=it.room+'|'+n+'|'+sp;if(memo.has(k))return memo.get(k);
+      let best=null,bs=-1;
+      if(n)list.forEach(x=>{
+        const exact=x.n===n||x.al.includes(n),hit=exact||x.full.includes(n)||(x.n&&n.includes(x.n));if(!hit)return;
+        const sc=(exact?3:1)+(x.e.room===it.room?2:0)+(sp&&x.full.includes(sp)?3:0);
+        if(sc>bs){bs=sc;best=x;}
+      });
+      memo.set(k,best);return best;
+    }};
+  }
+  function eqHtml(t,run){
+    if(!t)return '<div class="ws-none">沒有套課綱實驗，帶不出器材</div>';
+    const own=run&&String(run.template_id)===String(t.id)&&Array.isArray(run.equipment_items);
+    const list=(own?run.equipment_items:Array.isArray(t.equipment_items)?t.equipment_items:[]).filter(i=>i&&i.name);
+    if(!list.length)return '<div class="ws-none">這個課綱實驗還沒列器材</div>';
+    const ix=eqIndex(),haveEq=(allEquipment||[]).length>0;
+    const rows=list.slice(0,40).map(i=>{
+      const q=parseInt(i.quantity)||0,chem=i.room==='chemicals',e=chem?null:ix.get(i);
+      const short=e&&q>0&&e.avail<q;
+      const alt=e&&e.e.name!==i.name?` <small title="庫存裡對到的品名">→ ${escH(e.e.name)}${e.e.spec?' '+escH(e.e.spec):''}</small>`:'';
+      return `<tr${short?' class="short"':''}><td>${escH(i.name)}${i.spec?` <small>${escH(i.spec)}</small>`:''}${alt}</td><td class="loc" title="${escH(e?e.loc:'')}">${chem?'藥品':e&&e.loc?escH(e.loc):'—'}</td><td class="n">${q||'—'}</td><td class="n">${chem?'—':e?e.avail:(haveEq?'<small>對不到</small>':'—')}</td></tr>`;
+    }).join('');
+    return `<table class="ws-eq"><thead><tr><th>器材</th><th>櫃位</th><th class="n">要</th><th class="n">可借</th></tr></thead><tbody>${rows}</tbody></table>${list.length>40?`<div class="ws-none">另有 ${list.length-40} 項</div>`:''}${own?'<div class="ws-none">這次的器材有調整過</div>':''}`;
+  }
+
+  // ── 畫面 ──
+  function barHtml(weeks,nowIdx,wi,cnt){
+    const w=weeks[wi],[a,e]=wkRange(w);
+    const seg=(list,curv,fn)=>`<div class="sr-seg">${list.map(([k,l])=>`<button type="button" class="${curv===k?'on':''}" onclick="${fn(k)}">${l}</button>`).join('')}</div>`;
+    const term=seg([[1,'上學期'],[2,'下學期']],srTerm,k=>`srTerm=${k};srRender()`);
+    const view=seg([['ws','工作台'],['card','卡片'],['list','清單'],['grade','年級表'],['wk','週次表']],srView,k=>`srView='${k}';srSelClear();srRender()`);
+    const subj=`<select onchange="srSubj=this.value;srRender()" aria-label="科目">${['全部',...SR_SUBJ].map(s=>`<option value="${s}"${s===srSubj?' selected':''}>${s==='全部'?'全部科目':s}</option>`).join('')}</select>`;
+    const wsel=`<div class="ws-wk"><button type="button" data-act="wk" data-d="-1" aria-label="上一週"${wi<=0?' disabled':''}>‹</button><select id="wsWk" aria-label="週次">${weeks.map((x,i)=>{const c=cnt[i];return `<option value="${x.week}"${i===wi?' selected':''}>W${x.week}　${srMD(x.date)}${i===nowIdx?'・本週':''}${c&&c.todo?`・還沒填 ${c.todo}`:''}</option>`;}).join('')}</select><button type="button" data-act="wk" data-d="1" aria-label="下一週"${wi>=weeks.length-1?' disabled':''}>›</button></div>`;
+    const back=nowIdx>=0&&wi!==nowIdx?`<button type="button" class="sr-jump" data-act="wk" data-d="0">回本週</button>`:'';
+    const n=cnt[wi]||{tot:0,todo:0},done=n.tot-n.todo,pc=n.tot?Math.round(done/n.tot*100):0;
+    const flt=seg([['todo',`還沒填 ${n.todo}`],['all','全部'],['done','已填']],wsFilter,k=>`wsFlt('${k}')`);
+    const prog=`<div class="ws-prog"><span class="ws-pb"><i style="width:${pc}%"></i></span>已填 ${done}／${n.tot} 節</div>`;
+    const msel=(opts,curv,fn,lab)=>`<select aria-label="${lab}" onchange="${fn}">${opts.map(([k,l])=>`<option value="${k}"${String(k)===String(curv)?' selected':''}>${l}</option>`).join('')}</select>`;
+    const mob=`<div class="srm">
+      <div class="srm-r">${msel([[1,'上學期'],[2,'下學期']],srTerm,'srTerm=+this.value;srRender()','學期')}${msel([['ws','工作台'],['card','卡片'],['list','清單'],['grade','年級表'],['wk','週次表']],srView,"srView=this.value;srSelClear();srRender()",'檢視')}${msel([['全部','全科'],...SR_SUBJ.map(s=>[s,s])],srSubj,'srSubj=this.value;srRender()','科目')}${msel([['todo','還沒填'],['all','全部'],['done','已填']],wsFilter,'wsFlt(this.value)','狀態')}</div>
+      <div class="srm-r">${wsel.replace('id="wsWk"','id="wsWkM"')}${back}</div>
+      <div class="srm-r">${prog}<button type="button" class="btn btn-primary btn-sm srm-add" onclick="srEdit()">＋ 新增</button></div></div>`;
+    return `<div class="sr-bar ws-bar"><div class="ws-d">${term}${view}${subj}${wsel}${back}${flt}${prog}${wsCal.real?'':'<span class="ws-est">週次是估計的（學期設定還沒設這學期）</span>'}<button type="button" class="btn btn-primary btn-sm sr-add" onclick="srEdit()">＋ 新增實驗紀錄</button></div>${mob}</div>`;
+  }
+  const DAYN='日一二三四五六';
+  const skipWhy=x=>x.type==='競賽培訓'?'競賽培訓，不用填':'不是課程，不用填';
+  function listHtml(){
+    if(!wsShown.length){
+      const anyTodo=wsRows.some(x=>x.st==='todo'||x.st==='part');
+      if(wsFilter==='todo'&&!anyTodo&&wsRows.length)return `<div class="ws-empty"><b>這週都填好了</b>${nextTodoBtn()}</div>`;
+      return `<div class="ws-empty"><b>${wsRows.length?'這個篩選下沒有':'這週沒有預約實驗室'}</b>${wsFilter!=='all'&&wsRows.length?'<button type="button" class="sr-jump" onclick="wsFlt(\'all\')">看全部</button>':nextTodoBtn()}</div>`;
+    }
+    const today=fmtDate(new Date());let h='',last='';
+    wsShown.forEach((x,i)=>{
+      if(x.date!==last){
+        const n=wsRows.filter(y=>y.date===x.date&&(y.st==='todo'||y.st==='part')).reduce((s,y)=>s+y.todo.length,0);
+        h+=`<div class="ws-day"><span>週${DAYN[new Date(x.date+'T00:00:00').getDay()]} ${srMD(x.date)}${x.date===today?' · 今天':''}</span><em class="${n?'todo':''}">${n?`還沒填 ${n} 節`:'都填好了'}</em></div>`;last=x.date;
+      }
+      const names=[...new Set(x.runs.map(runName))];
+      const xs=x.st==='done'||x.st==='part'?`<div class="ws-x">${escH(names.join('／'))}${x.st==='part'?`<span class="part">還有 ${x.todo.length} 節沒填</span>`:''}</div>`:`<div class="ws-x todo">${x.skip?skipWhy(x):'還沒填'}</div>`;
+      const ty=x.type&&x.type!=='一般'?`<small>${escH(x.type)}</small>`:'';
+      h+=`<div class="ws-row${x.key===wsSel?' sel':''}${x.skip?' skip':''}" data-i="${i}" tabindex="-1" role="button" style="--c:${SR_COL[x.subj]||'#9ca3af'}"><span class="ws-pd">${escH(perText(x.ps.map(p=>p.period)))}</span><span class="ws-dot" title="${escH(x.subj)}"></span><span class="ws-cls">${escH(x.grade||'—')}${ty}</span><span class="ws-who">${escH(x.who)}</span>${xs}<span class="ws-room">${escH(x.venue.replace(/實驗室/g,''))}</span></div>`;
+    });
+    return h;
+  }
+  function nextTodoBtn(){
+    const weeks=wsCal.weeks,wi=weeks.findIndex(w=>w.week===wsWeek);
+    for(let i=0;i<weeks.length;i++){const j=(wi+1+i)%weeks.length;if(j===wi)break;const [a,e]=wkRange(weeks[j]);if(countRange(a,e,srBks,srRuns,srSubj).todo)return `<button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="wsGoWeek(${weeks[j].week})">去 W${weeks[j].week}（還有沒填的）</button>`;}
+    return '';
+  }
+  function paneHtml(){
+    const x=cur();
+    if(!x)return `<div class="ws-pbody"><div class="ws-none">${wsShown.length?'點左邊一節開始填':'—'}</div></div>`;
+    const DN=DAYN[new Date(x.date+'T00:00:00').getDay()];
+    const last=(()=>{if(!x.b)return '';const ck=srClassKey(x.b);let best=null;srRuns.forEach(r=>{if(!r.booking_id||r.run_date>=x.date)return;const b=wsBk.get(String(r.booking_id));if(b&&srClassKey(b)===ck&&(!best||r.run_date>best.run_date))best=r;});return best?`<span class="ws-last">這班上次：${escH(runName(best))}（${srMD(best.run_date)}）</span>`:'';})();
+    let h=`<button type="button" class="ws-close" data-act="close" aria-label="關閉">×</button><div class="ws-pbody">
+      <div class="ws-hd">${escH(x.grade||'—')}${x.type&&x.type!=='一般'?escH(x.type):''} · ${escH(x.subj||'')}<small>${srMD(x.date)}（${DN}）${escH(perText(x.ps.map(p=>p.period)))} · ${escH(x.venue||'—')} · ${escH(x.who||'—')}</small>${last}</div>`;
+    if(x.runs.length){
+      h+=`<div><div class="ws-lbl">${x.todo.length?'已填的節次':'已填'}</div><div class="ws-done">${x.runs.map(r=>`<div class="ws-run"><span>${escH(runName(r))}<small>${escH(r.period||'—')}${r.teacher?` · ${escH(r.teacher)}`:''}</small></span><button type="button" class="btn btn-secondary btn-sm" data-act="edit" data-id="${r.id}">修改</button><button type="button" class="sr-del" data-act="del" data-id="${r.id}">刪除</button></div>`).join('')}</div></div>`;
+    }
+    if(x.todo.length){
+      wsSugg=suggest(x,wsWeek);if(wsPick>=wsSugg.length)wsPick=0;
+      if(x.skip)h+=`<div class="ws-note">${x.type==='競賽培訓'?'競賽培訓通常不登記實驗，不算「還沒填」':'這筆預約不是一般課程（前台學期頁不顯示），不算「還沒填」'}；要填也可以。</div>`;
+      if(x.todo.length>1||x.runs.length)h+=`<div><div class="ws-lbl">要填的節次</div><div class="ws-ps">${x.todo.map((p,i)=>`<label><input type="checkbox" data-pi="${i}" checked> ${escH(p.period||'—')}</label>`).join('')}</div></div>`;
+      h+=`<div><div class="ws-lbl">${escH(srLevel(x.grade)||'')}${escH(x.subj||'')}・這週附近的課綱實驗</div>${wsSugg.length?`<div class="ws-sg">${wsSugg.map((s,i)=>{
+          const tags=[s.ws.length?`<i>W${s.ws.slice(0,3).join('、')}</i>`:'',s.sm?'<i class="peer">同一堂已填</i>':'',s.pw?`<i class="peer">這週 ${s.pw} 班已做</i>`:'',!s.pw&&s.pp?`<i class="peer">上週 ${s.pp} 班做</i>`:'',s.dn?'<i class="done">這班做過</i>':'',s.off&&s.tt?`<i>${escH(s.tt)}</i>`:''].join('');
+          return `<button type="button" data-act="pick" data-i="${i}" class="${i===wsPick?'on':''}"><b>${escH(tplName(s.t))}</b><kbd>${i+1}</kbd><span class="tg">${tags}</span></button>`;}).join('')}</div>`:`<div class="ws-none">${srLevel(x.grade)?'課綱實驗裡沒有排在這週前後的；用下面搜尋':'看不出年級，用下面搜尋'}</div>`}</div>
+        <div><div class="ws-lbl">搜尋其他課綱實驗，或直接打名稱</div><div class="ws-q"><input id="wsQ" list="wsTplList" maxlength="60" autocomplete="off" placeholder="例如：酸鹼滴定"><button type="button" class="btn btn-secondary btn-sm" data-act="fillq">填入</button></div>
+        <datalist id="wsTplList">${allTemplates.filter(t=>t&&t.name).map(t=>`<option value="${escH(srTplLabel(t))}">`).join('')}</datalist></div>
+        <div><div class="ws-lbl" id="wsEqL">${wsSugg[wsPick]?`若選「${escH(tplName(wsSugg[wsPick].t))}」，需要的器材`:'需要的器材'}</div><div id="wsEq">${wsSugg[wsPick]?eqHtml(wsSugg[wsPick].t):'<div class="ws-none">選了實驗才帶得出器材</div>'}</div></div>`;
+    }else if(x.runs.length){
+      wsSugg=[];const r0=x.runs[0],t=r0.template_id?srTpl(r0.template_id):null;
+      h+=`<div><div class="ws-lbl">這次的器材</div>${eqHtml(t,r0)}</div>`;
+    }
+    h+='</div>';
+    // 按鈕列
+    const front=x.b&&!x.b.is_fixed&&!x.loose?(()=>{const sv=x.b.semester_show===true?'1':x.b.semester_show===false?'0':'';return `<label class="ws-front">前台學期頁<select data-act="front" aria-label="前台學期頁"><option value=""${sv===''?' selected':''}>自動（${srShowAuto(x.b)?'顯示':'不顯示'}）</option><option value="1"${sv==='1'?' selected':''}>顯示</option><option value="0"${sv==='0'?' selected':''}>不顯示</option></select></label>`;})():'';
+    if(x.todo.length){
+      const s=wsSugg[wsPick];
+      h+=`<div class="ws-act"><button type="button" class="btn btn-primary" data-act="fill"${s?'':' disabled'} id="wsFillBtn">${s?`填入「${escH(tplName(s.t))}」並跳下一節`:'先選一個實驗'}</button>${x.b&&!x.loose?`<button type="button" class="ws-more" data-act="more" title="完整表單：可以一起填同一班接下來的課、同年級其他班">完整表單…</button>`:''}${front}</div>
+        <div class="ws-keys">↑↓ 換節 · 1–${Math.max(1,wsSugg.length)} 直接填 · Enter 填選中的 · / 搜尋</div>`;
+    }else if(front)h+=`<div class="ws-act">${front}</div>`;
+    return h;
+  }
+  function fit(){
+    const g=document.getElementById('wsGrid');if(!g)return;
+    if(!window.matchMedia('(min-width:1100px)').matches){g.style.height='';const bar=document.querySelector('#panel-semruns .ws-bar'),hh=typeof srHdrH==='function'?srHdrH():0;document.documentElement.style.setProperty('--wsStick',(hh+(bar?bar.offsetHeight:0))+'px');return;}
+    const top=g.getBoundingClientRect().top;if(top<0)return;
+    g.style.height=Math.max(420,window.innerHeight-top-16)+'px';
+  }
+  function drawSel(scroll){
+    const L=document.getElementById('wsList'),P=document.getElementById('wsPane');if(!L||!P)return;
+    L.querySelectorAll('.ws-row').forEach(el=>el.classList.toggle('sel',wsShown[+el.dataset.i]&&wsShown[+el.dataset.i].key===wsSel));
+    P.innerHTML=paneHtml();
+    const wide=window.matchMedia('(min-width:1100px)').matches;
+    P.classList.toggle('open',!wide&&wsSheet&&!!cur());
+    let bk=document.getElementById('wsBack');
+    if(!wide&&wsSheet&&cur()){if(!bk){bk=document.createElement('div');bk.id='wsBack';bk.className='ws-back';bk.onclick=()=>{wsSheet=false;drawSel();};document.body.appendChild(bk);}}else if(bk)bk.remove();
+    if(scroll){const el=L.querySelector('.ws-row.sel');if(el)el.scrollIntoView({block:'nearest'});}
+  }
+  function wsRender(){
+    const box=document.getElementById('srRoot');if(!box)return;
+    wsCal=semCalendar(srTerm,activeSemester);const weeks=wsCal.weeks;wsTW=new Map();
+    wsBk=new Map(srBks.map(b=>[String(b.id),b]));
+    const nowIdx=nowIdxOf(weeks);
+    if(wsTermOf!==srTerm||wsWeek==null||!weeks.some(w=>w.week===wsWeek)){wsTermOf=srTerm;wsWeek=(weeks[nowIdx>=0?nowIdx:0]||{}).week;wsSel=null;}
+    if(!weeks.length){box.innerHTML='<div class="empty"><p>還沒有學期設定</p></div>';return;}
+    const wi=weeks.findIndex(w=>w.week===wsWeek),w=weeks[wi];
+    const cnt=weeks.map(x=>{const [a,e]=wkRange(x);return countRange(a,e,srBks,srRuns,srSubj);});
+    wsRows=build(w);wsShown=shownOf(wsRows);
+    if(!wsShown.some(x=>x.key===wsSel))wsSel=(wsShown[0]||{}).key||null;
+    box.innerHTML=`${barHtml(weeks,nowIdx,wi,cnt)}<div class="ws-grid" id="wsGrid"><div class="ws-list" id="wsList" role="list" aria-label="這週的節次">${listHtml()}</div><aside class="ws-pane" id="wsPane" aria-label="填實驗">${paneHtml()}</aside></div>`;
+    const wide=window.matchMedia('(min-width:1100px)').matches;
+    if(!wide)document.getElementById('wsPane').classList.toggle('open',wsSheet&&!!cur());
+    if(!(!wide&&wsSheet&&cur()))document.getElementById('wsBack')?.remove();
+    fit();
+    const el=document.querySelector('#wsList .ws-row.sel');if(el&&wide)el.scrollIntoView({block:'nearest'});
+  }
+
+  // ── 動作 ──
+  function move(d){
+    if(!wsShown.length)return;
+    const i=wsShown.findIndex(x=>x.key===wsSel);
+    const j=Math.max(0,Math.min(wsShown.length-1,(i<0?0:i)+d));
+    if(wsShown[j].key!==wsSel){wsSel=wsShown[j].key;wsPick=0;drawSel(true);}
+  }
+  function goWeek(wk){wsWeek=+wk;wsSel=null;wsPick=0;wsSheet=false;srRender();window.scrollTo({top:0});}
+  window.wsGoWeek=goWeek;
+  window.wsFlt=function(v){wsFilter=['todo','all','done'].includes(v)?v:'todo';wsSel=null;srRender();};
+  // 從總覽跳過來
+  window.wsGo=function(wk,flt){
+    srView='ws';srTerm=srTermNow();wsTermOf=srTerm;wsWeek=wk!=null?+wk:null;wsFilter=['todo','all','done'].includes(flt)?flt:'todo';wsSel=null;wsSheet=false;
+    showTab('semruns');
+  };
+  function resolveTpl(v){
+    v=String(v||'').trim();if(!v)return {t:null,title:''};
+    const t=allTemplates.find(x=>srTplLabel(x)===v)||(()=>{const m=allTemplates.filter(x=>(x.name||'').trim()===v);return m.length===1?m[0]:null;})();
+    return t?{t,title:''}:{t:null,title:v.slice(0,60)};
+  }
+  async function fill(t,title){
+    const x=cur();if(wsBusy||!x||!x.b||x.loose||!x.todo.length)return;
+    if(!t&&!title){showToast('請選實驗','error');return;}
+    const boxes=[...document.querySelectorAll('#wsPane .ws-ps input[data-pi]')];
+    const use=boxes.length?boxes.filter(i=>i.checked).map(i=>x.todo[+i.dataset.pi]).filter(Boolean):x.todo.slice();
+    if(!use.length){showToast('請勾要填的節次','error');return;}
+    // 下一節：清單上這列之後、第一個還沒填的
+    const i=wsShown.indexOf(x);const nx=wsShown.slice(i+1).find(y=>(y.st==='todo'||y.st==='part')&&!y.skip)||wsShown.slice(0,i).find(y=>(y.st==='todo'||y.st==='part')&&!y.skip);
+    const b=x.b,name=t?tplName(t):title;
+    const body=use.map(p=>({template_id:t?String(t.id):null,title:t?null:title,run_date:p.date,period:p.period||null,venue:String(p.venue||'').slice(0,30)||null,booking_id:String(b.id),
+      subject:srTplSubj(t)||(SR_SUBJ.includes(x.subj)?x.subj:null),course_type:srBkType(b)||null,grade:String(b.grade||'').slice(0,20)||null,teacher:String(b.borrower_name||'未填').slice(0,30),note:null,is_hidden:false}));
+    wsBusy=true;const btn=document.getElementById('wsFillBtn');if(btn){btn.disabled=true;btn.textContent='儲存中…';}
+    try{
+      const res=await sb('POST','experiment_runs',{body,prefer:'return=representation'});
+      if(Array.isArray(res))srRuns.push(...res);
+      ovRuns=null;
+      const left=x.todo.length-use.length;
+      if(!left)wsSel=nx?nx.key:null;
+      wsPick=0;showToast(`已填「${name}」${use.length>1?`（${use.length} 節）`:''}`,'success');
+    }catch(e){showToast('儲存失敗：'+e.message,'error');}
+    finally{wsBusy=false;srRender();if(wsSel)drawSel(true);}
+  }
+  // 點擊：清單、窗格、工具列都用同一個監聽（不在 HTML 裡放資料字串）
+  document.addEventListener('click',e=>{
+    const root=document.getElementById('srRoot');if(!root||srView!=='ws'||!root.contains(e.target))return;
+    const row=e.target.closest('.ws-row');
+    if(row){const x=wsShown[+row.dataset.i];if(x){wsSel=x.key;wsPick=0;wsSheet=true;drawSel(false);}return;}
+    const a=e.target.closest('[data-act]');if(!a)return;
+    const act=a.dataset.act;
+    if(act==='wk'){const weeks=wsCal.weeks,d=+a.dataset.d;if(d===0){const n=nowIdxOf(weeks);if(n>=0)goWeek(weeks[n].week);return;}const wi=weeks.findIndex(w=>w.week===wsWeek),j=wi+d;if(weeks[j])goWeek(weeks[j].week);}
+    else if(act==='pick'){const s=wsSugg[+a.dataset.i];if(s)fill(s.t,'');}
+    else if(act==='fill'){const s=wsSugg[wsPick];if(s)fill(s.t,'');}
+    else if(act==='fillq'){const r=resolveTpl(document.getElementById('wsQ')?.value);fill(r.t,r.title);}
+    else if(act==='edit'){const id=+a.dataset.id;if(Number.isInteger(id))srEdit(id);}
+    else if(act==='del'){const id=+a.dataset.id;if(Number.isInteger(id))srDel(id);}
+    else if(act==='more'){const x=cur();if(x&&x.b){const w=wsCal.weeks.find(y=>y.week===wsWeek);const [s,en]=wkRange(w);srFill(x.b.id,s,en);}}
+    else if(act==='close'){wsSheet=false;drawSel();}
+  });
+  document.addEventListener('change',e=>{
+    if(srView!=='ws')return;const t=e.target;
+    if(t.id==='wsWk'||t.id==='wsWkM'){goWeek(t.value);return;}
+    if(t.dataset&&t.dataset.act==='front'){const x=cur();if(x&&x.b)srSetShow(x.b.id,t.value);}
+  });
+  // 滑過建議：下面的器材跟著換成那一個
+  document.addEventListener('pointerover',e=>{
+    if(srView!=='ws'||e.pointerType!=='mouse')return;const b=e.target.closest&&e.target.closest('#wsPane .ws-sg button');if(!b)return;
+    const i=+b.dataset.i;if(i===wsPick||!wsSugg[i])return;wsPick=i;
+    document.querySelectorAll('#wsPane .ws-sg button').forEach(x=>x.classList.toggle('on',+x.dataset.i===i));
+    const s=wsSugg[i],eq=document.getElementById('wsEq'),l=document.getElementById('wsEqL'),fb=document.getElementById('wsFillBtn');
+    if(eq)eq.innerHTML=eqHtml(s.t);if(l)l.textContent=`若選「${tplName(s.t)}」，需要的器材`;if(fb)fb.textContent=`填入「${tplName(s.t)}」並跳下一節`;
+  });
+  document.addEventListener('keydown',e=>{
+    if(srView!=='ws'||!document.getElementById('panel-semruns')?.classList.contains('active'))return;
+    if(document.getElementById('modalOverlay')?.classList.contains('show'))return;
+    const tg=e.target,typing=tg&&(/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName)||tg.isContentEditable);
+    if(typing){if(tg.id==='wsQ'&&e.key==='Enter'){e.preventDefault();const r=resolveTpl(tg.value);fill(r.t,r.title);}else if(tg.id==='wsQ'&&e.key==='Escape')tg.blur();return;}
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(e.key==='ArrowDown'){e.preventDefault();move(1);}
+    else if(e.key==='ArrowUp'){e.preventDefault();move(-1);}
+    else if(/^[1-5]$/.test(e.key)){const s=wsSugg[+e.key-1];if(s&&cur()&&cur().todo.length){e.preventDefault();fill(s.t,'');}}
+    else if(e.key==='Enter'&&!(tg&&tg.tagName==='BUTTON')){const s=wsSugg[wsPick];if(s&&cur()&&cur().todo.length){e.preventDefault();fill(s.t,'');}}
+    else if(e.key==='/'){const q=document.getElementById('wsQ');if(q){e.preventDefault();q.focus();}}
+    else if(e.key==='Escape'&&wsSheet){wsSheet=false;drawSel();}
+  });
+  window.addEventListener('resize',()=>{if(srView==='ws'&&document.getElementById('wsGrid')){fit();drawSel();}});
+
+  // ── 接到原本的學期實驗紀錄 ──
+  const _render=window.srRender;
+  window.srRender=function(){
+    try{localStorage.setItem('lab_sr_view',srView);}catch(_){}
+    if(srView==='ws'){try{return wsRender();}catch(err){console.error(err);srView='card';}}
+    document.getElementById('wsBack')?.remove();
+    return _render.apply(this,arguments);
+  };
+  // 紀錄有新增／修改／刪除（每次都會重畫）：總覽的「學期實驗」數字跟著更新
+  const _r2=window.srRender;
+  window.srRender=function(){const out=_r2.apply(this,arguments);if(srLoaded&&document.getElementById('statsGrid')?.children.length){clearTimeout(window._wsStT);window._wsStT=setTimeout(()=>{try{renderStats();}catch(_){}},300);}return out;};
+  // 其他檢視的工具列也加上「工作台」
+  const _bar=window.srBarHtml;
+  window.srBarHtml=function(){
+    let h=_bar.apply(this,arguments);
+    h=h.replace(/<button type="button" class="(on)?" onclick="srView='card'/,m=>`<button type="button" class="" onclick="srView='ws';srSelClear();srRender()">工作台</button>`+m);
+    h=h.replace('<option value="card"','<option value="ws">工作台</option><option value="card"');
+    return h;
+  };
+
+  // ── 總覽：待處理的格子是 0 就收成一行；最上面加「學期實驗」──
+  let ovRuns=null,ovBusy=false;
+  const OV_ACTION=['器材待審核','器材借用中','逾期未還','待收保證金','待退保證金','場地待審核','庫存不足器材','超過一年未盤點','位置代碼異常'];
+  function ovFetch(){
+    if(ovBusy)return;ovBusy=true;
+    sb('GET','experiment_runs',{select:'id,booking_id,run_date,period'}).then(r=>{ovRuns=Array.isArray(r)?r:[];}).catch(()=>{ovRuns=[];window._ovRunsErr=true;})
+      .finally(()=>{ovBusy=false;try{renderStats();}catch(_){}});
+  }
+  function semGroup(){
+    const runs=srLoaded?srRuns:ovRuns;if(!runs)return '';
+    const term=srTermNow(),cal=semCalendar(term,activeSemester),weeks=cal.weeks,ni=nowIdxOf(weeks);if(!weeks.length)return '';
+    const i=ni>=0?ni:0,w=weeks[i],[a,e]=wkRange(w);
+    const bks=allVenueBookings||[];
+    const now=countRange(a,e,bks,runs);
+    const before=countRange(fmtDate(weeks[0].date),addDays(a,-1),bks,runs);
+    const sem=countRange(fmtDate(weeks[0].date),e,bks,runs);
+    const nx=weeks[i+1]?countRange(...wkRange(weeks[i+1]),bks,runs):null;
+    const bw=before.first?(weeks.find(x=>{const [s,t]=wkRange(x);return before.first>=s&&before.first<=t;})||{}).week:null;
+    const pc=sem.tot?Math.round((sem.tot-sem.todo)/sem.tot*100):null;
+    const card=(num,label,color,fn,sub,zero)=>{const [full,short]=label.split('|');return `<div class="stat-card${zero?' is-zero':''}" onclick="${fn}"><div class="stat-num" style="color:${color}">${num}</div><div class="stat-label"><span class="sl-full">${full}</span><span class="sl-short">${short||full}</span></div>${sub?`<div class="stat-sub">${sub}</div>`:''}</div>`;};
+    const cards=[
+      card(now.todo,'本週還沒填實驗（節）|本週沒填',now.todo?WARN:'#1f5b4c',`wsGo(${w.week},'todo')`,`W${w.week}・共 ${now.tot} 節，已填 ${now.tot-now.todo}`,false),
+      before.todo?card(before.todo,'前幾週還沒填（節）|之前沒填',WARN,`wsGo(${bw||w.week},'todo')`,bw?`最早在 W${bw}`:'',false):'',
+      card(pc==null?'─':pc+'%','本學期已填|學期已填',"#34506b",`wsGo(${w.week},'all')`,`${sem.tot-sem.todo}／${sem.tot} 節（到本週）`,false),
+      nx?card(nx.tot,'下週已排實驗課（節）|下週已排','#34506b',`wsGo(${weeks[i+1].week},'todo')`,nx.tot?`已先填 ${nx.tot-nx.todo} 節`:'',!nx.tot):''
+    ].join('');
+    const ok=before.todo?'':`<div class="stat-ok"><span class="ok-dot"></span><span><b>都填好了</b>前幾週的實驗</span></div>`;
+    return `<section class="stat-grp" aria-label="學期實驗"><div class="stat-grp-h">學期實驗</div><div class="stats-grid">${cards}${ok}</div></section>`;
+  }
+  const _stats=window.renderStats;
+  window.renderStats=function(){
+    const out=_stats.apply(this,arguments);
+    try{
+      const g=document.getElementById('statsGrid');if(!g)return out;
+      g.querySelectorAll('.stat-grp').forEach(sec=>{
+        const grid=sec.querySelector('.stats-grid');if(!grid)return;
+        const gone=[];
+        grid.querySelectorAll('.stat-card.is-zero').forEach(c=>{const l=(c.querySelector('.sl-full')||{}).textContent;if(l&&OV_ACTION.includes(l.trim())){gone.push(l.trim());c.remove();}});
+        if(gone.length)grid.insertAdjacentHTML('beforeend',`<div class="stat-ok"><span class="ok-dot"></span><span><b>都沒有</b>${gone.map(escH).join('、')}</span></div>`);
+      });
+      if(!srLoaded&&ovRuns==null&&!ovBusy)ovFetch();
+      g.insertAdjacentHTML('afterbegin',semGroup());
+    }catch(err){console.error(err);}
+    return out;
+  };
+  // 按「重新整理」：總覽的學期實驗數字也重抓
+  if(typeof window.loadAll==='function'){const _la=window.loadAll;window.loadAll=function(){ovRuns=null;return _la.apply(this,arguments);};}
+  try{if(document.getElementById('statsGrid')?.children.length)renderStats();}catch(_){}
 })();
 </script>
 
