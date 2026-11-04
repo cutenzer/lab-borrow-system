@@ -2101,7 +2101,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-10-28b · 點週次看當週課表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-04a · 點週次看當週課表</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -8619,6 +8619,39 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   // 5a：說明文字跟右邊「器材借用」一致
   const h=document.querySelector('#homeChemSection .hint');
   if(h)h.textContent='查藥品在哪、還剩幾瓶，可直接申請；要找其他藥品請用上方搜尋框';
+})();
+</script>
+
+<!-- ===== hero-stock-1104（2026-11-04）：首頁大標下面一行「器材 n 種・n 件｜藥品 n 種・n 瓶」，搜尋框提示寫出能搜幾項；整段刪掉即還原 ===== -->
+<style id="hero-stock-1104">
+.hero2-stock{position:relative;order:1;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 16px;font-size:13px;color:rgba(244,240,230,.62);letter-spacing:.3px}
+.hero2-stock[hidden]{display:none}
+.hero2-stock b{font-family:'DM Mono',monospace;font-weight:500;font-size:16px;color:#f4f0e6;margin:0 3px}
+.hero2-stock i{font-style:normal;opacity:.35}
+.hero2-stock em{font-style:normal}
+@media(max-width:700px){.hero2-stock{font-size:12px;gap:4px 12px}.hero2-stock b{font-size:14px}.hero2-stock em{display:none}}
+</style>
+<script id="hero-stock-1104-js">
+(function(){
+  const s=document.querySelector('#page-home .hero2-search');if(!s)return;
+  const box=document.createElement('div');box.className='hero2-stock';box.hidden=true;box.setAttribute('aria-label','庫存總量');
+  s.insertAdjacentElement('afterend',box);
+  const f=n=>Number(n).toLocaleString();
+  const num=v=>{const n=parseInt(v,10);return Number.isFinite(n)&&n>0?n:0;};
+  // 停用的器材、藥品不算（跟後台總覽同一個規則）；只抓兩個欄位，不抓整張表
+  Promise.all([
+    sb('GET','equipment',{select:'total,is_available'}),
+    sb('GET','chemicals',{select:'bottles_left,is_available'})
+  ]).then(([eq,ch])=>{
+    eq=(Array.isArray(eq)?eq:[]).filter(e=>e&&e.is_available!==false);
+    ch=(Array.isArray(ch)?ch:[]).filter(c=>c&&c.is_available!==false);
+    if(!eq.length&&!ch.length)return;
+    const eqP=eq.reduce((a,e)=>a+num(e.total),0),chB=ch.reduce((a,c)=>a+num(c.bottles_left),0);
+    box.innerHTML=`<span>器材<b>${f(eq.length)}</b>種<em>・${f(eqP)} 件</em></span><i aria-hidden="true">｜</i><span>藥品<b>${f(ch.length)}</b>種<em>・${f(chB)} 瓶</em></span>`;
+    box.hidden=false;
+    const q=document.getElementById('heroSearch');
+    if(q&&window.matchMedia('(min-width:701px)').matches)q.placeholder=`在 ${f(eq.length+ch.length)} 項器材、藥品裡找，也可以打櫃位、CAS…`;
+  }).catch(()=>{});  // 抓不到就不顯示這一行，首頁其他功能照常
 })();
 </script>
 
