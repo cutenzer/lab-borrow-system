@@ -8575,6 +8575,7 @@ function renderInlineEditEquip(e){
       <div class="form-group" style="grid-column:span 2"><label>名稱</label><input type="text" id="ie-name-${e.id}" value="${escH(e.name||'')}"></div>
       <div class="form-group"><label>規格</label><input type="text" id="ie-spec-${e.id}" value="${escH(e.spec||'')}"></div>
       <div class="form-group"><label>單位</label><input type="text" id="ie-unit-${e.id}" value="${escH(e.unit||'個')}"></div>
+      <div class="form-group"><label>總數${equipOut(e)?`<small style="font-weight:400;color:var(--text2)">（借出中 ${equipOut(e)}）</small>`:''}</label><input type="number" id="ie-total-${e.id}" min="${equipOut(e)}" max="99999" step="1" inputmode="numeric" value="${parseInt(e.total)||0}"></div>
       <div class="form-group"><label>櫃位編碼</label><input type="text" id="ie-location-${e.id}" value="${escH(e.location||'')}"></div>
       <div class="form-group"><label>別名</label><input type="text" id="ie-alias-${e.id}" value="${escH(e.alias||'')}"></div>
       <div class="form-group" style="grid-column:1/-1"><label>財產編號（多個用「、」分開，連號寫「起～迄」）</label><input type="text" id="ie-asset-${e.id}" maxlength="500" value="${escH(e.asset_no||'')}" placeholder="例如：5010101-03-0001～0010"></div>
@@ -8601,6 +8602,12 @@ function renderInlineEditEquip(e){
 async function saveInlineEquip(id){
   const name=document.getElementById('ie-name-'+id).value.trim();
   if(!name){showToast('請填寫名稱','error');return;}
+  // 總數（2026-11-12 加進編輯表單；以前只能在盤點欄改，手機清單模式看不到）
+  const cur=allAdminEquipment.find(x=>String(x.id)===String(id));
+  const tRaw=String(document.getElementById('ie-total-'+id)?.value??'').trim();
+  if(!/^\d{1,5}$/.test(tRaw)){showToast('總數請填 0～99999 的整數','error');return;}
+  const total=+tRaw,out=cur?equipOut(cur):0;
+  if(total<out){showToast(`總數不能少於借出中的 ${out}；少掉的請用「報廢」`,'error');return;}
   const body={
     room:document.getElementById('ie-room-'+id).value,
     name,
@@ -8615,6 +8622,7 @@ async function saveInlineEquip(id){
     restricted_note:document.getElementById('ie-restrict-'+id).value.trim().slice(0,100)||null,
     kit_contents:cleanKitText(document.getElementById('ie-kit-'+id).value)
   };
+  if(!cur||total!==(parseInt(cur.total)||0))body.total=total; // 沒改就不送，避免蓋掉別人剛盤點的數字
   // 改了名稱或房間：還沒歸還／還在審核的單是用「房間＋名稱」記器材的，要一起處理，不然庫存會對不上
   const old=allEquipment.find(x=>String(x.id)===String(id));
   if(old&&(old.name!==body.name||old.room!==body.room)){
@@ -12347,7 +12355,7 @@ div:has(>.la)+.qe-pos{display:none}
     draw();
   };
   const totalChanged=()=>window.dispatchEvent(new Event('la-total'));
-  document.addEventListener('input',e=>{if(e.target&&/^(qe-shelf|qa-total|eq-total)$/.test(e.target.id))totalChanged();});
+  document.addEventListener('input',e=>{if(e.target&&/^(qe-shelf|qa-total|eq-total|ie-total-.+)$/.test(e.target.id))totalChanged();});
 
   // 1. 平面圖校正的「改」：總數＝架上＋借出中
   if(typeof window.qeOpen==='function'){
@@ -12364,7 +12372,7 @@ div:has(>.la)+.qe-pos{display:none}
     const _t=toggleInlineEditEquip;
     window.toggleInlineEditEquip=function(id){
       const r=_t.apply(this,arguments);
-      setTimeout(()=>{const e=allAdminEquipment.find(x=>String(x.id)===String(id));locAllocAttach(document.getElementById('ie-location-'+id),()=>e?e.total:NaN);},0);
+      setTimeout(()=>{const e=allAdminEquipment.find(x=>String(x.id)===String(id));locAllocAttach(document.getElementById('ie-location-'+id),()=>{const t=document.getElementById('ie-total-'+id);return t?t.value:(e?e.total:NaN);});},0);
       return r;
     };
   }
