@@ -2315,6 +2315,21 @@ function renderStats(){
   setTabBadge('menuBadge',pending+venuePending);
 }
 
+// ── 寫在實驗室、沒預約教室的實驗紀錄（今天以後、沒隱藏）──
+async function loadUnbookedRuns(){
+  try{
+    const rs=await sb('GET','experiment_runs',{select:'id,run_date,period,venue,teacher,title,template_id,grade',filter:'booking_id=is.null&run_date=gte.'+fmtDate(new Date())+'&venue=like.*實驗室*&or=(is_hidden.is.null,is_hidden.eq.false)',order:'run_date,period'});
+    const before=(window._unbookedRuns||[]).length;window._unbookedRuns=Array.isArray(rs)?rs:[];
+    if(before!==window._unbookedRuns.length)renderOverview();
+  }catch(_){}
+  setTimeout(()=>{window._unbookedLoading=false;},60000); // 一分鐘內不重查
+}
+function showUnbookedRuns(){
+  const ub=window._unbookedRuns||[];
+  showModal('寫在實驗室、但沒預約教室',`<p class="hint" style="margin-bottom:8px">老師在前台「學期實驗 → 登記實驗」把地點寫成實驗室，這只是實驗紀錄，<b>不會佔用教室</b>，場地課表上看不到，別人也還能借走那一節。請到「場地管理」幫他補一筆預約（補好後可以把這筆紀錄刪掉或改掛到預約上）。</p>
+    <div style="font-size:13.5px;line-height:1.9">${ub.map(r=>`・${escH(r.run_date)} ${escH(r.period||'未填節次')} <b>${escH(r.venue||'')}</b>　${escH(r.teacher||'')}${r.grade?'・'+escH(r.grade):''}${r.title?'・'+escH(r.title):''}`).join('<br>')}</div>`,
+    [{label:'關閉',cls:'btn-secondary',fn:'closeModal()'},{label:'去場地管理',cls:'btn-primary',fn:"closeModal();showTab('venue')"}]);
+}
 // ── 總覽：今天要處理＋本週使用率 ─────────────────────────
 function teacherUseCount(name){
   const n=String(name||'').trim();if(!n)return 0;
@@ -2340,6 +2355,10 @@ function renderOverview(){
   if(lendToday.length)rows.push({lv:'ok',t:`今天要借出 ${lendToday.length} 筆`,s:lendToday.slice(0,3).map(r=>escH(r.name)).join('、'),tab:'approved',b:'查看'});
   if(pending.length)rows.push({lv:'warn',t:`${pending.length} 筆借用待審核`,s:waitDays>=1?`最舊的一筆已等 ${waitDays} 天`:'都是今天送出的',tab:'pending',b:'去審核'});
   if(venuePend.length)rows.push({lv:'warn',t:`${venuePend.length} 筆場地待審核`,s:'待審核的時段在課表上是虛線框',tab:'venue',b:'場地管理'});
+  // 前台「登記實驗」寫在實驗室、卻沒預約教室：場地課表上看不到，別人可能把那節借走（2026-11-12）
+  const ub=window._unbookedRuns||[];
+  if(ub.length)rows.push({lv:'warn',t:`${ub.length} 節實驗寫在實驗室，但沒預約教室`,s:ub.slice(0,2).map(r=>`${escH(String(r.run_date).slice(5).replace('-','/'))} ${escH(r.period||'')} ${escH(r.venue||'')}・${escH(r.teacher||'')}`).join('、')+(ub.length>2?'…':''),tab:'__unbooked',b:'查看'});
+  if(!window._unbookedLoading){window._unbookedLoading=true;loadUnbookedRuns();}
   // 管理員補登時器材頁還沒有的品名：提醒之後補建（器材頁建了同名器材就不再提醒）
   const unreg=[...new Set(allRecords.filter(r=>['待審核','已核准','逾期'].includes(r.status)).flatMap(r=>(Array.isArray(r.items)?r.items:[]).filter(ieIsUnreg).map(i=>i.name)))];
   if(unreg.length)rows.push({lv:'warn',t:`${unreg.length} 項器材還沒建檔`,s:unreg.slice(0,3).map(escH).join('、')+(unreg.length>3?'…':'')+'（補登時加的）',tab:'equipment',b:'去建檔'});
@@ -2353,7 +2372,7 @@ function renderOverview(){
   if(bDays===null||bDays>=30)rows.push({lv:'mute',t:bDays===null?'還沒有備份紀錄':`已經 ${bDays} 天沒備份`,s:'下載一份備份，萬一資料被誤刪還能救回來',tab:'__backup',b:'立即備份'});
   renderBackupInfo();
   renderLoanTracker();
-  todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
+  todo.innerHTML=rows.length?rows.map(x=>`<div class="ov-row ov-${x.lv}"><span class="ov-dot"></span><div class="ov-txt"><b>${x.t}</b><span>${x.s}</span></div><button class="btn btn-secondary btn-sm" onclick="${x.tab==='__backup'?"runBackup('xlsx')":x.tab==='__unbooked'?'showUnbookedRuns()':`showTab('${x.tab}')`}">${x.b}</button></div>`).join('')
     :'<div class="empty" style="padding:24px 0"><p>今天沒有待處理的事項</p></div>';
   renderLabUse();
 }
