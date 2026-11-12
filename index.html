@@ -7923,26 +7923,56 @@ function sxLog(tplId){
   sxEqs={};
   showModal('登記實驗',`
     <div class="sx-form">
-      <div class="hint">不借教室的也可以登記（例如帶到班上做的示範實驗）。</div>
+      <div class="hint">這裡只記「做了什麼實驗」，<b>不會預約教室</b>。要用實驗室，地點選實驗室後按「登記」，會帶你去預約。</div>
       ${sxSlotsHtml(t?sxTplLabel(t):'')}
       <div class="sx-2"><div class="form-group"><label>日期 *</label><input type="date" id="sx-date" value="${escH(todayStr())}"></div>
       <div class="form-group"><label>節次</label><select id="sx-period"><option value="">（不填）</option>${PERIODS.map(p=>`<option>${escH(p)}</option>`).join('')}</select></div></div>
       <div class="sx-2"><div class="form-group"><label>科目 *</label><select id="sx-subj">${SX_SUBJ.map(s=>`<option${s===ts?' selected':''}>${s}</option>`).join('')}</select></div>
       <div class="form-group"><label>類型</label><select id="sx-type">${types.map(s=>`<option${s===(tt||'一般')?' selected':''}>${escH(s)}</option>`).join('')}</select></div></div>
       <div class="sx-2"><div class="form-group"><label>班級</label><input id="sx-grade" maxlength="20" placeholder="例如：高一戊"></div>
-      <div class="form-group"><label>地點</label><input id="sx-venue" maxlength="30" value="班上"></div></div>
+      <div class="form-group"><label>地點</label><select id="sx-venue-sel" onchange="sxVenueSel()"><option>班上</option>${VENUES.map(v=>`<option>${escH(v)}</option>`).join('')}<option value="__other">其他地點…</option></select><input id="sx-venue" maxlength="30" placeholder="寫地點，例如：操場" style="display:none;margin-top:6px"></div></div>
+      <div class="hint" id="sxVenueTip" style="display:none;color:#8a5a00"></div>
       <div class="form-group"><label>老師 *</label><input id="sx-who" maxlength="30" value="${escH(sxNameGuess())}"></div>
     </div>`,[{label:'取消',cls:'btn-secondary',fn:'closeModal()'},{label:'登記',cls:'btn-primary',fn:'sxLogSave()'}]);
   sxDatalist();
 }
+// 地點：選單（班上／五間實驗室／其他）；選實驗室時提醒「登記不等於預約」（2026-11-12）
+function sxVenueSel(){
+  const v=document.getElementById('sx-venue-sel')?.value,inp=document.getElementById('sx-venue'),tip=document.getElementById('sxVenueTip');
+  if(inp)inp.style.display=v==='__other'?'':'none';
+  if(tip){const lab=VENUES.includes(v);tip.style.display=lab?'':'none';tip.textContent=lab?'今天以後的日期：按「登記」會改開預約教室的表單，送出預約後實驗會一起記下來。':'';}
+}
+function sxVenueVal(){
+  const v=document.getElementById('sx-venue-sel')?.value;
+  if(v==='__other')return (document.getElementById('sx-venue')?.value||'').trim().slice(0,30);
+  return v||(document.getElementById('sx-venue')?.value||'').trim().slice(0,30);
+}
+// 寫的是實驗室（含自己打字寫「理化實驗室」「理化教室」）→ 對到哪一間
+function sxLabOf(v){v=String(v||'').replace(/\s/g,'');return VENUES.find(x=>v===x||v===x.replace('實驗室','教室')||v===x.replace('實驗室',''))||'';}
 async function sxLogSave(){
   const picks=sxSlotPicks(),who=document.getElementById('sx-who').value.trim(),date=document.getElementById('sx-date').value;
   if(!picks.length){showToast('請填實驗','error');return;}
   if(!date){showToast('請選日期','error');return;}
   if(!who){showToast('請填老師','error');return;}
+  // 今天以後要在實驗室做：改走預約教室（登記實驗不會佔教室，別人還能把它借走）
+  const lab=sxLabOf(sxVenueVal());
+  if(lab&&date>=todayStr()){
+    const per=document.getElementById('sx-period').value;
+    if(!per){showToast('要用實驗室請選節次，才能預約教室','error');return;}
+    const grade=document.getElementById('sx-grade').value.trim().slice(0,20),exp=picks[0].pick.tpl?sxTplLabel(picks[0].pick.tpl):picks[0].pick.title;
+    closeModal();
+    setTimeout(()=>{
+      currentVenueRole='老師';
+      openVenueBookingModal(date,per,lab);
+      const set=(id,v)=>{const el=document.getElementById(id);if(el&&v)el.value=v;};
+      set('vf-name',who.slice(0,30));set('vf-grade',grade);set('vf-exp',String(exp||'').slice(0,60));
+      showToast('實驗室要預約才算借到：確認借用目的（課程、社團…）後按「提交申請」','success');
+    },50);
+    return;
+  }
   const subj=document.getElementById('sx-subj').value;
   const base={run_date:date,period:document.getElementById('sx-period').value||null,subject:SX_SUBJ.includes(subj)?subj:null,course_type:document.getElementById('sx-type').value||null,
-    grade:document.getElementById('sx-grade').value.trim().slice(0,20)||null,teacher:who.slice(0,30),venue:document.getElementById('sx-venue').value.trim().slice(0,30)||null,booking_id:null};
+    grade:document.getElementById('sx-grade').value.trim().slice(0,20)||null,teacher:who.slice(0,30),venue:sxVenueVal()||null,booking_id:null};
   if(picks.length>1&&!base.period){showToast('同一堂做好幾個實驗，請選節次（才認得是同一堂）','error');return;}
   await sxSaveRuns(picks.map(({pick,items,note})=>({...(items?{equipment_items:items}:{}),...(note!=null?{ref_note:note}:{}),...base,template_id:pick.tpl?pick.tpl.id:null,title:pick.tpl?null:pick.title})),who);
 }
