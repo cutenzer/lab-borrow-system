@@ -7738,7 +7738,8 @@ function printChemCabinet(){
   const t=new Date(),printed=`${t.getFullYear()}/${t.getMonth()+1}/${t.getDate()}`;
   const cols=[14,13,12,11,10,9,8,7,6,5,4,3,2,1];
   const cell=(L,c)=>allChemLocs.filter(l=>l.cab===cab&&l.layer===L&&l.col===c).sort((a,b)=>(a.sort||0)-(b.sort||0)||a.id-b.id)
-    .map(l=>{const n=allAdminChems.find(x=>String(x.id)===String(l.chem_id))?.name_zh||'?';const b=parseInt(l.bottles)||0;return `<div>${escH(n)}${b!==1?` ×${b}`:''}</div>`;}).join('');
+    // 幾瓶就寫幾行（A×3 → A A A），跟 Excel 匯出一樣；0 瓶仍寫 1 行保留位置；上限 60 行防呆（2026-11-12）
+    .map(l=>{const n=escH(allAdminChems.find(x=>String(x.id)===String(l.chem_id))?.name_zh||'?');const b=Math.max(1,Math.min(60,parseInt(l.bottles)||0));return `<div>${n}</div>`.repeat(b);}).join('');
   const html=`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>第${CAB_CN[cab]}櫃 ${printed}</title>
 <style>@page{size:A4 landscape;margin:8mm}*{box-sizing:border-box}body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 h1{text-align:center;font-size:20pt;margin:0 0 4px}table{width:100%;border-collapse:collapse;table-layout:fixed}
@@ -7749,7 +7750,13 @@ td.l{width:9mm;text-align:center;vertical-align:middle;font-weight:700;backgroun
 <h1>第${CAB_CN[cab]}櫃</h1>
 <table><thead><tr><th class="l">層</th>${cols.map(c=>`<th class="${c>7?'door':''}">${c}</th>`).join('')}</tr></thead>
 <tbody>${[1,2,3,4,5].map(L=>`<tr class="r"><td class="l">${L}</td>${cols.map(c=>`<td>${cell(L,c)}</td>`).join('')}</tr>`).join('')}</tbody></table>
-<div class="f"><span>左門 14～8　右門 7～1　｜　以系統為準，搬動後請重印</span><span>列印 ${printed}</span></div></body></html>`;
+<div class="f"><span>左門 14～8　右門 7～1　｜　以系統為準，搬動後請重印</span><span>列印 ${printed}</span></div>
+<script>
+// 展開後某格行數變多，整張可能超過一頁：字一點一點縮小，直到塞進一張 A4 橫式（最小 6.5pt）
+(function(){var mm=96/25.4,page=194*mm,fs=9.5,tb=document.querySelector('table'),h=document.querySelector('h1'),f=document.querySelector('.f');
+function tall(){return h.offsetHeight+4+tb.offsetHeight+f.offsetHeight+3;}
+while(tall()>page&&fs>6.5){fs-=0.5;document.querySelectorAll('td:not(.l)').forEach(function(td){td.style.fontSize=fs+'pt';td.style.lineHeight='1.2';});}})();
+<\/script></body></html>`;
   const w=window.open('','_blank');
   if(!w){showToast('瀏覽器擋住了新視窗，請允許彈出視窗後再試','error');return;}
   w.document.open();w.document.write(html);w.document.close();
