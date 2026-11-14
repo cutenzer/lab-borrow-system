@@ -2101,7 +2101,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-14a · 位置代碼支援抽屜</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-14b · 層架＋抽屜櫃子正面圖</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -3238,7 +3238,7 @@ function showFloorplanBubbles(spots,code,itemName){
   spots.forEach((s,x)=>spots.forEach((t,y)=>{if(x<y&&near(s,t))group[find(x)]=find(y);}));
   const clusters={};spots.forEach((s,k)=>{(clusters[find(k)]=clusters[find(k)]||[]).push(k);});
   const clusterList=Object.values(clusters);
-  const codeLabel=s=>{const ly=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));return escH(s.code)+(ly.length?`（第${ly.map(escH).join('、')}層）`:'');};
+  const codeLabel=s=>{const ly=all.filter(c=>c.startsWith(s.code+'-')).map(c=>c.slice(s.code.length+1));const ls=ly.filter(v=>!/^抽\d+$/.test(v)),ds=ly.filter(v=>/^抽\d+$/.test(v)).map(v=>v.slice(1));return escH(s.code)+(ly.length?`（${[ls.length?`第${ls.map(escH).join('、')}層`:'',ds.length?`抽屜 ${ds.join('、')}`:''].filter(Boolean).join('、')}）`:'');};
   layer.innerHTML=clusterList.map((idxs,ci)=>{
     const cs=idxs.map(k=>spots[k]);
     const minL=Math.min(...cs.map(s=>s.left)),maxR=Math.max(...cs.map(s=>s.left+s.width));
@@ -8196,6 +8196,27 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
 .ldk-legs{display:flex;justify-content:space-between;margin:0 4px;padding:0 4px}
 .ldk-legs span{width:5px;height:10px;background:var(--ink)}
 .fp-row-hide{display:none!important}
+/* 層架＋抽屜的櫃子（2026-11-14，例如 TD03：左 1～3 層、右 抽1～18 一直排） */
+.dwc .dwc-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);border:2px solid var(--ink);border-top:0;border-radius:0 0 3px 3px;background:#f6f2ea;margin:0 4px}
+.dwc.nodesk .dwc-body{border-top:2px solid var(--ink);border-radius:3px;margin:0}
+.dwc .dwc-shelves{display:flex;flex-direction:column;border-right:1.6px solid var(--ink);min-width:0}
+.dwc .dwc-shelves .lev-l{flex:1;border-top:1.2px solid var(--ink)}
+.dwc .dwc-shelves .lev-l:first-child{border-top:0}
+.dwc .dwc-shelves .lev-l{flex-wrap:nowrap;overflow:hidden;padding:4px 22px 4px 28px}
+.dwc .dwc-shelves .lev-n{left:9px}
+.dwc .dwc-shelves .lev-c{right:6px}
+.dwc .dwc-shelves .lev-chip{flex:0 1 auto;min-width:0;max-width:100%}
+.dwc .dwc-col{display:flex;flex-direction:column;gap:2px;padding:3px;min-width:0}
+.dwc-d{display:flex;align-items:center;gap:5px;min-height:22px;padding:1px 6px;border:1.2px solid var(--ink);border-radius:2px;background:var(--surface);font:inherit;font-size:12px;color:#9a9488;cursor:default;text-align:left;min-width:0;position:relative}
+.dwc-d b{font-family:'DM Mono',monospace;font-weight:400;min-width:1.6em;flex:none}
+.dwc-d span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.dwc-d i{font-style:normal;font-family:'DM Mono',monospace;font-size:11px;color:#9a9488;flex:none}
+.dwc-d.has{background:#e3efe8;border-color:var(--accent);color:var(--text);cursor:pointer}
+.dwc-d.has b{color:var(--accent)}
+.dwc-d.on{background:#f7efd2;border-color:#c9a227;outline:2px solid #c9a227;outline-offset:0}
+.dwc-d:focus-visible,.dwc .lev-l:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.dwc .lev-in.dwc-in{margin:8px 0 0;border:2px solid var(--ink);border-radius:3px}
+.dwc .dwc-ih{font-size:12px;font-weight:700;color:var(--accent);padding:6px 0 2px}
 .nm-link{cursor:pointer;text-decoration:underline;text-decoration-color:rgba(31,91,76,.35);text-underline-offset:3px}
 .nm-link:hover,.nm-link:focus-visible{text-decoration-color:var(--accent);outline:none}
 .lev-chip.nm-link{text-decoration:none}
@@ -8295,10 +8316,27 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     // 學校的櫃子最多 6 層：寫到 7 以上的當成寫錯，不多畫一層
     n=Math.min(Math.max(n,1),LAYER_MAX);layerCache.set(k,n);return n;
   }
+  // 這個櫃子有幾個抽屜：看器材寫到的最大「抽幾」（2026-11-14）
+  const DRAWER_MAX=40;
+  function drawersOf(room,base){
+    const list=(typeof allEquipment!=='undefined'&&allEquipment)||[];let n=0;
+    list.forEach(e=>{if(e.room!==room||!e.location)return;expandLocationField(e.location).forEach(c=>{const q=locParse(c);if(q.base===base&&q.drawer!=null&&q.drawer<=DRAWER_MAX)n=Math.max(n,q.drawer);});});
+    return n;
+  }
+  window.locDrawersOf=drawersOf;
   // ── 小圖示（SVG）──
   function glyph(p,room,nOver){
     if(p.fridge)return `<svg width="13" height="18" viewBox="0 0 13 18" aria-hidden="true"><rect x="1" y="1" width="11" height="16" rx="2" fill="none" stroke="${INK}" stroke-width="1.4"/><path d="M1 6.5h11M3.5 3v2M3.5 8.5v3" stroke="${INK}" stroke-width="1.1"/></svg>`;
     if(p.other||!p.base)return `<svg width="12" height="16" viewBox="0 0 12 16" aria-hidden="true"><path d="M6 15s5-5 5-9A5 5 0 0 0 1 6c0 4 5 9 5 9z" fill="none" stroke="${INK}" stroke-width="1.3"/><circle cx="6" cy="6" r="1.6" fill="${INK}"/></svg>`;
+    if(p.drawer!=null){
+      // 層架＋抽屜：左邊層架、右邊一直排抽屜，塗亮那一格
+      const dn=Math.max(drawersOf(room,p.base),p.drawer,1),y0=5.4,h=10,dh=h/dn,D=p.type==='D';
+      let g=`<svg width="28" height="19" viewBox="0 0 28 19" aria-hidden="true">`;
+      if(D)g+=`<rect x="0" y="3" width="28" height="2.4" fill="${INK}"/>`;
+      g+=`<rect x="1" y="${y0}" width="26" height="${h}" fill="none" stroke="${INK}" stroke-width="1.2"/><path d="M14.5 ${y0}v${h}" stroke="${INK}" stroke-width="1"/>`;
+      g+=`<rect x="15.2" y="${(y0+dh*(p.drawer-1)+.4).toFixed(2)}" width="11.1" height="${Math.max(1.2,dh-.6).toFixed(2)}" fill="${ACC}"/>`;
+      return g+`<path d="M2.5 ${y0+h}v2.6M25.5 ${y0+h}v2.6" stroke="${INK}" stroke-width="1.3"/></svg>`;
+    }
     if(p.type==='D'){
       const d=deskOf(room,p.base),n=d?d.codes.length:1,i=d?d.idx:0;
       const W=26,x0=1,cw=W/n;
@@ -8406,6 +8444,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
         ${row(`<span class="lgd-i">${g('A','top')}<b class="lg-c">BA02-0</b></span>`,'0 或「頂」＝櫃頂（桌子是桌面）')}
         ${row(`<span class="lgd-i"><b class="lg-c">BD01-04</b></span>`,'兩位數＝BD01 到 BD04 都有')}
         ${row(`<span class="lgd-i"><b class="lg-c">BD08-13×2</b></span>`,'×數量＝每一處放幾個')}
+        ${row(`<span class="lgd-i">${glyph({base:'TD03',type:'D',drawer:3},'',4)}<b class="lg-c">TD03-抽3</b></span>`,'抽屜 3（抽屜由上往下數）')}
         <p style="font-size:12px;color:var(--text2);margin-top:10px">同一個器材放在好幾個地方，用 &amp; 或 / 隔開，清單上會顯示「＋1」。</p>`,
         [{label:'我了解了',cls:'btn-primary',fn:'closeModal()'}]);
     };
@@ -8414,7 +8453,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   // ── 平面圖點櫃位：上面畫出櫃子正面（或整張桌子）──
   let fpLayer=null,fpLayerCode='';
   window.locPickLayer=function(v){fpLayer=(fpLayer===v)?null:v;window._locScroll=true;renderFloorplanLocModalBody();};
-  const layerOfItem=(e,code)=>{for(const c of expandLocationField(e.location)){if(c===code)return null;if(c.startsWith(code+'-')){const p=locParse(c);return p.layer;}}return undefined;};
+  const layerOfItem=(e,code)=>{for(const c of expandLocationField(e.location)){if(c===code)return null;if(c.startsWith(code+'-')){const p=locParse(c);return p.drawer!=null?'d'+p.drawer:p.layer;}}return undefined;};
   if(typeof renderFloorplanLocModalBody==='function'){
     const _r=renderFloorplanLocModalBody;
     window.renderFloorplanLocModalBody=function(){
@@ -8433,7 +8472,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     const _j=jumpToFloorplanLocation;
     window.jumpToFloorplanLocation=function(room,code,name){
       const p=locParse(expandLocationField(code)[0]||'');
-      window._locPend=p.base&&p.layer!=null?{base:p.base,layer:p.layer}:null;fpLayerCode='';
+      window._locPend=p.base&&(p.layer!=null||p.drawer!=null)?{base:p.base,layer:p.drawer!=null?'d'+p.drawer:p.layer}:null;fpLayerCode='';
       return _j.apply(this,arguments);
     };
   }
@@ -8505,7 +8544,29 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     const chips=arr=>arr.slice(0,2).map(e=>{const q=qtyAt(e,code),ix=items.indexOf(e);return `<span class="lev-chip"${ix>=0?` data-i="${ix}"`:''}>${escH(e.name)}${q!=null?` ×${q}`:''}</span>`;}).join('')+(arr.length>2?`<span class="lev-chip">＋${arr.length-2}</span>`:'');
     const ar=v=>`aria-expanded="${fpLayer===v}"`;
     let html='',groups=[];   // groups：[哪一層, 要搬進去的器材編號]
-    if(p.type==='D'){
+    const dN=drawersOf(room,p.base);
+    if(dN>0){
+      // 層架＋抽屜（2026-11-14）：左邊第 1～n 層，右邊抽 1～dN 由上往下一直排；點一格，器材列在櫃子下面
+      const n=layersOf(room,p.base),T=p.type,D=T==='D',TW=TOPWORD[T]||'櫃頂';
+      lay.forEach((v,i)=>{if(typeof v==='number'&&(v<1||v>n))lay[i]=null;});
+      const idx=v=>items.map((e,i)=>lay[i]===v?i:-1).filter(i=>i>=0);
+      const top=idx('top'),none=items.map((e,i)=>lay[i]==null?i:-1).filter(i=>i>=0);
+      const shelf=k=>{const a=idx(k).map(i=>items[i]);return `<button type="button" class="lev-l${fpLayer===k?' on':''}" ${ar(k)} onclick="locPickLayer(${k})" ${a.length?'':'disabled'}><span class="lev-n">${k}</span>${a.length?`<span class="lev-chip">${escH(a[0].name)}</span>`:''}<span class="lev-c">${a.length>1?'＋'+(a.length-1):''}</span></button>`;};
+      const drawer=k=>{const v='d'+k,a=idx(v).map(i=>items[i]);
+        return `<button type="button" class="dwc-d${a.length?' has':''}${fpLayer===v?' on':''}" ${ar(v)} ${a.length?`onclick="locPickLayer('${v}')"`:'disabled'} aria-label="抽屜 ${k}${a.length?`，${a.length} 樣`:'，空的'}"><b>${k}</b><span>${a.length?escH(a[0].name):''}</span><i>${a.length>1?'＋'+(a.length-1):''}</i></button>`;};
+      const ks=[],ds=[];for(let k=1;k<=n;k++)ks.push(k);for(let k=1;k<=dN;k++)ds.push(k);
+      const pickName=fpLayer==null?'':fpLayer==='top'?(D?'桌面':TW):String(fpLayer).startsWith('d')?`抽屜 ${String(fpLayer).slice(1)}`:`第 ${fpLayer} 層`;
+      const nPick=fpLayer==null?0:idx(fpLayer).length;
+      html=`<div class="lev dwc t-${T}${D?'':' nodesk'}${fpLayer!=null?' pick':''}"><div class="lev-h"><span>${escH(KIND[T]||'櫃子')}・左 ${n} 層／右 ${dN} 個抽屜</span><span>點一格打開</span></div>
+        ${top.length?`<div class="lev-top${fpLayer==='top'?' on':''}" role="button" tabindex="0" ${ar('top')} onclick="locPickLayer('top')" onkeydown="if(event.key==='Enter')locPickLayer('top')"><span class="lev-n">${D?'桌面':TW}</span>${chips(top.map(i=>items[i]))}<span class="lev-c">${top.length}</span></div>`:''}
+        ${D?'<div class="ldk-slab"></div>':''}
+        <div class="dwc-body"><div class="dwc-shelves">${ks.map(shelf).join('')}</div><div class="dwc-col">${ds.map(drawer).join('')}</div></div>
+        <div class="lev-legs"><span></span><span></span></div>
+        ${fpLayer!=null?`<div class="dwc-ih">${pickName}・${nPick} 樣・再點一次收起</div><div class="lev-in dwc-in" data-g="${fpLayer}"></div>`:''}
+        ${none.length?`<div class="lev-h" style="margin:8px 0 0"><span>沒寫（或寫錯）第幾層／抽屜的 ${none.length} 樣</span></div>`:''}</div>`;
+      if(fpLayer!=null)groups=[[String(fpLayer),idx(fpLayer)]];
+      items.forEach((e,i)=>{if(lay[i]!=null&&lay[i]!==fpLayer){const el=rowEl(box,side,i);if(el)el.classList.add('fp-row-hide');}});
+    }else if(p.type==='D'){
       // 桌子：點門＝換到那個門；點「目前這個門」＝收起／打開；點桌面＝只看桌面上的
       const d=deskOf(room,p.base)||{codes:[p.base],idx:0},n=d.codes.length;
       const all=(allEquipment||[]).filter(e=>e.room===room&&e.location);
@@ -8545,14 +8606,14 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     }
     const anchor=side?box.querySelector('.fp-bar'):null;
     if(anchor)anchor.insertAdjacentHTML('afterend',html);else box.insertAdjacentHTML('afterbegin',html);
-    if(p.type==='D')items.forEach((e,i)=>{if(!groups[0][1].includes(i)){const el=rowEl(box,side,i);if(el)el.classList.add('fp-row-hide');}});
+    if(p.type==='D'&&!dN)items.forEach((e,i)=>{if(!groups[0][1].includes(i)){const el=rowEl(box,side,i);if(el)el.classList.add('fp-row-hide');}});
     groups.forEach(([g,ii])=>{
       const holder=box.querySelector(`.lev-in[data-g="${g}"]`);if(!holder)return;
       ii.forEach(i=>{const el=rowEl(box,side,i);if(el)holder.appendChild(el);});
       if(!holder.children.length)holder.remove();
     });
     // 剛點開的那一層：捲到看得見
-    if(window._locScroll){window._locScroll=false;const h=box.querySelector('.lev-l.on,.lev-top.on,.ldk-d.open,.ldk-slab.on');if(h)h.scrollIntoView({block:'nearest',behavior:'smooth'});}
+    if(window._locScroll){window._locScroll=false;const h=box.querySelector('.lev-l.on,.lev-top.on,.ldk-d.open,.ldk-slab.on,.dwc-d.on');if(h)h.scrollIntoView({block:'nearest',behavior:'smooth'});}
   }
 })();
 </script>
