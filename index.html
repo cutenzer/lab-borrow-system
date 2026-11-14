@@ -2101,7 +2101,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-04a · 點週次看當週課表</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-14a · 位置代碼支援抽屜</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -2235,7 +2235,7 @@ function decodeLocationPart(code,defaultRoomCode){
   const parts=rest.split('-');
   const numPart=parts[0],layerPart=parts[1];
   let label=`${prefix}${cab.icon}${cab.name}${numPart}號`;
-  if(layerPart)label+=`・第${layerPart}層`;
+  if(layerPart)label+=/^抽\d+$/.test(layerPart)?`・抽屜 ${layerPart.slice(1)}`:`・第${layerPart}層`;
   return `${label} (${code})`;
 }
 function decodeLocation(code,room){
@@ -2372,7 +2372,17 @@ function expandLocationCode(raw){
     return out;
   }
   // 子層模式：全部 token 當成 base 代碼的 -子層 後綴
-  return tokens.map(t=>prefix+baseNumStr+'-'+t);
+  // 抽屜（2026-11-14）：TD03-抽18；「抽1、2、3」後面的數字也算抽屜；「抽1~3」＝抽1～抽3
+  const out=[];let drawer=false;
+  tokens.forEach(t=>{
+    const r=t.match(/^抽\s*(\d+)\s*[~～]\s*(\d+)$/);
+    if(r){const s=parseInt(r[1],10),e=parseInt(r[2],10);if(e>=s&&e-s<60){for(let n=s;n<=e;n++)out.push(prefix+baseNumStr+'-抽'+n);}else out.push(prefix+baseNumStr+'-'+t);drawer=true;return;}
+    const d=t.match(/^抽\s*(\d+)$/);
+    if(d){out.push(prefix+baseNumStr+'-抽'+parseInt(d[1],10));drawer=true;return;}
+    if(drawer&&/^\d+$/.test(t)){out.push(prefix+baseNumStr+'-抽'+parseInt(t,10));return;}
+    drawer=false;out.push(prefix+baseNumStr+'-'+t);
+  });
+  return out;
 }
 // 拆解一整個位置欄位字串：先用 & 和 / 拆成各自獨立的代碼區塊，每塊再展開範圍/清單寫法
 // 每一塊最後可以寫「×數量」＝這裡放幾個（BA05×20、BD08-13×2＝BD08～BD13 各 2 台；* 或 x 也可以）（2026-10-29）
@@ -8253,7 +8263,8 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
     if(!m)return {raw:s,other:true};
     const suf=(m[4]||'').trim();
     const layer=!suf?null:(suf==='0'||suf==='頂')?'top':/^\d+$/.test(suf)?parseInt(suf,10):null;
-    return {raw:s,base:(m[1]||'')+m[2]+m[3],room:m[1]||'',type:m[2],num:m[3],layer,side};
+    const dm=suf.match(/^抽(\d+)$/),drawer=dm?parseInt(dm[1],10):null;   // 抽屜（2026-11-14）
+    return {raw:s,base:(m[1]||'')+m[2]+m[3],room:m[1]||'',type:m[2],num:m[3],layer,side,drawer};
   }
   window.locParse=locParse;
   // ── 同一張桌子：平面圖上代號 D、高度一樣、左右相接的框 ──
@@ -8327,7 +8338,7 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   function shortTxt(p){
     if(p.fridge||p.other||!p.base)return p.raw;
     if(p.side)return p.base+' 旁';
-    const w=p.layer==='top'?(TOPWORD[p.type]||'櫃頂'):typeof p.layer==='number'?`第 ${p.layer} 層`:'';
+    const w=p.drawer!=null?`抽屜 ${p.drawer}`:p.layer==='top'?(TOPWORD[p.type]||'櫃頂'):typeof p.layer==='number'?`第 ${p.layer} 層`:'';
     return p.base+(w?'・'+w:'');
   }
   // 清單上位置標籤的內容（原本只寫代碼的地方改呼叫這個）
