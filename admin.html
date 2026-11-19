@@ -2513,7 +2513,7 @@ function renderDepositSummary(){
 }
 // 側欄最下方：登入信箱＋登出
 // 後台版本：更新檔案時改這裡，手機上看選單最下面就知道是不是最新版
-const ADMIN_VERSION='2026-11-14a';
+const ADMIN_VERSION='2026-11-19a';
 function renderSideFoot(){const f=document.getElementById('sideFoot');if(f)f.innerHTML=`<span>${escH(ADMIN_EMAIL)}<br><small style="opacity:.7">版本 ${ADMIN_VERSION}</small></span><div class="sf-btns"><button class="btn btn-secondary btn-sm" onclick="loadAll()">重新整理</button><button class="btn btn-secondary btn-sm" onclick="logout()">登出</button></div>`;}
 
 // 手機／平板：右上角「設定」打開設定與資料清單（分頁列太長，原本的按鈕藏在最右邊不好找）
@@ -11583,7 +11583,7 @@ async function srSave(){
   // 精選卡的說明原本寫「在下方清單」，搬分頁後改字
   const fh=P.querySelector('.eqm-card[data-for="feat"] .hint');if(fh)fh.textContent='點 ✕ 取消；要新增，到「清單」分頁點器材旁的 ⋯ →「設為精選」。';
   // 3) 分頁
-  let mode='list';try{const v=localStorage.getItem('eqmMode');if(['list','stk','feat','wo','io'].includes(v))mode=v;}catch(_){}
+  let mode='list';try{const v=localStorage.getItem('eqmMode');if(['list','stk','feat','wo','io','slide'].includes(v))mode=v;}catch(_){}
   function counts(){
     const all=(typeof allAdminEquipment!=='undefined'&&allAdminEquipment)||[];
     const todo=all.filter(e=>typeof stkIsDone==='function'&&!stkIsDone(e)).length;
@@ -11593,6 +11593,8 @@ async function srSave(){
   function paint(){
     const c=counts();
     const T=[['list','清單',c.all],['stk','盤點',c.todo,'待'],['feat','首頁精選',c.feat],['wo','報廢紀錄'],['io','匯入匯出']];
+    // 玻片分頁（sla-1119）：有玻片櫃才出現
+    const nSl=typeof window.slaCount==='function'?window.slaCount():0;if(nSl||mode==='slide')T.splice(1,0,['slide','玻片',nSl||undefined]);
     head.querySelector('.eqm-tabs').innerHTML=T.map(([k,l,n,pre])=>`<button type="button" role="tab" aria-selected="${k===mode}" class="bw-tab${k===mode?' on':''}" onclick="eqmSet('${k}')">${l}${n===undefined?'':`<span class="bw-n${n?'':' z'}">${pre&&n?pre+' ':''}${n}</span>`}</button>`).join('');
     P.dataset.eqm=mode;
   }
@@ -11607,6 +11609,7 @@ async function srSave(){
     if(m==='list'||m==='stk')filterAdminEquip();
     if(m==='feat'&&typeof renderFeaturedList==='function')renderFeaturedList();
     if(m==='wo'&&typeof loadWriteoffLog==='function')loadWriteoffLog();
+    if(m==='slide'&&typeof window.slAdmRender==='function')window.slAdmRender();
   };
   // 4) 包住原本的清單函式：分頁上的數字跟著更新
   const _f=window.filterAdminEquip;
@@ -13392,6 +13395,239 @@ div:has(>.la)+.qe-pos{display:none}
   try{if(document.getElementById('statsGrid')?.children.length)renderStats();}catch(_){}
 })();
 </script>
+
+<!-- ═══ 器材管理「玻片」分頁 sla-1119（2026-11-19）：刪掉這段（到「sla-1119 結束」）即還原 ═══
+     （eq-v1 裡分頁清單多了一行 slide，這段不在時那顆分頁不會出現）
+     做的事：永久玻片照編號排成清單（不再夾在 63 頁裡）；早期片（規格前有 o）標「早期」；
+     課綱實驗器材清單有寫到的標「常用」；玻片組一盒一張；選一片看年代、片數、用在哪、名稱相近的；
+     年代可以在這裡填（存到器材的 purchase_date 欄位），早期一批可以一次填好。
+     新增玻片＝打開原本的新增表單，規格自動填下一號。 -->
+<style>
+#panel-equipment:not([data-eqm="slide"]) #slAdm{display:none}
+#panel-equipment[data-eqm="slide"]>*:not(.pg-head):not(#slAdm){display:none!important}
+.sla-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 12px}
+.sla-sum{font-size:13px;color:var(--text2)}
+.sla-sum b{font-family:'DM Mono',monospace;color:var(--text)}
+.sla-seg{display:inline-flex;background:var(--surface2);border-radius:9px;padding:3px;gap:2px}
+.sla-seg button{all:unset;cursor:pointer;padding:5px 12px;border-radius:7px;font-size:13px;color:var(--text2);white-space:nowrap}
+.sla-seg button[aria-selected="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.sla-seg button:focus-visible,.sla-chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.sla-seg small{font-family:'DM Mono',monospace;font-size:11px;margin-left:4px;opacity:.75}
+.sla-chip{all:unset;cursor:pointer;font-size:12px;border:1px solid var(--border);border-radius:99px;padding:2px 10px;background:var(--surface);color:var(--text2);white-space:nowrap}
+.sla-chip[aria-pressed="true"]{background:#dfe9e4;border-color:#9fc0b3;color:#1f5b4c;font-weight:600}
+.sla-chip.old[aria-pressed="true"]{background:#efe4d2;border-color:#d8c3a0;color:#7a5a2c}
+.sla-q{flex:0 1 220px;min-width:0;height:32px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font:inherit;font-size:13px;background:var(--surface);color:var(--text)}
+.sla-ws{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.sla-main{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-width:0}
+.sla-list{column-width:230px;column-gap:18px;column-rule:1px solid var(--surface2)}
+.sla-r{all:unset;box-sizing:border-box;display:grid;grid-template-columns:32px minmax(0,1fr) auto auto;gap:6px;align-items:center;width:100%;height:28px;padding:0 6px;border-bottom:1px solid var(--surface2);cursor:pointer;break-inside:avoid;font-size:13px}
+.sla-r:hover{background:var(--surface2)}
+.sla-r:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sla-r.on{background:#dfe9e4;border-radius:6px}
+.sla-no{font:12px 'DM Mono',monospace;color:var(--text2)}
+.sla-r.early .sla-no{color:#8a5a00}
+.sla-nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sla-av{font:12px 'DM Mono',monospace;color:var(--text2);white-space:nowrap}
+.sla-av.lo{color:#8a5a00;font-weight:600}
+.sla-tg{display:inline-block;font-size:10.5px;line-height:16px;border-radius:4px;padding:0 5px;margin-left:3px;white-space:nowrap}
+.sla-tg.old{background:#efe4d2;color:#7a5a2c}.sla-tg.com{background:#dfe9e4;color:#1f5b4c;font-weight:600}
+.sla-sep{break-inside:avoid;display:flex;justify-content:space-between;font-size:12px;color:#7a5a2c;background:#f4ead9;border-radius:5px;padding:3px 8px;margin:6px 0 4px}
+.sla-h{break-inside:avoid;font-size:12px;font-weight:600;color:var(--text2);background:var(--surface2);border-radius:5px;padding:3px 8px;margin:6px 0 4px;display:flex;justify-content:space-between}
+.sla-box{border:1px solid var(--border);border-radius:8px;margin-bottom:8px}
+.sla-bh{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:8px;align-items:baseline;width:100%;padding:8px 12px;font-size:14px}
+.sla-bh small{margin-left:auto;color:var(--text2);font-size:12px}
+.sla-box .sla-in{padding:0 8px 8px;column-width:230px;column-gap:18px}
+.sla-box .sla-r{grid-template-columns:minmax(0,1fr) auto auto}
+.sla-det{position:sticky;top:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.sla-det h3{margin:2px 0 4px;font-size:18px}
+.sla-det dl{display:grid;grid-template-columns:56px minmax(0,1fr);gap:8px 10px;margin:12px 0 0;font-size:13px}
+.sla-det dt{color:var(--text2)}.sla-det dd{margin:0;min-width:0}
+.sla-det .mut{color:var(--text2)}
+.sla-yr{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sla-yr input{width:120px;height:30px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font:inherit;font-size:13px}
+.sla-lnk{all:unset;cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.sla-lnk:focus-visible{outline:2px solid var(--accent)}
+.sla-empty{font-size:13px;color:var(--text2);padding:12px 4px}
+.sla-foot{margin-top:12px;padding-top:10px;border-top:1px solid var(--surface2);display:flex;gap:6px;flex-wrap:wrap}
+@media(max-width:1099px){.sla-ws{grid-template-columns:1fr}.sla-det{position:static}#slaDet{order:-1}.sla-list{column-width:auto;column-count:1}.sla-r{height:40px;font-size:14px}}
+</style>
+<script>
+(function(){
+  const P=document.getElementById('panel-equipment');if(!P)return;
+  const NUM_RE=/^\s*(o?)\s*永久玻片\s*(\d+)/i, BOX_RE=/^\s*永久玻片組\s*(\d+)\s*(?:[（(]([^）)]*)[）)])?/;
+  const pad=n=>String(n).padStart(3,'0');
+  function parse(e){const s=String(e&&e.spec||'');let m=s.match(NUM_RE);if(m)return {kind:'n',no:+m[2],early:!!m[1]};
+    m=s.match(BOX_RE);if(m)return {kind:'b',box:+m[1],tag:(m[2]||'').trim()};return {kind:'x'};}
+  const cabOf=e=>{const m=String(e&&e.location||'').trim().match(/^[A-Za-z]+\d+/);return m?m[0].toUpperCase():'';};
+  function baseName(n){let s=String(n||'').replace(/\s+/g,'').replace(/[（(][^）)]*[）)]/g,'');if(s.includes('/'))s=s.split('/')[0];
+    return s.replace(/(全型封埋|塗片|切片|裝片|磨片|縱切|橫切|橫斷|斷面|標本)$/,'');}
+  const yearOf=e=>{const v=String(e&&e.purchase_date||'').trim();if(!v)return '';const m=v.match(/^((19|20)\d{2})[-/.]\d/);return m?m[1]:v.slice(0,10);};
+  // 哪些櫃子是玻片櫃：至少 20 片、六成以上有玻片編號
+  function cabinets(){
+    const all=(typeof allAdminEquipment!=='undefined'&&allAdminEquipment)||[],m={};
+    all.forEach(e=>{const c=cabOf(e);if(!c)return;const k=e.room+'|'+c;(m[k]||(m[k]={room:e.room,code:c,items:[]})).items.push(e);});
+    return Object.values(m).filter(c=>{const k=c.items.filter(e=>parse(e).kind!=='x').length;return k>=20&&k>=c.items.length*0.6;})
+      .sort((a,b)=>b.items.length-a.items.length);
+  }
+  window.slaCount=function(){return cabinets().reduce((s,c)=>s+c.items.length,0);};
+  let tplLoading=false;
+  function tpls(){
+    if(typeof allTemplates!=='undefined'&&allTemplates.length)return allTemplates;
+    if(!tplLoading&&typeof sb==='function'&&typeof tplSetAll==='function'){tplLoading=true;
+      sb('GET','course_templates',{order:'name'}).then(r=>tplSetAll(r)).catch(()=>{}).finally(()=>{tplLoading=false;if(P.dataset.eqm==='slide')render();});}
+    return [];
+  }
+  function usedIn(e,p){const out=[];
+    tpls().forEach(t=>{(Array.isArray(t.equipment_items)?t.equipment_items:[]).some(it=>{
+      if(!it||it.room!==e.room)return false;const m=String(it.spec||'').match(/編號\s*(o?)\s*(\d+)/i);
+      const hit=m?(p.kind==='n'&&+m[2]===p.no&&(!!m[1])===p.early):it.name===e.name;
+      if(hit&&!out.includes(t.name))out.push(t.name);return hit;});});
+    return out;}
+  const S={cab:'',tab:'n',sel:null,q:'',fEarly:false,fCom:false,box:{}};
+  try{const v=localStorage.getItem('slaTab');if(['n','c','b'].includes(v))S.tab=v;}catch(_){}
+  let set=null,cab=null;
+  function build(){
+    const cs=cabinets();cab=cs.find(c=>c.room+'|'+c.code===S.cab)||cs[0]||null;
+    if(!cab){set=null;return;}S.cab=cab.room+'|'+cab.code;
+    const nums=[],boxes={},others=[];
+    cab.items.forEach(e=>{const p=parse(e),x={e,p};if(p.kind==='n')nums.push(x);else if(p.kind==='b')(boxes[p.box]||(boxes[p.box]={tag:p.tag,list:[]})).list.push(x);else others.push(x);});
+    nums.sort((a,b)=>a.p.no-b.p.no);
+    Object.values(boxes).forEach(b=>b.list.sort((x,y)=>String(x.e.name).localeCompare(String(y.e.name),'zh-Hant')));
+    const all=nums.concat(...Object.values(boxes).map(b=>b.list),others);
+    all.forEach(x=>{x.used=usedIn(x.e,x.p);x.key=baseName(x.e.name);});
+    set={nums,boxes,others,all,cs};
+  }
+  function tags(x){const y=yearOf(x.e);return (y?`<span class="sla-tg old">${escH(y)}</span>`:x.p.early?'<span class="sla-tg old">早期</span>':'')+(x.used.length?'<span class="sla-tg com">常用</span>':'');}
+  function av(e){const t=parseInt(e.total)||0,a=typeof equipAvailable==='function'?equipAvailable(e):t;
+    return a<t?`<span class="sla-av lo">${a}/${t}</span>`:`<span class="sla-av">${t}</span>`;}
+  const lab=x=>x.p.kind==='n'?pad(x.p.no):x.p.kind==='b'?'組'+x.p.box:'—';
+  function row(x,withNo){const id=String(x.e.id),on=String(S.sel)===id;
+    return `<button type="button" class="sla-r${on?' on':''}${x.p.early?' early':''}" id="sla-${escH(id)}" aria-pressed="${on}" onclick="slaSel(${ja(id)})">`+
+      (withNo?`<span class="sla-no">${lab(x)}</span>`:'')+`<span class="sla-nm">${escH(x.e.name)}</span><span>${tags(x)}</span>${av(x.e)}</button>`;}
+  function ok(x){
+    if(S.fEarly&&!x.p.early)return false;if(S.fCom&&!x.used.length)return false;
+    const q=S.q.trim();if(!q)return true;
+    if(/^\d+$/.test(q))return x.p.kind==='n'&&(String(x.p.no)===String(+q)||pad(x.p.no).startsWith(q));
+    const l=q.toLowerCase();return String(x.e.name).toLowerCase().includes(l)||String(x.e.spec||'').toLowerCase().includes(l);
+  }
+  function listHtml(){
+    if(!set)return '';
+    if(S.tab==='b'){
+      let h='';
+      Object.keys(set.boxes).map(Number).sort((a,b)=>a-b).forEach(k=>{const b=set.boxes[k],l=b.list.filter(ok);if((S.q||S.fCom||S.fEarly)&&!l.length)return;
+        const qs=[...new Set(b.list.map(x=>parseInt(x.e.total)||0))].sort((a,c)=>a-c),op=!!(S.box[k]||S.q);
+        h+=`<div class="sla-box"><button type="button" class="sla-bh" aria-expanded="${op}" onclick="slaBox(${k})"><b>組${k}</b>${escH(b.tag)}<small>${b.list.length} 種・每種 ${qs.length===1?qs[0]:qs[0]+'–'+qs[qs.length-1]} 片 ${op?'▾':'▸'}</small></button>`+
+          (op?`<div class="sla-in">${l.map(x=>row(x,false)).join('')}</div>`:'')+'</div>';});
+      const o=set.others.filter(ok);
+      if(o.length)h+=`<div class="sla-box"><div class="sla-bh" style="cursor:default"><b>未編號</b><small>${o.length} 項</small></div><div class="sla-in">${o.map(x=>row(x,false)).join('')}</div></div>`;
+      return h||'<div class="sla-empty">找不到符合的玻片</div>';
+    }
+    let l=set.nums.filter(ok);
+    if(S.tab==='c'){const c=l.filter(x=>x.used.length),r=l.filter(x=>!x.used.length);
+      if(!c.length&&!r.length)return '<div class="sla-empty">找不到符合的玻片</div>';
+      return (c.length?`<div class="sla-h"><span>常用・課綱實驗會用</span><span>${c.length}</span></div><div class="sla-list">${c.map(x=>row(x,true)).join('')}</div>`:
+        `<div class="sla-empty">${tplLoading?'讀取課綱實驗中…':'還沒有課綱實驗列入這些玻片（課綱實驗的器材規格寫「編號 74」就會算進來）。'}</div>`)+
+        (r.length?`<div class="sla-h" style="margin-top:10px"><span>其他</span><span>${r.length}</span></div><div class="sla-list">${r.map(x=>row(x,true)).join('')}</div>`:'');}
+    if(!l.length)return '<div class="sla-empty">找不到符合的玻片</div>';
+    const eNos=set.nums.filter(x=>x.p.early).map(x=>x.p.no),lo=Math.min(...eNos),hi=Math.max(...eNos);
+    const contig=eNos.length>1&&set.nums.filter(x=>x.p.no>=lo&&x.p.no<=hi).every(x=>x.p.early);
+    const eYears=[...new Set(set.nums.filter(x=>x.p.early).map(x=>yearOf(x.e)||''))];
+    let h='',prev=null;
+    l.forEach(x=>{if(contig&&x.p.early&&prev===false)h+=`<div class="sla-sep"><span>${pad(lo)}–${pad(hi)}　早期一批</span><span>${eYears.length===1&&eYears[0]?escH(eYears[0]):'年份：未填'}</span></div>`;prev=x.p.early;h+=row(x,true);});
+    return `<div class="sla-list">${h}</div>`;
+  }
+  function detHtml(){
+    const x=set&&set.all.find(o=>String(o.e.id)===String(S.sel));
+    if(!x)return `<div class="sla-det"><b>點任一片</b><p class="mut" style="font-size:13px;margin:6px 0 0">這裡會顯示年代、片數、用在哪個實驗、名稱相近的玻片，也可以填年代。</p>${addBtn()}</div>`;
+    const e=x.e,t=parseInt(e.total)||0,a=typeof equipAvailable==='function'?equipAvailable(e):t,y=String(e.purchase_date||'');
+    const rel=set.all.filter(o=>o!==x&&o.key&&o.key===x.key);
+    const early=set.nums.filter(o=>o.p.early);
+    return `<div class="sla-det"><div class="mut" style="font:12px 'DM Mono',monospace">${x.p.kind==='n'?'編號 '+pad(x.p.no):x.p.kind==='b'?'玻片組 '+x.p.box:'未編號'}・${escH(cab.code)}</div>
+      <h3>${escH(e.name)}</h3><div>${tags(x)||'<span class="mut" style="font-size:12px">—</span>'}</div>
+      <dl>
+        <dt>年代</dt><dd><div class="sla-yr"><input id="slaYear" type="text" maxlength="20" value="${escH(y)}" placeholder="${x.p.early?'例：約 2010 前':'例：2019'}" aria-label="年代"><button type="button" class="btn btn-secondary btn-sm" onclick="slaSaveYear(false)">存</button></div>
+          ${x.p.early&&early.length>1?`<button type="button" class="sla-lnk" style="font-size:12px;margin-top:4px" onclick="slaSaveYear(true)">把這個年代套到早期一批全部 ${early.length} 片</button>`:''}
+          <div class="mut" style="font-size:12px;margin-top:2px">${x.p.early?'規格前有「o」＝早期一批。':''}填年份或「約 20xx 前」，存在器材的購入日期欄。</div></dd>
+        <dt>片數</dt><dd><b>${t}</b> ${escH(e.unit||'')}${a<t?`<span class="mut">（借出 ${t-a}，可借 ${a}）</span>`:''}</dd>
+        <dt>規格</dt><dd>${escH(e.spec||'')}</dd>
+        ${e.restricted_note?`<dt>選修專用</dt><dd style="color:#7e22ce">${escH(e.restricted_note)}</dd>`:''}
+        <dt>用在</dt><dd>${x.used.length?x.used.map(escH).join('、'):'<span class="mut">沒有課綱實驗列入</span>'}</dd>
+        ${rel.length?`<dt>名稱相近</dt><dd>${rel.slice(0,5).map(o=>`<button type="button" class="sla-lnk" onclick="slaSel(${ja(String(o.e.id))},1)">${lab(o)} ${escH(o.e.name)}</button>`).join('、')}</dd>`:''}
+        <dt>上次盤點</dt><dd>${e.last_counted_at?escH(new Date(e.last_counted_at).toLocaleDateString('zh-TW')):'<span class="mut">未盤點</span>'}</dd>
+      </dl>
+      <div class="sla-foot"><button type="button" class="btn btn-secondary btn-sm" onclick="slaEdit(${ja(String(e.id))})">編輯這片的資料</button>${addBtn()}</div></div>`;
+  }
+  function nextNo(){return set&&set.nums.length?Math.max(...set.nums.map(x=>x.p.no))+1:1;}
+  function addBtn(){return set?`<button type="button" class="btn btn-primary btn-sm" onclick="slaAdd()">＋ 新增玻片（${pad(nextNo())}）</button>`:'';}
+  function render(){
+    let box=document.getElementById('slAdm');
+    if(!box){box=document.createElement('div');box.id='slAdm';P.appendChild(box);}
+    build();
+    if(!set){box.innerHTML=!((typeof allAdminEquipment!=='undefined'&&allAdminEquipment)||[]).length?'<div class="sla-empty">載入中…</div>':'<div class="sla-empty">目前沒有玻片櫃（櫃子裡至少 20 片、規格寫「永久玻片 編號」才會出現在這裡）。</div>';return;}
+    if(S.tab==='b'&&!Object.keys(set.boxes).length&&!set.others.length)S.tab='n';
+    const nCom=set.nums.filter(x=>x.used.length).length,nEarly=set.nums.filter(x=>x.p.early).length,nBox=Object.keys(set.boxes).length;
+    const tab=(k,l,n)=>`<button type="button" role="tab" aria-selected="${S.tab===k}" onclick="slaTab('${k}')">${l}<small>${n}</small></button>`;
+    const pick=set.cs.length>1?`<select onchange="slaCab(this.value)" aria-label="玻片櫃">${set.cs.map(c=>`<option value="${escH(c.room+'|'+c.code)}"${c===cab?' selected':''}>${escH(c.code)}（${escH(rn(c.room))}）</option>`).join('')}</select>`:`<b style="font-family:'DM Mono',monospace;font-size:16px">${escH(cab.code)}</b>`;
+    box.innerHTML=`<div class="sla-top">${pick}<span class="sla-sum">${escH(rn(cab.room))}・編號 <b>${set.nums.length}</b>${nBox?`・玻片組 <b>${nBox}</b> 盒`:''}${set.others.length?`・未編號 <b>${set.others.length}</b>`:''}</span></div>
+      <div class="sla-top"><div class="sla-seg" role="tablist" aria-label="排法">${tab('n','依編號',set.nums.length)}${tab('c','常用在前',nCom)}${nBox||set.others.length?tab('b','玻片組',nBox+(set.others.length?1:0)):''}</div>
+      <button type="button" class="sla-chip" aria-pressed="${S.fCom}" onclick="slaF('fCom')">常用 ${nCom}</button>${nEarly?`<button type="button" class="sla-chip old" aria-pressed="${S.fEarly}" onclick="slaF('fEarly')">早期 ${nEarly}</button>`:''}
+      <input class="sla-q" id="slaQ" type="search" placeholder="找編號或名稱" aria-label="找編號或名稱" value="${escH(S.q)}" oninput="slaQ(this.value)"></div>
+      <div class="sla-ws"><div class="sla-main" id="slaList">${listHtml()}</div><div id="slaDet">${detHtml()}</div></div>`;
+  }
+  function paint(){const l=document.getElementById('slaList'),d=document.getElementById('slaDet');if(!l||!d||!set)return render();l.innerHTML=listHtml();d.innerHTML=detHtml();}
+  window.slAdmRender=render;
+  window.slaTab=k=>{S.tab=k;try{localStorage.setItem('slaTab',k);}catch(_){}render();};
+  window.slaCab=v=>{S.cab=v;S.sel=null;render();};
+  window.slaF=k=>{S[k]=!S[k];render();};
+  window.slaQ=v=>{S.q=v;const l=document.getElementById('slaList');if(l)l.innerHTML=listHtml();};
+  window.slaBox=k=>{S.box[k]=!S.box[k];paint();};
+  window.slaSel=function(id,go){
+    S.sel=String(id);
+    if(go&&set){const x=set.all.find(o=>String(o.e.id)===String(id));if(x){S.q='';S.fCom=S.fEarly=false;S.tab=x.p.kind==='n'?'n':'b';if(x.p.kind==='b')S.box[x.p.box]=true;}render();}
+    else paint();
+    const el=document.getElementById('sla-'+id);if(el){el.focus({preventScroll:true});el.scrollIntoView({block:'nearest'});}
+    if(window.matchMedia('(max-width:1099px)').matches){const d=document.getElementById('slaDet');if(d)d.scrollIntoView({block:'start',behavior:'smooth'});}
+  };
+  window.slaSaveYear=async function(all){
+    const x=set&&set.all.find(o=>String(o.e.id)===String(S.sel));if(!x)return;
+    const v=(document.getElementById('slaYear')||{}).value;const val=String(v||'').trim().slice(0,20)||null;
+    const targets=all?set.nums.filter(o=>o.p.early).map(o=>o.e):[x.e];
+    const go=async()=>{
+      try{
+        const ids=targets.map(e=>parseInt(e.id)).filter(n=>!isNaN(n));
+        const res=await sb('PATCH','equipment',{filter:'id=in.('+ids.join(',')+')',body:{purchase_date:val}});
+        if(Array.isArray(res)&&res.length<ids.length)throw new Error(`只存到 ${res.length}／${ids.length} 片，可能沒有權限`);
+        targets.forEach(e=>{e.purchase_date=val;});
+        showToast(all?`已把早期一批 ${targets.length} 片的年代設成「${val||'空白'}」`:`已存：${x.e.name} ${val||'（清空）'}`,'success');
+        render();
+      }catch(err){showToast('年代沒有存成功：'+(err.message||err),'error');}
+    };
+    if(all&&typeof uiConfirm==='function'){
+      uiConfirm(`把早期一批 ${targets.length} 片的年代都設成「${val||'空白'}」？\n會蓋掉這 ${targets.length} 片原本填的年代。`,`全部套用到 ${targets.length} 片`).then(y=>{if(y)go();});
+    }else go();
+  };
+  window.slaEdit=function(id){
+    const e=(allAdminEquipment||[]).find(o=>String(o.id)===String(id));if(!e)return;
+    if(typeof eqmSet==='function')eqmSet('list');
+    const s=document.getElementById('adminEquipSearch');if(s)s.value=e.name;
+    adminEquipPage=1;inlineEditEquipId=null;toggleInlineEditEquip(e.id);
+  };
+  window.slaAdd=function(){
+    if(!set)return;const n=nextNo(),room=cab.room,code=cab.code;
+    if(typeof eqmSet==='function')eqmSet('list');
+    toggleEqAdd(true);
+    setTimeout(()=>{
+      const f=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+      f('eq-room',room);f('eq-spec','永久玻片'+n);f('eq-unit','片');f('eq-location',code);
+      showToast(`已帶入：規格「永久玻片${n}」、櫃位 ${code}；填名稱和片數再存`,'success');
+    },150);
+  };
+  // 資料重新載入後，如果正在看玻片分頁就重畫
+  const _f=window.filterAdminEquip;
+  if(typeof _f==='function')window.filterAdminEquip=function(){const r=_f.apply(this,arguments);if(P.dataset.eqm==='slide')render();return r;};
+})();
+</script>
+<!-- ═══ sla-1119 結束 ═══ -->
 
 </body>
 </html>
