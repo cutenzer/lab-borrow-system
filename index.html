@@ -2101,7 +2101,7 @@ body.wk-open{overflow:hidden}
   </div>
 </div>
   
-<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-14b · 層架＋抽屜櫃子正面圖</div>
+<div class="app-ver" style="text-align:center;font-size:11px;color:#9a948a;padding:18px 0 8px">版本 2026-11-19a · 永久玻片照編號列</div>
 </main>
 <div id="venueZoomOverlay" class="venue-zoom" onclick="if(event.target===this)closeHomeVenueZoom()">
   <div class="venue-zoom-box">
@@ -4862,7 +4862,7 @@ async function loadEquipmentData(){
     const mapped=rows.filter(r=>r.is_available!==false).map(r=>{
       const total=parseInt(r.total)||0,borrowed=borrowedMap[r.room+'__'+r.name]||0;
       return {id:r.id,room:r.room,name:r.name,spec:r.spec||'',total,
-        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||'',alias:r.alias||'',asset_no:r.asset_no||'',featured:r.featured===true,is_consumable:(r.is_consumable===true||r.is_consumable===false)?r.is_consumable:null,restricted_note:String(r.restricted_note||'').trim().slice(0,100),kit_contents:String(r.kit_contents||'').slice(0,2000)};
+        available:Math.max(0,total-borrowed),unit:r.unit||'個',image_url:r.image_url||'',location:r.location||'',alias:r.alias||'',asset_no:r.asset_no||'',featured:r.featured===true,is_consumable:(r.is_consumable===true||r.is_consumable===false)?r.is_consumable:null,restricted_note:String(r.restricted_note||'').trim().slice(0,100),kit_contents:String(r.kit_contents||'').slice(0,2000),purchase_date:String(r.purchase_date||'').trim().slice(0,20)};
     });
     allEquipment=mapped;allEquipBrowse=mapped;
     allRooms=[...new Set(rows.map(r=>r.room))];
@@ -8756,6 +8756,302 @@ const CBM_DISPOSABLE=[['塑膠','滴管'],['蓋玻片'],['乳膠','手套']];
   }).catch(()=>{});  // 抓不到就不顯示這一行，首頁其他功能照常
 })();
 </script>
+
+<!-- ═══ 永久玻片清單 sl-1119（2026-11-19）：刪掉這段（到「sl-1119 結束」）即還原 ═══
+     做的事：櫃子裡大多是永久玻片時（規格寫「永久玻片 23」「o永久玻片 130」「永久玻片組 1（動植物）」），
+     「這個櫃位裡有什麼」改成玻片清單：照編號排、早期片標「早期」、課綱實驗會用的標「常用」、
+     玻片組一盒一張。只換畫面，不改資料。用在：器材借用頁搜尋櫃位、首頁搜尋櫃位、平面圖點櫃子。 -->
+<style>
+.sl{margin-top:4px}
+.sl-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px}
+.sl-seg{display:inline-flex;background:var(--surface2);border-radius:9px;padding:3px;gap:2px}
+.sl-seg button{all:unset;cursor:pointer;padding:5px 12px;border-radius:7px;font-size:13px;color:var(--text2);white-space:nowrap}
+.sl-seg button[aria-selected="true"]{background:var(--surface);color:var(--text);font-weight:700;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.sl-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.sl-seg small{font-family:'DM Mono',monospace;font-size:11px;margin-left:4px;color:inherit;opacity:.75}
+.sl-q{flex:1 1 150px;min-width:0;max-width:240px;height:32px;border:1px solid var(--border);border-radius:8px;padding:0 10px;font:inherit;font-size:13px;background:var(--surface);color:var(--text)}
+.sl-jump{display:flex;gap:4px;margin:0 0 6px;flex-wrap:wrap}
+.sl-jump button{all:unset;cursor:pointer;font:12px 'DM Mono',monospace;border:1px solid var(--border);border-radius:6px;padding:3px 9px;background:var(--surface);color:var(--text2)}
+.sl-jump button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.sl-legend{font-size:12px;color:var(--text2);display:flex;gap:10px;align-items:center;margin-left:auto}
+.sl-list{column-width:250px;column-gap:20px;column-rule:1px solid var(--surface2)}
+.sl-r{display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;gap:6px;align-items:center;min-height:34px;padding:2px 6px;border-bottom:1px solid var(--surface2);cursor:pointer;break-inside:avoid;font-size:14px}
+.sl-r:hover{background:var(--surface2)}
+.sl-r:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sl-r.on{background:#e3eee8;color:#22262a;border-radius:8px 8px 0 0;border-bottom:0}
+.sl-no{font:12.5px 'DM Mono',monospace;color:var(--text2)}
+.sl-r.early .sl-no{color:#8a5a00}
+.sl-nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl-r.on .sl-nm{white-space:normal;font-weight:700}
+.sl-av{font-size:12.5px;white-space:nowrap;color:#1f7a55}
+.sl-av.lo{color:#8a5a00;font-weight:700}.sl-av.no{color:var(--danger);font-weight:700}
+.sl-tg{display:inline-block;font-size:11px;line-height:17px;border-radius:4px;padding:0 5px;margin-left:3px;white-space:nowrap}
+.sl-tg.old{background:#efe4d2;color:#7a5a2c}
+.sl-tg.com{background:#dfe9e4;color:#1f5b4c;font-weight:700}
+.sl-d{background:#e3eee8;color:#22262a;border-radius:0 0 8px 8px;padding:2px 10px 10px 46px;margin-bottom:2px;font-size:13px;line-height:1.6;break-inside:avoid;border-bottom:1px solid var(--surface2)}
+.sl-d .k{color:var(--text2)}
+.sl-d .old{color:#7a5a2c}
+.sl-d a,.sl-d .lnk{all:unset;cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.sl-d .lnk:focus-visible{outline:2px solid var(--accent)}
+.sl-qty{display:flex;align-items:center;gap:6px;margin-top:6px}
+.sl-qty b{min-width:28px;text-align:center;font-family:'DM Mono',monospace}
+.sl-sep{break-inside:avoid;font-size:12px;color:#7a5a2c;background:#f4ead9;border-radius:5px;padding:3px 8px;margin:6px 0 4px}
+.sl-h{break-inside:avoid;font-size:12.5px;font-weight:700;color:var(--text2);background:var(--surface2);border-radius:5px;padding:3px 8px;margin:6px 0 4px;display:flex;justify-content:space-between}
+.sl-box{border:1px solid var(--border);border-radius:10px;margin-bottom:8px;background:var(--surface)}
+.sl-bh{all:unset;box-sizing:border-box;cursor:pointer;display:flex;gap:8px;align-items:baseline;width:100%;padding:9px 12px;font-size:14px}
+.sl-bh:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:10px}
+.sl-bh small{margin-left:auto;color:var(--text2);font-size:12px}
+.sl-box .sl-in{padding:0 8px 8px}
+.sl-box .sl-r{grid-template-columns:minmax(0,1fr) auto auto}
+.sl-box .sl-d{padding-left:10px}
+.sl-empty{font-size:13px;color:var(--text2);padding:10px 4px}
+.sl-note{font-size:12px;color:var(--text2);margin-top:6px}
+#floorplanSide .sl-list,.fp-sheet .sl-list{column-width:auto;column-count:1}
+@media(max-width:700px){.sl-list{column-count:1;column-width:auto}.sl-r{min-height:40px;font-size:14.5px}.sl-legend{display:none}.sl-q{max-width:none}}
+</style>
+<script>
+(function(){
+  const NUM_RE=/^\s*(o?)\s*永久玻片\s*(\d+)/i, BOX_RE=/^\s*永久玻片組\s*(\d+)\s*(?:[（(]([^）)]*)[）)])?/;
+  const pad=n=>String(n).padStart(3,'0');
+  function parse(e){
+    const s=String(e&&e.spec||'');let m=s.match(NUM_RE);
+    if(m)return {kind:'n',no:+m[2],early:!!m[1]};
+    m=s.match(BOX_RE);if(m)return {kind:'b',box:+m[1],tag:(m[2]||'').trim()};
+    return {kind:'x'};
+  }
+  // 櫃子裡至少 20 片、六成以上是編了號的玻片／玻片組，才換成玻片清單
+  function isSet(items){
+    if(!Array.isArray(items)||items.length<20)return false;
+    const k=items.filter(e=>parse(e).kind!=='x').length;
+    return k>=20&&k>=items.length*0.6;
+  }
+  // 名稱相近：去掉括號、「/」後面的做法說明、常見字尾
+  function baseName(n){
+    let s=String(n||'').replace(/\s+/g,'').replace(/[（(][^）)]*[）)]/g,'');
+    if(s.includes('/'))s=s.split('/')[0];
+    s=s.replace(/(全型封埋|塗片|切片|裝片|磨片|縱切|橫切|橫斷|斷面|標本)$/,'');
+    return s;
+  }
+  function yearOf(e){const v=String(e&&e.purchase_date||'').trim();if(!v)return '';const m=v.match(/^((19|20)\d{2})[-/.]\d/);return m?m[1]:v.slice(0,10);}
+  // ── 常用：課綱實驗的器材清單裡有這片（規格寫「編號 74」就對編號，否則對名稱）──
+  let tplRows=null,tplLoading=false;
+  function tpls(){
+    if(Array.isArray(allCourseTemplates)&&allCourseTemplates.length)return allCourseTemplates;
+    if(tplRows)return tplRows;
+    if(!tplLoading){tplLoading=true;
+      sb('GET','course_templates',{order:'name'}).then(r=>{
+        r=Array.isArray(r)?r:[];tplRows=typeof tplLatestOnly==='function'?tplLatestOnly(r):r;
+      }).catch(()=>{tplRows=[];}).finally(()=>{tplLoading=false;refreshAll();});
+    }
+    return [];
+  }
+  function usedIn(e,p){
+    const out=[];
+    tpls().forEach(t=>{
+      const its=Array.isArray(t.equipment_items)?t.equipment_items:[];
+      const hit=its.some(it=>{
+        if(!it||it.room!==e.room)return false;
+        const m=String(it.spec||'').match(/編號\s*(o?)\s*(\d+)/i);
+        if(m)return p.kind==='n'&&+m[2]===p.no&&(!!m[1])===p.early;
+        return it.name===e.name;
+      });
+      if(hit&&!out.includes(t.name))out.push(t.name);
+    });
+    return out;
+  }
+  // ── 狀態（每個畫面各記各的）──
+  const ST={};
+  function st(ctx,code){const s=ST[ctx]||(ST[ctx]={});if(s.code!==code){s.code=code;s.tab='n';s.open=null;s.q='';s.box={};}return s;}
+  let lastSets={};
+  function build(items){
+    const nums=[],boxes={},others=[];
+    items.forEach(e=>{const p=parse(e);
+      if(p.kind==='n')nums.push({e,p});else if(p.kind==='b')(boxes[p.box]||(boxes[p.box]={tag:p.tag,list:[]})).list.push({e,p});else others.push({e,p});});
+    nums.sort((a,b)=>a.p.no-b.p.no||(a.p.early?1:0)-(b.p.early?1:0));
+    Object.values(boxes).forEach(b=>b.list.sort((x,y)=>String(x.e.name).localeCompare(String(y.e.name),'zh-Hant')));
+    const all=nums.concat(...Object.values(boxes).map(b=>b.list),others);
+    all.forEach(x=>{x.used=usedIn(x.e,x.p);x.key=baseName(x.e.name);});
+    return {nums,boxes,others,all};
+  }
+  function tags(x){
+    const y=yearOf(x.e);let t='';
+    if(y)t+=`<span class="sl-tg old">${escH(y)}</span>`;else if(x.p.early)t+='<span class="sl-tg old">早期</span>';
+    if(x.used.length)t+='<span class="sl-tg com">常用</span>';
+    return t;
+  }
+  function avHtml(e){
+    const a=parseInt(e.available)||0,t=parseInt(e.total)||0,u=escH((String(e.unit||'').match(/^[^（(/／\s]{1,3}/)||[''])[0]);
+    if(a<=0)return '<span class="sl-av no">借完</span>';
+    if(a<t)return `<span class="sl-av lo">可借 ${a}/${t}</span>`;
+    return `<span class="sl-av">可借 ${a}${u}</span>`;
+  }
+  function label(x){return x.p.kind==='n'?pad(x.p.no):x.p.kind==='b'?'組'+x.p.box:'';}
+  function rowHtml(ctx,x,s,withNo){
+    const e=x.e,id=String(e.id),on=s.open===id;
+    const cls='sl-r'+(on?' on':'')+(x.p.early?' early':'');
+    let h=`<div class="${cls}" role="button" tabindex="0" aria-expanded="${on}" id="sl-${ctx}-${escH(id)}" onclick="slOpen('${ctx}',${ja(id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();slOpen('${ctx}',${ja(id)})}">`+
+      (withNo?`<span class="sl-no">${label(x)}</span>`:'')+`<span class="sl-nm">${escH(e.name)}</span><span>${tags(x)}</span>${avHtml(e)}</div>`;
+    if(on)h+=detailHtml(ctx,x);
+    return h;
+  }
+  function detailHtml(ctx,x){
+    const e=x.e,set=lastSets[ctx],y=yearOf(e);
+    const rel=set?set.all.filter(o=>o!==x&&o.key&&o.key===x.key):[];
+    const a=parseInt(e.available)||0,qty=(selectedItems[e.room+'__'+e.name]||{}).quantity||0;
+    let h='<div class="sl-d">';
+    if(e.spec)h+=`<div><span class="k">規格：</span>${escH(e.spec)}</div>`;
+    h+=`<div><span class="k">片數：</span>${parseInt(e.total)||0} ${escH(e.unit||'')}</div>`;
+    if(y)h+=`<div class="old">年代：${escH(y)}</div>`;else if(x.p.early)h+='<div class="old">早期一批的玻片</div>';
+    if(rel.length){
+      const newer=rel.filter(o=>!o.p.early&&(parseInt(o.e.available)||0)>0);
+      h+=`<div><span class="k">${x.p.early&&newer.length?'較新的同一種：':'名稱相近：'}</span>`+rel.slice(0,4).map(o=>`<button type="button" class="lnk" onclick="event.stopPropagation();slOpen('${ctx}',${ja(String(o.e.id))},1)">${label(o)?label(o)+' ':''}${escH(o.e.name)}</button>`).join('、')+'</div>';
+    }
+    if(x.used.length)h+=`<div><span class="k">用在：</span>${x.used.map(escH).join('、')}</div>`;
+    h+=`<div><button type="button" class="lnk" onclick="event.stopPropagation();slCard('${ctx}',${ja(String(e.id))})">看器材資料與照片</button></div>`;
+    if(a>0)h+=`<div class="sl-qty"><button type="button" class="qty-btn" aria-label="減少" onclick="event.stopPropagation();slQty('${ctx}',${ja(String(e.id))},-1)">−</button><b>${qty}</b><button type="button" class="qty-btn" aria-label="增加" onclick="event.stopPropagation();slQty('${ctx}',${ja(String(e.id))},1)">＋</button><span class="k" style="font-size:12px">加入借用清單</span></div>`;
+    return h+'</div>';
+  }
+  function match(x,q){
+    if(!q)return true;
+    if(/^\d+$/.test(q))return x.p.kind==='n'&&(String(x.p.no)===String(+q)||pad(x.p.no).startsWith(q));
+    q=q.toLowerCase();return String(x.e.name).toLowerCase().includes(q)||String(x.e.spec||'').toLowerCase().includes(q);
+  }
+  function listHtml(ctx){
+    const s=ST[ctx],set=lastSets[ctx];if(!s||!set)return '';
+    const q=(s.q||'').trim();
+    if(s.tab==='b'){
+      const ks=Object.keys(set.boxes).map(Number).sort((a,b)=>a-b);
+      let h='';
+      ks.forEach(k=>{const b=set.boxes[k],list=b.list.filter(x=>match(x,q));if(q&&!list.length)return;
+        const qs=[...new Set(b.list.map(x=>parseInt(x.e.total)||0))].sort((a,c)=>a-c);
+        const per=qs.length===1?`每種 ${qs[0]} 片`:`每種 ${qs[0]}–${qs[qs.length-1]} 片`;
+        const op=!!(s.box[k]||q);
+        h+=`<div class="sl-box"><button type="button" class="sl-bh" aria-expanded="${op}" onclick="slBox('${ctx}',${k})"><b>組${k}</b>${b.tag?escH(b.tag):''}<small>${b.list.length} 種・${per} ${op?'▾':'▸'}</small></button>`+
+          (op?`<div class="sl-in">${list.map(x=>rowHtml(ctx,x,s,false)).join('')}</div>`:'')+'</div>';});
+      const ot=set.others.filter(x=>match(x,q));
+      if(ot.length)h+=`<div class="sl-box"><div class="sl-bh" style="cursor:default"><b>未編號</b><small>${ot.length} 項</small></div><div class="sl-in">${ot.map(x=>rowHtml(ctx,x,s,false)).join('')}</div></div>`;
+      return h||'<div class="sl-empty">找不到符合的玻片</div>';
+    }
+    let list=set.nums.filter(x=>match(x,q));
+    if(s.tab==='c'){
+      const com=list.filter(x=>x.used.length);
+      if(!com.length)return `<div class="sl-empty">${tplLoading?'讀取課綱實驗中…':'還沒有課綱實驗列入這些玻片。課綱實驗的器材清單寫上「編號 74」這樣的規格，這裡就會出現。'}</div>`;
+      const rest=list.length-com.length;
+      return `<div class="sl-h"><span>常用・課綱實驗會用</span><span>${com.length}</span></div><div class="sl-list">${com.map(x=>rowHtml(ctx,x,s,true)).join('')}</div>`+
+        (rest?`<div class="sl-note">其他 ${rest} 片在「編號」分頁。</div>`:'');
+    }
+    if(!list.length)return '<div class="sl-empty">找不到符合的玻片</div>';
+    // 早期片如果是連續的一段，前面加一條分隔線
+    let h='',prevEarly=null;
+    const earlyNos=set.nums.filter(x=>x.p.early).map(x=>x.p.no);
+    const contiguous=earlyNos.length>1&&set.nums.filter(x=>x.p.no>=Math.min(...earlyNos)&&x.p.no<=Math.max(...earlyNos)).every(x=>x.p.early);
+    list.forEach(x=>{
+      if(contiguous&&!q&&x.p.early&&prevEarly===false)h+=`<div class="sl-sep">${pad(Math.min(...earlyNos))}–${pad(Math.max(...earlyNos))}　早期一批</div>`;
+      prevEarly=x.p.early;h+=rowHtml(ctx,x,s,true);
+    });
+    return `<div class="sl-list">${h}</div>`;
+  }
+  function html(ctx,items,code){
+    const s=st(ctx,code),set=build(items);lastSets[ctx]=set;
+    const nCom=set.nums.filter(x=>x.used.length).length,nBox=Object.keys(set.boxes).length+(set.others.length?1:0);
+    if(s.tab==='b'&&!nBox)s.tab='n';
+    const tab=(k,l,n)=>`<button type="button" role="tab" aria-selected="${s.tab===k}" onclick="slTab('${ctx}','${k}')">${l}<small>${n}</small></button>`;
+    const nums=set.nums.map(x=>x.p.no),max=nums.length?Math.max(...nums):0;
+    const jumps=[];for(let k=1;k<=max;k+=30)jumps.push(k===1?1:k-1);
+    const hasEarly=set.nums.some(x=>x.p.early||yearOf(x.e));
+    return `<div class="sl" data-sl="${ctx}"><div class="sl-top"><div class="sl-seg" role="tablist" aria-label="玻片清單">${tab('n','編號',set.nums.length)}${tab('c','常用',nCom)}${nBox?tab('b','玻片組',nBox):''}</div>`+
+      `<input class="sl-q" type="search" placeholder="找編號或名稱，例：23、洋蔥" aria-label="找編號或名稱" value="${escH(s.q||'')}" oninput="slQ('${ctx}',this.value)">`+
+      `<span class="sl-legend">${nCom?'<span><span class="sl-tg com">常用</span> 課綱實驗會用</span>':''}${hasEarly?'<span><span class="sl-tg old">早期</span> 早期一批</span>':''}</span></div>`+
+      (s.tab==='n'&&max>40?`<div class="sl-jump" aria-label="跳到編號">${jumps.map(k=>`<button type="button" onclick="slJump('${ctx}',${k})">${pad(k)}</button>`).join('')}</div>`:'')+
+      `<div class="sl-body" id="slBody-${ctx}">${listHtml(ctx)}</div></div>`;
+  }
+  // ── 動作 ──
+  function itemById(ctx,id){const set=lastSets[ctx];const x=set&&set.all.find(o=>String(o.e.id)===String(id));return x&&x.e;}
+  function refresh(ctx){
+    if(ctx==='fp'){if(typeof renderFloorplanLocModalBody==='function')renderFloorplanLocModalBody();}
+    else if(ctx==='hero'){const i=document.getElementById('heroSearch');if(i&&typeof heroSearchLive==='function')heroSearchLive(i.value);}
+    else if(typeof applyEquipBrowseFilter==='function')applyEquipBrowseFilter();
+  }
+  function refreshAll(){['loc','hero','fp'].forEach(c=>{if(lastSets[c]&&document.querySelector(`.sl[data-sl="${c}"]`))refresh(c);});}
+  function paintBody(ctx){const b=document.getElementById('slBody-'+ctx);if(b)b.innerHTML=listHtml(ctx);}
+  window.slTab=function(ctx,k){const s=ST[ctx];if(!s)return;s.tab=k;s.open=null;refresh(ctx);};
+  window.slQ=function(ctx,v){const s=ST[ctx];if(!s)return;s.q=v;paintBody(ctx);};
+  window.slBox=function(ctx,k){const s=ST[ctx];if(!s)return;s.box[k]=!s.box[k];paintBody(ctx);};
+  window.slOpen=function(ctx,id,go){
+    const s=ST[ctx];if(!s)return;
+    if(go){const set=lastSets[ctx],x=set&&set.all.find(o=>String(o.e.id)===String(id));
+      if(x){s.tab=x.p.kind==='n'?'n':'b';if(x.p.kind==='b')s.box[x.p.box]=true;s.q='';}}
+    s.open=(s.open===String(id)&&!go)?null:String(id);
+    if(go)refresh(ctx);else paintBody(ctx);
+    const el=document.getElementById(`sl-${ctx}-${id}`);if(el){el.focus({preventScroll:true});if(go)el.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  };
+  window.slJump=function(ctx,k){
+    const s=ST[ctx],set=lastSets[ctx];if(!s||!set)return;
+    if(s.q){s.q='';refresh(ctx);}
+    const x=set.nums.find(o=>o.p.no>=k);if(!x)return;
+    const el=document.getElementById(`sl-${ctx}-${x.e.id}`);if(el){el.scrollIntoView({block:'start',behavior:'smooth'});el.focus({preventScroll:true});}
+  };
+  window.slQty=function(ctx,id,d){const e=itemById(ctx,id);if(!e)return;changeQty(e.room,e.name,e.spec||'',e.unit,parseInt(e.available)||0,d);refresh(ctx);};
+  window.slCard=function(ctx,id){const e=itemById(ctx,id);if(e&&typeof openEquipDetailFor==='function')openEquipDetailFor(e,()=>refresh(ctx));};
+  // ── 接到三個地方 ──
+  function swapDropdown(box,ctx,items,code){
+    if(!box||!isSet(items))return;
+    const dd=box.querySelector(':scope > .search-dropdown');if(!dd)return;
+    const w=document.createElement('div');w.innerHTML=html(ctx,items,code);dd.replaceWith(w.firstChild);
+  }
+  // ① 器材借用頁：搜尋櫃位，展開「裡面有什麼」
+  if(typeof renderLocSearchSection==='function'){
+    const _r=renderLocSearchSection;
+    window.renderLocSearchSection=function(q,room){
+      const n=_r.apply(this,arguments);
+      try{
+        const box=document.querySelector('#locSearchSection .hr-locbox');
+        const code=box&&box.querySelector('.hr-loch b')?box.querySelector('.hr-loch b').textContent:'';
+        swapDropdown(box,'loc',window._srLists&&window._srLists.loc,code);
+      }catch(err){console.warn('玻片清單',err);}
+      return n;
+    };
+  }
+  // ② 首頁搜尋框：打櫃位代碼（結果是延遲畫的，所以看 #heroResults 有沒有換內容）
+  const hr=document.getElementById('heroResults');
+  if(hr&&'MutationObserver' in window){
+    new MutationObserver(()=>{
+      try{
+        hr.querySelectorAll('.hr-locbox').forEach(box=>{
+          const code=box.querySelector('.hr-loch b')?box.querySelector('.hr-loch b').textContent:'';
+          swapDropdown(box,'hero',window._srLists&&window._srLists.heroLoc,code);
+        });
+      }catch(err){console.warn('玻片清單',err);}
+    }).observe(hr,{childList:true});
+  }
+  // ③ 平面圖：點整個櫃子（點到某一層就照原本的列法）
+  if(typeof renderFloorplanLocModalBody==='function'){
+    const _f=renderFloorplanLocModalBody;
+    window.renderFloorplanLocModalBody=function(){
+      const r=_f.apply(this,arguments);
+      try{
+        const items=window._fpItems||[],code=floorplanOpenLoc;
+        if(isSet(items)){
+          const side=typeof fpSideMode==='function'&&fpSideMode();
+          const box=document.getElementById(side?'floorplanSide':'fpSheetBody');
+          if(box){
+            // 櫃子正面圖會把列搬進櫃子裡，所以整個框裡找
+            const rows=side?[...box.querySelectorAll('.fp-item')]
+              :[...box.querySelectorAll('[onclick^="toggleFloorplanEquipRow"]')].map(t=>t.parentElement);
+            if(rows.length){
+              const w=document.createElement('div');w.innerHTML=html('fp',items,code);
+              rows[0].before(w.firstChild);rows.forEach(n=>n.remove());
+            }
+          }
+        }
+      }catch(err){console.warn('玻片清單',err);}
+      return r;
+    };
+  }
+  window.slIsSet=isSet;window.slParse=parse;
+})();
+</script>
+<!-- ═══ sl-1119 結束 ═══ -->
 
 </body>
 </html>
